@@ -1,0 +1,38 @@
+{
+  "name": "@datawheel/create-tesseract-ui",
+  "version": "0.8.1",
+  "description": "A quick script to create a new tesseract-ui instance.",
+  "bin": "./index.js",
+  "readme": "README.md",
+  "files": [
+    "./index.js",
+    "./template/*"
+  ],
+  "author": "Francisco Abarzúa <francisco@datawheel.us>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Datawheel/tesseract-ui.git",
+    "directory": "packages/create-tesseract-ui"
+  },
+  "dependencies": {
+    "cac": "~6.7.0",
+    "cross-spawn": "^7.0.0",
+    "kleur": "^3.0.0",
+    "prompts": "~2.4.0"
+  },
+  "devDependencies": {
+    "@types/node": "^14.0.0"
+  },
+  "keywords": [
+    "create",
+    "init",
+    "tesseract-olap",
+    "tesseract-ui"
+  ],
+  "eslintConfig": {
+    "env": {
+      "node": true
+    }
+  }
+}

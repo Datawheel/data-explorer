@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "jsx": "react",
+    "lib": ["dom", "es2018"],
+    "moduleResolution": "node",
+    "outDir": "dist",
+    "strictNullChecks": true,
+    "target": "es2015"
+  },
+  "include": [
+    "./src",
+  ]
+}

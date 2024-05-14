@@ -1,0 +1,11 @@
+.side-bar {
+  background-color: red;
+}
+
+.side-bar [data-state="expanded"] {
+  width: 300px;
+}
+
+.side-bar [data-state="collapsed"] {
+  width: 50px;
+}

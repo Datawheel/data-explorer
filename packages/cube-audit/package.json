@@ -1,0 +1,48 @@
+{
+  "name": "@datawheel/cube-audit",
+  "version": "1.0.3",
+  "description": "A script to audit annotations on tesseract-olap servers.",
+  "bin": "cli.js",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "readme": "README.md",
+  "files": [
+    "cli.js",
+    "index.d.ts",
+    "index.js",
+    "logger.js"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cubes",
+    "datawheel",
+    "schema",
+    "tesseract-olap"
+  ],
+  "author": "Dave Landry <dave@datawheel.us>",
+  "contributors": [
+    "Francisco Abarzua <francisco@datawheel.us>"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Datawheel/tesseract-ui.git",
+    "directory": "packages/cube-audit"
+  },
+  "dependencies": {
+    "@datawheel/olap-client": "^2.0.0",
+    "d3plus-text": "^1.2.3",
+    "getopts": "^2.3.0",
+    "lodash": "^4.17.21"
+  },
+  "devDependencies": {
+    "@types/node": "^12.20.0"
+  },
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 11
+    }
+  }
+}
