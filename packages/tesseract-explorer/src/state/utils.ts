@@ -20,9 +20,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
   Object.values(params.drilldowns).forEach(dd => {
     drills[dd.uniqueName] = dd.memberCount;
   });
-  console.log(query, params, "All")
   // get the member counts if already stored, else fetch them
-
   const memberLengths = query.getParam("drilldowns").map(level =>
     Level.isLevel(level)
       ? drills[level.uniqueName] || ds.fetchMembers(level).then(members => {

@@ -1,24 +1,37 @@
-import { ActionIcon, Alert, Box, MantineTheme, Menu, Flex, Text, rem, Group, MultiSelect } from "@mantine/core";
+import {
+  ActionIcon, Alert, Box, MantineTheme, Flex, Text,
+  rem, Stack, Divider, Table
+} from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
   MantineReactTable,
   MRT_TableOptions as TableOptions,
-  useMantineReactTable
+  useMantineReactTable,
+  flexRender,
+  MRT_GlobalFilterTextInput,
+  MRT_TablePagination,
+  MRT_ToolbarAlertBanner,
+  MRT_ColumnActionMenu,
+  MRT_TableHeadCellFilterContainer,
+  MRT_TableBodyCell,
+  MRT_TopToolbar
 } from "mantine-react-table";
 import React, { useMemo, useState } from "react";
 import { useFormatter } from "../hooks/formatter";
 import { useTranslation } from "../hooks/translation";
 import { AnyResultColumn } from "../utils/structs";
 import { ViewProps } from "../utils/types";
-import { BarsSVG, StackSVG } from "./icons";
-import { selectCurrentQueryParams, selectDrilldownItems, selectDrilldownMap } from "../state/queries";
+import { BarsSVG, StackSVG, EyeSVG, SortSVG } from "./icons";
+import { selectCurrentQueryParams } from "../state/queries";
 import { useSelector } from "react-redux";
 import { PlainLevel, PlainMeasure, PlainProperty } from "@datawheel/olap-client";
 import { DrilldownItem } from "../utils/structs";
-
+import { isNumeric } from "../utils/validation";
 
 type EntityTypes = "measure" | "level" | "property";
+type TData = Record<string, string | number>
+
 
 const getEntityColor = (entityType: EntityTypes, theme: MantineTheme) => {
   if (entityType === "measure") {
@@ -67,12 +80,21 @@ const getColumnFilterOption = (entityType: EntityTypes) => {
   }
 };
 
+function getMemberFilterFn(data, key: string) {
+  const dd = data[0]
+  if (dd[key + " " + "ID"]) {
+    return (member) => `${member.caption} ${member.key}`;
+  }
+  return (member) => member.caption;
+}
 
-function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range, entity: PlainLevel | PlainMeasure | PlainProperty, drilldowns: Record<string, DrilldownItem>) {
+
+function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range, entity: PlainLevel | PlainMeasure | PlainProperty, drilldowns: Record<string, DrilldownItem>, data: TData[], columnKey: string) {
   let result: {
     filterVariant?: "multi-select" | "text",
     mantineFilterMultiSelectProps?: { data: unknown },
   } = {}
+
   // const filterVariant = !isId && isNumeric && range && (range[1] - range[0] <= 50) ? "multi-select" : "text"
   const filterVariant = !isId && (!range || range && (range[1] - range[0] <= 50)) ? "multi-select" : "text"
   result = Object.assign({}, result, { filterVariant })
@@ -80,15 +102,22 @@ function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, ran
   if (result.filterVariant === "multi-select") {
     if (entity._type === "level") {
       if (entity.fullName) {
-        const data = drilldowns[entity.fullName];
-        if (data) {
+        const dd = Object.keys(drilldowns).reduce((prev, key) => ({ ...prev, [drilldowns[key].fullName]: drilldowns[key] }), {})
+        const drilldwonData = dd[entity.fullName];
+
+        if (drilldwonData) {
+          const getmemberFilterValue = getMemberFilterFn(data, columnKey)
           result = Object.assign({}, result, {
             mantineFilterMultiSelectProps: {
-              data: data.members.map(o => o.caption),
+              data: drilldwonData.members.map(getmemberFilterValue),
             },
             filterFn: (row, id, filterValue) => {
               if (filterValue.length) {
-                return filterValue.includes(String(row.getValue(id)))
+                const rowValue = row.getValue(id)
+                if (typeof rowValue === "object") {
+                  return filterValue.includes(String(rowValue.value + " " + rowValue.id))
+                }
+                return filterValue.includes(String(rowValue))
               }
               return true
             },
@@ -132,9 +161,6 @@ export function TableView<TData extends Record<string, any>>(
   const { types } = result;
 
   const { locale, measures, drilldowns } = useSelector(selectCurrentQueryParams);
-  const a = useSelector(selectDrilldownItems)
-  const b = useSelector(selectDrilldownMap)
-
 
   const data = useMemo(
     () =>
@@ -150,14 +176,14 @@ export function TableView<TData extends Record<string, any>>(
     cube.measures
   );
 
-
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
    * and its contents, for later use.
    */
+  const finalKeys = Object.values(types).filter(t => !t.isId).filter(columnFilter).sort(columnSorting);
   const columns = useMemo<ColumnDef<TData>[]>(() => {
-    const finalKeys = Object.values(types).filter(columnFilter).sort(columnSorting);
+
     return finalKeys.map(column => {
       const { entity, entityType, label: columnKey, localeLabel: header, valueType, range, isId } = column;
       const isNumeric = valueType === "number";
@@ -165,46 +191,76 @@ export function TableView<TData extends Record<string, any>>(
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
       const filterOption = getColumnFilterOption(entityType);
-
-      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range, entity, drilldowns);
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range, entity, drilldowns, data, columnKey);
 
       return {
         ...filterOption,
         ...mantineFilterVariantObject,
         header,
+        enableHiding: true,
         Header: ({ column }) => {
           return (
-            <div>
-              <Flex gap={5}>
-                {getActionIcon(entityType)}
-                <Text size="md" color="black" fs={rem(16)}>
-                  {column.columnDef.header}
-                </Text>
+            <Box mb={rem(10)}>
+              <Flex justify="center" align="center">
+                <Box sx={{ flexGrow: 1 }}>
+                  <Flex gap={rem(10)}>
+                    {getActionIcon(entityType)}
+                    <Text size="md" color="black" fs={rem(16)}>
+                      {column.columnDef.header}
+                    </Text>
+                    <ActionIcon key={"sort"} size={22} ml={rem(8)} onClick={() => column.toggleSorting()}>
+                      <SortSVG />
+                    </ActionIcon>
+                  </Flex>
+                  <Text ml={rem(35)} size="sm" color="dimmed" fw="normal">
+                    {getEntityText(entityType)}
+                  </Text>
+                </Box>
+                <ActionIcon key="visibility" size={25} ml={rem(8)} onClick={() => column.toggleVisibility()}>
+                  <EyeSVG />
+                </ActionIcon>
               </Flex>
-              <Text ml={rem(35)} size="sm" color="dimmed" fw="normal">
-                {getEntityText(entityType)}
-              </Text>
-            </div>
+
+            </Box >
           );
         },
         size: isId ? 80 : null,
         formatter,
         formatterKey,
-        isNumeric,
         id: columnKey,
         dataType: valueType,
-        accessorFn: item => item[columnKey],
+        accessorFn: item => {
+          if (item[columnKey + " " + 'ID']) {
+            return { value: item[columnKey], id: item[columnKey + " " + 'ID'] }
+          }
+          return item[columnKey]
+        },
+        // not needed in headless implementation
         mantineTableHeadCellProps: {
           sx: theme => ({
             backgroundColor: getEntityColor(column.entityType, theme),
             align: isNumeric ? "right" : "left",
-            height: 135,
-            paddingBottom: 15
+            height: 140,
+            paddingBottom: 15,
+            '& .mantine-TableHeadCell-Content': {
+              justifyContent: 'space-between',
+              '& .mantine-Indicator-root': {
+                display: 'none'
+              }
+            },
           })
         },
         Cell: isNumeric
           ? ({ cell }) => formatter(cell.getValue<number>())
-          : ({ renderedCellValue }) => renderedCellValue
+          : ({ renderedCellValue }) => {
+            if (renderedCellValue && typeof renderedCellValue === 'object') {
+              return (<Flex justify="space-between" sx={{ width: "100%" }}>
+                <Box>{renderedCellValue.value}</Box>
+                <Box><Text color="dimmed">{renderedCellValue.id}</Text></Box>
+              </Flex>);
+            }
+
+          }
       };
     });
   }, [currentFormats, data, types, drilldowns, measures]);
@@ -228,7 +284,7 @@ export function TableView<TData extends Record<string, any>>(
           enableOrdering: true,
         }
       },
-      enableRowVirtualization: true,
+      enableRowVirtualization: false,
       globalFilterFn: "contains",
       initialState: { density: "xs", showColumnFilters: true },
       mantineBottomToolbarProps: {
@@ -312,14 +368,139 @@ export function TableView<TData extends Record<string, any>>(
     [isLimited]
   );
 
+
+  function getColumn(id: String) {
+    return finalKeys.find(c => c.label === id)
+  }
+
+
   const table = useMantineReactTable({
     ...constTableProps,
     ...mantineReactTableProps,
     columns,
-    data
+    data,
   });
 
-  return <MantineReactTable table={table} />;
+  return (
+    <Stack sx={{ height: "100%", maxHeight: '100vh', overflow: "auto", position: "relative" }}>
+      <MRT_TopToolbar table={table} />
+      {/* <Flex justify="space-between" align="center"> */}
+      {/**
+         * Use MRT components along side your own markup.
+         * They just need the `table` instance passed as a prop to work!
+         */}
+      {/* <MRT_GlobalFilterTextInput table={table} />
+        <MRT_TablePagination table={table} /> */}
+      {/* </Flex> */}
+      {/* Using Vanilla Mantine Table component here */}
+      <Table
+        captionSide="top"
+        fontSize="md"
+        highlightOnHover
+        horizontalSpacing="xl"
+        striped
+        verticalSpacing="xs"
+        withBorder
+        withColumnBorders
+
+      >
+        {/* Use your own markup, customize however you want using the power of TanStack Table */}
+        <Box component="thead" sx={{
+          display: "table-row-group",
+          position: "relative",
+          opacity: 0.97,
+          top: 0
+        }}>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <Box component="tr" key={headerGroup.id} sx={theme => ({
+              height: 140,
+              paddingBottom: 15,
+            })
+            }>
+              {headerGroup.headers.map((header) => {
+                const column = getColumn(header.id)
+                if (column) {
+                  const isNumeric = column.valueType === "number"
+                  return (
+                    <Box component="th" key={header.id} sx={theme => ({
+                      backgroundColor: getEntityColor(column.entityType, theme),
+                      align: isNumeric ? "right" : "left",
+                      height: 140,
+                      paddingBottom: 15,
+                      width: 350,
+                      position: "sticky",
+                      top: 0
+
+                    })
+                    }>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.Header ??
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                      <MRT_TableHeadCellFilterContainer header={header} table={table} />
+                    </Box>
+                  )
+                } else {
+                  return (
+                    <Box component="th" key={header.id} sx={theme => ({
+                      width: 25,
+                      position: "sticky",
+                      top: 0,
+                      backgroundColor: "white"
+                    })}>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                          header.column.columnDef.Header ??
+                          header.column.columnDef.header,
+                          header.getContext(),
+                        )}
+                    </Box>
+                  )
+                }
+              })}
+            </Box>
+          ))}
+        </Box>
+        <Box component="tbody" sx={(theme) => ({
+          // scrollBehavior: "smooth",
+          // scrollPaddingTop: "5rem",
+          // overflowY: "overlay"
+        })
+        }>
+          {table.getRowModel().rows.map((row) => (
+            <tr key={row.id}>
+              {
+                row.getVisibleCells().map((cell) =>
+                  <MRT_TableBodyCell key={cell.id} cell={cell} rowIndex={row.index} table={table} />
+                )
+              }
+            </tr>
+          ))}
+        </Box>
+      </Table>
+      <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
+    </Stack >
+  )
+  // POre
+  // return <MantineReactTable table={table} />;
 }
+
+
+
+
+
+
+// <td key={cell.id}>
+//                   {flexRender(
+//                     cell.column.columnDef.Cell ?? cell.column.columnDef.cell,
+//                     cell.getContext(),
+//                   )}
+//                 </td>
+
+
 
 TableView.displayName = "TesseractExplorer:TableView";

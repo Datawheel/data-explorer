@@ -53,10 +53,6 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
     useActions();
 
   const itemMap = useSelector(selectMeasureMap);
-  const measureMap = useSelector(selectOlapMeasureMap);
-  const measures = useSelector(selectOlapMeasureItems);
-
-
   const drilldowns = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
   const { isValid, error } = useSelector(selectValidQueryStatus);
@@ -66,7 +62,6 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
       const drilldownItem = buildDrilldown(level);
       updateDrilldown(drilldownItem);
       return willFetchMembers({ ...level, level: level.name }).then(members => {
-        console.log(members, "members")
         const dimension = dimensions.find(dim => dim.name === level.dimension);
         if (!dimension) return;
         return updateDrilldown({

@@ -1,6 +1,6 @@
-import {PlainCube} from "@datawheel/olap-client";
+import { PlainCube } from "@datawheel/olap-client";
 import React from "react";
-import {QueryParams, QueryResult} from "./structs";
+import { QueryParams, QueryResult } from "./structs";
 
 export interface Annotated {
   annotations: Record<string, string | undefined>;
@@ -38,3 +38,4 @@ export interface ViewProps<TData = Record<string, string | number>> {
   params: QueryParams;
   result: QueryResult<TData>;
 }
+
