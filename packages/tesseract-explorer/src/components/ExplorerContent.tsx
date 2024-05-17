@@ -37,8 +37,7 @@ const useStyles = createStyles((theme, params: { height: CSSObject["height"] }) 
   root: {
     display: "flex",
     flexFlow: "column nowrap",
-    // height: "100%",
-
+    height: "calc(100% - 50px)",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row"
       // height: params.height,

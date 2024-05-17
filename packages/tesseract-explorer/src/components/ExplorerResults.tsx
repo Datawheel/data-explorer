@@ -229,7 +229,7 @@ function SuccessResult(props: {
         </Alert>
       )}
 
-      <Box id="query-results-content" sx={{ flex: "1 1" }} mt="md">
+      <Box id="query-results-content" sx={{ flex: "1 1", height: "calc(100% - 60px)" }} mt="md">
         <Suspense fallback={props.children}>
           <Flex h="100%">
             <Box sx={{ flex: "1 1" }}>
