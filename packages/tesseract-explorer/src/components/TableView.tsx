@@ -208,7 +208,7 @@ export function TableView<TData extends Record<string, any>>(
                     <Text size="md" color="black" fs={rem(16)}>
                       {column.columnDef.header}
                     </Text>
-                    <ActionIcon key={"sort"} size={22} ml={rem(8)} onClick={() => column.toggleSorting()}>
+                    <ActionIcon key={`sort-${column.columnDef.header}`} size={22} ml={rem(8)} onClick={() => column.toggleSorting()}>
                       <SortSVG />
                     </ActionIcon>
                   </Flex>
@@ -216,7 +216,7 @@ export function TableView<TData extends Record<string, any>>(
                     {getEntityText(entityType)}
                   </Text>
                 </Box>
-                <ActionIcon key="visibility" size={25} ml={rem(8)} onClick={() => column.toggleVisibility()}>
+                <ActionIcon key={`visibility-${column.columnDef.header}`} size={25} ml={rem(8)} onClick={() => column.toggleVisibility(!column.getIsVisible())}>
                   <EyeSVG />
                 </ActionIcon>
               </Flex>
