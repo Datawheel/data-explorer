@@ -204,14 +204,17 @@ function SuccessResult(props: {
     <Paper id="query-results-success" className={props.className} radius="md" withBorder m="md">
       <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
         <Tabs.List>
+
           {panels.map(panel => (
             <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
               {t(panel.label)}
             </Tabs.Tab>
           ))}
+
           <Tabs.Tab disabled ml="auto" value="_results">
             <Title order={5}>{t("results.count_rows", { n: result.data.length })}</Title>
           </Tabs.Tab>
+
         </Tabs.List>
       </Tabs>
 

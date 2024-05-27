@@ -77,8 +77,7 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
 
 
   useEffect(() => {
-    // params.cube
-    // check TS
+    // check TS params.cube
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop: "string") => searchParams.get(prop),
     });
@@ -96,15 +95,28 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
     }
   }, [selectedItem]);
 
-  // check for double requests.
-  // check difference with will execute query
-  useEffect(() => {
-    // willRequestQuery();
-  }, [drilldowns, itemMap])
+  function getDataFromCube() {
+    const measure = Object.keys(itemMap)
+      .map(k => itemMap[k])
+      .shift();
+    const dimension = [...dimensions].shift();
+    if (measure && dimension) {
+      updateMeasure({ ...measure, active: true });
+      addDrilldown(dimension.hierarchies[0].levels[0]);
+      willRequestQuery();
+    }
+  }
+
+
+  // // check for double requests.
+  // // check difference with will execute query
+  // useEffect(() => {
+  //   // willRequestQuery();
+  // }, [drilldowns, itemMap])
 
   return (
     <Stack id="select-cube" spacing={"lg"} w={400}>
-      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
+      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} getDataFromCube={getDataFromCube} />
       {selectedItem && (
         <Text mt="sm" sx={{ "& p": { margin: 0 } }}>
           <CubeAnnotation
@@ -175,11 +187,13 @@ function getCube(items: AnnotatedCube[], name: string) {
 function CubeTree({
   items,
   locale,
-  selectedItem
+  selectedItem,
+  getDataFromCube
 }: {
   items: AnnotatedCube[];
   locale: string;
   selectedItem?: PlainCube;
+  getDataFromCube: () => void
 }) {
   const actions = useActions();
 
@@ -187,6 +201,7 @@ function CubeTree({
     const cube = items.find(i => i.annotations.table === name);
     if (cube) {
       actions.willSetCube(cube.name);
+      getDataFromCube()
     }
   };
 

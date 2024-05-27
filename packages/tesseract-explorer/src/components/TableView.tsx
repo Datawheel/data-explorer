@@ -14,8 +14,10 @@ import {
   MRT_ToolbarAlertBanner,
   MRT_ColumnActionMenu,
   MRT_TableHeadCellFilterContainer,
+  MRT_BottomToolbar,
   MRT_TableBodyCell,
-  MRT_TopToolbar
+  MRT_TopToolbar,
+  MRT_TableHeadCell
 } from "mantine-react-table";
 import React, { useMemo, useState } from "react";
 import { useFormatter } from "../hooks/formatter";
@@ -274,19 +276,23 @@ export function TableView<TData extends Record<string, any>>(
       enableDensityToggle: false,
       enableFilterMatchHighlighting: true,
       enableGlobalFilter: true,
-      enablePagination: false,
+      // enablePagination: false,
+      mantinePaginationProps: {
+        showRowsPerPage: false,
+      },
+      paginationDisplayMode: 'pages',
       enableRowNumbers: true,
       rowNumberMode: "static",
       displayColumnDefOptions: {
         "mrt-row-numbers": {
           size: 10,
-          maxSize: 15,
+          maxSize: 25,
           enableOrdering: true,
         }
       },
       enableRowVirtualization: false,
       globalFilterFn: "contains",
-      initialState: { density: "xs", showColumnFilters: true },
+      initialState: { density: "xs", showColumnFilters: true, pagination: { pageSize: 50 } },
       mantineBottomToolbarProps: {
         id: "query-results-table-view-footer"
       },
@@ -373,7 +379,6 @@ export function TableView<TData extends Record<string, any>>(
     return finalKeys.find(c => c.label === id)
   }
 
-
   const table = useMantineReactTable({
     ...constTableProps,
     ...mantineReactTableProps,
@@ -382,124 +387,120 @@ export function TableView<TData extends Record<string, any>>(
   });
 
   return (
-    <Stack sx={{ height: "100%", maxHeight: '100vh', overflow: "auto", position: "relative" }}>
+
+    <Stack sx={{ height: "100%", maxHeight: '100vh', overflow: "scroll", position: "relative" }}>
       <MRT_TopToolbar table={table} />
-      {/* <Flex justify="space-between" align="center"> */}
-      {/**
-         * Use MRT components along side your own markup.
-         * They just need the `table` instance passed as a prop to work!
-         */}
-      {/* <MRT_GlobalFilterTextInput table={table} />
-        <MRT_TablePagination table={table} /> */}
-      {/* </Flex> */}
-      {/* Using Vanilla Mantine Table component here */}
-      <Table
-        captionSide="top"
-        fontSize="md"
-        highlightOnHover
-        horizontalSpacing="xl"
-        striped
-        verticalSpacing="xs"
-        withBorder
-        withColumnBorders
+      <Flex direction="column">
+        <Flex justify="space-between" align="center">
+          <Table
+            captionSide="top"
+            fontSize="md"
+            highlightOnHover
+            horizontalSpacing="xl"
+            striped
+            verticalSpacing="xs"
+            withBorder
+            withColumnBorders
 
-      >
-        {/* Use your own markup, customize however you want using the power of TanStack Table */}
-        <Box component="thead" sx={{
-          display: "table-row-group",
-          position: "relative",
-          opacity: 0.97,
-          top: 0
-        }}>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <Box component="tr" key={headerGroup.id} sx={theme => ({
-              height: 140,
-              paddingBottom: 15,
-            })
-            }>
-              {headerGroup.headers.map((header) => {
-                const column = getColumn(header.id)
-                if (column) {
-                  const isNumeric = column.valueType === "number"
-                  return (
-                    <Box component="th" key={header.id} sx={theme => ({
-                      backgroundColor: getEntityColor(column.entityType, theme),
-                      align: isNumeric ? "right" : "left",
-                      height: 140,
-                      paddingBottom: 15,
-                      width: 350,
-                      position: "sticky",
-                      top: 0
+          >
+            {/* Use your own markup, customize however you want using the power of TanStack Table */}
+            <Box component="thead" sx={{
+              // display: "table-row-group",
+              position: "relative",
+              opacity: 0.97,
+              top: 0
+            }}>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <Box component="tr" key={headerGroup.id} sx={theme => ({
+                  height: 140,
+                  paddingBottom: 15,
+                })
+                }>
+                  {headerGroup.headers.map((header) => {
+                    const column = getColumn(header.id)
+                    if (column) {
+                      const isNumeric = column.valueType === "number"
+                      return (
+                        <Box component="th" key={header.id} sx={theme => ({
+                          backgroundColor: getEntityColor(column.entityType, theme),
+                          align: isNumeric ? "right" : "left",
+                          height: 140,
+                          paddingBottom: 15,
+                          width: 350,
+                          position: "sticky",
+                          top: 0,
+                          display: "table-cell"
 
-                    })
-                    }>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.Header ??
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                      <MRT_TableHeadCellFilterContainer header={header} table={table} />
-                    </Box>
-                  )
-                } else {
-                  return (
-                    <Box component="th" key={header.id} sx={theme => ({
-                      width: 25,
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white"
-                    })}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                          header.column.columnDef.Header ??
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                    </Box>
-                  )
-                }
-              })}
+                        })
+                        }>
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                              header.column.columnDef.Header ??
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                          <MRT_TableHeadCellFilterContainer header={header} table={table} />
+                        </Box>
+                      )
+                    } else {
+                      console.log(flexRender(
+                        header.column.columnDef.Header ??
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      ), "FR")
+
+
+                      return (<>
+                        {/* <MRT_TableHeadCell header={header} table={table} /> */}
+                        <Box component="th" key={header.id} sx={theme => ({
+                          width: 100,
+                          maxWidth: 140,
+                          position: "sticky",
+                          top: 0,
+                          backgroundColor: "white",
+                          display: "table-cell"
+                        })}>
+                          <Box>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                header.column.columnDef.Header ??
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                          </Box>
+                        </Box>
+                      </>
+                      )
+                    }
+                  })}
+                </Box>
+              ))}
             </Box>
-          ))}
+            <Box component="tbody">
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id}>
+                  {
+                    row.getVisibleCells().map((cell) =>
+                      <MRT_TableBodyCell key={cell.id} cell={cell} rowIndex={row.index} table={table} />
+                    )
+                  }
+                </tr>
+              ))}
+            </Box>
+          </Table>
+          <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
+        </Flex>
+        <Box sx={{ alignSelf: "end" }}>
+          <MRT_TablePagination table={table} />
         </Box>
-        <Box component="tbody" sx={(theme) => ({
-          // scrollBehavior: "smooth",
-          // scrollPaddingTop: "5rem",
-          // overflowY: "overlay"
-        })
-        }>
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id}>
-              {
-                row.getVisibleCells().map((cell) =>
-                  <MRT_TableBodyCell key={cell.id} cell={cell} rowIndex={row.index} table={table} />
-                )
-              }
-            </tr>
-          ))}
-        </Box>
-      </Table>
-      <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-    </Stack >
+      </Flex>
+    </Stack>
   )
-  // POre
-  // return <MantineReactTable table={table} />;
+
 }
 
-
-
-
-
-
-// <td key={cell.id}>
-//                   {flexRender(
-//                     cell.column.columnDef.Cell ?? cell.column.columnDef.cell,
-//                     cell.getContext(),
-//                   )}
-//                 </td>
 
 
 
