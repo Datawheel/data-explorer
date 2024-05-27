@@ -23,13 +23,12 @@ import {
   selectOlapDimensionItems
 } from "../state/selectors";
 import { selectOlapCubeItems } from "../state/server";
-import { selectDrilldownItems } from "../state/queries";
+import { selectDrilldownItems, selectCubeName } from "../state/queries";
 import { getAnnotation } from "../utils/string";
 import { buildDrilldown } from "../utils/structs";
 import Graph from "../utils/graph";
 import type { Annotated } from "../utils/types";
 import type { PlainLevel } from "@datawheel/olap-client";
-
 
 const graph = new Graph();
 
@@ -52,6 +51,7 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
   const { willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers } =
     useActions();
 
+  const cube = useSelector(selectCubeName)
   const itemMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
@@ -81,8 +81,7 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
     const params = new Proxy(new URLSearchParams(window.location.search), {
       get: (searchParams, prop: "string") => searchParams.get(prop),
     });
-    if (selectedItem && !params.cube) {
-      // if they are already in the url dont call it again.
+    if (selectedItem && cube) {
       const measure = Object.keys(itemMap)
         .map(k => itemMap[k])
         .shift();
@@ -93,7 +92,7 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
         willRequestQuery();
       }
     }
-  }, [selectedItem]);
+  }, [selectedItem, cube]);
 
   function getDataFromCube() {
     const measure = Object.keys(itemMap)
@@ -106,13 +105,6 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
       willRequestQuery();
     }
   }
-
-
-  // // check for double requests.
-  // // check difference with will execute query
-  // useEffect(() => {
-  //   // willRequestQuery();
-  // }, [drilldowns, itemMap])
 
   return (
     <Stack id="select-cube" spacing={"lg"} w={400}>
@@ -200,8 +192,7 @@ function CubeTree({
   const onSelectCube = (name: string) => {
     const cube = items.find(i => i.annotations.table === name);
     if (cube) {
-      actions.willSetCube(cube.name);
-      getDataFromCube()
+      actions.willSetCube(cube.name)
     }
   };
 
