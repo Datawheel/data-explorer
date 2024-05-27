@@ -444,13 +444,6 @@ export function TableView<TData extends Record<string, any>>(
                         </Box>
                       )
                     } else {
-                      console.log(flexRender(
-                        header.column.columnDef.Header ??
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      ), "FR")
-
-
                       return (<>
                         {/* <MRT_TableHeadCell header={header} table={table} /> */}
                         <Box component="th" key={header.id} sx={theme => ({
