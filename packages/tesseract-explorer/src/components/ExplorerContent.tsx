@@ -70,7 +70,6 @@ export function ExplorerContent(props: {
   const translation = useTranslation();
 
   const isSetupDone = useSetup(props.source, props.dataLocale);
-
   const serverState = useSelector(selectServerState);
 
   const { classes } = useStyles({ height: props.height });
@@ -104,8 +103,6 @@ export function ExplorerContent(props: {
             <SideBarItem>
               <ParamsExplorer />
             </SideBarItem>
-            <SideBarItem />
-            <SideBarItem />
             <SideBarItem />
           </SideBar>
         </SideBarProvider>

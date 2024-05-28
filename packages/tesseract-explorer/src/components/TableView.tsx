@@ -24,12 +24,14 @@ import { useFormatter } from "../hooks/formatter";
 import { useTranslation } from "../hooks/translation";
 import { AnyResultColumn } from "../utils/structs";
 import { ViewProps } from "../utils/types";
-import { BarsSVG, StackSVG, EyeSVG, SortSVG } from "./icons";
+import { BarsSVG, StackSVG, EyeSVG, SortSVG, PlusSVG } from "./icons";
 import { selectCurrentQueryParams } from "../state/queries";
 import { useSelector } from "react-redux";
 import { PlainLevel, PlainMeasure, PlainProperty } from "@datawheel/olap-client";
 import { DrilldownItem } from "../utils/structs";
 import { isNumeric } from "../utils/validation";
+import OptionsMenu from "./OptionsMenu";
+
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, string | number>
@@ -107,7 +109,7 @@ function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, ran
         const dd = Object.keys(drilldowns).reduce((prev, key) => ({ ...prev, [drilldowns[key].fullName]: drilldowns[key] }), {})
         const drilldwonData = dd[entity.fullName];
 
-        if (drilldwonData) {
+        if (drilldwonData && drilldwonData.members) {
           const getmemberFilterValue = getMemberFilterFn(data, columnKey)
           result = Object.assign({}, result, {
             mantineFilterMultiSelectProps: {
@@ -390,8 +392,9 @@ export function TableView<TData extends Record<string, any>>(
 
     <Stack sx={{ height: "100%", maxHeight: '100vh', overflow: "scroll", position: "relative" }}>
       <MRT_TopToolbar table={table} />
-      <Flex direction="column">
-        <Flex justify="space-between" align="center">
+
+      <Flex justify="space-between" align="center">
+        <Flex direction="column" sx={{ flex: '1 1 auto' }}>
           <Table
             captionSide="top"
             fontSize="md"
@@ -484,9 +487,16 @@ export function TableView<TData extends Record<string, any>>(
             </Box>
           </Table>
           <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
+
+          <Box sx={{ alignSelf: "end" }}>
+            <MRT_TablePagination table={table} />
+          </Box>
+
         </Flex>
-        <Box sx={{ alignSelf: "end" }}>
-          <MRT_TablePagination table={table} />
+        <Box px="xl" py={"sm"} sx={{ alignSelf: "self-start" }}>
+          <OptionsMenu>
+            <PlusSVG />
+          </OptionsMenu>
         </Box>
       </Flex>
     </Stack>

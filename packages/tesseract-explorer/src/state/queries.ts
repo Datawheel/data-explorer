@@ -196,7 +196,6 @@ export const queriesSlice = createSlice({
      * Replaces a single DrilldownItem in the current QueryItem.
      */
     updateDrilldown(state, { payload }: Action<DrilldownItem>) {
-      console.log(state, payload, "update drill")
       const query = taintCurrentQuery(state);
       query.params.drilldowns[payload.key] = payload;
     },

@@ -243,12 +243,6 @@ function SuccessResult(props: {
                 result={result}
               />
             </Box>
-
-            <Box px="xl" py={"sm"}>
-              <OptionsMenu>
-                <PlusSVG />
-              </OptionsMenu>
-            </Box>
           </Flex>
         </Suspense>
       </Box>
