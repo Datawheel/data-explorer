@@ -202,6 +202,11 @@ export function TableView<TData extends Record<string, any>>(
         ...mantineFilterVariantObject,
         header,
         enableHiding: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          if (rowA.original[columnId] < rowB.original[columnId]) { return -1; }
+          if (rowA.original[columnId] > rowB.original[columnId]) { return 1; }
+          return 0;
+        },
         Header: ({ column }) => {
           return (
             <Box mb={rem(10)}>
@@ -212,7 +217,8 @@ export function TableView<TData extends Record<string, any>>(
                     <Text size="md" color="black" fs={rem(16)}>
                       {column.columnDef.header}
                     </Text>
-                    <ActionIcon key={`sort-${column.columnDef.header}`} size={22} ml={rem(8)} onClick={() => column.toggleSorting()}>
+                    {/* onClick={() => column.toggleSorting()} */}
+                    <ActionIcon key={`sort-${column.columnDef.header}`} size={22} ml={rem(8)} onClick={column.getToggleSortingHandler()}>
                       <SortSVG />
                     </ActionIcon>
                   </Flex>
