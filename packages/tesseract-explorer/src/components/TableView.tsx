@@ -4,7 +4,6 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import {
-  SortDirection,
   MRT_ColumnDef as ColumnDef,
   MantineReactTable,
   MRT_TableOptions as TableOptions,
