@@ -4,6 +4,7 @@ import {
 } from "@mantine/core";
 import { IconAlertCircle } from "@tabler/icons-react";
 import {
+  SortDirection,
   MRT_ColumnDef as ColumnDef,
   MantineReactTable,
   MRT_TableOptions as TableOptions,
@@ -31,6 +32,13 @@ import { PlainLevel, PlainMeasure, PlainProperty } from "@datawheel/olap-client"
 import { DrilldownItem } from "../utils/structs";
 import { isNumeric } from "../utils/validation";
 import OptionsMenu from "./OptionsMenu";
+import {
+  IconSortAscendingLetters as SortAsc,
+  IconSortDescendingLetters as SortDesc,
+  IconArrowsSort,
+  IconSortAscendingNumbers as SortNAsc,
+  IconSortAscendingNumbers as SortNDesc
+} from '@tabler/icons-react'
 
 
 type EntityTypes = "measure" | "level" | "property";
@@ -135,6 +143,18 @@ function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, ran
   return result
 }
 
+type SortDirection = "asc" | "desc" | false;
+
+function getSortIcon(value: SortDirection, entityType: EntityTypes) {
+  switch (value) {
+    case "asc":
+      return entityType === "measure" ? <SortNAsc color="blue" /> : <SortAsc color="blue" />
+    case "desc":
+      return entityType === "measure" ? <SortNDesc color="blue" /> : <SortDesc color="blue" />
+    default:
+      return <IconArrowsSort />
+  }
+}
 
 /** */
 export function TableView<TData extends Record<string, any>>(
@@ -217,9 +237,8 @@ export function TableView<TData extends Record<string, any>>(
                     <Text size="md" color="black" fs={rem(16)}>
                       {column.columnDef.header}
                     </Text>
-                    {/* onClick={() => column.toggleSorting()} */}
                     <ActionIcon key={`sort-${column.columnDef.header}`} size={22} ml={rem(8)} onClick={column.getToggleSortingHandler()}>
-                      <SortSVG />
+                      {getSortIcon(column.getIsSorted(), entityType)}
                     </ActionIcon>
                   </Flex>
                   <Text ml={rem(35)} size="sm" color="dimmed" fw="normal">
