@@ -206,7 +206,8 @@ export function buildDrilldown(props): DrilldownItem {
     hierarchy,
     key: props.key || randomKey(),
     level,
-    memberCount: 0,
+    members: props.members || [],
+    memberCount: props.memberCount || props.members?.length || 0,
     properties: asArray(props.properties).map(buildProperty),
     uniqueName: props.uniqueName || props.name || props.level
   };

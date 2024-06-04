@@ -14,6 +14,10 @@ export function isOneOf<T extends string>(str: any, options: T[]): str is T {
   return options.includes(str);
 }
 
+export function hasProperty<T extends string>(obj: unknown, property: T): obj is {[K in T]: unknown} {
+  return typeof obj === "object" && obj != null && Object.prototype.hasOwnProperty.call(obj, property);
+}
+
 /**
  */
 export function shallowEqualExceptFns(
