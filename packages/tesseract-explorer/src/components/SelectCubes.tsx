@@ -1,34 +1,33 @@
-import { type PlainCube } from "@datawheel/olap-client";
-
+import type {PlainCube, PlainLevel} from "@datawheel/olap-client";
 import {
+  Accordion,
+  AccordionControlProps,
   Anchor,
+  Box,
+  Button,
   Stack,
   Text,
   TextProps,
-  Box,
-  Accordion,
-  Button,
-  AccordionControlProps,
-  rem
+  rem,
 } from "@mantine/core";
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { useActions } from "../hooks/settings";
-import { useTranslation } from "../hooks/translation";
-import { selectLocale, selectMeasureMap, selectValidQueryStatus } from "../state/queries";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo} from "react";
+import {useSelector} from "react-redux";
+
+import {useActions} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
 import {
-  selectOlapCube,
-  selectOlapMeasureItems,
-  selectOlapMeasureMap,
-  selectOlapDimensionItems
-} from "../state/selectors";
-import { selectOlapCubeItems } from "../state/server";
-import { selectDrilldownItems, selectCubeName } from "../state/queries";
-import { getAnnotation } from "../utils/string";
-import { buildDrilldown } from "../utils/structs";
+  selectCubeName,
+  selectDrilldownItems,
+  selectLocale,
+  selectMeasureMap,
+  selectValidQueryStatus,
+} from "../state/queries";
+import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
+import {selectOlapCubeItems} from "../state/server";
 import Graph from "../utils/graph";
-import type { Annotated } from "../utils/types";
-import type { PlainLevel } from "@datawheel/olap-client";
+import {getAnnotation} from "../utils/string";
+import {buildDrilldown} from "../utils/structs";
+import type {Annotated} from "../utils/types";
 
 const graph = new Graph();
 
@@ -108,7 +107,12 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
 
   return (
     <Stack id="select-cube" spacing={"lg"} w={400}>
-      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} getDataFromCube={getDataFromCube} />
+      <CubeTree
+        items={items}
+        locale={locale}
+        selectedItem={selectedItem}
+        getDataFromCube={getDataFromCube}
+      />
       {selectedItem && (
         <Text mt="sm" sx={{ "& p": { margin: 0 } }}>
           <CubeAnnotation
@@ -139,14 +143,11 @@ function AccordionControl(props: AccordionControlProps) {
   );
 }
 
-type Keys = "subtopic" | "topic" | "table";
-type AnnotatedCube = PlainCube & { annotations: { subtopic: string; topic: string; table: string } }[];
-
 function getKeys(
-  items: AnnotatedCube[],
-  k: Keys,
+  items: PlainCube[],
+  k: string,
   locale: string,
-  filter?: { key: Keys; value: string }
+  filter?: {key: string; value: string},
 ): string[] {
   let cubes = items;
 
@@ -155,10 +156,7 @@ function getKeys(
   }
   const keys = cubes.reduce((prev: Set<string>, curr) => {
     const key = getAnnotation(curr, k, locale);
-    if (key) {
-      prev.add(key);
-      return prev;
-    }
+    if (key) prev.add(key);
     return prev;
   }, new Set<string>());
 
@@ -171,7 +169,7 @@ function isSelected(selectedItem, currentItem) {
   }
 }
 
-function getCube(items: AnnotatedCube[], name: string) {
+function getCube(items: PlainCube[], name: string) {
   const cube = items.find(i => i.annotations.table === name);
   return cube;
 }
@@ -182,7 +180,7 @@ function CubeTree({
   selectedItem,
   getDataFromCube
 }: {
-  items: AnnotatedCube[];
+  items: PlainCube[];
   locale: string;
   selectedItem?: PlainCube;
   getDataFromCube: () => void
@@ -198,9 +196,9 @@ function CubeTree({
 
   const topics = useMemo(() => {
     items.map(item => {
-      const {
-        annotations: { topic, subtopic, table }
-      } = item;
+      const topic = getAnnotation(item, "topic", locale);
+      const subtopic = getAnnotation(item, "subtopic", locale);
+      const table = getAnnotation(item, "table", locale);
       graph.addNode(topic);
       graph.addNode(subtopic);
       graph.addNode(table);
@@ -208,11 +206,11 @@ function CubeTree({
       graph.addEdge(subtopic, table);
       return item;
     });
-    const topics = getKeys(items as AnnotatedCube[], "topic", locale);
+    const topics = getKeys(items, "topic", locale);
     graph.items = items;
 
     return topics;
-  }, [items]);
+  }, [items, locale]);
 
   return (
     <NestedAccordion
