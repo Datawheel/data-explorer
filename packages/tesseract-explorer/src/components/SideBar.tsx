@@ -57,9 +57,6 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   Select Dataset
                 </Text>
               </Flex>
-              <Box my="md">
-                <Auto />
-              </Box>
               <Box sx={{ flexGrow: 1 }}></Box>
               <Box my="sm">{props.children}</Box>
             </Flex>
@@ -94,27 +91,6 @@ export function SideBarItem({ children }: PropsWithChildren<SideBarItemPropos>) 
       }}
     >
       {children}
-    </Box>
-  );
-}
-
-function Auto() {
-  const { expanded } = useSideBar();
-  return (
-    <Box>
-      <Autocomplete
-        icon={<IconSearch />}
-        radius="xl"
-        size="md"
-        placeholder="Search"
-        data={["React", "Angular", "Svelte", "Vue"]}
-        sx={t => ({
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          width: expanded ? 400 : 0,
-          transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-        })}
-      />
     </Box>
   );
 }
