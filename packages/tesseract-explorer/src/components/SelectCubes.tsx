@@ -152,7 +152,9 @@ function getKeys(
   let cubes = items;
 
   if (filter) {
-    cubes = items.filter(i => i.annotations[filter.key] === filter.value);
+    cubes = items.filter(
+      i => getAnnotation(i, filter.key, locale) === filter.value,
+    );
   }
   const keys = cubes.reduce((prev: Set<string>, curr) => {
     const key = getAnnotation(curr, k, locale);
@@ -163,15 +165,8 @@ function getKeys(
   return Array.from(keys);
 }
 
-function isSelected(selectedItem, currentItem) {
-  if (selectedItem && currentItem) {
-    return selectedItem.name === currentItem.name;
-  }
-}
-
-function getCube(items: PlainCube[], name: string) {
-  const cube = items.find(i => i.annotations.table === name);
-  return cube;
+function getCube(items: PlainCube[], name: string, locale: string) {
+  return items.find(i => getAnnotation(i, "table", locale) === name);
 }
 
 function CubeTree({
@@ -188,9 +183,9 @@ function CubeTree({
   const actions = useActions();
 
   const onSelectCube = (name: string) => {
-    const cube = items.find(i => i.annotations.table === name);
+    const cube = getCube(items, name, locale);
     if (cube) {
-      actions.willSetCube(cube.name)
+      actions.willSetCube(cube.name);
     }
   };
 
@@ -216,6 +211,7 @@ function CubeTree({
     <NestedAccordion
       items={topics}
       graph={graph}
+      locale={locale}
       onSelectCube={onSelectCube}
       selectedItem={selectedItem}
     />
@@ -223,12 +219,12 @@ function CubeTree({
 }
 
 function CubeButton({
+  isSelected,
   item,
   onSelectCube,
-  selectedItem
 }: {
+  isSelected: boolean;
   item: string;
-  selectedItem?: PlainCube;
   onSelectCube: (name: string) => void;
 }) {
   return (
@@ -239,7 +235,7 @@ function CubeButton({
       onClick={() => onSelectCube(item)}
       styles={theme => ({
         root: {
-          backgroundColor: isSelected(selectedItem, getCube(graph.items, item))
+          backgroundColor: isSelected
             ? theme.colors.blue[4]
             : theme.colors.gray[4],
           border: 0,
@@ -257,41 +253,46 @@ function CubeButton({
   );
 }
 
-type NestedAccordionType = {
-  items: string[];
+function NestedAccordion({
+  graph,
+  items,
+  locale,
+  onSelectCube,
+  parent,
+  selectedItem,
+}: PropsWithChildren<{
   graph: any;
+  items: string[];
+  locale: string;
+  onSelectCube: (name: string) => void;
   parent?: string;
   selectedItem?: PlainCube;
-  onSelectCube: (name: string) => void;
-};
-
-function NestedAccordion({
-  items,
-  graph,
-  parent,
-  onSelectCube,
-  selectedItem
-}: PropsWithChildren<NestedAccordionType>) {
+}>) {
   return [...items].map(item => {
     const filtered = [...graph.adjList[item]].filter(topic => topic !== parent);
     let component: React.ReactNode;
+
     if (filtered.length === 0) {
+      const currentItem = getCube(graph.items, item, locale);
       return (
         <CubeButton
           item={item}
           onSelectCube={onSelectCube}
           key={item}
-          selectedItem={selectedItem}
+          isSelected={selectedItem?.name === currentItem?.name}
         />
       );
-    } else if (filtered.length === 1) {
+    }
+
+    if (filtered.length === 1) {
+      const currentItem = getCube(graph.items, item, locale);
       const topic = filtered[0];
       component = (
         <CubeButton
           item={topic}
           onSelectCube={onSelectCube}
           key={item}
-          selectedItem={selectedItem}
+          isSelected={selectedItem?.name === currentItem?.name}
         />
       );
     } else {
@@ -300,6 +301,7 @@ function NestedAccordion({
           items={filtered}
           graph={graph}
           parent={item}
+          locale={locale}
           selectedItem={selectedItem}
           onSelectCube={onSelectCube}
           key={item}
