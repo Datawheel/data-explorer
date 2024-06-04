@@ -21,8 +21,7 @@ export default function Home() {
       <Explorer
         panels={PANELS}
         previewLimit={100}
-        // source={process.env.OLAPPROXY_TARGET}
-        source={"https://api.oec.world/tesseract/"}
+        source={process.env.TESSERACT_SOURCE}
         withinMantineProvider
         withinReduxProvider
         withMultiQuery

@@ -1,11 +1,10 @@
 // @ts-check
-import {DebugView, Explorer, PivotView, translationDict as explorerTranslation} from "@datawheel/tesseract-explorer";
+import {DebugView, Explorer, PivotView, TableView, translationDict as explorerTranslation} from "@datawheel/tesseract-explorer";
 import {createVizbuilderView} from "@datawheel/tesseract-vizbuilder";
 import {translationDict as vizbuilderTranslation} from "@datawheel/vizbuilder";
 import {MantineProvider} from "@mantine/core";
 import React from "react";
 import {createRoot} from "react-dom/client";
-import {TableView} from "./TableView";
 
 import "normalize.css";
 
@@ -30,7 +29,7 @@ const PANELS = [
 
 /** @type {import("@mantine/core").MantineThemeOverride} */
 const theme = {
-  colorScheme: "dark"
+  // colorScheme: "dark"
 };
 
 const container = document.getElementById("app");
@@ -42,9 +41,9 @@ function mount(container) {
   root.render(
     <MantineProvider inherit withNormalizeCSS theme={theme}>
       <Explorer
-        source="/olap/"
+        source={process.env.TESSERACT_SERVER}
         formatters={formatters}
-        dataLocale="en,es"
+        dataLocale="en,ar"
         // height="90vh"
         previewLimit={75}
         panels={PANELS}

@@ -4,7 +4,7 @@ const nextConfig = {
   swcMinify: true,
   env: {
     BUILD_VERSION: "x.y.z",
-    TESSERACT_SOURCE: process.env.OLAPPROXY_TARGET,
+    TESSERACT_SOURCE: "https://api.datasaudi.sa/",
   }
 };
 
