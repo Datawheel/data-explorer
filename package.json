@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
+    "build": "turbo run build",
     "mono:publish": "node scripts/publish.js",
     "mono:release": "node scripts/release.js"
   },
@@ -11,6 +12,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@biomejs/biome": "^1.8.0",
     "args": "^5.0.0",
     "chosen": "0.0.2",
     "semver": "^7.3.0",
