@@ -1,39 +1,33 @@
-import { PlainCube } from "@datawheel/olap-client";
+import {PlainCube} from "@datawheel/olap-client";
 import {
-  ActionIcon,
   Alert,
   Anchor,
-  Box,
-  Flex,
   Group,
   Paper,
   Stack,
-  Tabs,
-  TabsValue,
   Text,
   Title,
-  createStyles
+  createStyles,
 } from "@mantine/core";
-import { IconAlertTriangle, IconBox, IconWorld } from "@tabler/icons-react";
-import React, { Suspense, useCallback, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { useSettings } from "../hooks/settings";
-import { useTranslation } from "../hooks/translation";
-import { selectCurrentQueryItem, selectIsPreviewMode } from "../state/queries";
-import { selectOlapCube } from "../state/selectors";
-import { selectServerState } from "../state/server";
-import { QueryParams, QueryResult } from "../utils/structs";
-import { PanelDescriptor } from "../utils/types";
-import { PreviewModeSwitch } from "./PreviewModeSwitch";
-import { PlusSVG } from "./icons";
-import OptionsMenu from "./OptionsMenu";
+import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
+import React, {Suspense, useMemo} from "react";
+import {useSelector} from "react-redux";
+
+import {useSettings} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
+import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
+import {selectOlapCube} from "../state/selectors";
+import {selectServerState} from "../state/server";
+import {QueryParams, QueryResult} from "../utils/structs";
+import {PreviewModeSwitch} from "./PreviewModeSwitch";
+import {ModeTabs} from "./ModeTabs";
 
 const useStyles = createStyles(() => ({
   container: {
     minHeight: "40vh",
     display: "flex",
-    flexFlow: "column nowrap"
-  }
+    flexFlow: "column nowrap",
+  },
 }));
 
 /**
@@ -45,14 +39,14 @@ export function ExplorerResults(props: {
 }) {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
-  const { isDirty, params, result } = useSelector(selectCurrentQueryItem);
+  const {isDirty, params, result} = useSelector(selectCurrentQueryItem);
 
-  const { online: isServerOnline, url: serverUrl } = serverStatus;
-  const { data, error } = result;
+  const {online: isServerOnline, url: serverUrl} = serverStatus;
+  const {data, error} = result;
 
-  const { translate: t } = useTranslation();
+  const {translate: t} = useTranslation();
 
-  const { classes, cx } = useStyles();
+  const {classes, cx} = useStyles();
 
   // Check if client is browser not connected to internet
   if (typeof window === "object" && window.navigator.onLine === false) {
@@ -154,7 +148,7 @@ function FailureResult(props: {
       className={props.className}
       radius={0}
       withBorder
-      sx={{ justifyContent: "center" }}
+      sx={{justifyContent: "center"}}
     >
       <Stack align="center" spacing="xs">
         {props.icon && props.icon}
@@ -179,7 +173,7 @@ function SuccessResult(props: {
 }) {
   const {cube, params, result} = props;
 
-  const { translate: t } = useTranslation();
+  const {translate: t} = useTranslation();
 
   const {panels, previewLimit} = useSettings();
 
@@ -193,56 +187,44 @@ function SuccessResult(props: {
     return [panel.component, panel.key, panelMeta.join("-")];
   }, [panels, queryItem.panel]);
 
-  const tabHandler = useCallback((newTab: TabsValue) => {
-    actions.switchPanel(newTab);
-  }, []);
-
   return (
-    <Paper id="query-results-success" className={props.className} radius="md" withBorder m="md">
-      <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
-        <Tabs.List>
-
-          {panels.map(panel => (
-            <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
-              {t(panel.label)}
-            </Tabs.Tab>
-          ))}
-
-          <Tabs.Tab disabled ml="auto" value="_results">
-            <Title order={5}>{t("results.count_rows", { n: result.data.length })}</Title>
-          </Tabs.Tab>
-
-        </Tabs.List>
-      </Tabs>
-
+    <Paper id="query-results-success" className={props.className}>
       {isPreviewMode && (
-        <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{ flex: "0 0 auto" }}>
+        <Alert
+          id="alert-load-all-results"
+          color="yellow"
+          radius={0}
+          sx={{flex: "0 0 auto"}}
+        >
           <Group position="apart">
             <Text>
               <Text fw={700} span>
                 {t("previewMode.title_preview")}:{" "}
               </Text>
-              <Text span>{t("previewMode.description_preview", { limit: previewLimit })}</Text>
+              <Text span>
+                {t("previewMode.description_preview", {limit: previewLimit})}
+              </Text>
             </Text>
             <PreviewModeSwitch />
           </Group>
         </Alert>
       )}
 
-      <Box id="query-results-content" sx={{ flex: "1 1", height: "calc(100% - 60px)" }} mt="md">
+      <Stack
+        id="query-results-content"
+        spacing={0}
+        sx={{flex: "1 1", height: "100%"}}
+      >
+        {panelKey !== "table" && <ModeTabs />}
         <Suspense fallback={props.children}>
-          <Flex h="100%">
-            <Box sx={{ flex: "1 1" }}>
-              <CurrentComponent
-                cube={cube}
-                panelKey={`${panelKey}-${panelMeta}`}
-                params={params}
-                result={result}
-              />
-            </Box>
-          </Flex>
+          <CurrentComponent
+            cube={cube}
+            panelKey={`${panelKey}-${panelMeta}`}
+            params={params}
+            result={result}
+          />
         </Suspense>
-      </Box>
+      </Stack>
     </Paper>
   );
 }

@@ -23,8 +23,8 @@ const VizbuilderPanel = createVizbuilderView({
 const PANELS = [
   {key: "table", label: "Data Table", component: TableView},
   {key: "matrix", label: "Pivot Table", component: PivotView},
-  {key: "debug", label: "Raw response", component: DebugView},
-  {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderPanel}
+  {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderPanel},
+  // {key: "debug", label: "Raw response", component: DebugView},
 ];
 
 /** @type {import("@mantine/core").MantineThemeOverride} */

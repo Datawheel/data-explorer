@@ -1,6 +1,5 @@
 import {
   ActionIcon,
-  Alert,
   Box,
   MantineTheme,
   Flex,
@@ -9,7 +8,6 @@ import {
   Stack,
   Table,
 } from "@mantine/core";
-import {IconAlertCircle} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
   MRT_TableOptions as TableOptions,
@@ -19,11 +17,11 @@ import {
   MRT_ToolbarAlertBanner,
   MRT_TableHeadCellFilterContainer,
   MRT_TableBodyCell,
-  MRT_TopToolbar,
+  MRT_ToolbarInternalButtons,
+  MRT_GlobalFilterTextInput,
 } from "mantine-react-table";
-import React, {useMemo, useState} from "react";
+import React, {useMemo} from "react";
 import {useFormatter} from "../hooks/formatter";
-import {useTranslation} from "../hooks/translation";
 import {AnyResultColumn} from "../utils/structs";
 import {ViewProps} from "../utils/types";
 import {BarsSVG, StackSVG, EyeSVG, PlusSVG} from "./icons";
@@ -40,6 +38,7 @@ import {
   IconSortAscendingNumbers as SortNDesc,
 } from "@tabler/icons-react";
 import {hasProperty} from "../utils/validation";
+import {ModeTabs} from "./ModeTabs";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, string | number>;
@@ -217,8 +216,6 @@ export function TableView<TData extends Record<string, any>>(
 
   const isLimited = result.data.length !== data.length;
 
-  const {translate: t} = useTranslation();
-
   const {
     currentFormats,
     getAvailableKeys,
@@ -344,10 +341,10 @@ export function TableView<TData extends Record<string, any>>(
           ? ({cell}) => formatter(cell.getValue())
           : ({renderedCellValue}) => {
               const value = hasProperty(renderedCellValue, "value")
-                ? renderedCellValue.value as string
+                ? (renderedCellValue.value as string)
                 : "";
               const id = hasProperty(renderedCellValue, "id")
-                ? renderedCellValue.id as string
+                ? (renderedCellValue.id as string)
                 : "";
               return (
                 <Flex justify="space-between" sx={{width: "100%"}}>
@@ -427,20 +424,6 @@ export function TableView<TData extends Record<string, any>>(
             flex: "0 0 auto",
           },
         },
-        renderBottomToolbar() {
-          const [isOpen, setIsOpen] = useState(isLimited);
-          if (!isOpen) return null;
-          return (
-            <Alert
-              icon={<IconAlertCircle size="1rem" />}
-              color="yellow"
-              withCloseButton
-              onClose={() => setIsOpen(false)}
-            >
-              {t("table_view.slicedresult")}
-            </Alert>
-          );
-        },
         // renderColumnActionsMenuItems({column}) {
         //   if (!column?.columnDef?.isNumeric) return null;
         //   return (
@@ -484,6 +467,7 @@ export function TableView<TData extends Record<string, any>>(
 
   return (
     <Stack
+      align="stretch"
       sx={{
         height: "100%",
         maxHeight: "100vh",
@@ -491,9 +475,13 @@ export function TableView<TData extends Record<string, any>>(
         position: "relative",
       }}
     >
-      <MRT_TopToolbar table={table} />
+      <Flex id="table-top-toolbar" direction="row" justify="space-between">
+        <ModeTabs />
+        <MRT_GlobalFilterTextInput table={table} />
+        <MRT_ToolbarInternalButtons table={table} />
+      </Flex>
 
-      <Flex justify="space-between" align="center">
+      <Flex id="table-content" direction="row">
         <Flex direction="column" sx={{flex: "1 1 auto"}}>
           <Table
             captionSide="top"
@@ -505,7 +493,6 @@ export function TableView<TData extends Record<string, any>>(
             withBorder
             withColumnBorders
           >
-            {/* Use your own markup, customize however you want using the power of TanStack Table */}
             <Box
               component="thead"
               sx={{
@@ -609,16 +596,16 @@ export function TableView<TData extends Record<string, any>>(
             </Box>
           </Table>
           <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-
-          <Box sx={{alignSelf: "end"}}>
-            <MRT_TablePagination table={table} />
-          </Box>
         </Flex>
         <Box px="xl" py={"sm"} sx={{alignSelf: "self-start"}}>
           <OptionsMenu>
             <PlusSVG />
           </OptionsMenu>
         </Box>
+      </Flex>
+
+      <Flex id="table-bottom-toolbar" direction="row" justify="flex-end">
+        <MRT_TablePagination table={table} />
       </Flex>
     </Stack>
   );
