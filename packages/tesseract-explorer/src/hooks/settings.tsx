@@ -1,7 +1,7 @@
 /* eslint-disable comma-dangle */
 import React, {createContext, useCallback, useContext, useMemo} from "react";
 import {type ExplorerActionMap} from "../state";
-import {Formatter} from "../utils/types";
+import {Formatter, PanelDescriptor} from "../utils/types";
 import {usePermalink} from "./permalink";
 
 // These types are needed to `.then()` over the returned value of dispatched thunks
@@ -17,6 +17,7 @@ interface SettingsContextProps {
   defaultMembersFilter: "id" | "name" | "any";
   formatters: Record<string, Formatter>;
   previewLimit: number;
+  panels: PanelDescriptor[];
 }
 
 /**
@@ -34,6 +35,7 @@ export function SettingsProvider(props: {
   children?: React.ReactElement;
   defaultMembersFilter?: "id" | "name" | "any";
   formatters?: Record<string, Formatter>;
+  panels: PanelDescriptor[];
   previewLimit?: number;
   withPermalink: boolean | undefined;
 }) {
@@ -43,6 +45,7 @@ export function SettingsProvider(props: {
     actions: props.actions,
     defaultMembersFilter: props.defaultMembersFilter || "id",
     formatters: props.formatters || {},
+    panels: props.panels,
     previewLimit: props.previewLimit || 50,
   }), [props.formatters, props.previewLimit]);
 

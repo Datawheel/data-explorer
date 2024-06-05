@@ -170,6 +170,7 @@ export function ExplorerComponent(props: {
       actions={boundActions}
       defaultMembersFilter={props.defaultMembersFilter}
       formatters={props.formatters}
+      panels={panels}
       previewLimit={previewLimit}
       withPermalink={props.withPermalink}
     >
@@ -178,7 +179,6 @@ export function ExplorerComponent(props: {
           dataLocale={locale}
           defaultOpenParams={defaultOpenParams}
           height={height}
-          panels={panels}
           source={props.source}
           splash={props.splash}
           uiLocale={props.uiLocale}

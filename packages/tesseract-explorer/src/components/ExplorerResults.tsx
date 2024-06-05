@@ -41,7 +41,6 @@ const useStyles = createStyles(() => ({
  */
 export function ExplorerResults(props: {
   className?: string;
-  panels: PanelDescriptor[];
   splash: React.ReactElement | null;
 }) {
   const cube = useSelector(selectOlapCube);
@@ -132,7 +131,6 @@ export function ExplorerResults(props: {
     <SuccessResult
       className={cx(classes.container, props.className)}
       cube={cube}
-      panels={props.panels}
       params={params}
       result={result}
     >
@@ -176,15 +174,14 @@ function SuccessResult(props: {
   children?: React.ReactNode;
   className?: string;
   cube: PlainCube;
-  panels: PanelDescriptor[];
   params: QueryParams;
   result: QueryResult;
 }) {
-  const { cube, panels, params, result } = props;
+  const {cube, params, result} = props;
 
   const { translate: t } = useTranslation();
 
-  const { previewLimit, actions } = useSettings();
+  const {panels, previewLimit} = useSettings();
 
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);

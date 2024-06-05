@@ -59,7 +59,6 @@ export function ExplorerContent(props: {
   dataLocale: string[];
   defaultOpenParams: string;
   height: CSSObject["height"];
-  panels: PanelDescriptor[];
   source: ServerConfig;
   splash?: React.ComponentType<{ translation: TranslationContextProps }>;
   uiLocale: string | undefined;
@@ -107,7 +106,7 @@ export function ExplorerContent(props: {
           </SideBar>
         </SideBarProvider>
         {/* <LoadingOverlay /> */}
-        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        <ExplorerResults className={classes.flexCol} splash={splash} />
       </div>
     </div>
   );
