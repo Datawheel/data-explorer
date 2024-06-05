@@ -18,10 +18,7 @@
     "semver": "^7.3.0",
     "simple-git": "^3.16.1",
     "tsup": "^8.0.2",
-    "turbo": "^1.8.2"
-  },
-  "engines": {
-    "node": ">=16.0.0"
-  },
-  "packageManager": "npm@8.11.0"
+    "turbo": "^1.8.2",
+    "wrangler": "^3.59.0"
+  }
 }
