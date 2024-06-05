@@ -10,9 +10,7 @@ target.pathname = `${target.pathname}/`.replace(/\/{2,}/g, "/");
 
 export default defineConfig(({command, mode, ssrBuild}) => {
   return {
-    root: "./src",
     define: {
-      'process.env': {},
       'process.env.BUILD_VERSION': '"x.y.z"',
       'process.env.TESSERACT_SERVER': command === "build" ? `"${OLAPPROXY_TARGET}"` : '"/olap/"',
     },

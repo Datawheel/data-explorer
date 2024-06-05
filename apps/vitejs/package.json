@@ -2,6 +2,7 @@
   "name": "demo-vitejs",
   "private": true,
   "scripts": {
+    "static": "vite build",
     "dev": "vite serve"
   },
   "dependencies": {
