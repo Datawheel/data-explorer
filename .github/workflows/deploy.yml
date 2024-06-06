@@ -1,11 +1,10 @@
 name: Deploy to Cloudflare Pages
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*.*.*"
-    branches:
-      - main
 
 jobs:
   build-and-deploy:
@@ -24,6 +23,8 @@ jobs:
         run: npm install
 
       - name: Build the project
+        env:
+          OLAPPROXY_TARGET: https://api.datasaudi.sa/
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
@@ -31,5 +32,4 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-          OLAPPROXY_TARGET: https://api.datasaudi.sa/
         run: npx wrangler pages deploy apps/vitejs/dist/ --project-name $CLOUDFLARE_PROJECT_NAME
