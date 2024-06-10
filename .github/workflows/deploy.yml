@@ -18,12 +18,14 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
       - name: Build the project
         env:
+          TURBO_TELEMETRY_DISABLED: "1"
           OLAPPROXY_TARGET: https://api.datasaudi.sa/
         run: npm run build
 
