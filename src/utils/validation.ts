@@ -1,5 +1,5 @@
 import {filterMap} from "./array";
-import {CutItem, FilterItem, QueryParams} from "./structs";
+import type {CutItem, FilterItem, QueryParams} from "./structs";
 import {stringifyName} from "./transform";
 
 /**
@@ -14,8 +14,28 @@ export function isOneOf<T extends string>(str: any, options: T[]): str is T {
   return options.includes(str);
 }
 
-export function hasProperty<T extends string>(obj: unknown, property: T): obj is {[K in T]: unknown} {
-  return typeof obj === "object" && obj != null && Object.prototype.hasOwnProperty.call(obj, property);
+/**
+ * Type guard to establish if an unknown key belongs in a certain object.
+ */
+export function isIn<T extends {}>(
+  property: string | number | symbol,
+  container: T,
+): property is keyof T {
+  return Object.prototype.hasOwnProperty.call(container, property);
+}
+
+/**
+ * Type guard to establish if a certain key is present in an unknown object.
+ */
+export function hasProperty<T extends {}, U extends string | number | symbol>(
+  container: T,
+  property: U,
+): container is T & {[K in U]: unknown} {
+  return (
+    typeof container === "object" &&
+    container != null &&
+    Object.hasOwn(container, property)
+  );
 }
 
 /**
@@ -23,10 +43,12 @@ export function hasProperty<T extends string>(obj: unknown, property: T): obj is
 export function shallowEqualExceptFns(
   prev,
   next,
-  keys = Object.keys({...prev, ...next})
+  keys = Object.keys({...prev, ...next}),
 ) {
-  // eslint-disable-next-line eqeqeq
-  return keys.every(key => typeof prev[key] === "function" || prev[key] == next[key]);
+  return keys.every(
+    // biome-ignore lint/suspicious/noDoubleEquals: intended to shallow equal
+    key => typeof prev[key] === "function" || prev[key] == next[key],
+  );
 }
 
 /**
@@ -34,7 +56,8 @@ export function shallowEqualExceptFns(
  * properties are specified beforehand.
  */
 export function shallowEqualForProps<T extends {}>(...props: Array<keyof T>) {
-  return (prev: T, next: T): boolean => props.every(key => prev[key] === next[key]);
+  return (prev: T, next: T): boolean =>
+    props.every(key => prev[key] === next[key]);
 }
 
 /**
@@ -61,47 +84,55 @@ export function isQuery(query): query is QueryParams {
 /**
  * List of conditions that make a Query valid.
  */
-const validQueryConditions = [{
-  error: "queries.error_not_query",
-  condition: isQuery as ((query: QueryParams) => boolean)
-}, {
-  error: "queries.error_no_measures",
-  condition: (query: QueryParams) =>
-    Object.values(query.measures).reduce(activeItemCounter, 0) > 0
-}, {
-  error: "queries.error_no_drilldowns",
-  condition: (query: QueryParams) =>
-    Object.values(query.drilldowns).reduce(activeItemCounter, 0) > 0
-}, {
-  error: "queries.error_one_hierarchy_per_dimension",
-  condition: (query: QueryParams) => {
-    const dimensions = new Map<string, string>();
-    return Object.values(query.drilldowns).every(dd => {
-      if (isActiveItem(dd)) {
-        const hierarchy = dimensions.get(dd.dimension);
-        dimensions.set(dd.dimension, dd.hierarchy);
-        return !hierarchy || hierarchy === dd.hierarchy;
-      }
-      return true;
-    });
-  }
-}, {
-  error: "queries.error_one_cut_per_dimension",
-  condition: (query: QueryParams) => {
-    const levels = filterMap(Object.values(query.cuts), item =>
-      isActiveItem(item) ? stringifyName(item) : null
-    );
-    const uniqueLevels = new Set(levels);
-    return levels.length === uniqueLevels.size;
-  }
-}];
+const validQueryConditions = [
+  {
+    error: "queries.error_not_query",
+    condition: isQuery as (query: QueryParams) => boolean,
+  },
+  {
+    error: "queries.error_no_measures",
+    condition: (query: QueryParams) =>
+      Object.values(query.measures).reduce(activeItemCounter, 0) > 0,
+  },
+  {
+    error: "queries.error_no_drilldowns",
+    condition: (query: QueryParams) =>
+      Object.values(query.drilldowns).reduce(activeItemCounter, 0) > 0,
+  },
+  {
+    error: "queries.error_one_hierarchy_per_dimension",
+    condition: (query: QueryParams) => {
+      const dimensions = new Map<string, string>();
+      return Object.values(query.drilldowns).every(dd => {
+        if (isActiveItem(dd)) {
+          const hierarchy = dimensions.get(dd.dimension);
+          dimensions.set(dd.dimension, dd.hierarchy);
+          return !hierarchy || hierarchy === dd.hierarchy;
+        }
+        return true;
+      });
+    },
+  },
+  {
+    error: "queries.error_one_cut_per_dimension",
+    condition: (query: QueryParams) => {
+      const levels = filterMap(Object.values(query.cuts), item =>
+        isActiveItem(item) ? stringifyName(item) : null,
+      );
+      const uniqueLevels = new Set(levels);
+      return levels.length === uniqueLevels.size;
+    },
+  },
+];
 
 /**
  * Validates whether the provided object is a valid Query object
  * that can be used to make a request.
  */
 export function isValidQuery(query): boolean {
-  return validQueryConditions.every(queryCondition => queryCondition.condition(query));
+  return validQueryConditions.every(queryCondition =>
+    queryCondition.condition(query),
+  );
 }
 
 /**
@@ -109,7 +140,10 @@ export function isValidQuery(query): boolean {
  * that can be used to make a request.
  * Also returns an error message of the first failed condition.
  */
-export function isValidQueryVerbose(query): {isValid: boolean, error: undefined | string} {
+export function isValidQueryVerbose(query): {
+  isValid: boolean;
+  error: undefined | string;
+} {
   let error;
   const allConditionsPass = validQueryConditions.every(queryCondition => {
     const passed = queryCondition.condition(query);
@@ -142,6 +176,9 @@ export function isFilterItem(obj): obj is FilterItem {
 
 /**
  */
-export function activeItemCounter(sum: number, item: {active: boolean}): number {
+export function activeItemCounter(
+  sum: number,
+  item: {active: boolean},
+): number {
   return sum + (isActiveItem(item) ? 1 : 0);
 }

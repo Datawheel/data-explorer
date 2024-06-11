@@ -16,12 +16,13 @@ export function asArray<T>(value: MaybeArray<T | undefined | null>): T[] {
  * and if the result of the map is `null`, discards it.
  */
 export function filterMap<T, U>(
-  items: T[],
+  array: T[],
   callback: (item: T, index: number, array: T[]) => U | null
 ): U[] {
-  const output = [] as U[];
-  for (let i = 0; i < items.length; i++) {
-    const result = callback(items[i], i, items);
+  const length = array.length;
+  const output: U[] = [];
+  for (let i = 0; i < length; i++) {
+    const result = callback(array[i], i, array);
     result !== null && output.push(result);
   }
   return output;
@@ -87,7 +88,7 @@ export function itemIteratorFactory(items, filter) {
 export function sortByKey<K extends string, T extends {[P in K]: string}>(
   array: T[],
   key: K,
-  descendent: boolean = true
+  descendent = true
 ) {
   if (!Array.isArray(array) || array.length < 2) return array;
 
@@ -110,7 +111,7 @@ export function sortByKey<K extends string, T extends {[P in K]: string}>(
 export function sortByDate<K extends string, T extends {[P in K]: string}>(
   array: T[],
   key: K,
-  descendent: boolean = true
+  descendent = true
 ) {
   if (!Array.isArray(array) || array.length < 2) return array;
 
