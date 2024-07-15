@@ -208,7 +208,8 @@ export function buildDrilldown(props): DrilldownItem {
     level,
     memberCount: 0,
     properties: asArray(props.properties).map(buildProperty),
-    uniqueName: props.uniqueName || props.name || props.level
+    uniqueName: props.uniqueName || props.name || props.level,
+    members: props.members || []
   };
 }
 
