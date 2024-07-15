@@ -1,6 +1,5 @@
-import { PlainCube } from "@datawheel/olap-client";
+import {PlainCube} from "@datawheel/olap-client";
 import {
-  ActionIcon,
   Alert,
   Anchor,
   Box,
@@ -14,19 +13,20 @@ import {
   Title,
   createStyles
 } from "@mantine/core";
-import { IconAlertTriangle, IconBox, IconWorld } from "@tabler/icons-react";
-import React, { Suspense, useCallback, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { useSettings } from "../hooks/settings";
-import { useTranslation } from "../hooks/translation";
-import { selectCurrentQueryItem, selectIsPreviewMode } from "../state/queries";
-import { selectOlapCube } from "../state/selectors";
-import { selectServerState } from "../state/server";
-import { QueryParams, QueryResult } from "../utils/structs";
-import { PanelDescriptor } from "../utils/types";
-import { PreviewModeSwitch } from "./PreviewModeSwitch";
-import { PlusSVG } from "./icons";
-import OptionsMenu from "./OptionsMenu";
+import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
+import React, {Suspense, useCallback, useMemo} from "react";
+import {useSelector} from "react-redux";
+import {useSettings} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
+import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
+import {selectOlapCube} from "../state/selectors";
+import {selectServerState} from "../state/server";
+import {QueryParams, QueryResult} from "../utils/structs";
+import {PanelDescriptor} from "../utils/types";
+import {PreviewModeSwitch} from "./PreviewModeSwitch";
+import {MRT_TopToolbar} from "mantine-react-table";
+import {useTable} from "./TableView";
+import {selectLoadingState} from "../state/loading";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -46,14 +46,16 @@ export function ExplorerResults(props: {
 }) {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
-  const { isDirty, params, result } = useSelector(selectCurrentQueryItem);
+  const {isDirty, params, result} = useSelector(selectCurrentQueryItem);
 
-  const { online: isServerOnline, url: serverUrl } = serverStatus;
-  const { data, error } = result;
+  const {loading: isLoading} = useSelector(selectLoadingState);
 
-  const { translate: t } = useTranslation();
+  const {online: isServerOnline, url: serverUrl} = serverStatus;
+  const {data, error} = result;
 
-  const { classes, cx } = useStyles();
+  const {translate: t} = useTranslation();
+
+  const {classes, cx} = useStyles();
 
   // Check if client is browser not connected to internet
   if (typeof window === "object" && window.navigator.onLine === false) {
@@ -88,7 +90,9 @@ export function ExplorerResults(props: {
 
   // Show splash if the schema is not fully loaded, server hasn't been checked,
   // or the user changed parameters since last query
-  if (isServerOnline == null || !cube || isDirty) {
+  // check is loading
+  // use set loading when seraching members.
+  if (isServerOnline == null || !cube || isDirty || isLoading) {
     return (
       <Paper
         className={cx(classes.container, props.className)}
@@ -156,7 +160,7 @@ function FailureResult(props: {
       className={props.className}
       radius={0}
       withBorder
-      sx={{ justifyContent: "center" }}
+      sx={{justifyContent: "center"}}
     >
       <Stack align="center" spacing="xs">
         {props.icon && props.icon}
@@ -180,14 +184,14 @@ function SuccessResult(props: {
   params: QueryParams;
   result: QueryResult;
 }) {
-  const { cube, panels, params, result } = props;
-
-  const { translate: t } = useTranslation();
-
-  const { previewLimit, actions } = useSettings();
+  const {cube, panels, params, result} = props;
+  const {translate: t} = useTranslation();
+  const {previewLimit, actions} = useSettings();
 
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
+
+  const {table} = useTable({cube, result});
 
   const [CurrentComponent, panelKey, panelMeta] = useMemo(() => {
     const currentPanel = queryItem.panel || `${panels[0].key}-`;
@@ -202,45 +206,50 @@ function SuccessResult(props: {
 
   return (
     <Paper id="query-results-success" className={props.className} radius="md" withBorder m="md">
-      <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
-        <Tabs.List>
-
-          {panels.map(panel => (
-            <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
-              {t(panel.label)}
-            </Tabs.Tab>
-          ))}
-
-          <Tabs.Tab disabled ml="auto" value="_results">
-            <Title order={5}>{t("results.count_rows", { n: result.data.length })}</Title>
-          </Tabs.Tab>
-
-        </Tabs.List>
-      </Tabs>
-
+      <Flex sx={{alignItems: "center"}}>
+        <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
+          <Tabs.List>
+            {panels.map(panel => (
+              <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
+                {t(panel.label)}
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+        </Tabs>
+        {/* need to update this logic */}
+        {(!queryItem.panel || queryItem.panel === "table") && (
+          <Box sx={{display: "flex", flex: "1 1 auto"}}>
+            <MRT_TopToolbar table={table} />
+          </Box>
+        )}
+        <Box px={10} mx={10}>
+          <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
+        </Box>
+      </Flex>
       {isPreviewMode && (
-        <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{ flex: "0 0 auto" }}>
+        <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
           <Group position="apart">
             <Text>
               <Text fw={700} span>
                 {t("previewMode.title_preview")}:{" "}
               </Text>
-              <Text span>{t("previewMode.description_preview", { limit: previewLimit })}</Text>
+              <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
             </Text>
             <PreviewModeSwitch />
           </Group>
         </Alert>
       )}
 
-      <Box id="query-results-content" sx={{ flex: "1 1", height: "calc(100% - 60px)" }} mt="md">
+      <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
         <Suspense fallback={props.children}>
           <Flex h="100%">
-            <Box sx={{ flex: "1 1" }}>
+            <Box sx={{flex: "1 1"}}>
               <CurrentComponent
-                cube={cube}
                 panelKey={`${panelKey}-${panelMeta}`}
+                cube={cube}
                 params={params}
                 result={result}
+                table={table}
               />
             </Box>
           </Flex>

@@ -197,9 +197,8 @@ export function ExplorerComponent(props: {
             "*, *::before, *::after": {
               boxSizing: "border-box"
             },
-
             "[data-state='expanded']": {
-              width: 400
+              width: 350
             }
           })
         }}
