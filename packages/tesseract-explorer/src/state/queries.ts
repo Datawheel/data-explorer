@@ -93,8 +93,15 @@ export const queriesSlice = createSlice({
     removeDrilldown(state, action: Action<string>) {
       const query = taintCurrentQuery(state);
       delete query.params.drilldowns[action.payload];
-    },
 
+    },
+    /**
+      * Remove a single DrilldownItem from the current QueryItem.
+    */
+    removeMeasure(state, action: Action<string>) {
+      const query = taintCurrentQuery(state);
+      delete query.params.measures[action.payload];
+    },
     /**
      * Remove a single FilterItem from the current QueryItem.
      */
