@@ -221,7 +221,7 @@ export const queriesSlice = createSlice({
     updateLocale(state, { payload }: Action<string>) {
       const query = state.itemMap[state.current];
       if (payload !== query.params.locale) {
-        query.isDirty = true;
+        // query.isDirty = true;
         query.params.locale = payload;
       }
     },

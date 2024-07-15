@@ -8,6 +8,7 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
+import {SelectLocale} from "./SelectLocale";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -60,7 +61,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
     <Box
       p="md"
       sx={t => ({
-        height: "calc(100vh - 50px)",
+        height: "calc(100vh - 80px)",
         border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],

@@ -209,7 +209,7 @@ function CubeTree({
 
   useEffect(() => {
     graphInit && setGraph(graphInit);
-  }, [graphInit, setGraph]);
+  }, [graphInit, setGraph, locale]);
 
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
@@ -222,7 +222,7 @@ function CubeTree({
     }
   };
 
-  const topics = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items]);
+  const topics = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items, locale]);
 
   return map && map.size > 0 ? (
     <Results
@@ -256,12 +256,13 @@ function useAccordionValue(key: Keys, locale) {
       const value = getAnnotation(selectedItem, key, locale);
       setValue(`${key}-${value}`);
     }
-  }, [key, selectedItem]);
+  }, [key, selectedItem, locale]);
 
   return {value, setValue};
 }
 
 function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
+  console.log(items, "items");
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -361,6 +362,7 @@ function SubtopicAccordion({
   selectedItem,
   locale
 }: PropsWithChildren<NestedAccordionType>) {
+  console.log(items, "Sub");
   const {value, setValue} = useAccordionValue("subtopic", locale);
   return (
     <Accordion

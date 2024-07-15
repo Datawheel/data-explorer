@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { ServerConfig } from "@datawheel/olap-client";
-import { TranslationContextProps } from "@datawheel/use-translation";
+import {useState} from "react";
+import {ServerConfig} from "@datawheel/olap-client";
+import {TranslationContextProps} from "@datawheel/use-translation";
 import {
   CSSObject,
   Center,
@@ -11,22 +11,22 @@ import {
   Burger,
   useMantineTheme
 } from "@mantine/core";
-import React, { useEffect, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { useSetup } from "../hooks/setup";
-import { useTranslation } from "../hooks/translation";
-import { selectServerState } from "../state/server";
-import { PanelDescriptor } from "../utils/types";
-import { AnimatedCube } from "./AnimatedCube";
-import { ExplorerParams } from "./ExplorerParams";
-import { ExplorerQueries } from "./ExplorerQueries";
-import { ExplorerResults } from "./ExplorerResults";
-import { LoadingOverlay } from "./LoadingOverlay";
-import SideBar, { SideBarProvider, SideBarItem } from "./SideBar";
+import React, {useEffect, useMemo} from "react";
+import {useSelector} from "react-redux";
+import {useSetup} from "../hooks/setup";
+import {useTranslation} from "../hooks/translation";
+import {selectServerState} from "../state/server";
+import {PanelDescriptor} from "../utils/types";
+import {AnimatedCube} from "./AnimatedCube";
+import {ExplorerParams} from "./ExplorerParams";
+import {ExplorerQueries} from "./ExplorerQueries";
+import {ExplorerResults} from "./ExplorerResults";
+import {LoadingOverlay} from "./LoadingOverlay";
+import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
-import { HomeSVG } from "./icons";
+import {HomeSVG} from "./icons";
 
-const useStyles = createStyles((theme, params: { height: CSSObject["height"] }) => ({
+const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
     height: "100%",
     [theme.fn.largerThan("md")]: {
@@ -59,8 +59,9 @@ export function ExplorerContent(props: {
   dataLocale: string[];
   defaultOpenParams: string;
   height: CSSObject["height"];
+  panels: PanelDescriptor[];
   source: ServerConfig;
-  splash?: React.ComponentType<{ translation: TranslationContextProps }>;
+  splash?: React.ComponentType<{translation: TranslationContextProps}>;
   uiLocale: string | undefined;
   withMultiQuery: boolean;
 }) {
@@ -71,7 +72,7 @@ export function ExplorerContent(props: {
   const isSetupDone = useSetup(props.source, props.dataLocale);
   const serverState = useSelector(selectServerState);
 
-  const { classes } = useStyles({ height: props.height });
+  const {classes} = useStyles({height: props.height});
 
   // Monitor the uiLocale param to update the UI on change
   useEffect(() => {
@@ -83,7 +84,7 @@ export function ExplorerContent(props: {
     return SplashComponent ? (
       <SplashComponent translation={translation} />
     ) : (
-      <Center h="100%" sx={{ flex: 1 }}>
+      <Center h="100%" sx={{flex: 1}}>
         <AnimatedCube />
       </Center>
     );
@@ -91,8 +92,8 @@ export function ExplorerContent(props: {
 
   return (
     <div className={classes.container}>
-      <Header height={{ base: 50 }} p="md">
-        <div style={{ display: "flex", alignItems: "center", height: "100%", padding: 5 }}>
+      <Header height={{base: 50}} p="md">
+        <div style={{display: "flex", alignItems: "center", height: "100%", padding: 5}}>
           <HomeSVG />
         </div>
       </Header>
@@ -106,7 +107,7 @@ export function ExplorerContent(props: {
           </SideBar>
         </SideBarProvider>
         {/* <LoadingOverlay /> */}
-        <ExplorerResults className={classes.flexCol} splash={splash} />
+        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
       </div>
     </div>
   );

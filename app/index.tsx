@@ -1,9 +1,4 @@
-import {
-  Explorer,
-  PivotView,
-  TableView,
-  translationDict as explorerTranslation,
-} from "../src/main";
+import {Explorer, PivotView, TableView, translationDict as explorerTranslation} from "../src/main";
 import {MantineProvider} from "@mantine/core";
 import React from "react";
 import {createRoot} from "react-dom/client";
@@ -11,7 +6,7 @@ import {createRoot} from "react-dom/client";
 const formatters = {
   Index: n => (typeof n === "number" ? n.toFixed(3) : n || " "),
   "Metric Ton": n => `${n.toFixed()} 📦`,
-  Sheep: n => `🐑 ${n.toFixed()}`,
+  Sheep: n => `🐑 ${n.toFixed()}`
 };
 
 /** @type {import("@mantine/core").MantineThemeOverride} */
@@ -28,14 +23,16 @@ function mount(container) {
   root.render(
     <MantineProvider inherit withNormalizeCSS theme={theme}>
       <Explorer
-        source={process.env.TESSERACT_SERVER}
+        // source={process.env.TESSERACT_SERVER}
+        // source={"https://api.oec.world/tesseract/"}
+        source={"https://api.datasaudi.sa/"}
         formatters={formatters}
         dataLocale="en,ar"
         // height="90vh"
         previewLimit={75}
         panels={[
           {key: "table", label: "Data Table", component: TableView},
-          {key: "matrix", label: "Pivot Table", component: PivotView},
+          {key: "matrix", label: "Pivot Table", component: PivotView}
         ]}
         translations={{en: explorerTranslation}}
         defaultOpenParams="drilldowns"
@@ -44,6 +41,6 @@ function mount(container) {
         withMultiQuery
         withPermalink
       />
-    </MantineProvider>,
+    </MantineProvider>
   );
 }
