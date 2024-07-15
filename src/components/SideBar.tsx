@@ -8,7 +8,6 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
-import {SelectLocale} from "./SelectLocale";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -21,17 +20,23 @@ type SidebarProviderProps = {
   setInput: React.Dispatch<React.SetStateAction<string>>;
   map: Map<string, string[]> | undefined;
   setMap: React.Dispatch<React.SetStateAction<Map<string, string[]> | undefined>>;
+  resetGraph: () => void;
 };
 
 export const [useSideBar, Provider] =
   createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
 
 export function SideBarProvider(props: PropsWithChildren<{}>) {
+  const {code: locale} = useSelector(selectLocale);
   const [input, setInput] = useState<string>("");
   const [expanded, setExpanded] = useState<boolean>(false);
   const [results, setResults] = useState<string[]>([]);
   const [map, setMap] = useState<Map<string, string[]>>();
   const [graph, setGraph] = useState(new Graph());
+  const resetGraph = () => {
+    console.log("me llama");
+    setGraph(new Graph());
+  };
 
   return (
     <Provider
@@ -46,7 +51,8 @@ export function SideBarProvider(props: PropsWithChildren<{}>) {
         input,
         map,
         setMap,
-        setInput
+        setInput,
+        resetGraph
       }}
     />
   );
@@ -61,7 +67,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
     <Box
       p="md"
       sx={t => ({
-        height: "calc(100vh - 80px)",
+        height: "calc(100vh - 90px)",
         border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],

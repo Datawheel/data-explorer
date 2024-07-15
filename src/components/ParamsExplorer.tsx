@@ -8,12 +8,12 @@ type Props = {};
 function ParamsExplorer(props: Props) {
   const {} = props;
   return (
-    <Box>
-      <Box mb="md">
+    <>
+      <Box mb="xl">
         <SelectLocale />
       </Box>
       <SelectCube />
-    </Box>
+    </>
   );
 }
 

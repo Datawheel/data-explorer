@@ -118,7 +118,6 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   );
 }
 
-// check accordion
 function AccordionControl(props: AccordionControlProps) {
   return (
     <Box sx={{display: "flex", alignItems: "center"}}>
@@ -169,8 +168,8 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
   return cube;
 }
 
-function useBuildGraph(items, locale) {
-  const [graph, setGraph] = useState<Graph>(new Graph());
+function useBuildGraph(items, locale, graph, setGraph) {
+  // const [graph, setGraph] = useState<Graph>(new Graph());
 
   useEffect(() => {
     const graph = new Graph();
@@ -204,13 +203,8 @@ function CubeTree({
   selectedItem?: PlainCube;
 }) {
   const {graph, setGraph, map} = useSideBar();
-  const {graph: graphInit} = useBuildGraph(items, locale);
+  useBuildGraph(items, locale, graph, setGraph);
   const actions = useActions();
-
-  useEffect(() => {
-    graphInit && setGraph(graphInit);
-  }, [graphInit, setGraph, locale]);
-
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
       item =>
@@ -262,7 +256,6 @@ function useAccordionValue(key: Keys, locale) {
 }
 
 function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
-  console.log(items, "items");
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -362,7 +355,6 @@ function SubtopicAccordion({
   selectedItem,
   locale
 }: PropsWithChildren<NestedAccordionType>) {
-  console.log(items, "Sub");
   const {value, setValue} = useAccordionValue("subtopic", locale);
   return (
     <Accordion

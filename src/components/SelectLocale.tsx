@@ -7,13 +7,14 @@ import {useTranslation} from "../hooks/translation";
 import {selectLocale} from "../state/queries";
 import {selectServerState} from "../state/server";
 import {SelectObject} from "./Select";
+import {useSideBar} from "./SideBar";
 
-type LocaleOptions = {label: string, value: LanguageCode};
+type LocaleOptions = {label: string; value: LanguageCode};
 
 /** */
 export function SelectLocale() {
   const actions = useActions();
-
+  const {resetGraph} = useSideBar();
   const {translate: t, locale} = useTranslation();
 
   const {code: currentCode} = useSelector(selectLocale);
@@ -22,17 +23,19 @@ export function SelectLocale() {
   const options: LocaleOptions[] = useMemo(() => {
     const languages = ISO6391.getLanguages(localeOptions);
     return languages.map(lang => ({
-      label: t("params.label_localeoption", {
-        code: lang.code,
-        engName: lang.name,
-        nativeName: lang.nativeName,
-        customName: t(`params.label_localecustom_${lang.code}`)
-      }) || lang.nativeName,
+      label:
+        t("params.label_localeoption", {
+          code: lang.code,
+          engName: lang.name,
+          nativeName: lang.nativeName,
+          customName: t(`params.label_localecustom_${lang.code}`)
+        }) || lang.nativeName,
       value: lang.code
     }));
   }, [locale, localeOptions]);
 
   const localeChangeHandler = useCallback((locale: LocaleOptions) => {
+    resetGraph();
     actions.updateLocale(locale.value);
   }, []);
 

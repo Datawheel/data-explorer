@@ -24,7 +24,6 @@ import {selectCurrentQueryParams} from "../state/queries";
 import {useSelector} from "react-redux";
 import {PlainCube, PlainLevel, PlainMeasure, PlainProperty} from "@datawheel/olap-client";
 import {ViewProps} from "../utils/types";
-import {isNumeric} from "../utils/validation";
 import OptionsMenu from "./OptionsMenu";
 import {
   IconSortAscendingLetters as SortAsc,
@@ -498,8 +497,8 @@ export function TableView({table}: TableView) {
                           component="th"
                           key={header.id}
                           sx={theme => ({
-                            // backgroundColor: getEntityColor(column.columnDef.entityType, theme),
-                            backgroundColor: "white",
+                            backgroundColor: theme.colors.gray[0],
+                            // backgroundColor: "white",
                             align: isNumeric ? "right" : "left",
                             height: 140,
                             paddingBottom: 15,
