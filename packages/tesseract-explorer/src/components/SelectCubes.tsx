@@ -1,36 +1,20 @@
-import { type PlainCube } from "@datawheel/olap-client";
-
-import {
-  Anchor,
-  Stack,
-  Text,
-  TextProps,
-  Box,
-  Accordion,
-  Button,
-  AccordionControlProps,
-  rem
-} from "@mantine/core";
-import React, { PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
-import { useSelector } from "react-redux";
-import { useActions } from "../hooks/settings";
-import { useTranslation } from "../hooks/translation";
-import { selectLocale, selectMeasureMap, selectValidQueryStatus } from "../state/queries";
-import {
-  selectOlapCube,
-  selectOlapMeasureItems,
-  selectOlapMeasureMap,
-  selectOlapDimensionItems
-} from "../state/selectors";
-import { selectOlapCubeItems } from "../state/server";
-import { selectDrilldownItems, selectCubeName } from "../state/queries";
-import { getAnnotation } from "../utils/string";
-import { buildDrilldown } from "../utils/structs";
+import {type PlainCube} from "@datawheel/olap-client";
+import {Anchor, Stack, Text, TextProps, Box, Accordion, AccordionControlProps} from "@mantine/core";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useSelector} from "react-redux";
+import {useActions} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
+import {selectLocale, selectMeasureMap, selectValidQueryStatus} from "../state/queries";
+import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
+import {selectOlapCubeItems} from "../state/server";
+import {selectDrilldownItems, selectCubeName} from "../state/queries";
+import {getAnnotation} from "../utils/string";
+import {buildDrilldown} from "../utils/structs";
+import type {Annotated} from "../utils/types";
+import type {PlainLevel} from "@datawheel/olap-client";
+import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
-import type { Annotated } from "../utils/types";
-import type { PlainLevel } from "@datawheel/olap-client";
-
-const graph = new Graph();
+import Results, {useStyles as useLinkStyles} from "./Results";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -44,24 +28,22 @@ export function SelectCube() {
 }
 
 /** */
-function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube | undefined }) {
-  const { items, selectedItem } = props;
-  const { translate: t } = useTranslation();
-  const { code: locale } = useSelector(selectLocale);
-  const { willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers } =
-    useActions();
+function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube | undefined}) {
+  const {items, selectedItem} = props;
+  const {translate: t} = useTranslation();
+  const {code: locale} = useSelector(selectLocale);
+  const {willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers} = useActions();
+  const initRef = useRef(false);
 
-  const cube = useSelector(selectCubeName)
+  const cube = useSelector(selectCubeName);
   const itemMap = useSelector(selectMeasureMap);
-  const drilldowns = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
-  const { isValid, error } = useSelector(selectValidQueryStatus);
 
   const addDrilldown = useCallback(
     (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown(level);
+      const drilldownItem = buildDrilldown({...level, key: level.fullName});
       updateDrilldown(drilldownItem);
-      return willFetchMembers({ ...level, level: level.name }).then(members => {
+      return willFetchMembers({...level, level: level.name}).then(members => {
         const dimension = dimensions.find(dim => dim.name === level.dimension);
         if (!dimension) return;
         return updateDrilldown({
@@ -75,42 +57,47 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
     [dimensions]
   );
 
-
   useEffect(() => {
-    // check TS params.cube
-    const params = new Proxy(new URLSearchParams(window.location.search), {
-      get: (searchParams, prop: "string") => searchParams.get(prop),
-    });
-    if (selectedItem && cube) {
+    const params = new URLSearchParams(location.search);
+    const cubeParam = params.get("cube");
+
+    //autoload if not params
+    if (selectedItem && cube && !cubeParam) {
+      initRef.current = true;
       const measure = Object.keys(itemMap)
         .map(k => itemMap[k])
         .shift();
       const dimension = [...dimensions].shift();
       if (measure && dimension) {
-        updateMeasure({ ...measure, active: true });
-        addDrilldown(dimension.hierarchies[0].levels[0]);
-        willRequestQuery();
+        updateMeasure({...measure, active: true});
+        addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
+          willRequestQuery();
+        });
+      }
+    }
+    if (selectedItem && cube && cubeParam) {
+      if (!initRef.current) {
+        initRef.current = true;
+      } else {
+        const measure = Object.keys(itemMap)
+          .map(k => itemMap[k])
+          .shift();
+        const dimension = [...dimensions].shift();
+        if (measure && dimension) {
+          updateMeasure({...measure, active: true});
+          addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
+            willRequestQuery();
+          });
+        }
       }
     }
   }, [selectedItem, cube]);
 
-  function getDataFromCube() {
-    const measure = Object.keys(itemMap)
-      .map(k => itemMap[k])
-      .shift();
-    const dimension = [...dimensions].shift();
-    if (measure && dimension) {
-      updateMeasure({ ...measure, active: true });
-      addDrilldown(dimension.hierarchies[0].levels[0]);
-      willRequestQuery();
-    }
-  }
-
   return (
-    <Stack id="select-cube" spacing={"lg"} w={400}>
-      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} getDataFromCube={getDataFromCube} />
+    <Stack id="select-cube" spacing={"xs"} w={300}>
+      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
       {selectedItem && (
-        <Text mt="sm" sx={{ "& p": { margin: 0 } }}>
+        <Text mt="sm" sx={{"& p": {margin: 0}}}>
           <CubeAnnotation
             annotation="description"
             className="dex-cube-description"
@@ -131,22 +118,24 @@ function SelectCubeInternal(props: { items: PlainCube[]; selectedItem: PlainCube
   );
 }
 
+// check accordion
 function AccordionControl(props: AccordionControlProps) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center" }}>
+    <Box sx={{display: "flex", alignItems: "center"}}>
       <Accordion.Control {...props} />
     </Box>
   );
 }
 
 type Keys = "subtopic" | "topic" | "table";
-type AnnotatedCube = PlainCube & { annotations: { subtopic: string; topic: string; table: string } }[];
+export type AnnotatedCube = PlainCube &
+  {annotations: {subtopic: string; topic: string; table: string}}[];
 
-function getKeys(
+export function getKeys(
   items: AnnotatedCube[],
   k: Keys,
   locale: string,
-  filter?: { key: Keys; value: string }
+  filter?: {key: Keys; value: string}
 ): string[] {
   let cubes = items;
 
@@ -171,91 +160,187 @@ function isSelected(selectedItem, currentItem) {
   }
 }
 
-function getCube(items: AnnotatedCube[], name: string) {
-  const cube = items.find(i => i.annotations.table === name);
+function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale: string) {
+  const cube = items.find(
+    item =>
+      getAnnotation(item, "table", locale) === table &&
+      getAnnotation(item, "subtopic", locale) === subtopic
+  );
   return cube;
 }
 
-function CubeTree({
-  items,
-  locale,
-  selectedItem,
-  getDataFromCube
-}: {
-  items: AnnotatedCube[];
-  locale: string;
-  selectedItem?: PlainCube;
-  getDataFromCube: () => void
-}) {
-  const actions = useActions();
+function useBuildGraph(items, locale) {
+  const [graph, setGraph] = useState<Graph>(new Graph());
 
-  const onSelectCube = (name: string) => {
-    const cube = items.find(i => i.annotations.table === name);
-    if (cube) {
-      actions.willSetCube(cube.name)
-    }
-  };
-
-  const topics = useMemo(() => {
+  useEffect(() => {
+    const graph = new Graph();
     items.map(item => {
-      const {
-        annotations: { topic, subtopic, table }
-      } = item;
+      const topic = getAnnotation(item, "topic", locale);
+      const subtopic = getAnnotation(item, "subtopic", locale);
+      const table = getAnnotation(item, "table", locale);
       graph.addNode(topic);
       graph.addNode(subtopic);
       graph.addNode(table);
       graph.addEdge(topic, subtopic);
       graph.addEdge(subtopic, table);
+
       return item;
     });
-    const topics = getKeys(items as AnnotatedCube[], "topic", locale);
+
     graph.items = items;
+    setGraph(graph);
+  }, [items, locale, setGraph]);
 
-    return topics;
-  }, [items]);
+  return {graph};
+}
 
-  return (
-    <NestedAccordion
-      items={topics}
-      graph={graph}
+function CubeTree({
+  items,
+  locale,
+  selectedItem
+}: {
+  items: AnnotatedCube[];
+  locale: string;
+  selectedItem?: PlainCube;
+}) {
+  const {graph, setGraph, map} = useSideBar();
+  const {graph: graphInit} = useBuildGraph(items, locale);
+  const actions = useActions();
+
+  useEffect(() => {
+    graphInit && setGraph(graphInit);
+  }, [graphInit, setGraph]);
+
+  const onSelectCube = (table: string, subtopic: string) => {
+    const cube = items.find(
+      item =>
+        getAnnotation(item, "table", locale) === table &&
+        getAnnotation(item, "subtopic", locale) === subtopic
+    );
+    if (cube) {
+      actions.willSetCube(cube.name);
+    }
+  };
+
+  const topics = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items]);
+
+  return map && map.size > 0 ? (
+    <Results
       onSelectCube={onSelectCube}
       selectedItem={selectedItem}
+      getCube={getCube}
+      isSelected={isSelected}
+      graph={graph}
+      locale={locale}
     />
+  ) : (
+    graph.items.length > 0 && (
+      <RootAccordions
+        items={topics}
+        graph={graph}
+        onSelectCube={onSelectCube}
+        selectedItem={selectedItem}
+        locale={locale}
+      />
+    )
+  );
+}
+
+function useAccordionValue(key: Keys, locale) {
+  const selectedItem = useSelector(selectOlapCube);
+
+  const [value, setValue] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedItem) {
+      const value = getAnnotation(selectedItem, key, locale);
+      setValue(`${key}-${value}`);
+    }
+  }, [key, selectedItem]);
+
+  return {value, setValue};
+}
+
+function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
+  const {value, setValue} = useAccordionValue("topic", locale);
+  return (
+    <Accordion
+      value={value}
+      onChange={setValue}
+      key={"topic"}
+      chevronPosition="left"
+      w={300}
+      styles={t => ({
+        control: {
+          "&[data-active]": {
+            borderLeft: 5,
+            borderLeftColor: t.colors.blue[4],
+            borderLeftStyle: "solid"
+          }
+        },
+        content: {
+          paddingLeft: 0
+        }
+      })}
+    >
+      {items.map(item => {
+        return (
+          <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
+            <AccordionControl>{item}</AccordionControl>
+            <Accordion.Panel>
+              <SubtopicAccordion
+                graph={graph}
+                parent={item}
+                items={graph.adjList[item]}
+                key={item}
+                locale={locale}
+                selectedItem={selectedItem}
+                onSelectCube={onSelectCube}
+              />
+            </Accordion.Panel>
+          </Accordion.Item>
+        );
+      })}
+    </Accordion>
   );
 }
 
 function CubeButton({
   item,
   onSelectCube,
-  selectedItem
+  selectedItem,
+  graph,
+  locale,
+  parent
 }: {
   item: string;
   selectedItem?: PlainCube;
-  onSelectCube: (name: string) => void;
+  onSelectCube: (table: string, subtopic: string) => void;
+  graph: Graph;
+  locale: string;
+  parent?: string;
 }) {
+  const {setExpanded} = useSideBar();
+  const {classes} = useLinkStyles();
+  const table = item;
+  const subtopic = parent ?? "";
   return (
-    <Button
-      fullWidth
-      mt="md"
-      radius="md"
-      onClick={() => onSelectCube(item)}
-      styles={theme => ({
-        root: {
-          backgroundColor: isSelected(selectedItem, getCube(graph.items, item))
-            ? theme.colors.blue[4]
-            : theme.colors.gray[4],
-          border: 0,
-          height: rem(42),
-          paddingLeft: rem(20),
-          paddingRight: rem(20),
-          "&:not([data-disabled])": theme.fn.hover({
-            backgroundColor: theme.fn.darken(theme.colors.blue[4], 0.05)
-          })
-        }
-      })}
+    <Text
+      key={`table-${item}`}
+      fz="sm"
+      component="a"
+      className={
+        isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
+          ? `${classes.link} ${classes.linkActive}`
+          : classes.link
+      }
+      onClick={() => {
+        onSelectCube(item, subtopic);
+        setExpanded(false);
+      }}
     >
       {item}
-    </Button>
+    </Text>
   );
 }
 
@@ -265,74 +350,65 @@ type NestedAccordionType = {
   parent?: string;
   selectedItem?: PlainCube;
   onSelectCube: (name: string) => void;
+  locale: string;
 };
 
-function NestedAccordion({
+function SubtopicAccordion({
   items,
   graph,
   parent,
   onSelectCube,
-  selectedItem
+  selectedItem,
+  locale
 }: PropsWithChildren<NestedAccordionType>) {
-  return [...items].map(item => {
-    const filtered = [...graph.adjList[item]].filter(topic => topic !== parent);
-    let component: React.ReactNode;
-    if (filtered.length === 0) {
-      return (
-        <CubeButton
-          item={item}
-          onSelectCube={onSelectCube}
-          key={item}
-          selectedItem={selectedItem}
-        />
-      );
-    } else if (filtered.length === 1) {
-      const topic = filtered[0];
-      component = (
-        <CubeButton
-          item={topic}
-          onSelectCube={onSelectCube}
-          key={item}
-          selectedItem={selectedItem}
-        />
-      );
-    } else {
-      component = (
-        <NestedAccordion
-          items={filtered}
-          graph={graph}
-          parent={item}
-          selectedItem={selectedItem}
-          onSelectCube={onSelectCube}
-          key={item}
-        />
-      );
-    }
-    return (
-      <Accordion
-        key={`parent-${item}`}
-        chevronPosition="left"
-        w={400}
-        styles={t => ({
-          control: {
-            "&[data-active]": {
-              borderLeft: 5,
-              borderLeftColor: t.colors.blue[4],
-              borderLeftStyle: "solid"
-            }
+  const {value, setValue} = useAccordionValue("subtopic", locale);
+  return (
+    <Accordion
+      value={value}
+      onChange={setValue}
+      key={`subtopic-${parent}`}
+      chevronPosition="left"
+      w={300}
+      styles={t => ({
+        control: {
+          "&[data-active]": {
+            borderLeft: 5,
+            borderLeftColor: t.colors.blue[4],
+            borderLeftStyle: "solid"
           }
-        })}
-      >
-        <Accordion.Item value={`item-${item}`} key={`item-${item}`}>
-          <AccordionControl>{item}</AccordionControl>
-          <Accordion.Panel>{component}</Accordion.Panel>
-        </Accordion.Item>
-      </Accordion>
-    );
-  });
+        },
+        content: {
+          paddingLeft: 0,
+          paddingRight: 0
+        }
+      })}
+    >
+      {[...items].map((item, index) => {
+        const filtered = [...graph.adjList[item]].filter(value => value !== parent);
+
+        return (
+          <Accordion.Item value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
+            <AccordionControl>{item}</AccordionControl>
+            <Accordion.Panel>
+              {filtered.map((table, index) => (
+                <CubeButton
+                  key={index}
+                  graph={graph}
+                  item={table}
+                  locale={locale}
+                  onSelectCube={onSelectCube}
+                  selectedItem={selectedItem}
+                  parent={item}
+                />
+              ))}
+            </Accordion.Panel>
+          </Accordion.Item>
+        );
+      })}
+    </Accordion>
+  );
 }
 
-/** */
 function CubeAnnotation(
   props: TextProps & {
     annotation: string;
@@ -340,7 +416,7 @@ function CubeAnnotation(
     locale: string;
   }
 ) {
-  const { annotation, item, locale, ...textProps } = props;
+  const {annotation, item, locale, ...textProps} = props;
   const content = getAnnotation(item, annotation, locale);
   return content ? (
     <Text component="p" {...textProps}>
@@ -356,8 +432,8 @@ function CubeSourceAnchor(
     locale: string;
   }
 ) {
-  const { item, locale, ...textProps } = props;
-  const { translate: t } = useTranslation();
+  const {item, locale, ...textProps} = props;
+  const {translate: t} = useTranslation();
 
   const srcName = getAnnotation(item, "source_name", locale);
   const srcLink = getAnnotation(item, "source_link", locale);
