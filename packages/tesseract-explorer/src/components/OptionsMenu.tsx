@@ -1,44 +1,44 @@
-import React, { useCallback } from "react";
-import { Menu, ActionIcon, ActionIconProps, UnstyledButton, Group, Text } from "@mantine/core";
-import { IconChevronRight, IconStack2 } from "@tabler/icons-react";
-import { DimensionMenu } from "./MenuDimension";
+import React, {useCallback} from "react";
+import {Menu, ActionIcon, ActionIconProps, UnstyledButton, Group, Text} from "@mantine/core";
+import {IconChevronRight, IconStack2} from "@tabler/icons-react";
+import {DimensionMenu} from "./MenuDimension";
 import MeasuresMenu from "./MeasuresMenu";
-import { IconArrowsLeftRight } from "@tabler/icons-react";
-import { useMantineTheme } from "@mantine/core";
-import { useMediaQuery } from "@mantine/hooks";
-import { stringifyName } from "../utils/transform";
-import { useSelector } from "react-redux";
-import { selectDrilldownItems } from "../state/queries";
-import { selectOlapDimensionItems } from "../state/selectors";
-import { useActions } from "../hooks/settings";
-import { buildDrilldown } from "../utils/structs";
-import type { LevelDescriptor } from "../utils/types";
-import type { ComponentProps, ReactNode } from "react";
-import type { PlainLevel } from "@datawheel/olap-client";
+import {IconArrowsLeftRight} from "@tabler/icons-react";
+import {useMantineTheme} from "@mantine/core";
+import {useMediaQuery} from "@mantine/hooks";
+import {stringifyName} from "../utils/transform";
+import {useSelector} from "react-redux";
+import {selectDrilldownItems} from "../state/queries";
+import {selectOlapDimensionItems} from "../state/selectors";
+import {useActions} from "../hooks/settings";
+import {buildDrilldown} from "../utils/structs";
+import type {LevelDescriptor} from "../utils/types";
+import type {ComponentProps, ReactNode} from "react";
+import type {PlainLevel} from "@datawheel/olap-client";
 
-
-function OptionsMenu({ children }: { children: ReactNode }) {
-  const theme = useMantineTheme();
-  const isMediumScreen = useMediaQuery(`(max-width: ${theme.breakpoints.md}px)`);
+function OptionsMenu({children}: {children: ReactNode}) {
   const actions = useActions();
   const items = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
-  const { willRequestQuery } = useActions()
+  const {willRequestQuery} = useActions();
 
   const createHandler = useCallback(
     (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown(level);
+      const drilldownItem = buildDrilldown({...level, key: level.fullName});
       actions.updateDrilldown(drilldownItem);
-      actions.willFetchMembers({ ...level, level: level.name }).then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
-        actions.updateDrilldown({
-          ...drilldownItem,
-          dimType: dimension.dimensionType,
-          memberCount: members.length,
-          members
-        });
-      }).then(() => willRequestQuery());
+      actions
+        .willFetchMembers({...level, level: level.name})
+        .then(members => {
+          const dimension = dimensions.find(dim => dim.name === level.dimension);
+          if (!dimension) return;
+          actions.updateDrilldown({
+            ...drilldownItem,
+            dimType: dimension.dimensionType,
+            memberCount: members.length,
+            members
+          });
+        })
+        .then(() => willRequestQuery());
     },
     [dimensions]
   );
@@ -62,7 +62,7 @@ function OptionsMenu({ children }: { children: ReactNode }) {
         <NestedMenu selectedItems={items} onItemSelect={createHandler}>
           Dimensions
         </NestedMenu>
-        <Menu.Item icon={<IconArrowsLeftRight size={14} />}>Calculations</Menu.Item>
+        {/* <Menu.Item icon={<IconArrowsLeftRight size={14} />}>Calculations</Menu.Item> */}
       </Menu.Dropdown>
     </Menu>
   );
@@ -74,7 +74,7 @@ type NestedMenuProps = {
   onItemSelect: ComponentProps<typeof DimensionMenu>["onItemSelect"];
 };
 
-function NestedMenu({ selectedItems, children, onItemSelect }: NestedMenuProps) {
+function NestedMenu({selectedItems, children, onItemSelect}: NestedMenuProps) {
   return (
     <Menu
       key={"options-dimensions"}
