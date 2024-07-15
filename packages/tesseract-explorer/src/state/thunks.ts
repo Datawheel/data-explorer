@@ -236,9 +236,7 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-
     if (!isValidQuery(params)) return Promise.resolve();
-
     dispatch(loadingActions.setLoadingState("FETCHING"));
     return dispatch(willExecuteQuery()).then(() => {
       dispatch(loadingActions.setLoadingState("SUCCESS"));

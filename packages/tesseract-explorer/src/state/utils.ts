@@ -23,7 +23,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
   // get the member counts if already stored, else fetch them
   const memberLengths = query.getParam("drilldowns").map(level =>
     Level.isLevel(level)
-      ? drills[level.uniqueName] || ds.fetchMembers(level).then(members => {
+      ? drills[level.uniqueName] || ds.fetchMembers(level).then(async members => {
         const { cube, name, dimension, fullName, depth, properties, hierarchy, annotations } = level
         const lv: PlainLevel = {
           cube: cube.name, dimension: dimension.name,
@@ -34,7 +34,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
         }
         const dd = buildDrilldown(lv)
         const ddd = { ...dd, key: dd.fullName, dimType: dimension.dimensionType, memberCount: members.length, members }
-        dispatch(actions.updateDrilldown(ddd))
+        dispatch(actions.updateDrilldown(ddd));
         return members.length
       })
       : Promise.resolve(1)
