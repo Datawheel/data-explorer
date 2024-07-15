@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+    "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "jsx": "react",
+    "lib": ["DOM", "ES2022.Array", "ES2022.Object", "WebWorker"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "outDir": "dist",
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "target": "es2018"
+  },
+  "include": ["./app", "./src", "app/vite-env.d.ts"]
+}
