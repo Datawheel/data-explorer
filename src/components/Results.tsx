@@ -134,20 +134,13 @@ export const useStyles = createStyles(theme => ({
   link: {
     ...theme.fn.focusStyles(),
     WebkitTapHighlightColor: "transparent",
-    borderLeft: `${rem(1)} solid ${
-      theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[3]
-    }`,
     outline: 0,
     display: "block",
     textDecoration: "none",
     color: theme.colorScheme === "dark" ? theme.colors.dark[1] : theme.colors.gray[7],
     paddingLeft: rem(23),
-    paddingRight: theme.spacing.md,
-    marginLeft: rem(7),
     height: rem(44),
     lineHeight: rem(44),
-    borderTopRightRadius: theme.radius.sm,
-    borderBottomRightRadius: theme.radius.sm,
     fontSize: theme.fontSizes.md,
     cursor: "pointer",
     "&:hover": {
@@ -159,7 +152,6 @@ export const useStyles = createStyles(theme => ({
   },
 
   linkActive: {
-    // borderLeftColor: theme.colors.blue[7],
     backgroundColor:
       theme.colorScheme === "dark"
         ? theme.fn.rgba(theme.colors.blue[9], 0.45)

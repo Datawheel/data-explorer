@@ -169,8 +169,6 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
 }
 
 function useBuildGraph(items, locale, graph, setGraph) {
-  // const [graph, setGraph] = useState<Graph>(new Graph());
-
   useEffect(() => {
     const graph = new Graph();
     items.map(item => {

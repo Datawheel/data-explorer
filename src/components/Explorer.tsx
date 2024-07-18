@@ -201,7 +201,24 @@ export function ExplorerComponent(props: {
             "[data-state='expanded']": {
               width: 350
             }
-          })
+          }),
+          components: {
+            Text: {
+              styles: theme => ({
+                root: {
+                  fontSize: theme.fontSizes.sm // Apply small font size to Text component
+                }
+              })
+            }
+            // Add other component customizations here
+          },
+          fontSizes: {
+            xs: "0.75rem",
+            sm: "0.875rem",
+            md: "1rem",
+            lg: "1.125rem",
+            xl: "1.25rem"
+          }
         }}
       >
         {content}

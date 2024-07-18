@@ -278,24 +278,24 @@ export function useTable({
         },
         Header: ({column}) => {
           return (
-            <Box mb={rem(10)}>
+            <Box mb={rem(5)}>
               <Flex justify="center" align="center">
                 <Box sx={{flexGrow: 1}}>
-                  <Flex gap={rem(10)}>
+                  <Flex gap="xs" align="center">
                     {getActionIcon(entityType)}
-                    <Text size="md" color="black" fs={rem(16)}>
+                    <Text size="md" color="black">
                       {column.columnDef.header}
                     </Text>
                     <ActionIcon
                       key={`sort-${column.columnDef.header}`}
                       size={22}
-                      ml={rem(8)}
+                      ml={rem(5)}
                       onClick={column.getToggleSortingHandler()}
                     >
                       {getSortIcon(column.getIsSorted(), entityType)}
                     </ActionIcon>
                   </Flex>
-                  <Text ml={rem(35)} size="sm" color="dimmed" fw="normal">
+                  <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
                     {getEntityText(entityType)}
                   </Text>
                 </Box>
@@ -303,7 +303,7 @@ export function useTable({
                   disabled={!showTrashIcon(finalKeys, entityType)}
                   key={`remove-${column.columnDef.header}`}
                   size={25}
-                  ml={rem(8)}
+                  ml={rem(5)}
                   onClick={() => removeColumn(actions, entity, measures, drilldowns)}
                 >
                   <IconTrash />
@@ -324,20 +324,20 @@ export function useTable({
           return item[columnKey];
         },
         // not needed in headless implementation. possibly remove.
-        mantineTableHeadCellProps: {
-          sx: theme => ({
-            // backgroundColor: getEntityColor(column.entityType, theme),
-            align: isNumeric ? "right" : "left",
-            height: 140,
-            paddingBottom: 15,
-            "& .mantine-TableHeadCell-Content": {
-              justifyContent: "space-between",
-              "& .mantine-Indicator-root": {
-                display: "none"
-              }
-            }
-          })
-        },
+        // mantineTableHeadCellProps: {
+        //   sx: theme => ({
+        //     // backgroundColor: getEntityColor(column.entityType, theme),
+        //     align: isNumeric ? "right" : "left",
+        //     height: 100,
+        //     paddingBottom: 15,
+        //     "& .mantine-TableHeadCell-Content": {
+        //       justifyContent: "space-between",
+        //       "& .mantine-Indicator-root": {
+        //         display: "none"
+        //       }
+        //     }
+        //   })
+        // },
         Cell: isNumeric
           ? ({cell}) => formatter(cell.getValue<number>())
           : ({renderedCellValue}) => {
@@ -480,14 +480,7 @@ export function TableView({table}: TableView) {
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (
-                <Box
-                  component="tr"
-                  key={headerGroup.id}
-                  sx={{
-                    height: 140,
-                    paddingBottom: 15
-                  }}
-                >
+                <Box component="tr" key={headerGroup.id}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
                     if (column.id !== "mrt-row-numbers") {
@@ -498,11 +491,10 @@ export function TableView({table}: TableView) {
                           key={header.id}
                           sx={theme => ({
                             backgroundColor: theme.colors.gray[0],
-                            // backgroundColor: "white",
                             align: isNumeric ? "right" : "left",
-                            height: 140,
-                            paddingBottom: 15,
-                            width: 350,
+                            height: 60,
+                            paddingBottom: 10,
+                            width: 300,
                             position: "sticky",
                             top: 0,
                             display: "table-cell"

@@ -65,7 +65,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
 
   return (
     <Box
-      p="md"
+      p="sm"
       sx={t => ({
         height: "calc(100vh - 90px)",
         border: "1px solid",
