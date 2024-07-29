@@ -2,7 +2,6 @@ import {ActionIcon, Alert, Box, MantineTheme, Flex, Text, rem, Stack, Table} fro
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
-  MantineReactTable,
   MRT_TableOptions as TableOptions,
   useMantineReactTable,
   flexRender,
@@ -34,6 +33,7 @@ import {
 } from "@tabler/icons-react";
 import type {MeasureItem, QueryResult, DrilldownItem} from "../utils/structs";
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
+import TableFooter from "./TableFooter";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -64,15 +64,6 @@ function showTrashIcon(columns: AnyResultColumn[], type: EntityTypes) {
   const result = columns.filter(c => c.entityType === type);
   return result.length > 1;
 }
-
-const getEntityColor = (entityType: EntityTypes, theme: MantineTheme) => {
-  if (entityType === "measure") {
-    return theme.fn.lighten(theme.colors.red[8], 0.9);
-  } else if (entityType === "level") {
-    return theme.fn.lighten(theme.colors.blue[8], 0.9);
-  }
-  return theme.fn.lighten(theme.colors.green[8], 0.9);
-};
 
 const getActionIcon = (entityType: EntityTypes) => {
   if (entityType === "measure") {
@@ -323,21 +314,6 @@ export function useTable({
           }
           return item[columnKey];
         },
-        // not needed in headless implementation. possibly remove.
-        // mantineTableHeadCellProps: {
-        //   sx: theme => ({
-        //     // backgroundColor: getEntityColor(column.entityType, theme),
-        //     align: isNumeric ? "right" : "left",
-        //     height: 100,
-        //     paddingBottom: 15,
-        //     "& .mantine-TableHeadCell-Content": {
-        //       justifyContent: "space-between",
-        //       "& .mantine-Indicator-root": {
-        //         display: "none"
-        //       }
-        //     }
-        //   })
-        // },
         Cell: isNumeric
           ? ({cell}) => formatter(cell.getValue<number>())
           : ({renderedCellValue}) => {
@@ -454,9 +430,9 @@ export function useTable({
 type TableView = {
   table: MRT_TableInstance<TData>;
   getColumn(id: String): AnyResultColumn | undefined;
-};
+} & ViewProps;
 
-export function TableView({table}: TableView) {
+export function TableView({table, result}: TableView) {
   return (
     <Stack sx={{height: "100%", maxHeight: "100vh", overflow: "scroll", position: "relative"}}>
       <Flex justify="space-between" align="center">
@@ -512,11 +488,10 @@ export function TableView({table}: TableView) {
                     } else {
                       return (
                         <>
-                          {/* <MRT_TableHeadCell header={header} table={table} /> */}
                           <Box
                             component="th"
                             key={header.id}
-                            sx={theme => ({
+                            sx={() => ({
                               width: 100,
                               maxWidth: 140,
                               position: "sticky",
@@ -558,9 +533,7 @@ export function TableView({table}: TableView) {
             </Box>
           </Table>
           <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-          <Box sx={{alignSelf: "end"}}>
-            <MRT_TablePagination table={table} />
-          </Box>
+          <TableFooter table={table} result={result} />
         </Flex>
         <Box px="xl" py={"sm"} sx={{alignSelf: "self-start"}}>
           <OptionsMenu>
@@ -571,5 +544,7 @@ export function TableView({table}: TableView) {
     </Stack>
   );
 }
+
+export default TableView;
 
 TableView.displayName = "TesseractExplorer:TableView";

@@ -360,7 +360,7 @@ function SubtopicAccordion({
       onChange={setValue}
       key={`subtopic-${parent}`}
       chevronPosition="left"
-      w={300}
+      w={315}
       styles={t => ({
         control: {
           "&[data-active]": {

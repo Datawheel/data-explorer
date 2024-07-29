@@ -1,10 +1,9 @@
-import {Button, Group, Input, Select} from "@mantine/core";
+import {Button, Group, Input, Select, useMantineTheme} from "@mantine/core";
 import React, {useCallback, useMemo} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
+import {IconLanguage, IconChevronDown} from "@tabler/icons-react";
 
-type PropertyAccesor<T> =
-  | (T extends string | number ? never : keyof T)
-  | ((item: T) => string);
+type PropertyAccesor<T> = (T extends string | number ? never : keyof T) | ((item: T) => string);
 
 /** */
 export function SelectObject<T>(props: {
@@ -19,6 +18,7 @@ export function SelectObject<T>(props: {
   searchable?: boolean;
   selectedItem?: T | string | null;
 }) {
+  const theme = useMantineTheme();
   const {getLabel, getValue = identity, items, onItemSelect, selectedItem} = props;
 
   const [itemList, itemMap] = useMemo(() => {
@@ -41,9 +41,12 @@ export function SelectObject<T>(props: {
     return valueAccessor(selectedItem);
   }, [selectedItem, getValue]);
 
-  const itemSelectHandler = useCallback((value: string) => {
-    onItemSelect && onItemSelect(itemMap[value].item);
-  }, [itemMap]);
+  const itemSelectHandler = useCallback(
+    (value: string) => {
+      onItemSelect && onItemSelect(itemMap[value].item);
+    },
+    [itemMap]
+  );
 
   if (items.length === 0 || !selected) {
     return null;
@@ -60,6 +63,8 @@ export function SelectObject<T>(props: {
       onFocus={inputFocusHandler}
       searchable={props.searchable ?? props.items.length > 6}
       value={selected}
+      icon={<IconLanguage size="1rem" color={theme.colors[theme.primaryColor][5]} />}
+      rightSection={<IconChevronDown size="1rem" />}
     />
   );
 }
@@ -82,9 +87,8 @@ export function SelectWithButtons<T>(props: {
 
     const getValue = accesorFactory(props.getValue || identity);
     const getLabel = props.getLabel ? accesorFactory(props.getLabel) : getValue;
-    const selected = typeof selectedItem === "string"
-      ? selectedItem
-      : selectedItem && getValue(selectedItem);
+    const selected =
+      typeof selectedItem === "string" ? selectedItem : selectedItem && getValue(selectedItem);
 
     return (
       <Input.Wrapper hidden={props.hidden} label={props.label}>
@@ -106,16 +110,20 @@ export function SelectWithButtons<T>(props: {
     );
   }, [items, onItemSelect, selectedItem]);
 
-  return buttons || <SelectObject
-    getLabel={props.getLabel}
-    getValue={props.getValue}
-    hidden={props.hidden}
-    items={items}
-    label={props.label}
-    onItemSelect={props.onItemSelect}
-    searchable={props.searchable}
-    selectedItem={selectedItem}
-  />;
+  return (
+    buttons || (
+      <SelectObject
+        getLabel={props.getLabel}
+        getValue={props.getValue}
+        hidden={props.hidden}
+        items={items}
+        label={props.label}
+        onItemSelect={props.onItemSelect}
+        searchable={props.searchable}
+        selectedItem={selectedItem}
+      />
+    )
+  );
 }
 
 /** */

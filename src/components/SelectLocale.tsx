@@ -1,4 +1,4 @@
-import {Box, Input} from "@mantine/core";
+import {Box} from "@mantine/core";
 import ISO6391, {LanguageCode} from "iso-639-1";
 import React, {useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
@@ -45,15 +45,14 @@ export function SelectLocale() {
 
   return (
     <Box id="select-locale">
-      <Input.Wrapper label={t("params.label_locale")}>
-        <SelectObject
-          getLabel="label"
-          getValue="value"
-          items={options}
-          onItemSelect={localeChangeHandler}
-          selectedItem={currentCode}
-        />
-      </Input.Wrapper>
+      <SelectObject
+        label={t("params.label_locale")}
+        getLabel="label"
+        getValue="value"
+        items={options}
+        onItemSelect={localeChangeHandler}
+        selectedItem={currentCode}
+      />
     </Box>
   );
 }

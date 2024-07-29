@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, useState, useMemo, useEffect} from "react";
-import {Box, Flex, ActionIcon, Text, Autocomplete, ScrollArea, Select, Input} from "@mantine/core";
+import {Box, Flex, ActionIcon, Text, rem, ScrollArea, Input} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
@@ -8,6 +8,7 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
+import {useTranslation} from "../hooks/translation";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -33,8 +34,8 @@ export function SideBarProvider(props: PropsWithChildren<{}>) {
   const [results, setResults] = useState<string[]>([]);
   const [map, setMap] = useState<Map<string, string[]>>();
   const [graph, setGraph] = useState(new Graph());
+
   const resetGraph = () => {
-    console.log("me llama");
     setGraph(new Graph());
   };
 
@@ -62,12 +63,14 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
-
+  const {translate: t, locale} = useTranslation();
   return (
     <Box
-      p="sm"
+      py="xs"
+      pl="sm"
+      pr="xs"
       sx={t => ({
-        height: "calc(100vh - 90px)",
+        height: "calc(100vh - 75px)",
         border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],
@@ -77,37 +80,35 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
     >
       <Flex h="100%" direction="column" justify="space-between">
         <ScrollArea>
-          <Box py="sm">
-            <Flex direction="column" sx={{flex: 1}}>
-              <Flex align="center" my="sm">
-                <ActionIcon
-                  onClick={() => setExpanded(!expanded)}
-                  variant="subtle"
-                  sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
-                >
-                  <DataSetSVG />
-                </ActionIcon>
-                <Text
-                  ml="sm"
-                  sx={{
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    width: expanded ? 300 : 0
-                  }}
-                >
-                  Select Dataset
-                </Text>
-              </Flex>
-              <Box my="md">
-                <Auto />
-              </Box>
-              <Box sx={{flexGrow: 1}}></Box>
-              <Box my="sm">{props.children}</Box>
+          <Flex direction="column" sx={{flex: 1}}>
+            <Flex align="center" py="xs">
+              <ActionIcon
+                onClick={() => setExpanded(!expanded)}
+                variant="subtle"
+                sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
+              >
+                <DataSetSVG />
+              </ActionIcon>
+              <Text
+                ml="sm"
+                sx={{
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  width: expanded ? 315 : 0
+                }}
+              >
+                {t("params.label_dataset")}
+              </Text>
             </Flex>
-          </Box>
+            <Auto />
+
+            <Box sx={{flexGrow: 1}}></Box>
+            <Box my="sm">{props.children}</Box>
+          </Flex>
         </ScrollArea>
         <ActionIcon
+          mb={rem(10)}
           onClick={() => setExpanded(!expanded)}
           variant="subtle"
           sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
@@ -130,7 +131,7 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemPropos>) {
       sx={{
         overflow: "hidden",
         whiteSpace: "nowrap",
-        width: expanded ? 300 : 0,
+        width: expanded ? 315 : 0,
         transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
       }}
     >
@@ -171,7 +172,7 @@ function Auto() {
         sx={t => ({
           overflow: "hidden",
           whiteSpace: "nowrap",
-          width: expanded ? 300 : 0,
+          width: expanded ? 315 : 0,
           transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
         })}
       />
