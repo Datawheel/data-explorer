@@ -7,7 +7,7 @@ import {useTranslation} from "../hooks/translation";
 import {selectLocale, selectMeasureMap, selectValidQueryStatus} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
-import {selectDrilldownItems, selectCubeName} from "../state/queries";
+import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
 import {buildDrilldown} from "../utils/structs";
 import type {Annotated} from "../utils/types";
@@ -94,7 +94,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   }, [selectedItem, cube]);
 
   return (
-    <Stack id="select-cube" spacing={"xs"} w={300}>
+    <Stack id="select-cube" spacing={"xs"} w={"100%"}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
       {selectedItem && (
         <Text mt="sm" sx={{"& p": {margin: 0}}}>
@@ -261,17 +261,25 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
       onChange={setValue}
       key={"topic"}
       chevronPosition="left"
-      w={300}
+      w={"100%"}
       styles={t => ({
         control: {
+          background: t.colors.gray[1],
+          borderLeft: 8,
+          borderLeftColor: "transparent",
+          borderLeftStyle: "solid",
           "&[data-active]": {
-            borderLeft: 5,
-            borderLeftColor: t.colors.blue[4],
-            borderLeftStyle: "solid"
+            borderLeft: 8,
+            borderLeftColor: t.colors.blue[5],
+            borderLeftStyle: "solid",
+            color: t.colors.blue[5]
           }
         },
         content: {
-          paddingLeft: 0
+          padding: 0,
+          "& > *": {
+            marginLeft: 0
+          }
         }
       })}
     >
@@ -320,12 +328,21 @@ function CubeButton({
     <Text
       key={`table-${item}`}
       fz="sm"
+      pl={60}
+      maw={240}
+      pr="md"
       component="a"
       className={
         isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
           ? `${classes.link} ${classes.linkActive}`
           : classes.link
       }
+      sx={t => ({
+        background: t.colors.gray[3],
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      })}
       onClick={() => {
         onSelectCube(item, subtopic);
         setExpanded(false);
@@ -361,17 +378,22 @@ function SubtopicAccordion({
       key={`subtopic-${parent}`}
       chevronPosition="left"
       w={300}
+      ml={0}
       styles={t => ({
         control: {
+          fontSize: 14,
+          background: t.colors.gray[2],
+          borderLeft: 8,
+          borderLeftColor: "transparent",
+          borderLeftStyle: "solid",
           "&[data-active]": {
-            borderLeft: 5,
+            borderLeft: 8,
             borderLeftColor: t.colors.blue[4],
             borderLeftStyle: "solid"
           }
         },
         content: {
-          paddingLeft: 0,
-          paddingRight: 0
+          padding: 0,
         }
       })}
     >

@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, useState, useMemo, useEffect} from "react";
-import {Box, Flex, ActionIcon, Text, Autocomplete, ScrollArea, Select, Input} from "@mantine/core";
+import {Box, Flex, ActionIcon, Text, ScrollArea, Input, UnstyledButton, Group} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
@@ -8,7 +8,7 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
-
+import { SelectLocale } from "./SelectLocale";
 type SidebarProviderProps = {
   expanded: boolean;
   setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
@@ -27,17 +27,12 @@ export const [useSideBar, Provider] =
   createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
 
 export function SideBarProvider(props: PropsWithChildren<{}>) {
-  const {code: locale} = useSelector(selectLocale);
   const [input, setInput] = useState<string>("");
   const [expanded, setExpanded] = useState<boolean>(false);
   const [results, setResults] = useState<string[]>([]);
   const [map, setMap] = useState<Map<string, string[]>>();
   const [graph, setGraph] = useState(new Graph());
-  const resetGraph = () => {
-    console.log("me llama");
-    setGraph(new Graph());
-  };
-
+  const resetGraph = () => setGraph(new Graph());
   return (
     <Provider
       {...props}
@@ -65,55 +60,72 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
 
   return (
     <Box
-      p="sm"
       sx={t => ({
         height: "calc(100vh - 90px)",
-        border: "1px solid",
+        // border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        maxWidth: 375
+        maxWidth: 300,
+        padding: 0,
       })}
     >
-      <Flex h="100%" direction="column" justify="space-between">
-        <ScrollArea>
-          <Box py="sm">
-            <Flex direction="column" sx={{flex: 1}}>
-              <Flex align="center" my="sm">
-                <ActionIcon
-                  onClick={() => setExpanded(!expanded)}
-                  variant="subtle"
-                  sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
-                >
-                  <DataSetSVG />
-                </ActionIcon>
+      <Flex h="100%" direction="column" justify="flex-start">
+        
+        <Box p="sm">
+          <Flex direction="column" sx={{flex: 1}}>
+            <Flex align="center" my="sm">
+              <ActionIcon
+                onClick={() => setExpanded(!expanded)}
+                variant="subtle"
+                sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
+              >
+                <DataSetSVG />
+              </ActionIcon>
+              <Group
+                position="apart"
+                noWrap
+                sx={{
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  width: expanded ? 300 : 0,
+                }}>
                 <Text
-                  ml="sm"
-                  sx={{
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    width: expanded ? 300 : 0
-                  }}
+                  ml={"sm"}
+
                 >
                   Select Dataset
                 </Text>
-              </Flex>
-              <Box my="md">
-                <Auto />
-              </Box>
-              <Box sx={{flexGrow: 1}}></Box>
-              <Box my="sm">{props.children}</Box>
+                <SelectLocale />
+              </Group>
             </Flex>
-          </Box>
+            <Box my="md">
+              <Auto />
+            </Box>
+            <Box sx={{flexGrow: 1}}></Box>
+            
+          </Flex>
+        </Box>
+        <ScrollArea sx={theme => (
+          {
+            borderTopColor: theme.colors.gray[3],
+            borderTopWidth: "1px",
+            borderTopStyle: "solid" 
+          }
+          )}>
+          <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
         </ScrollArea>
-        <ActionIcon
-          onClick={() => setExpanded(!expanded)}
-          variant="subtle"
-          sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
-        >
-          {expanded ? <IconChevronLeft /> : <IconChevronRight />}
-        </ActionIcon>
+        <Group align="flex-end">
+          <ActionIcon
+            onClick={() => setExpanded(!expanded)}
+            variant="subtle"
+            mt="auto"
+            sx={t => ({alignSelf: "flex-end", color: t.colors.gray[7]})}
+          >
+            {expanded ? <IconChevronLeft /> : <IconChevronRight />}
+          </ActionIcon>
+        </Group>
       </Flex>
     </Box>
   );
@@ -121,8 +133,8 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
 
 export default SideBar;
 
-type SideBarItemPropos = {};
-export function SideBarItem({children}: PropsWithChildren<SideBarItemPropos>) {
+type SideBarItemProps = {};
+export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
   const {expanded} = useSideBar();
 
   return (
@@ -160,18 +172,19 @@ function Auto() {
   }, [input, graph]);
 
   return (
-    <Box>
+    <Box w="100%">
       <Input
         icon={<IconSearch />}
         radius="xl"
         size="md"
         placeholder="Search"
+        
         value={input}
         onInput={e => setInput(e.currentTarget.value)}
         sx={t => ({
           overflow: "hidden",
           whiteSpace: "nowrap",
-          width: expanded ? 300 : 0,
+          width: expanded ? "100%" : 0,
           transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
         })}
       />

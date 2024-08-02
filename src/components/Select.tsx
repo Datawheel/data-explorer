@@ -1,5 +1,5 @@
-import {Button, Group, Input, Select} from "@mantine/core";
-import React, {useCallback, useMemo} from "react";
+import {Button, Group, Input, Select, SelectProps} from "@mantine/core";
+import React, {useCallback, useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
 
 type PropertyAccesor<T> =
@@ -7,7 +7,7 @@ type PropertyAccesor<T> =
   | ((item: T) => string);
 
 /** */
-export function SelectObject<T>(props: {
+export const SelectObject = forwardRef(function<T>(props: {
   disabled?: boolean;
   getLabel?: PropertyAccesor<T>;
   getValue?: PropertyAccesor<T>;
@@ -18,8 +18,9 @@ export function SelectObject<T>(props: {
   onItemSelect?: (item: T) => void;
   searchable?: boolean;
   selectedItem?: T | string | null;
-}) {
-  const {getLabel, getValue = identity, items, onItemSelect, selectedItem} = props;
+  selectProps?: Partial<SelectProps>;
+}, ref) {
+  const {getLabel, getValue = identity, items, onItemSelect, selectedItem, selectProps = {}} = props;
 
   const [itemList, itemMap] = useMemo(() => {
     const valueAccessor = accesorFactory(getValue);
@@ -51,6 +52,7 @@ export function SelectObject<T>(props: {
 
   return (
     <Select
+      ref={ref}
       data={itemList}
       disabled={props.loading || props.disabled}
       hidden={props.hidden}
@@ -60,9 +62,10 @@ export function SelectObject<T>(props: {
       onFocus={inputFocusHandler}
       searchable={props.searchable ?? props.items.length > 6}
       value={selected}
+      {...selectProps}
     />
   );
-}
+})
 
 /** */
 export function SelectWithButtons<T>(props: {

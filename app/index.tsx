@@ -23,9 +23,9 @@ function mount(container) {
   root.render(
     <MantineProvider inherit withNormalizeCSS theme={theme}>
       <Explorer
-        // source={process.env.TESSERACT_SERVER}
+        source={process.env.TESSERACT_SERVER}
         // source={"https://api.oec.world/tesseract/"}
-        source={"https://api.datasaudi.sa/"}
+        // source={"https://api.datasaudi.sa/"}
         formatters={formatters}
         dataLocale="en,ar"
         // height="90vh"

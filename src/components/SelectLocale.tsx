@@ -1,4 +1,4 @@
-import {Box, Input} from "@mantine/core";
+import {Box, Input, MantineTheme, CSSObject, Tooltip, useMantineTheme} from "@mantine/core";
 import ISO6391, {LanguageCode} from "iso-639-1";
 import React, {useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
@@ -8,6 +8,28 @@ import {selectLocale} from "../state/queries";
 import {selectServerState} from "../state/server";
 import {SelectObject} from "./Select";
 import {useSideBar} from "./SideBar";
+import { IconLanguage } from "@tabler/icons-react";
+
+const localeSelectorStyle = (theme:MantineTheme) => ({
+  input: {
+    border: "none",
+    background: theme.colors.blue[0],
+    borderRadius: theme.radius.sm,
+    color: theme.colors.blue[7],
+    fontSize: 12,
+    fontWeight: 700,
+    width: 94,
+    textTransform: "uppercase" as const,
+  },
+  item: {
+    fontSize: 12,
+    textTransform: "uppercase" as const
+  },
+  rightSection: {
+      pointerEvents: "none",
+  // weird hack, seems like CSSObject is not completely right defined inside mantine.
+  } as CSSObject
+})
 
 type LocaleOptions = {label: string; value: LanguageCode};
 
@@ -19,6 +41,8 @@ export function SelectLocale() {
 
   const {code: currentCode} = useSelector(selectLocale);
   const {localeOptions} = useSelector(selectServerState);
+
+  const theme = useMantineTheme();
 
   const options: LocaleOptions[] = useMemo(() => {
     const languages = ISO6391.getLanguages(localeOptions);
@@ -43,17 +67,22 @@ export function SelectLocale() {
     return null;
   }
 
+  console.log(options)
   return (
     <Box id="select-locale">
-      <Input.Wrapper label={t("params.label_locale")}>
+      <Tooltip label={t("params.label_locale")}>
         <SelectObject
-          getLabel="label"
+          getLabel="value"
           getValue="value"
           items={options}
           onItemSelect={localeChangeHandler}
           selectedItem={currentCode}
+          selectProps={{
+            styles: localeSelectorStyle,
+            icon: <IconLanguage size="0.8rem" color={theme.colors.blue[7]}/>
+          }}
         />
-      </Input.Wrapper>
+      </Tooltip>
     </Box>
   );
 }
