@@ -9,6 +9,9 @@ import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
 import { SelectLocale } from "./SelectLocale";
+import { selectOlapCube } from "../state/selectors";
+import { CubeAnnotation, CubeSourceAnchor } from "./SelectCubes";
+
 type SidebarProviderProps = {
   expanded: boolean;
   setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
@@ -57,11 +60,13 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
+  const {code: locale} = useSelector(selectLocale);
+  const selectedItem = useSelector(selectOlapCube);
 
   return (
     <Box
       sx={t => ({
-        height: "calc(100vh - 90px)",
+        height: "calc(100vh - 49px)",
         // border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],
@@ -116,7 +121,32 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           )}>
           <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
         </ScrollArea>
-        <Group align="flex-end">
+        <Group
+          align="center"
+          position={expanded ? "apart": "center"}
+          w="100%"
+          p="md"
+          sx={{alignSelf: "flex-end", marginTop: "auto"}}
+          noWrap
+        >
+          {selectedItem && expanded && (
+        <Text mt="sm" sx={{"& p": {margin: 0}}}>
+          <CubeAnnotation
+            annotation="description"
+            className="dex-cube-description"
+            item={selectedItem}
+            locale={locale}
+          />
+          <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
+          <CubeAnnotation
+            annotation="source_description"
+            className="dex-cube-srcdescription"
+            fz="xs"
+            item={selectedItem}
+            locale={locale}
+          />
+        </Text>
+      )}
           <ActionIcon
             onClick={() => setExpanded(!expanded)}
             variant="subtle"

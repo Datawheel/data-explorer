@@ -96,24 +96,6 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   return (
     <Stack id="select-cube" spacing={"xs"} w={"100%"}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
-      {selectedItem && (
-        <Text mt="sm" sx={{"& p": {margin: 0}}}>
-          <CubeAnnotation
-            annotation="description"
-            className="dex-cube-description"
-            item={selectedItem}
-            locale={locale}
-          />
-          <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
-          <CubeAnnotation
-            annotation="source_description"
-            className="dex-cube-srcdescription"
-            fz="xs"
-            item={selectedItem}
-            locale={locale}
-          />
-        </Text>
-      )}
     </Stack>
   );
 }
@@ -338,10 +320,10 @@ function CubeButton({
           : classes.link
       }
       sx={t => ({
-        background: t.colors.gray[3],
+        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale)) ?t.colors.blue[5]: t.colors.gray[3],
         whiteSpace: "nowrap",
         overflow: "hidden",
-        textOverflow: "ellipsis"
+        textOverflow: "ellipsis",
       })}
       onClick={() => {
         onSelectCube(item, subtopic);
@@ -423,7 +405,7 @@ function SubtopicAccordion({
   );
 }
 
-function CubeAnnotation(
+export function CubeAnnotation(
   props: TextProps & {
     annotation: string;
     item: Annotated;
@@ -440,7 +422,7 @@ function CubeAnnotation(
 }
 
 /** */
-function CubeSourceAnchor(
+export function CubeSourceAnchor(
   props: TextProps & {
     item: Annotated;
     locale: string;
