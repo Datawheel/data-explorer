@@ -34,7 +34,7 @@ const localeSelectorStyle = (theme:MantineTheme) => ({
 type LocaleOptions = {label: string; value: LanguageCode};
 
 /** */
-export function SelectLocale() {
+export function LocaleSelector() {
   const actions = useActions();
   const {resetGraph} = useSideBar();
   const {translate: t, locale} = useTranslation();

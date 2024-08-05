@@ -405,41 +405,4 @@ function SubtopicAccordion({
   );
 }
 
-export function CubeAnnotation(
-  props: TextProps & {
-    annotation: string;
-    item: Annotated;
-    locale: string;
-  }
-) {
-  const {annotation, item, locale, ...textProps} = props;
-  const content = getAnnotation(item, annotation, locale);
-  return content ? (
-    <Text component="p" {...textProps}>
-      {content}
-    </Text>
-  ) : null;
-}
 
-/** */
-export function CubeSourceAnchor(
-  props: TextProps & {
-    item: Annotated;
-    locale: string;
-  }
-) {
-  const {item, locale, ...textProps} = props;
-  const {translate: t} = useTranslation();
-
-  const srcName = getAnnotation(item, "source_name", locale);
-  const srcLink = getAnnotation(item, "source_link", locale);
-
-  if (!srcName) return null;
-
-  return (
-    <Text component="p" {...textProps}>
-      {`${t("params.label_source")}: `}
-      {srcLink ? <Anchor href={srcLink}>{srcName}</Anchor> : <Text span>{srcName}</Text>}
-    </Text>
-  );
-}

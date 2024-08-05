@@ -185,6 +185,10 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
   }
 }
 
+const tableHeadStyles = (t: MantineTheme) => ({
+  border: `0.0625rem solid ${t.colors.gray[9]}`
+})
+
 type TableProps = {
   cube: PlainCube;
   result: QueryResult<Record<string, string | number>>;
@@ -474,9 +478,8 @@ export function TableView({table}: TableView) {
             <Box
               component="thead"
               sx={{
-                position: "relative",
-                opacity: 0.97,
-                top: 0
+                position: "sticky",
+                top: 0,
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (
@@ -497,7 +500,8 @@ export function TableView({table}: TableView) {
                             width: 300,
                             position: "sticky",
                             top: 0,
-                            display: "table-cell"
+                            display: "table-cell",
+                            ...tableHeadStyles,
                           })}
                         >
                           {header.isPlaceholder
@@ -539,6 +543,24 @@ export function TableView({table}: TableView) {
                       );
                     }
                   })}
+                  <Box 
+                    component="th"
+                    key={"placeholder"}
+                    sx={theme => ({
+                        backgroundColor: theme.colors.gray[0],
+                        align: "center",
+                        height: 60,
+                        paddingBottom: 10,
+                        width: 50,
+                        position: "sticky",
+                        top: 0,
+                        display: "table-cell",
+                        textAlign: "center",
+                      })}>
+                      <OptionsMenu>
+                        <PlusSVG />
+                      </OptionsMenu>
+                    </Box>
                 </Box>
               ))}
             </Box>
@@ -562,11 +584,6 @@ export function TableView({table}: TableView) {
             <MRT_TablePagination table={table} />
           </Box>
         </Flex>
-        <Box px="xl" py={"sm"} sx={{alignSelf: "self-start"}}>
-          <OptionsMenu>
-            <PlusSVG />
-          </OptionsMenu>
-        </Box>
       </Flex>
     </Stack>
   );

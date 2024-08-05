@@ -8,9 +8,7 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
-import { SelectLocale } from "./SelectLocale";
-import { selectOlapCube } from "../state/selectors";
-import { CubeAnnotation, CubeSourceAnchor } from "./SelectCubes";
+import { LocaleSelector } from "./LocaleSelector";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -60,14 +58,10 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
-  const {code: locale} = useSelector(selectLocale);
-  const selectedItem = useSelector(selectOlapCube);
-
   return (
     <Box
       sx={t => ({
         height: "calc(100vh - 49px)",
-        // border: "1px solid",
         backgroundColor: t.colors.gray[2],
         borderColor: t.colors.gray[1],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
@@ -79,7 +73,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
         
         <Box p="sm">
           <Flex direction="column" sx={{flex: 1}}>
-            <Flex align="center" my="sm">
+            <Flex align="center" justify="center" my="sm">
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
@@ -102,7 +96,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                 >
                   Select Dataset
                 </Text>
-                <SelectLocale />
+                <LocaleSelector />
               </Group>
             </Flex>
             <Box my="md">
@@ -116,37 +110,19 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           {
             borderTopColor: theme.colors.gray[3],
             borderTopWidth: "1px",
-            borderTopStyle: "solid" 
+            borderTopStyle: expanded ? "solid": "none"
           }
           )}>
           <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
         </ScrollArea>
         <Group
           align="center"
-          position={expanded ? "apart": "center"}
+          position={expanded ? "right": "center"}
           w="100%"
           p="md"
           sx={{alignSelf: "flex-end", marginTop: "auto"}}
           noWrap
         >
-          {selectedItem && expanded && (
-        <Text mt="sm" sx={{"& p": {margin: 0}}}>
-          <CubeAnnotation
-            annotation="description"
-            className="dex-cube-description"
-            item={selectedItem}
-            locale={locale}
-          />
-          <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
-          <CubeAnnotation
-            annotation="source_description"
-            className="dex-cube-srcdescription"
-            fz="xs"
-            item={selectedItem}
-            locale={locale}
-          />
-        </Text>
-      )}
           <ActionIcon
             onClick={() => setExpanded(!expanded)}
             variant="subtle"
@@ -202,21 +178,27 @@ function Auto() {
   }, [input, graph]);
 
   return (
-    <Box w="100%">
+    <Box>
       <Input
         icon={<IconSearch />}
         radius="xl"
         size="md"
         placeholder="Search"
-        
         value={input}
         onInput={e => setInput(e.currentTarget.value)}
-        sx={t => ({
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          width: expanded ? "100%" : 0,
-          transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-        })}
+        styles={{
+          wrapper: {
+            whiteSpace: "nowrap",
+            width: expanded ? "100%" : 0,
+            overflow: "hidden",
+            animation: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+          },
+          input: {
+            whiteSpace: "nowrap",
+            width: expanded ? "100%" : 0,
+            overflow: "hidden",
+          },
+        }}
       />
     </Box>
   );
