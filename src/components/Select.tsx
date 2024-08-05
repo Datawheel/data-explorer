@@ -41,12 +41,9 @@ export function SelectObject<T>(props: {
     return valueAccessor(selectedItem);
   }, [selectedItem, getValue]);
 
-  const itemSelectHandler = useCallback(
-    (value: string) => {
-      onItemSelect && onItemSelect(itemMap[value].item);
-    },
-    [itemMap]
-  );
+  const itemSelectHandler = (value: string) => {
+    onItemSelect && onItemSelect(itemMap[value].item);
+  };
 
   if (items.length === 0 || !selected) {
     return null;

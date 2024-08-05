@@ -34,10 +34,12 @@ export function SelectLocale() {
     }));
   }, [locale, localeOptions]);
 
-  const localeChangeHandler = useCallback((locale: LocaleOptions) => {
-    resetGraph();
-    actions.updateLocale(locale.value);
-  }, []);
+  const localeChangeHandler = (l: LocaleOptions) => {
+    if (currentCode !== l.value) {
+      resetGraph();
+      actions.updateLocale(l.value);
+    }
+  };
 
   if (localeOptions.length < 2) {
     return null;

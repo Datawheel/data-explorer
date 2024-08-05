@@ -7,7 +7,7 @@ import {useTranslation} from "../hooks/translation";
 import {selectLocale, selectMeasureMap, selectValidQueryStatus} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
-import {selectDrilldownItems, selectCubeName} from "../state/queries";
+import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
 import {buildDrilldown} from "../utils/structs";
 import type {Annotated} from "../utils/types";
@@ -27,7 +27,6 @@ export function SelectCube() {
   return <SelectCubeInternal items={items} selectedItem={selectedItem} />;
 }
 
-/** */
 function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube | undefined}) {
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
@@ -94,26 +93,8 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   }, [selectedItem, cube]);
 
   return (
-    <Stack id="select-cube" spacing={"xs"} w={300}>
+    <Stack id="select-cube" spacing={"xs"} w={320}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
-      {selectedItem && (
-        <Text mt="sm" sx={{"& p": {margin: 0}}}>
-          <CubeAnnotation
-            annotation="description"
-            className="dex-cube-description"
-            item={selectedItem}
-            locale={locale}
-          />
-          <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
-          <CubeAnnotation
-            annotation="source_description"
-            className="dex-cube-srcdescription"
-            fz="xs"
-            item={selectedItem}
-            locale={locale}
-          />
-        </Text>
-      )}
     </Stack>
   );
 }
@@ -401,7 +382,7 @@ function SubtopicAccordion({
   );
 }
 
-function CubeAnnotation(
+export function CubeAnnotation(
   props: TextProps & {
     annotation: string;
     item: Annotated;
@@ -418,7 +399,7 @@ function CubeAnnotation(
 }
 
 /** */
-function CubeSourceAnchor(
+export function CubeSourceAnchor(
   props: TextProps & {
     item: Annotated;
     locale: string;

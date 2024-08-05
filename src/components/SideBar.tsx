@@ -9,6 +9,8 @@ import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
 import {useTranslation} from "../hooks/translation";
+import {CubeAnnotation, CubeSourceAnchor} from "./SelectCubes";
+import {selectOlapCube} from "../state/selectors";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -64,6 +66,8 @@ type SidebarProps = {};
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
   const {translate: t, locale} = useTranslation();
+  const selectedItem = useSelector(selectOlapCube);
+
   return (
     <Box
       py="xs"
@@ -107,14 +111,43 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
             <Box my="sm">{props.children}</Box>
           </Flex>
         </ScrollArea>
-        <ActionIcon
-          mb={rem(10)}
-          onClick={() => setExpanded(!expanded)}
-          variant="subtle"
-          sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
-        >
-          {expanded ? <IconChevronLeft /> : <IconChevronRight />}
-        </ActionIcon>
+        <Box mt="sm">
+          {selectedItem && (
+            <Text
+              mt="sm"
+              sx={{
+                "& p": {margin: 0},
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                width: expanded ? 315 : 0
+              }}
+            >
+              <CubeAnnotation
+                annotation="description"
+                className="dex-cube-description"
+                item={selectedItem}
+                locale={locale}
+              />
+              <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
+              <CubeAnnotation
+                annotation="source_description"
+                className="dex-cube-srcdescription"
+                fz="xs"
+                item={selectedItem}
+                locale={locale}
+              />
+            </Text>
+          )}
+          <ActionIcon
+            my={rem(10)}
+            onClick={() => setExpanded(!expanded)}
+            variant="subtle"
+            sx={t => ({alignSelf: "center", color: t.colors.gray[7], margin: "0 auto"})}
+          >
+            {expanded ? <IconChevronLeft /> : <IconChevronRight />}
+          </ActionIcon>
+        </Box>
       </Flex>
     </Box>
   );

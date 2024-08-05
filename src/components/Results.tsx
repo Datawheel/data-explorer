@@ -66,10 +66,10 @@ export const useStyles = createStyles(theme => ({
     display: "block",
     textDecoration: "none",
     color: theme.colorScheme === "dark" ? theme.colors.dark[1] : theme.colors.gray[7],
-    paddingLeft: rem(23),
-    height: rem(44),
-    lineHeight: rem(44),
-    fontSize: theme.fontSizes.md,
+    padding: theme.spacing.xs,
+    minHeight: rem(20),
+    fontSize: theme.fontSizes.sm,
+    whiteSpace: "wrap",
     cursor: "pointer",
     "&:hover": {
       backgroundColor:

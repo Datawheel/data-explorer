@@ -169,7 +169,6 @@ const ItemDownload = props => {
       icon={icon(isLoading)}
       onClick={e => {
         e.preventDefault();
-        console.log("Me llama");
         onClick(e).then(() => {
           setOpened(false);
         });
