@@ -1,5 +1,5 @@
-import { getAnnotation } from "./string";
-import { matchSorter } from "match-sorter";
+import {getAnnotation} from "./string";
+import {matchSorter} from "match-sorter";
 
 class Graph {
   constructor() {
@@ -68,9 +68,6 @@ class Graph {
     return subtopic;
   }
 
-
-
-
   filter(locale, startingNode, filter) {
     function addItemToSubtopic(map, subtopic, item) {
       if (map.has(subtopic)) {
@@ -87,14 +84,14 @@ class Graph {
 
     if (filter !== "") {
       this.depthFirstTraversal(startingNode, node => {
-        const Items = this.isTable(locale, node);
-        if (Items.length) {
+        const items = this.isTable(locale, node);
+        if (items.length) {
           if (filter) {
-            for (const item of Items) {
+            for (const item of items) {
               const list = matchSorter([node], filter);
               if (list.length) {
-                const subtopic = getAnnotation(item, "subtopic", locale)
-                const topic = getAnnotation(item, "topic", locale)
+                const subtopic = getAnnotation(item, "subtopic", locale);
+                const topic = getAnnotation(item, "topic", locale);
                 addItemToSubtopic(map, `${topic} - ${subtopic}`, list[0]);
                 matches.push(...list);
               }
@@ -105,9 +102,8 @@ class Graph {
         }
       });
     }
-    return { matches, map };
+    return {matches, map};
   }
-
 
   depthFirstTraversal(startingNode, func = console.log) {
     if (startingNode === undefined) {
