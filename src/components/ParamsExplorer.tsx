@@ -1,6 +1,6 @@
 import React from "react";
 import {Box} from "@mantine/core";
-import {SelectLocale} from "./SelectLocale";
+import {SelectLocale} from "./LocaleSelector";
 import {SelectCube} from "./SelectCubes";
 
 type Props = {};
@@ -8,12 +8,7 @@ type Props = {};
 function ParamsExplorer(props: Props) {
   const {} = props;
   return (
-    <>
-      <Box mb="xl">
-        <SelectLocale />
-      </Box>
       <SelectCube />
-    </>
   );
 }
 
