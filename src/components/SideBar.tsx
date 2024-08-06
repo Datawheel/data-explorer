@@ -64,14 +64,10 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
-  const {translate: t, locale} = useTranslation();
-  const selectedItem = useSelector(selectOlapCube);
 
   return (
     <Box
-      py="xs"
-      pl="sm"
-      pr="xs"
+      py="md"
       sx={t => ({
         height: "calc(100vh - 75px)",
         border: "1px solid",
@@ -84,9 +80,9 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
     >
       <Flex h="100%" direction="column" justify="flex-start">
         
-        <Box p="sm">
+        <Box px="sm">
           <Flex direction="column" sx={{flex: 1}}>
-            <Flex align="center" justify="center" my="sm">
+            <Flex align="center" justify="center">
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
@@ -161,7 +157,7 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
       sx={{
         overflow: "hidden",
         whiteSpace: "nowrap",
-        width: expanded ? 315 : 0,
+        width: expanded ? 300 : 0,
         transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
       }}
     >

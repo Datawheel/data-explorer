@@ -4,6 +4,8 @@ import { useTranslation } from "../main";
 
 const tabsStyles = (t: MantineTheme) => ({
     tab: {
+        fontWeight: 700,
+        color: t.colors.gray[6],
         [`&[data-active] > span`]: {
             fontWeight: 700,
             color: t.colors[t.primaryColor][5]
@@ -28,7 +30,7 @@ export function ExplorerTabs ({
         >
             <Tabs.List>
                 {panels.map(panel => (
-                    <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
+                    <Tabs.Tab key={panel.key} id={panel.key} value={panel.key} h={56}>
                     {t(panel.label)}
                     </Tabs.Tab>
                 ))}

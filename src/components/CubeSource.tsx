@@ -52,7 +52,7 @@ export default function CubeSource () {
     const {code: locale} = useSelector(selectLocale);
     return (
     selectedItem && (
-        <Text mt="sm" sx={{"& p": {margin: 0}}}>
+        <Text sx={{"& p": {margin: 0}}}>
           <CubeAnnotation
             annotation="description"
             className="dex-cube-description"

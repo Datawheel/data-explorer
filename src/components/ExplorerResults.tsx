@@ -209,8 +209,8 @@ function SuccessResult(props: {
 
   return (
     <Flex gap="xs" direction="column" w="100%" className={props.className}>
-      <Paper id="query-results-success" h={"calc(100% - 120px)"}>
-        <Flex align="flex-end" justify={"space-between"} mih={56}>
+      <Paper id="query-results-success" h={"100%"}>
+        <Flex justify={"space-between"} mih={56}>
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
@@ -248,11 +248,6 @@ function SuccessResult(props: {
             </Flex>
           </Suspense>
         </Box>
-      </Paper>
-      <Paper id="query-results-success-footer" h={120} p="xl">
-        <Group align="center">
-          <CubeSource />
-        </Group>
       </Paper>
     </Flex>
 

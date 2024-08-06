@@ -12,6 +12,7 @@ import {selectCurrentQueryItem} from "../state/queries";
 import {selectServerFormatsEnabled} from "../state/server";
 import {FileDescriptor} from "../utils/types";
 import {useAsync} from "../hooks/useAsync";
+import CubeSource from "./CubeSource";
 
 type TData = Record<string, any> & Record<string, string | number>;
 type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result">;
@@ -25,11 +26,16 @@ function TableFooter(props: Props) {
   const copyHandler = useCallback(() => copy(url), [url]);
 
   return (
-    <Flex sx={{alignSelf: "end"}} align="center">
-      <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
-      <MRT_TablePagination table={table} />
-      <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />
-    </Flex>
+    <Box w="100%" sx={{flex: "0 0 70px"}}>
+      <Flex p="md" justify="space-between" align="center">
+        <CubeSource />
+        <Group noWrap>
+          <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
+          <MRT_TablePagination table={table} />
+          <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />
+        </Group>
+      </Flex>
+    </Box>
   );
 }
 
