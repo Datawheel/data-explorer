@@ -244,7 +244,6 @@ export function useTable({
         range,
         isId
       } = column;
-      console.log({column})
       const isNumeric = valueType === "number";
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
