@@ -218,9 +218,6 @@ function SuccessResult(props: {
               <MRT_TopToolbar table={table} />
             </Box>
           )}
-          <Flex px={10} mx={10} align="center" justify="center" h="100%">
-            <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
-          </Flex>
         </Flex>
         {isPreviewMode && (
           <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>

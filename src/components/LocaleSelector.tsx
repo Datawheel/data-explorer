@@ -1,6 +1,6 @@
-import {Box, Input, MantineTheme, CSSObject, Tooltip, useMantineTheme} from "@mantine/core";
+import {Box, MantineTheme, CSSObject, Tooltip, useMantineTheme} from "@mantine/core";
 import ISO6391, {LanguageCode} from "iso-639-1";
-import React, {useCallback, useMemo} from "react";
+import React, {useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
@@ -58,16 +58,17 @@ export function LocaleSelector() {
     }));
   }, [locale, localeOptions]);
 
-  const localeChangeHandler = useCallback((locale: LocaleOptions) => {
-    resetGraph();
-    actions.updateLocale(locale.value);
-  }, []);
+  const localeChangeHandler = (l: LocaleOptions) => {
+    if (currentCode !== l.value) {
+      resetGraph();
+      actions.updateLocale(l.value);
+    }
+  };
 
   if (localeOptions.length < 2) {
     return null;
   }
-
-  console.log(options)
+  
   return (
     <Box id="select-locale">
       <Tooltip label={t("params.label_locale")}>

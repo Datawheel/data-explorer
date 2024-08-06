@@ -1,10 +1,8 @@
 import {Button, Group, Input, Select, SelectProps} from "@mantine/core";
-import React, {useCallback, useMemo, forwardRef} from "react";
+import React, {useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
 
-type PropertyAccesor<T> =
-  | (T extends string | number ? never : keyof T)
-  | ((item: T) => string);
+type PropertyAccesor<T> = (T extends string | number ? never : keyof T) | ((item: T) => string);
 
 /** */
 export const SelectObject = forwardRef(function<T>(props: {
@@ -42,9 +40,9 @@ export const SelectObject = forwardRef(function<T>(props: {
     return valueAccessor(selectedItem);
   }, [selectedItem, getValue]);
 
-  const itemSelectHandler = useCallback((value: string) => {
+  const itemSelectHandler = (value: string) => {
     onItemSelect && onItemSelect(itemMap[value].item);
-  }, [itemMap]);
+  };
 
   if (items.length === 0 || !selected) {
     return null;
@@ -85,9 +83,8 @@ export function SelectWithButtons<T>(props: {
 
     const getValue = accesorFactory(props.getValue || identity);
     const getLabel = props.getLabel ? accesorFactory(props.getLabel) : getValue;
-    const selected = typeof selectedItem === "string"
-      ? selectedItem
-      : selectedItem && getValue(selectedItem);
+    const selected =
+      typeof selectedItem === "string" ? selectedItem : selectedItem && getValue(selectedItem);
 
     return (
       <Input.Wrapper hidden={props.hidden} label={props.label}>
@@ -109,16 +106,20 @@ export function SelectWithButtons<T>(props: {
     );
   }, [items, onItemSelect, selectedItem]);
 
-  return buttons || <SelectObject
-    getLabel={props.getLabel}
-    getValue={props.getValue}
-    hidden={props.hidden}
-    items={items}
-    label={props.label}
-    onItemSelect={props.onItemSelect}
-    searchable={props.searchable}
-    selectedItem={selectedItem}
-  />;
+  return (
+    buttons || (
+      <SelectObject
+        getLabel={props.getLabel}
+        getValue={props.getValue}
+        hidden={props.hidden}
+        items={items}
+        label={props.label}
+        onItemSelect={props.onItemSelect}
+        searchable={props.searchable}
+        selectedItem={selectedItem}
+      />
+    )
+  );
 }
 
 /** */

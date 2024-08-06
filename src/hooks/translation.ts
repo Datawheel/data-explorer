@@ -1,5 +1,5 @@
 /* eslint-disable comma-dangle */
-import {translationFactory} from "@datawheel/use-translation";
+import { translationFactory } from "@datawheel/use-translation";
 
 export const defaultTranslation = {
   action_copy: "Copy",
@@ -67,7 +67,8 @@ export const defaultTranslation = {
     label_cuts_filterby_id: "IDs",
     label_cuts_filterby_name: "Names",
     label_cuts_filterby_any: "Any",
-    label_locale: "Data language",
+    label_locale: "",
+    label_dataset: "Select Dataset",
     label_localeoption: "{{nativeName}}",
     label_measure: "Measure",
     label_pagination_limit: "Results limit",
@@ -184,4 +185,4 @@ export const {
   useTranslation,
   TranslationConsumer,
   TranslationProvider
-} = translationFactory({defaultLocale: "en", defaultTranslation});
+} = translationFactory({ defaultLocale: "en", defaultTranslation });

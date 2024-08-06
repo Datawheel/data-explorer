@@ -27,7 +27,6 @@ export function SelectCube() {
   return <SelectCubeInternal items={items} selectedItem={selectedItem} />;
 }
 
-/** */
 function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube | undefined}) {
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
@@ -404,5 +403,3 @@ function SubtopicAccordion({
     </Accordion>
   );
 }
-
-

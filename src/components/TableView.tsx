@@ -1,8 +1,7 @@
-import {ActionIcon, Alert, Box, MantineTheme, Flex, Text, rem, Stack, Table} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Tooltip, Table, MantineTheme} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
-  MantineReactTable,
   MRT_TableOptions as TableOptions,
   useMantineReactTable,
   flexRender,
@@ -34,6 +33,8 @@ import {
 } from "@tabler/icons-react";
 import type {MeasureItem, QueryResult, DrilldownItem} from "../utils/structs";
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
+import TableFooter from "./TableFooter";
+import CustomActionIcon from "./CustomActionIcon";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -64,15 +65,6 @@ function showTrashIcon(columns: AnyResultColumn[], type: EntityTypes) {
   const result = columns.filter(c => c.entityType === type);
   return result.length > 1;
 }
-
-const getEntityColor = (entityType: EntityTypes, theme: MantineTheme) => {
-  if (entityType === "measure") {
-    return theme.fn.lighten(theme.colors.red[8], 0.9);
-  } else if (entityType === "level") {
-    return theme.fn.lighten(theme.colors.blue[8], 0.9);
-  }
-  return theme.fn.lighten(theme.colors.green[8], 0.9);
-};
 
 const getActionIcon = (entityType: EntityTypes) => {
   if (entityType === "measure") {
@@ -303,15 +295,17 @@ export function useTable({
                     {getEntityText(entityType)}
                   </Text>
                 </Box>
-                <ActionIcon
-                  disabled={!showTrashIcon(finalKeys, entityType)}
+                <CustomActionIcon
+                  label={`At least one ${getEntityText(entityType)} is required.`}
                   key={`remove-${column.columnDef.header}`}
+                  disabled={!showTrashIcon(finalKeys, entityType)}
+                  onClick={() => removeColumn(actions, entity, measures, drilldowns)}
+                  showTooltip={!showTrashIcon(finalKeys, entityType)}
                   size={25}
                   ml={rem(5)}
-                  onClick={() => removeColumn(actions, entity, measures, drilldowns)}
                 >
                   <IconTrash />
-                </ActionIcon>
+                </CustomActionIcon>
               </Flex>
             </Box>
           );
@@ -327,21 +321,6 @@ export function useTable({
           }
           return item[columnKey];
         },
-        // not needed in headless implementation. possibly remove.
-        // mantineTableHeadCellProps: {
-        //   sx: theme => ({
-        //     // backgroundColor: getEntityColor(column.entityType, theme),
-        //     align: isNumeric ? "right" : "left",
-        //     height: 100,
-        //     paddingBottom: 15,
-        //     "& .mantine-TableHeadCell-Content": {
-        //       justifyContent: "space-between",
-        //       "& .mantine-Indicator-root": {
-        //         display: "none"
-        //       }
-        //     }
-        //   })
-        // },
         Cell: isNumeric
           ? ({cell}) => formatter(cell.getValue<number>())
           : ({renderedCellValue}) => {
@@ -458,135 +437,127 @@ export function useTable({
 type TableView = {
   table: MRT_TableInstance<TData>;
   getColumn(id: String): AnyResultColumn | undefined;
-};
+} & ViewProps;
 
-export function TableView({table}: TableView) {
+export function TableView({table, result}: TableView) {
   return (
-    <Stack sx={{height: "100%", maxHeight: "100vh", overflow: "scroll", position: "relative"}}>
-      <Flex justify="space-between" align="center">
-        <Flex direction="column" sx={{flex: "1 1 auto"}}>
-          <Table
-            captionSide="top"
-            fontSize="md"
-            highlightOnHover
-            horizontalSpacing="xl"
-            striped
-            verticalSpacing="xs"
-            withBorder
-            withColumnBorders
+    <Box sx={{height: "100%"}}>
+      <Flex justify="space-between" align="center" sx={{height: "100%"}}>
+        <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
+          <Box
+            sx={{
+              flex: "1 1 auto",
+              height: "100%",
+              maxHeight: "calc(100vh - 210px)",
+              position: "relative",
+              overflow: "scroll"
+            }}
           >
-            <Box
-              component="thead"
-              sx={{
-                position: "sticky",
-                top: 0,
-              }}
+            <Table
+              sx={{overflow: "scroll"}}
+              captionSide="top"
+              fontSize="md"
+              highlightOnHover
+              horizontalSpacing="xl"
+              striped
+              verticalSpacing="xs"
+              withBorder
+              withColumnBorders
             >
-              {table.getHeaderGroups().map(headerGroup => (
-                <Box component="tr" key={headerGroup.id}>
-                  {headerGroup.headers.map(header => {
-                    const column = table.getColumn(header.id);
-                    if (column.id !== "mrt-row-numbers") {
-                      const isNumeric = column.columnDef.dataType === "number";
-                      return (
-                        <Box
-                          component="th"
-                          key={header.id}
-                          sx={theme => ({
-                            backgroundColor: theme.colors.gray[0],
-                            align: isNumeric ? "right" : "left",
-                            height: 60,
-                            paddingBottom: 10,
-                            width: 300,
-                            position: "sticky",
-                            top: 0,
-                            display: "table-cell",
-                            ...tableHeadStyles,
-                          })}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.Header ?? header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                          <MRT_TableHeadCellFilterContainer header={header} table={table} />
-                        </Box>
-                      );
-                    } else {
-                      return (
-                        <>
-                          {/* <MRT_TableHeadCell header={header} table={table} /> */}
+              <Box
+                component="thead"
+                sx={{
+                  position: "relative",
+                  opacity: 0.97,
+                  top: 0
+                }}
+              >
+                {table.getHeaderGroups().map(headerGroup => (
+                  <Box component="tr" key={headerGroup.id}>
+                    {headerGroup.headers.map(header => {
+                      const column = table.getColumn(header.id);
+                      if (column.id !== "mrt-row-numbers") {
+                        const isNumeric = column.columnDef.dataType === "number";
+                        return (
                           <Box
                             component="th"
                             key={header.id}
                             sx={theme => ({
-                              width: 100,
-                              maxWidth: 140,
+                              backgroundColor: theme.colors.gray[0],
+                              align: isNumeric ? "right" : "left",
+                              height: 60,
+                              paddingBottom: 10,
+                              width: 300,
                               position: "sticky",
                               top: 0,
-                              backgroundColor: "white",
                               display: "table-cell"
                             })}
                           >
-                            <Box>
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.Header ??
-                                      header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                            </Box>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.Header ?? header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                            <MRT_TableHeadCellFilterContainer header={header} table={table} />
                           </Box>
-                        </>
-                      );
-                    }
-                  })}
-                  <Box 
-                    component="th"
-                    key={"placeholder"}
-                    sx={theme => ({
-                        backgroundColor: theme.colors.gray[0],
-                        align: "center",
-                        height: 60,
-                        paddingBottom: 10,
-                        width: 50,
-                        position: "sticky",
-                        top: 0,
-                        display: "table-cell",
-                        textAlign: "center",
-                      })}>
-                      <OptionsMenu>
-                        <PlusSVG />
-                      </OptionsMenu>
-                    </Box>
-                </Box>
-              ))}
-            </Box>
-            <Box component="tbody">
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <MRT_TableBodyCell
-                      key={cell.id}
-                      cell={cell}
-                      rowIndex={row.index}
-                      table={table}
-                    />
-                  ))}
-                </tr>
-              ))}
-            </Box>
-          </Table>
-          <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-          <Box sx={{alignSelf: "end"}}>
-            <MRT_TablePagination table={table} />
+                        );
+                      } else {
+                        return (
+                          <>
+                            <Box
+                              component="th"
+                              key={header.id}
+                              sx={() => ({
+                                width: 100,
+                                maxWidth: 140,
+                                position: "sticky",
+                                top: 0,
+                                backgroundColor: "white",
+                                display: "table-cell"
+                              })}
+                            >
+                              <Box>
+                                {header.isPlaceholder
+                                  ? null
+                                  : flexRender(
+                                      header.column.columnDef.Header ??
+                                        header.column.columnDef.header,
+                                      header.getContext()
+                                    )}
+                              </Box>
+                            </Box>
+                          </>
+                        );
+                      }
+                    })}
+                  </Box>
+                ))}
+              </Box>
+              <Box component="tbody">
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map(cell => (
+                      <MRT_TableBodyCell
+                        key={cell.id}
+                        cell={cell}
+                        rowIndex={row.index}
+                        table={table}
+                      />
+                    ))}
+                  </tr>
+                ))}
+              </Box>
+            </Table>
           </Box>
+          {/* <MRT_ToolbarAlertBanner stackAlertBanner table={table} /> */}
+          <TableFooter table={table} result={result} />
         </Flex>
       </Flex>
-    </Stack>
+    </Box>
   );
 }
+
+export default TableView;
 
 TableView.displayName = "TesseractExplorer:TableView";
