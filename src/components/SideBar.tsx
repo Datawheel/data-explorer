@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, useState, useMemo, useEffect} from "react";
-import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group} from "@mantine/core";
+import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group, Title} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
@@ -70,23 +70,20 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
       py="md"
       sx={t => ({
         height: "calc(100vh - 75px)",
-        border: "1px solid",
-        backgroundColor: t.colors.gray[2],
-        borderColor: t.colors.gray[1],
+        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[2],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
         maxWidth: 300,
         padding: 0,
       })}
     >
       <Flex h="100%" direction="column" justify="flex-start">
-        
         <Box px="sm">
           <Flex direction="column" sx={{flex: 1}}>
             <Flex align="center" justify="center">
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
-                sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
+                sx={t => ({alignSelf: "center", color: t.colorScheme === "dark" ? t.white: t.colors.gray[7]})}
               >
                 <DataSetSVG />
               </ActionIcon>
@@ -99,10 +96,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
                   width: expanded ? 300 : 0,
                 }}>
-                <Text
-                  ml={"sm"}
-
-                >
+                <Text sx={t => ({color: t.colorScheme === "dark" ? t.white: t.black})} ml={"sm"}>
                   Select Dataset
                 </Text>
                 <LocaleSelector />
@@ -117,7 +111,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
         </Box>
         <ScrollArea sx={theme => (
           {
-            borderTopColor: theme.colors.gray[3],
+            borderTopColor: theme.colorScheme === "dark" ? theme.colors.dark[6] :theme.colors.gray[3],
             borderTopWidth: "1px",
             borderTopStyle: expanded ? "solid": "none"
           }

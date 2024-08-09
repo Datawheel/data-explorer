@@ -13,9 +13,9 @@ import { IconLanguage } from "@tabler/icons-react";
 const localeSelectorStyle = (theme:MantineTheme) => ({
   input: {
     border: "none",
-    background: theme.colors.blue[0],
+    background: theme.colorScheme === "dark" ? theme.fn.darken(theme.fn.primaryColor(), 0.1): theme.fn.lighten(theme.fn.primaryColor(), 0.8),
     borderRadius: theme.radius.sm,
-    color: theme.colors.blue[7],
+    color: theme.colorScheme === "dark" ?  theme.fn.lighten(theme.fn.primaryColor(), 0.7): theme.fn.primaryColor(),
     fontSize: 12,
     fontWeight: 700,
     width: 94,
@@ -80,7 +80,7 @@ export function LocaleSelector() {
           selectedItem={currentCode}
           selectProps={{
             styles: localeSelectorStyle,
-            icon: <IconLanguage size="0.8rem" color={theme.colors.blue[7]}/>
+            icon: <IconLanguage size="0.8rem" color={theme.colorScheme === "dark" ?  theme.fn.lighten(theme.fn.primaryColor(), 0.8): theme.fn.primaryColor()}/>
           }}
         />
       </Tooltip>

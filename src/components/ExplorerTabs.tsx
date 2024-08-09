@@ -6,9 +6,12 @@ const tabsStyles = (t: MantineTheme) => ({
     tab: {
         fontWeight: 700,
         color: t.colors.gray[6],
+        [`&[data-active]`]: {
+            borderColor: t.colors[t.primaryColor][t.fn.primaryShade()]
+        },
         [`&[data-active] > span`]: {
             fontWeight: 700,
-            color: t.colors[t.primaryColor][5]
+            color: t.colors[t.primaryColor][t.fn.primaryShade()]
         }   
     }
 })

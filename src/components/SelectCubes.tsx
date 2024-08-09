@@ -245,15 +245,15 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
       w={"100%"}
       styles={t => ({
         control: {
-          background: t.colors.gray[1],
+          background: t.colorScheme === "dark" ? t.colors.dark[7] :t.colors.gray[1],
           borderLeft: 8,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
           "&[data-active]": {
             borderLeft: 8,
-            borderLeftColor: t.colors.blue[5],
+            borderLeftColor: t.colors[t.primaryColor][t.fn.primaryShade()],
             borderLeftStyle: "solid",
-            color: t.colors.blue[5]
+            color: t.colors[t.primaryColor][t.fn.primaryShade()],
           }
         },
         content: {
@@ -319,7 +319,7 @@ function CubeButton({
           : classes.link
       }
       sx={t => ({
-        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale)) ?t.colors.blue[5]: t.colors.gray[3],
+        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale)) ?t.fn.primaryColor(): t.colorScheme === "dark" ? t.colors.dark[6]: t.colors.gray[3],
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis",
@@ -363,13 +363,13 @@ function SubtopicAccordion({
       styles={t => ({
         control: {
           fontSize: 14,
-          background: t.colors.gray[2],
+          background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[2],
           borderLeft: 8,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
           "&[data-active]": {
             borderLeft: 8,
-            borderLeftColor: t.colors.blue[4],
+            borderLeftColor: t.colors[t.primaryColor][4],
             borderLeftStyle: "solid"
           }
         },

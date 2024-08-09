@@ -280,7 +280,7 @@ export function useTable({
                 <Box sx={{flexGrow: 1}}>
                   <Flex gap="xs" align="center">
                     {getActionIcon(entityType)}
-                    <Text size="sm" color="black">
+                    <Text size="sm">
                       {column.columnDef.header}
                     </Text>
                     <ActionIcon
@@ -495,7 +495,7 @@ export function TableView({table, result}: TableView) {
                           component="th"
                           key={header.id}
                           sx={theme => ({
-                            backgroundColor: theme.colors.gray[0],
+                            backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
                             align: isNumeric ? "right" : "left",
                             height: 60,
                             paddingBottom: 10,
@@ -521,12 +521,12 @@ export function TableView({table, result}: TableView) {
                           <Box
                             component="th"
                             key={header.id}
-                            sx={() => ({
+                            sx={(theme) => ({
                               width: `calc(1rem * ${String(table.getRowModel().rows.length).length})`,
                               maxWidth: `calc(1rem * ${String(table.getRowModel().rows.length).length})`,
                               position: "sticky",
                               top: 0,
-                              backgroundColor: "white",
+                              backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
                               display: "table-cell"
                             })}
                           >
@@ -548,7 +548,7 @@ export function TableView({table, result}: TableView) {
                     component="th"
                     key={"placeholder"}
                     sx={theme => ({
-                        backgroundColor: theme.colors.gray[0],
+                        backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
                         align: "center",
                         height: 60,
                         paddingBottom: 10,
