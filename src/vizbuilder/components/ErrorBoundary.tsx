@@ -1,6 +1,6 @@
-import {TranslationConsumer} from "@datawheel/data-explorer";
 import {Button, Flex, Group, Text, Title} from "@mantine/core";
 import React from "react";
+import { TranslationConsumer } from "../../main";
 
 interface State {
   message: string;

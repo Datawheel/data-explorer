@@ -22,27 +22,25 @@
     "hash-css-selector": "^1.0.0",
     "iso-639-1": "^2.1.0",
     "mantine-react-table": "^1.3.0",
+    "match-sorter": "^6.3.4",
     "postcss-modules": "^6.0.0",
     "react-redux": "^7.0.0",
-    "react-viewport-list": "^3.0.0",
-    "match-sorter": "^6.3.4"
+    "react-viewport-list": "^3.0.0"
   },
   "peerDependencies": {
+    "@datawheel/vizbuilder": "^0.5.0",
     "@emotion/react": "^11.0.0",
     "@mantine/core": "^6.0.0",
     "@mantine/dates": "^6.0.0",
     "@mantine/hooks": "^6.0.0",
     "@mantine/prism": "^6.0.0",
+    "d3plus-react": "^1.0.0",
     "react": "^17.0.0 || ^18.0.0",
     "react-dom": "^17.0.0 || ^18.0.0"
   },
-  "optionalDependencies": {
-    "@datawheel/vizbuilder": "^0.5.0",
-    "d3plus-react": "^1.0.0"
-  },
   "devDependencies": {
-    "wrangler": "^3.59.0",
     "@biomejs/biome": "^1.8.0",
+    "@datawheel/vizbuilder": "^0.5.0",
     "@emotion/react": "^11.10.0",
     "@mantine/core": "^6.0.7",
     "@mantine/dates": "^6.0.7",
@@ -52,6 +50,7 @@
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react-swc": "^3.5.0",
+    "d3plus-react": "^1.0.0",
     "normalize.css": "^8.0.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -59,6 +58,6 @@
     "redux": "^4.2.0",
     "typescript": "^5.2.2",
     "vite": "^5.0.0",
-    "vite-plugin-dts": "^3.9.1"
+    "wrangler": "^3.59.0"
   }
 }
