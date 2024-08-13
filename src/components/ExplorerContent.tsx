@@ -1,16 +1,7 @@
 import {useState} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
-import {
-  CSSObject,
-  Center,
-  createStyles,
-  Header,
-  MediaQuery,
-  Text,
-  Burger,
-  useMantineTheme
-} from "@mantine/core";
+import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
 import React, {useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
@@ -25,7 +16,7 @@ import {LoadingOverlay} from "./LoadingOverlay";
 import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
 import {HomeSVG} from "./icons";
-
+import {AppProviders} from "../context";
 const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
     height: "100%",
@@ -98,16 +89,16 @@ export function ExplorerContent(props: {
         </div>
       </Header>
       <div className={classes.root}>
-        <SideBarProvider>
-          <SideBar>
-            <SideBarItem>
-              <ParamsExplorer />
-            </SideBarItem>
-            <SideBarItem />
-          </SideBar>
-        </SideBarProvider>
-        {/* <LoadingOverlay /> */}
-        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        <AppProviders>
+          <SideBarProvider>
+            <SideBar>
+              <SideBarItem>
+                <ParamsExplorer />
+              </SideBarItem>
+            </SideBar>
+          </SideBarProvider>
+          <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        </AppProviders>
       </div>
     </div>
   );

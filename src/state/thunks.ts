@@ -25,7 +25,6 @@ export function willDownloadQuery(
   return (dispatch, getState, { olapClient, previewLimit }) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-    // const dimensions = selectOlapDimensionItems;
     if (!isValidQuery(params)) {
       return Promise.reject(new Error("The current query is not valid."));
     }
@@ -69,9 +68,7 @@ export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
     const state = getState();
     const params = selectCurrentQueryParams(state);
     const endpoint = selectServerEndpoint(state);
-
     if (!isValidQuery(params)) return Promise.resolve();
-
     return olapClient.getCube(params.cube)
       .then(cube => {
         const query = applyQueryParams(cube.query, params, { previewLimit });
@@ -94,6 +91,7 @@ export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
               url: query.toString(endpoint)
             })
           );
+          return aggregation.data
         }, error => {
           dispatch(queriesActions.updateResult({
             data: [],
@@ -169,6 +167,7 @@ export function willHydrateParams(
               key: measure.name,
               name: measure.name
             }));
+
           const resolvedDrilldowns = filterMap(Object.values(params.drilldowns), item =>
             hydrateDrilldownProperties(cube, item) || null
           );
@@ -204,6 +203,7 @@ export function willParseQueryUrl(
   return (dispatch, getState, { olapClient }) =>
     olapClient.parseQueryURL(url.toString(), { anyServer: true })
       .then(query => {
+        extractQueryParams(query)
         const queryItem = buildQuery({
           params: extractQueryParams(query)
         });

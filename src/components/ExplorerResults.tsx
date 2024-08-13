@@ -46,9 +46,7 @@ export function ExplorerResults(props: {
 }) {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
-  const {isDirty, params, result} = useSelector(selectCurrentQueryItem);
-
-  const {loading: isLoading} = useSelector(selectLoadingState);
+  const {params, result} = useSelector(selectCurrentQueryItem);
 
   const {online: isServerOnline, url: serverUrl} = serverStatus;
   const {data, error} = result;
@@ -92,7 +90,8 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
-  if (isServerOnline == null || !cube || isDirty || isLoading) {
+
+  if (isServerOnline == null || !cube) {
     return (
       <Paper
         className={cx(classes.container, props.className)}
@@ -121,16 +120,16 @@ export function ExplorerResults(props: {
   }
 
   // Check if query executed but returned empty dataset
-  if (data.length === 0) {
-    return (
-      <FailureResult
-        className={cx(classes.container, props.className)}
-        icon={<IconBox color="orange" size="5rem" />}
-        title={t("results.error_emptyresult_title")}
-        description={t("results.error_emptyresult_detail")}
-      />
-    );
-  }
+  // if (data.length === 0) {
+  //   return (
+  //     <FailureResult
+  //       className={cx(classes.container, props.className)}
+  //       icon={<IconBox color="orange" size="5rem" />}
+  //       title={t("results.error_emptyresult_title")}
+  //       description={t("results.error_emptyresult_detail")}
+  //     />
+  //   );
+  // }
 
   return (
     <SuccessResult
@@ -218,7 +217,7 @@ function SuccessResult(props: {
         </Tabs>
         {/* need to update this logic */}
         {(!queryItem.panel || queryItem.panel === "table") && (
-          <Box sx={{display: "flex", flex: "1 1 auto"}}>
+          <Box sx={{display: "flex", flex: "1 1 auto"}} mr={92}>
             <MRT_TopToolbar table={table} />
           </Box>
         )}

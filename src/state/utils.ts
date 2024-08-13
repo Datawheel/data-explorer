@@ -4,6 +4,14 @@ import { DrilldownItem, QueryParams, buildDrilldown, buildProperty } from "../ut
 import { isActiveItem } from "../utils/validation";
 import { actions } from ".";
 import { ExplorerDispatch } from "./store";
+import { buildCut } from "../utils/structs";
+
+
+const createCutHandler = (level: PlainLevel, dispatch: ExplorerDispatch) => {
+  const cutItem = buildCut(level);
+  cutItem.active = false;
+  dispatch(actions.updateCut(cutItem));
+}
 
 /**
  * Returns the maximum number of member combinations a query can return.
@@ -24,17 +32,24 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
   const memberLengths = query.getParam("drilldowns").map(level =>
     Level.isLevel(level)
       ? drills[level.uniqueName] || ds.fetchMembers(level).then(async members => {
-        const { cube, name, dimension, fullName, depth, properties, hierarchy, annotations } = level
+        const { cube, name, dimension, fullName, depth, properties, hierarchy, annotations, key } = level
         const lv: PlainLevel = {
-          cube: cube.name, dimension: dimension.name,
+          cube: cube.name,
+          dimension: dimension.name,
           fullName, depth, _type: "level", name, uri: level._source.uri,
           properties: properties.map((p: Property) => ({ name: p.name, annotations: p.annotations, uri: p._source.uri, _type: "property" })),
           hierarchy: hierarchy.name,
-          annotations: annotations
+          annotations: annotations,
         }
-        const dd = buildDrilldown(lv)
-        const ddd = { ...dd, key: dd.fullName, dimType: dimension.dimensionType, memberCount: members.length, members }
-        dispatch(actions.updateDrilldown(ddd));
+        // fix here dd names
+
+        const drilldown = Object.values(params.drilldowns).find((d) => d.fullName === level.fullName)
+        if (drilldown) {
+          const dd = buildDrilldown(lv)
+          const ddd = { ...drilldown, dimType: dimension.dimensionType, memberCount: members.length, members }
+          dispatch(actions.updateDrilldown(ddd));
+          createCutHandler(level, dispatch)
+        }
         return members.length
       })
       : Promise.resolve(1)
@@ -53,7 +68,6 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
   const activeProperties = filterMap(drilldownItem.properties, prop =>
     isActiveItem(prop) ? prop.name : null
   );
-
   for (const level of cube.levelIterator) {
     if (level.matches(drilldownItem)) {
       return buildDrilldown({

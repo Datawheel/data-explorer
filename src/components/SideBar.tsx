@@ -11,6 +11,7 @@ import {AnnotatedCube} from "./SelectCubes";
 import {useTranslation} from "../hooks/translation";
 import {CubeAnnotation, CubeSourceAnchor} from "./SelectCubes";
 import {selectOlapCube} from "../state/selectors";
+import {AreaCuts} from "./AreaCuts";
 
 type SidebarProviderProps = {
   expanded: boolean;

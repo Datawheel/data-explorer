@@ -1,25 +1,24 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Tooltip, Table} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
   MRT_TableOptions as TableOptions,
   useMantineReactTable,
   flexRender,
-  MRT_GlobalFilterTextInput,
-  MRT_TablePagination,
-  MRT_ToolbarAlertBanner,
-  MRT_ColumnActionMenu,
   MRT_TableHeadCellFilterContainer,
   MRT_TableBodyCell,
   MRT_TableHeadCell,
-  MRT_TableInstance
+  MRT_TableInstance,
+  MRT_ColumnFiltersState,
+  MRT_PaginationState,
+  MRT_ProgressBar as ProgressBar
 } from "mantine-react-table";
-import React, {useMemo, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn} from "../utils/structs";
+import {AnyResultColumn, buildCut} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
-import {selectCurrentQueryParams} from "../state/queries";
+import {selectCurrentQueryParams, selectCutItems, selectPaginationParams} from "../state/queries";
 import {useSelector} from "react-redux";
 import {PlainCube, PlainLevel, PlainMeasure, PlainProperty} from "@datawheel/olap-client";
 import {ViewProps} from "../utils/types";
@@ -31,10 +30,12 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-import type {MeasureItem, QueryResult, DrilldownItem} from "../utils/structs";
+import type {MeasureItem, QueryResult, DrilldownItem, CutItem} from "../utils/structs";
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
+import {LoadingOverlay} from "./LoadingOverlay";
+import {useQuery} from "@tanstack/react-query";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -45,19 +46,21 @@ const removeColumn = (
   measures: Record<string, MeasureItem>,
   drilldowns: Record<string, DrilldownItem>
 ) => {
+  // check for measure
   if (entity._type === "measure") {
     if (entity.name) {
-      const measure = measures[entity.name];
-      actions.updateMeasure({...measure, active: false});
+      // const measure = measures[entity.name];
+      const measure = Object.values(measures).find(d => d.name === entity.name);
+      measure && actions.updateMeasure({...measure, active: false});
+      actions.willRequestQuery();
     }
   }
   if (entity._type === "level") {
-    if (entity.fullName) {
-      const drilldown = drilldowns[entity.fullName];
-      actions.updateDrilldown({...drilldown, active: false});
-    }
+    const drilldown = Object.values(drilldowns).find(d => d.fullName === entity?.fullName);
+    drilldown && actions.updateDrilldown({...drilldown, active: false});
+    actions.willRequestQuery();
   }
-  actions.willRequestQuery();
+
   // maybe need to handle case for property columns.
 };
 
@@ -119,7 +122,8 @@ function getMantineFilterMultiSelectProps(
   entity: PlainLevel | PlainMeasure | PlainProperty,
   drilldowns: Record<string, DrilldownItem>,
   data: TData[],
-  columnKey: string
+  columnKey: string,
+  itemsCuts: CutItem[]
 ) {
   let result: {
     filterVariant?: "multi-select" | "text";
@@ -133,31 +137,18 @@ function getMantineFilterMultiSelectProps(
 
   if (result.filterVariant === "multi-select") {
     if (entity._type === "level") {
-      if (entity.fullName) {
-        const dd = Object.keys(drilldowns).reduce(
-          (prev, key) => ({...prev, [drilldowns[key].fullName]: drilldowns[key]}),
-          {}
-        );
-        const drilldwonData = dd[entity.fullName];
-
-        if (drilldwonData && drilldwonData.members) {
-          const getmemberFilterValue = getMemberFilterFn(data, columnKey);
-          result = Object.assign({}, result, {
-            mantineFilterMultiSelectProps: {
-              data: drilldwonData.members.map(getmemberFilterValue)
-            },
-            filterFn: (row, id, filterValue) => {
-              if (filterValue.length) {
-                const rowValue = row.getValue(id);
-                if (typeof rowValue === "object") {
-                  return filterValue.includes(String(rowValue.value + " " + rowValue.id));
-                }
-                return filterValue.includes(String(rowValue));
-              }
-              return true;
-            }
-          });
-        }
+      const dd = Object.keys(drilldowns).reduce(
+        (prev, key) => ({...prev, [drilldowns[key].fullName]: drilldowns[key]}),
+        {}
+      );
+      const drilldwonData = dd[entity.fullName];
+      if (drilldwonData && drilldwonData.members) {
+        const getmemberFilterValue = getMemberFilterFn(data, columnKey);
+        result = Object.assign({}, result, {
+          mantineFilterMultiSelectProps: {
+            data: drilldwonData.members.map(getmemberFilterValue)
+          }
+        });
       }
     }
   }
@@ -194,6 +185,29 @@ type TableProps = {
   columnSorting?: (a: AnyResultColumn, b: AnyResultColumn) => number;
 };
 
+function getLastWord(str) {
+  const words = str.trim().split(" ");
+  return words[words.length - 1];
+}
+type UserApiResponse = any;
+
+const useTableDataType = {};
+
+//refetch whenever the URL changes (columnFilters, globalFilter, sorting, pagination)
+function useTableData({offset, limit, columns}) {
+  const actions = useActions();
+  const key = ["table", limit, offset, ...columns];
+  const enabled = key.length >= 5;
+  return useQuery<UserApiResponse>({
+    queryKey: key,
+    queryFn: () => {
+      return actions.willExecuteQuery();
+    },
+    staleTime: 30000
+    // enabled
+  });
+}
+
 // ViewPros
 export function useTable({
   cube,
@@ -203,21 +217,6 @@ export function useTable({
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const {types} = result;
-  const {locale, measures, drilldowns} = useSelector(selectCurrentQueryParams);
-  const actions = useActions();
-
-  const data = useMemo(
-    () =>
-      window.navigator.userAgent.includes("Firefox") ? result.data.slice(0, 10000) : result.data,
-    [result.data]
-  );
-
-  const isLimited = result.data.length !== data.length;
-  const {translate: t} = useTranslation();
-  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
-    cube.measures
-  );
-
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
@@ -227,6 +226,119 @@ export function useTable({
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
+
+  // const finalUniqueKeys = finalKeys.map(c => c.entity?.fullName ?? c.entity?.name);
+
+  const {locale, measures, drilldowns} = useSelector(selectCurrentQueryParams);
+
+  const finalUniqueKeys = [
+    ...Object.keys(measures).reduce((prev, curr) => {
+      const measure = measures[curr];
+      if (measure.active) {
+        return [...prev, curr];
+      }
+      return prev;
+    }, []),
+    ...Object.keys(drilldowns).reduce((prev, curr) => {
+      const dd = drilldowns[curr];
+      if (dd.active) {
+        return [...prev, curr];
+      }
+      return prev;
+    }, [])
+  ];
+
+  const actions = useActions();
+  const itemsCuts = useSelector(selectCutItems);
+  const {limit, offset} = useSelector(selectPaginationParams);
+
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: offset,
+    pageSize: limit
+  });
+  const [columnFilters, setColumnFilters] = useState<MRT_ColumnFiltersState>([]);
+
+  const {
+    isLoading,
+    isFetching,
+    isError,
+    data: tableData,
+    refetch
+  } = useTableData({
+    offset,
+    limit,
+    columns: finalUniqueKeys
+  });
+  //this will depend on your API response shape
+  const fetchedTableData = tableData ?? [];
+  // const totalRowCount = data?.meta?.totalRowCount ?? 0;
+
+  useEffect(() => {
+    actions.updatePagination({
+      limit: pagination.pageSize,
+      offset: pagination.pageIndex * pagination.pageSize
+    });
+  }, [pagination]);
+
+  const data = useMemo(
+    () =>
+      window.navigator.userAgent.includes("Firefox") ? result.data.slice(0, 10000) : result.data,
+    [result.data]
+  );
+
+  const isLimited = result.data.length !== data.length;
+
+  //So far this is a hardcoded count until api returns value
+  const totalRowCount = result.data.length === limit ? limit * 10 : result.data.length;
+
+  const {translate: t} = useTranslation();
+
+  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
+    cube.measures
+  );
+
+  const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
+    actions.updateCut({...item, members});
+  }, []);
+
+  function notFound(cut: CutItem, columnFilters: MRT_ColumnFiltersState) {
+    // add case for measure
+    const column = columnFilters.find(c => c.id === cut.fullName);
+    return !column;
+  }
+  useEffect(() => {
+    let cleaned = false;
+    for (const columnFilter of columnFilters) {
+      const column = finalKeys.find(f => {
+        if (f.entity._type === "level") {
+          return f.entity?.fullName === columnFilter.id;
+        }
+        return f.entity.name === columnFilter.id;
+      });
+
+      if (column?.entity._type === "level") {
+        const cut = itemsCuts.find(cut => cut.fullName === column?.entity.fullName);
+        if (Array.isArray(columnFilter.value)) {
+          const members: string[] = columnFilter.value.map(str => getLastWord(str));
+          if (cut) {
+            updatecutHandler({...cut, active: true}, members);
+            refetch();
+          }
+        }
+      }
+    }
+
+    for (const cut of itemsCuts) {
+      if (cut.active && notFound(cut, columnFilters)) {
+        updatecutHandler({...cut, active: false}, []);
+        cleaned = true;
+      }
+    }
+
+    if (cleaned) {
+      refetch();
+    }
+  }, [columnFilters]);
 
   const columns = useMemo<ColumnDef<TData>[]>(() => {
     return finalKeys.map(column => {
@@ -250,7 +362,8 @@ export function useTable({
         entity,
         drilldowns,
         data,
-        columnKey
+        columnKey,
+        itemsCuts
       );
 
       return {
@@ -309,7 +422,7 @@ export function useTable({
         size: isId ? 80 : undefined,
         formatter,
         formatterKey,
-        id: columnKey,
+        id: entity.fullName ?? entity.name,
         dataType: valueType,
         accessorFn: item => {
           if (item[columnKey + " " + "ID"]) {
@@ -361,8 +474,7 @@ export function useTable({
         globalFilterFn: "contains",
         initialState: {
           density: "xs",
-          showColumnFilters: true,
-          pagination: {pageSize: 100, pageIndex: 0}
+          showColumnFilters: true
         },
         mantineBottomToolbarProps: {
           id: "query-results-table-view-footer"
@@ -421,8 +533,22 @@ export function useTable({
 
   const table = useMantineReactTable({
     columns,
-    data,
+    data: fetchedTableData,
+    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: setPagination,
     enableHiding: false,
+    manualFiltering: true,
+    manualPagination: true,
+    rowCount: totalRowCount,
+    state: {
+      // columnFilterFns,
+      columnFilters,
+      isLoading: isLoading,
+      pagination,
+      showAlertBanner: isError,
+      showProgressBars: isFetching
+      // sorting,
+    },
     ...constTableProps,
     ...mantineTableProps
   });
@@ -438,6 +564,8 @@ type TableView = {
 export function TableView({table, result}: TableView) {
   return (
     <Box sx={{height: "100%"}}>
+      {/* <LoadingOverlay /> */}
+      <ProgressBar isTopToolbar table={table} />
       <Flex justify="space-between" align="center" sx={{height: "100%"}}>
         <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
           <Box

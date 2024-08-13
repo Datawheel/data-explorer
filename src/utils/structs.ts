@@ -156,7 +156,7 @@ export function buildQueryParams(props): QueryParams {
     isPreview: props.isPreview || false,
     locale: props.locale || "",
     measures: props.measures || {},
-    pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 0,
+    pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
     sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
     sortKey: props.sortKey || props.sortProperty || ""

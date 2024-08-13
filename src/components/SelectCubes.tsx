@@ -4,12 +4,12 @@ import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useSt
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLocale, selectMeasureMap, selectValidQueryStatus} from "../state/queries";
+import {selectLocale, selectMeasureMap} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
-import {buildDrilldown} from "../utils/structs";
+import {buildDrilldown, buildCut} from "../utils/structs";
 import type {Annotated} from "../utils/types";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {useSideBar} from "./SideBar";
@@ -31,16 +31,24 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
-  const {willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers} = useActions();
+  const {willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers, updateCut} =
+    useActions();
   const initRef = useRef(false);
 
   const cube = useSelector(selectCubeName);
   const itemMap = useSelector(selectMeasureMap);
   const dimensions = useSelector(selectOlapDimensionItems);
 
+  const createCutHandler = React.useCallback((level: PlainLevel) => {
+    const cutItem = buildCut({...level});
+    cutItem.active = false;
+    updateCut(cutItem);
+  }, []);
+
   const addDrilldown = useCallback(
     (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown({...level, key: level.fullName});
+      const drilldownItem = buildDrilldown(level);
+      createCutHandler(level);
       updateDrilldown(drilldownItem);
       return willFetchMembers({...level, level: level.name}).then(members => {
         const dimension = dimensions.find(dim => dim.name === level.dimension);
@@ -59,7 +67,6 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
-
     //autoload if not params
     if (selectedItem && cube && !cubeParam) {
       initRef.current = true;
@@ -70,24 +77,23 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
       if (measure && dimension) {
         updateMeasure({...measure, active: true});
         addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-          willRequestQuery();
+          // willRequestQuery();
         });
       }
     }
     if (selectedItem && cube && cubeParam) {
       if (!initRef.current) {
         initRef.current = true;
-      } else {
-        const measure = Object.keys(itemMap)
-          .map(k => itemMap[k])
-          .shift();
-        const dimension = [...dimensions].shift();
-        if (measure && dimension) {
-          updateMeasure({...measure, active: true});
-          addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-            willRequestQuery();
-          });
-        }
+      }
+      const measure = Object.keys(itemMap)
+        .map(k => itemMap[k])
+        .shift();
+      const dimension = [...dimensions].shift();
+      if (measure && dimension) {
+        updateMeasure({...measure, active: true});
+        addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
+          // willRequestQuery();
+        });
       }
     }
   }, [selectedItem, cube]);

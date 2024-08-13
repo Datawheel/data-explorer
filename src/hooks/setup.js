@@ -20,10 +20,13 @@ export function useSetup(serverConfig, locale) {
   const [done, setDone] = useState(false);
 
   // ensure the locale variable is an array
-  const cleanLocale = useMemo(() => typeof locale === "string"
-    ? locale.split(",").map(item => item.trim())
-    : asArray(locale).map(item => item.trim())
-  , [`${locale}`]);
+  const cleanLocale = useMemo(
+    () =>
+      typeof locale === "string"
+        ? locale.split(",").map(item => item.trim())
+        : asArray(locale).map(item => item.trim()),
+    [`${locale}`]
+  );
 
   // Keep the locale list in sync with the server state
   useEffect(() => {
@@ -35,7 +38,8 @@ export function useSetup(serverConfig, locale) {
     actions.setLoadingState("FETCHING");
     setDone(false);
 
-    actions.willSetupClient(serverConfig)
+    actions
+      .willSetupClient(serverConfig)
       .then(() => actions.willReloadCubes())
       .then(cubeMap => {
         let query;
@@ -49,22 +53,23 @@ export function useSetup(serverConfig, locale) {
           const searchObject = formUrlDecode(searchString);
 
           if ("query" in searchObject) {
-          // Search params are a base64-encoded OLAP server URL
+            // Search params are a base64-encoded OLAP server URL
             const decodedURL = decodeUrlFromBase64(searchObject.query);
             const url = new URL(decodedURL);
-            return actions.willParseQueryUrl(url)
+            return actions
+              .willParseQueryUrl(url)
               .then(() => actions.willHydrateParams())
               .then(() => actions.willExecuteQuery());
           }
-
           // else, search params are a Explorer state permalink
           const locationState = parseStateFromSearchParams(searchObject);
-          query = isValidQuery(locationState) && buildQuery({
-            panel: searchObject.panel,
-            params: buildQueryParams({...locationState})
-          });
-        }
-        else if (isValidQuery(historyState)) {
+          query =
+            isValidQuery(locationState) &&
+            buildQuery({
+              panel: searchObject.panel,
+              params: buildQueryParams({...locationState})
+            });
+        } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState}});
         }
 
@@ -75,17 +80,20 @@ export function useSetup(serverConfig, locale) {
 
         query.params.locale = query.params.locale || cleanLocale[0];
         actions.resetQueries({[query.key]: query});
-        return actions.willHydrateParams()
-          .then(() => actions.willExecuteQuery());
+        return actions.willHydrateParams();
+        // .then(() => actions.willExecuteQuery());
       })
-      .then(() => {
-        actions.setLoadingState("SUCCESS");
-        setDone(true);
-      }, error => {
-        console.dir("There was an error during setup:", error);
-        actions.setLoadingState("FAILURE", error.message);
-        setDone(true);
-      });
+      .then(
+        () => {
+          actions.setLoadingState("SUCCESS");
+          setDone(true);
+        },
+        error => {
+          console.dir("There was an error during setup:", error);
+          actions.setLoadingState("FAILURE", error.message);
+          setDone(true);
+        }
+      );
   }, [serverConfig]);
 
   return done;

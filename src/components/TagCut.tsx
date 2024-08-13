@@ -37,9 +37,7 @@ import {ItemPredicateMethod, TransferInput} from "./TransferInput";
 const MembersTransferInput = TransferInput<MemberItem>;
 
 /** */
-export function TagCut(props: {
-  item: CutItem;
-}) {
+export function TagCut(props: {item: CutItem}) {
   const {item} = props;
 
   const theme = useMantineTheme();
@@ -61,14 +59,20 @@ export function TagCut(props: {
     actions.updateCut({...item, active: !item.active});
   }, [item]);
 
-  const removeHandler = useCallback(evt => {
-    evt.stopPropagation();
-    actions.removeCut(item.key);
-  }, [item.key]);
+  const removeHandler = useCallback(
+    evt => {
+      evt.stopPropagation();
+      actions.removeCut(item.key);
+    },
+    [item.key]
+  );
 
-  const membersUpdateHandler = useCallback((members: string[]) => {
-    actions.updateCut({...item, members});
-  }, [item]);
+  const membersUpdateHandler = useCallback(
+    (members: string[]) => {
+      actions.updateCut({...item, members});
+    },
+    [item]
+  );
 
   const reloadHandler = useCallback(() => {
     const activeMembers = item.members;
@@ -107,20 +111,23 @@ export function TagCut(props: {
     });
   }, [item.members.join("-"), item, locale.code]);
 
-  const itemPredicate = useMemo((): ItemPredicateMethod<MemberItem>[] => [
-    {
-      label: t("params.label_cuts_filterby_id"),
-      method: (query, item) => query.test(item.key)
-    },
-    {
-      label: t("params.label_cuts_filterby_name"),
-      method: (query, item) => query.test(item.name)
-    },
-    {
-      label: t("params.label_cuts_filterby_any"),
-      method: (query, item) => query.test(item.key) || query.test(item.name)
-    }
-  ], [locale.code]);
+  const itemPredicate = useMemo(
+    (): ItemPredicateMethod<MemberItem>[] => [
+      {
+        label: t("params.label_cuts_filterby_id"),
+        method: (query, item) => query.test(item.key)
+      },
+      {
+        label: t("params.label_cuts_filterby_name"),
+        method: (query, item) => query.test(item.name)
+      },
+      {
+        label: t("params.label_cuts_filterby_any"),
+        method: (query, item) => query.test(item.key) || query.test(item.name)
+      }
+    ],
+    [locale.code]
+  );
 
   const initialItemPredicateIndex = {id: 0, name: 1, any: 2}[defaultMembersFilter];
 
@@ -196,7 +203,7 @@ export function TagCut(props: {
               getLabel={item => item.name}
               getSecondLabel={
                 showMemberKey // eslint-disable-next-line eqeqeq
-                  ? item => item.key != item.name ? item.key : undefined
+                  ? item => (item.key != item.name ? item.key : undefined)
                   : undefined
               }
               initialItemPredicateIndex={initialItemPredicateIndex}

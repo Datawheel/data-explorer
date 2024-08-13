@@ -1,9 +1,9 @@
 import formUrlEncode from "form-urlencoded";
-import {SERIAL_BOOLEAN} from "../enums";
-import {asArray, filterMap} from "./array";
-import {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, buildCut, buildDrilldown, buildFilter, buildMeasure} from "./structs";
-import {keyBy, parseName, stringifyName} from "./transform";
-import {isActiveCut, isActiveItem} from "./validation";
+import { SERIAL_BOOLEAN } from "../enums";
+import { asArray, filterMap } from "./array";
+import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, buildCut, buildDrilldown, buildFilter, buildMeasure } from "./structs";
+import { keyBy, parseName, stringifyName } from "./transform";
+import { isActiveCut, isActiveItem } from "./validation";
 
 export interface SerializedQuery {
   cube: string;
@@ -116,7 +116,7 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
   /** */
   function cutReducer(cuts: Record<string, CutItem>, item: string) {
     const [fullName, ...members] = item.split(",");
-    const cut = buildCut({...parseName(fullName), active: true, members});
+    const cut = buildCut({ ...parseName(fullName), active: true, members });
 
     // fullName is normalized into descriptor, so this is better for comparison
     const matchingCut = Object.values(cuts).find(item =>
@@ -137,8 +137,8 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
   function drilldownReducer(drilldowns: Record<string, DrilldownItem>, item: string) {
     const [fullName, ...props] = item.split(",");
     const nameParts = parseName(fullName);
-    const properties = props.map(name => ({active: true, level: nameParts.level, name}));
-    const ddn = buildDrilldown({...nameParts, active: true, properties, key: fullName});
+    const properties = props.map(name => ({ active: true, level: nameParts.level, name }));
+    const ddn = buildDrilldown({ ...nameParts, active: true, properties, key: fullName });
     drilldowns[ddn.key] = ddn;
     return drilldowns;
   }
