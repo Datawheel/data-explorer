@@ -1,7 +1,7 @@
-import {Measure, Query} from "@datawheel/olap-client";
-import {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, QueryParamsItem, buildCut, buildDrilldown, buildFilter, buildMeasure} from "./structs";
-import {keyBy} from "./transform";
-import {isActiveCut, isActiveItem} from "./validation";
+import { Measure, Query } from "@datawheel/olap-client";
+import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, QueryParamsItem, buildCut, buildDrilldown, buildFilter, buildMeasure } from "./structs";
+import { keyBy } from "./transform";
+import { isActiveCut, isActiveItem } from "./validation";
 
 /**
  * Applies the properties set on a QueryParams object
@@ -23,13 +23,20 @@ export function applyQueryParams(
     isActiveCut(item) && query.addCut(item, item.members);
   });
 
+
+  Object.values(params.filters).forEach(item => {
+    isActiveItem(item) && query.addFilter(item.measure, item.conditionOne,
+      item.joint && item.conditionTwo ? item.joint : "",
+      item.joint && item.conditionTwo ? item.conditionTwo : "")
+  });
+
   Object.values(params.drilldowns).forEach(item => {
     if (!isActiveItem(item)) return;
     query.addDrilldown(item);
     item.captionProperty &&
-      query.addCaption({...item, property: item.captionProperty});
+      query.addCaption({ ...item, property: item.captionProperty });
     item.properties.forEach(prop => {
-      isActiveItem(prop) && query.addProperty({...item, property: prop.name});
+      isActiveItem(prop) && query.addProperty({ ...item, property: prop.name });
     });
   });
 

@@ -29,7 +29,7 @@ function OptionsMenu({children}: {children: ReactNode}) {
     (level: PlainLevel) => {
       // find or create drilldown
       const drilldownItem =
-        items.find(item => item.fullName === level.fullName) ?? buildDrilldown({...level});
+        items.find(item => item.uniqueName === level.uniqueName) ?? buildDrilldown({...level});
       createCutHandler(level);
       actions.updateDrilldown(drilldownItem);
       actions

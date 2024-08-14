@@ -41,11 +41,9 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
           hierarchy: hierarchy.name,
           annotations: annotations,
         }
-        // fix here dd names
 
-        const drilldown = Object.values(params.drilldowns).find((d) => d.fullName === level.fullName)
+        const drilldown = Object.values(params.drilldowns).find((d) => d.uniqueName === level.uniqueName)
         if (drilldown) {
-          const dd = buildDrilldown(lv)
           const ddd = { ...drilldown, dimType: dimension.dimensionType, memberCount: members.length, members }
           dispatch(actions.updateDrilldown(ddd));
           createCutHandler(level, dispatch)

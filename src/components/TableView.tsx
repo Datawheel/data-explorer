@@ -11,16 +11,23 @@ import {
   MRT_TableInstance,
   MRT_ColumnFiltersState,
   MRT_PaginationState,
+  MRT_ColumnFilterFnsState,
   MRT_ProgressBar as ProgressBar
 } from "mantine-react-table";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn, buildCut} from "../utils/structs";
+import {AnyResultColumn, buildFilter} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
 import {selectCurrentQueryParams, selectCutItems, selectPaginationParams} from "../state/queries";
 import {useSelector} from "react-redux";
-import {PlainCube, PlainLevel, PlainMeasure, PlainProperty} from "@datawheel/olap-client";
+import {
+  PlainCube,
+  PlainLevel,
+  PlainMeasure,
+  PlainProperty,
+  Comparison
+} from "@datawheel/olap-client";
 import {ViewProps} from "../utils/types";
 import OptionsMenu from "./OptionsMenu";
 import {
@@ -34,7 +41,7 @@ import type {MeasureItem, QueryResult, DrilldownItem, CutItem} from "../utils/st
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
-import {LoadingOverlay} from "./LoadingOverlay";
+// import {LoadingOverlay} from "./LoadingOverlay";
 import {useQuery} from "@tanstack/react-query";
 
 type EntityTypes = "measure" | "level" | "property";
@@ -56,11 +63,10 @@ const removeColumn = (
     }
   }
   if (entity._type === "level") {
-    const drilldown = Object.values(drilldowns).find(d => d.fullName === entity?.fullName);
+    const drilldown = Object.values(drilldowns).find(d => d.uniqueName === entity?.uniqueName);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
     actions.willRequestQuery();
   }
-
   // maybe need to handle case for property columns.
 };
 
@@ -112,7 +118,9 @@ function getMemberFilterFn(data, key: string) {
   if (dd[key + " " + "ID"]) {
     return member => `${member.caption} ${member.key}`;
   }
-  return member => member.caption;
+  // api changed
+  // return member => member.caption;
+  return member => member.name;
 }
 
 function getMantineFilterMultiSelectProps(
@@ -122,8 +130,7 @@ function getMantineFilterMultiSelectProps(
   entity: PlainLevel | PlainMeasure | PlainProperty,
   drilldowns: Record<string, DrilldownItem>,
   data: TData[],
-  columnKey: string,
-  itemsCuts: CutItem[]
+  columnKey: string
 ) {
   let result: {
     filterVariant?: "multi-select" | "text";
@@ -132,7 +139,7 @@ function getMantineFilterMultiSelectProps(
 
   // const filterVariant = !isId && isNumeric && range && (range[1] - range[0] <= 50) ? "multi-select" : "text"
   const filterVariant =
-    !isId && (!range || (range && range[1] - range[0] <= 50)) ? "multi-select" : "text";
+    !isId && (!range || (range && range[1] - range[0] <= 100)) ? "multi-select" : "text";
   result = Object.assign({}, result, {filterVariant});
 
   if (result.filterVariant === "multi-select") {
@@ -141,7 +148,9 @@ function getMantineFilterMultiSelectProps(
         (prev, key) => ({...prev, [drilldowns[key].fullName]: drilldowns[key]}),
         {}
       );
-      const drilldwonData = dd[entity.fullName];
+      const drilldwonData = dd[entity.uniqueName];
+      console.log(drilldwonData, "Key");
+      console.log(columnKey, "key");
       if (drilldwonData && drilldwonData.members) {
         const getmemberFilterValue = getMemberFilterFn(data, columnKey);
         result = Object.assign({}, result, {
@@ -203,7 +212,8 @@ function useTableData({offset, limit, columns}) {
     queryFn: () => {
       return actions.willExecuteQuery();
     },
-    staleTime: 30000
+    staleTime: 300000
+    // 5 min
     // enabled
   });
 }
@@ -229,7 +239,7 @@ export function useTable({
 
   // const finalUniqueKeys = finalKeys.map(c => c.entity?.fullName ?? c.entity?.name);
 
-  const {locale, measures, drilldowns} = useSelector(selectCurrentQueryParams);
+  const {locale, measures, drilldowns, filters} = useSelector(selectCurrentQueryParams);
 
   const finalUniqueKeys = [
     ...Object.keys(measures).reduce((prev, curr) => {
@@ -303,21 +313,24 @@ export function useTable({
 
   function notFound(cut: CutItem, columnFilters: MRT_ColumnFiltersState) {
     // add case for measure
-    const column = columnFilters.find(c => c.id === cut.fullName);
+    const column = columnFilters.find(c => c.id === cut.uniqueName);
     return !column;
   }
   useEffect(() => {
     let cleaned = false;
+    console.log(columnFilters, "CL"); // arr
+    console.log(columnFilterFns, "CL 1"); // object
+
     for (const columnFilter of columnFilters) {
       const column = finalKeys.find(f => {
         if (f.entity._type === "level") {
-          return f.entity?.fullName === columnFilter.id;
+          return f.entity?.uniqueName === columnFilter.id;
         }
         return f.entity.name === columnFilter.id;
       });
 
       if (column?.entity._type === "level") {
-        const cut = itemsCuts.find(cut => cut.fullName === column?.entity.fullName);
+        const cut = itemsCuts.find(cut => cut.uniqueName === column?.entity.uniqueName);
         if (Array.isArray(columnFilter.value)) {
           const members: string[] = columnFilter.value.map(str => getLastWord(str));
           if (cut) {
@@ -325,6 +338,25 @@ export function useTable({
             refetch();
           }
         }
+      }
+      if (column?.entity._type === "measure") {
+        const filterFn = columnFilterFns[column.entity.name];
+        const value = columnFilter.value;
+        console.log(filterFn, value, "filters");
+
+        console.log(filters, "filters");
+        console.log(Comparison, "Compariosion");
+
+        const filter = buildFilter({
+          active: true,
+          key: columnFilter.id,
+          name: columnFilter.id,
+          conditionOne: [Comparison.GT, String(value), Number(value)]
+        });
+        actions.updateFilter(filter);
+        console.log(filter, "filter2");
+        refetch();
+        //find or create Filter
       }
     }
 
@@ -362,8 +394,7 @@ export function useTable({
         entity,
         drilldowns,
         data,
-        columnKey,
-        itemsCuts
+        columnKey
       );
 
       return {
@@ -447,6 +478,19 @@ export function useTable({
       };
     });
   }, [currentFormats, data, types, drilldowns, measures]);
+
+  console.log(columns, "columns");
+
+  // maybe not render until we have derived columns data.
+  useLayoutEffect(() => {
+    const fns = columns
+      .filter(({entityType}) => entityType === "measure")
+      .map(({id}) => [id, "greaterThan"]);
+    setColumnFilterFns(Object.fromEntries(fns));
+  }, [columns]);
+
+  const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>([]);
+  console.log(columnFilterFns, "columnFilterFns");
 
   const constTableProps = useMemo(
     () =>
@@ -536,12 +580,14 @@ export function useTable({
     data: fetchedTableData,
     onColumnFiltersChange: setColumnFilters,
     onPaginationChange: setPagination,
+    onColumnFilterFnsChange: setColumnFilterFns,
     enableHiding: false,
     manualFiltering: true,
     manualPagination: true,
+    manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      // columnFilterFns,
+      columnFilterFns,
       columnFilters,
       isLoading: isLoading,
       pagination,

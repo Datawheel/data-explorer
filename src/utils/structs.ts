@@ -4,7 +4,6 @@ import { asArray } from "./array";
 import { parseNumeric, randomKey } from "./string";
 import { joinName } from "./transform";
 
-
 export interface QueryItem {
   created: string;
   isDirty: boolean;
@@ -213,6 +212,7 @@ export function buildDrilldown(props): DrilldownItem {
     uniqueName: props.uniqueName || props.name || props.level
   };
 }
+
 
 /**
  * Creates a FilterItem object.

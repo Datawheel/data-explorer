@@ -65,37 +65,37 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   );
 
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const cubeParam = params.get("cube");
-    //autoload if not params
-    if (selectedItem && cube && !cubeParam) {
-      initRef.current = true;
-      const measure = Object.keys(itemMap)
-        .map(k => itemMap[k])
-        .shift();
-      const dimension = [...dimensions].shift();
-      if (measure && dimension) {
-        updateMeasure({...measure, active: true});
-        addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-          // willRequestQuery();
-        });
-      }
-    }
-    if (selectedItem && cube && cubeParam) {
-      if (!initRef.current) {
-        initRef.current = true;
-      }
-      const measure = Object.keys(itemMap)
-        .map(k => itemMap[k])
-        .shift();
-      const dimension = [...dimensions].shift();
-      if (measure && dimension) {
-        updateMeasure({...measure, active: true});
-        addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-          // willRequestQuery();
-        });
-      }
-    }
+    // const params = new URLSearchParams(location.search);
+    // const cubeParam = params.get("cube");
+    // //autoload if not params
+    // if (selectedItem && cube && !cubeParam) {
+    //   initRef.current = true;
+    //   const measure = Object.keys(itemMap)
+    //     .map(k => itemMap[k])
+    //     .shift();
+    //   const dimension = [...dimensions].shift();
+    //   if (measure && dimension) {
+    //     updateMeasure({...measure, active: true});
+    //     addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
+    //       // willRequestQuery();
+    //     });
+    //   }
+    // }
+    // if (selectedItem && cube && cubeParam) {
+    //   if (!initRef.current) {
+    //     initRef.current = true;
+    //   }
+    //   const measure = Object.keys(itemMap)
+    //     .map(k => itemMap[k])
+    //     .shift();
+    //   const dimension = [...dimensions].shift();
+    //   if (measure && dimension) {
+    //     updateMeasure({...measure, active: true});
+    //     addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
+    //       // willRequestQuery();
+    //     });
+    //   }
+    // }
   }, [selectedItem, cube]);
 
   return (
