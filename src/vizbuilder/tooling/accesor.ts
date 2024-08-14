@@ -1,5 +1,5 @@
-import {D3plusConfig} from "@datawheel/vizbuilder";
-import {Measure} from "@datawheel/olap-client";
+import type {Measure} from "@datawheel/olap-client";
+import type {D3plusConfig} from "@datawheel/vizbuilder";
 
 /**
  * Normalizes the Vizbuilder Component Property "measureConfig", which can
