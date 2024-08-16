@@ -1,3 +1,4 @@
+import { useMantineTheme } from "@mantine/core";
 import React from "react";
 
 function IconChevronLeft() {
@@ -53,9 +54,10 @@ function HomeSVG() {
 }
 
 function PlusSVG() {
+  const theme = useMantineTheme();
   return (
     <svg width="35" height="37" viewBox="0 0 26 29" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="13" cy="12" r="12" fill="#868E96" />
+      <circle cx="13" cy="12" r="12" fill={theme.colors[theme.primaryColor][5]} />
       <path
         d="M18.8008 10.8477V12.8867H7.10547V10.8477H18.8008ZM14.043 5.86719V18.2891H11.875V5.86719H14.043Z"
         fill="white"

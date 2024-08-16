@@ -3,6 +3,7 @@ import {
   Alert,
   Anchor,
   Box,
+  Center,
   Flex,
   Group,
   Paper,
@@ -27,6 +28,8 @@ import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {MRT_TopToolbar} from "mantine-react-table";
 import {useTable} from "./TableView";
 import {selectLoadingState} from "../state/loading";
+import CubeSource from "./CubeSource";
+import { ExplorerTabs } from "./ExplorerTabs";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -205,53 +208,48 @@ function SuccessResult(props: {
   }, []);
 
   return (
-    <Paper id="query-results-success" className={props.className} radius="md" withBorder m="md">
-      <Flex sx={{alignItems: "center"}}>
-        <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
-          <Tabs.List>
-            {panels.map(panel => (
-              <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
-                {t(panel.label)}
-              </Tabs.Tab>
-            ))}
-          </Tabs.List>
-        </Tabs>
-        {/* need to update this logic */}
-        {(!queryItem.panel || queryItem.panel === "table") && (
-          <Box sx={{display: "flex", flex: "1 1 auto"}}>
-            <MRT_TopToolbar table={table} />
-          </Box>
-        )}
-      </Flex>
-      {isPreviewMode && (
-        <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
-          <Group position="apart">
-            <Text>
-              <Text fw={700} span>
-                {t("previewMode.title_preview")}:{" "}
-              </Text>
-              <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
-            </Text>
-            <PreviewModeSwitch />
-          </Group>
-        </Alert>
-      )}
-
-      <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
-        <Suspense fallback={props.children}>
-          <Flex h="100%">
-            <Box sx={{flex: "1 1"}}>
-              <CurrentComponent
-                panelKey={`${panelKey}-${panelMeta}`}
-                cube={cube}
-                params={params}
-                result={result}
-                table={table}
-              />
+    <Flex gap="xs" direction="column" w="100%" className={props.className}>
+      <Paper id="query-results-success" h={"100%"}>
+        <Flex justify={"space-between"} mih={56}>
+          <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
+          {/* need to update this logic */}
+          {(!queryItem.panel || queryItem.panel === "table") && (
+            <Box sx={{display: "flex", flex: "1 1 auto"}}>
+              <MRT_TopToolbar table={table} />
             </Box>
-          </Flex>
-        </Suspense>
-      </Box>
-    </Paper>
+          )}
+        </Flex>
+        {isPreviewMode && (
+          <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
+            <Group position="apart">
+              <Text>
+                <Text fw={700} span>
+                  {t("previewMode.title_preview")}:{" "}
+                </Text>
+                <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
+              </Text>
+              <PreviewModeSwitch />
+            </Group>
+          </Alert>
+        )}
+
+        <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
+          <Suspense fallback={props.children}>
+            <Flex h="100%">
+              <Box sx={{flex: "1 1"}}>
+                <CurrentComponent
+                  panelKey={`${panelKey}-${panelMeta}`}
+                  cube={cube}
+                  params={params}
+                  result={result}
+                  table={table}
+                />
+              </Box>
+            </Flex>
+          </Suspense>
+        </Box>
+      </Paper>
+    </Flex>
+
   );
 }
