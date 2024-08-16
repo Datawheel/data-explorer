@@ -146,7 +146,7 @@ function getMantineFilterMultiSelectProps(
   if (result.filterVariant === "multi-select") {
     if (entity._type === "level") {
       const dd = Object.keys(drilldowns).reduce(
-        (prev, key) => ({...prev, [drilldowns[key].fullName]: drilldowns[key]}),
+        (prev, key) => ({...prev, [drilldowns[key].uniqueName]: drilldowns[key]}),
         {}
       );
       const drilldwonData = dd[entity.uniqueName];
@@ -682,7 +682,6 @@ export function useTable({
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching
-      // sorting,
     },
     ...constTableProps,
     ...mantineTableProps
@@ -702,151 +701,147 @@ export function TableView({table, result}: TableView) {
     <Box sx={{height: "100%"}}>
       {/* <LoadingOverlay /> */}
       <ProgressBar isTopToolbar table={table} />
-      <Flex justify="space-between" align="center" sx={{height: "100%"}}>
-        <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
-          <Box
-            sx={{
-              flex: isData ? "1 1 auto" : "0 0 auto",
-              height: isData ? "100%" : "auto",
-              maxHeight: "calc(100vh - 210px)",
-              position: "relative",
-              overflow: "scroll"
-            }}
+      <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
+        <Box
+          sx={{
+            flex: isData ? "1 1 auto" : "0 0 auto",
+            height: isData ? "100%" : "auto",
+            maxHeight: "calc(100vh - 210px)",
+            position: "relative",
+            overflow: "scroll"
+          }}
+        >
+          <Table
+            captionSide="top"
+            fontSize="md"
+            highlightOnHover
+            horizontalSpacing="xl"
+            striped
+            verticalSpacing="xs"
+            withBorder
+            withColumnBorders
           >
-            <Table
-              captionSide="top"
-              fontSize="md"
-              highlightOnHover
-              horizontalSpacing="xl"
-              striped
-              verticalSpacing="xs"
-              withBorder
-              withColumnBorders
+            <Box
+              component="thead"
+              sx={{
+                position: "relative",
+                top: 0
+              }}
             >
-              <Box
-                component="thead"
-                sx={{
-                  position: "relative",
-                  top: 0
-                }}
-              >
-                {table.getHeaderGroups().map(headerGroup => (
-                  <Box component="tr" key={headerGroup.id}>
-                    {headerGroup.headers.map(header => {
-                      const column = table.getColumn(header.id);
-                      if (column.id !== "mrt-row-numbers") {
-                        const isNumeric = column.columnDef.dataType === "number";
-                        return (
+              {table.getHeaderGroups().map(headerGroup => (
+                <Box component="tr" key={headerGroup.id}>
+                  {headerGroup.headers.map(header => {
+                    const column = table.getColumn(header.id);
+                    if (column.id !== "mrt-row-numbers") {
+                      const isNumeric = column.columnDef.dataType === "number";
+                      return (
+                        <Box
+                          component="th"
+                          key={header.id}
+                          sx={theme => ({
+                            backgroundColor:
+                              theme.colorScheme === "dark"
+                                ? theme.colors.dark[7]
+                                : theme.colors.gray[0],
+                            align: isNumeric ? "right" : "left",
+                            height: 60,
+                            paddingBottom: 10,
+                            width: 300,
+                            position: "sticky",
+                            fontSize: theme.fontSizes.sm,
+                            top: 0,
+                            display: "table-cell"
+                          })}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.Header ?? header.column.columnDef.header,
+                                header.getContext()
+                              )}
+                          <MRT_TableHeadCellFilterContainer header={header} table={table} />
+                        </Box>
+                      );
+                    } else {
+                      return (
+                        <>
                           <Box
                             component="th"
                             key={header.id}
                             sx={theme => ({
+                              width: `calc(1rem * ${
+                                String(table.getRowModel().rows.length).length
+                              })`,
+                              maxWidth: `calc(1rem * ${
+                                String(table.getRowModel().rows.length).length
+                              })`,
+                              position: "sticky",
+                              top: 0,
                               backgroundColor:
                                 theme.colorScheme === "dark"
                                   ? theme.colors.dark[7]
                                   : theme.colors.gray[0],
-                              align: isNumeric ? "right" : "left",
-                              height: 60,
-                              paddingBottom: 10,
-                              width: 300,
-                              position: "sticky",
-                              fontSize: theme.fontSizes.sm,
-                              top: 0,
                               display: "table-cell"
                             })}
                           >
-                            {header.isPlaceholder
-                              ? null
-                              : flexRender(
-                                  header.column.columnDef.Header ?? header.column.columnDef.header,
-                                  header.getContext()
-                                )}
-                            <MRT_TableHeadCellFilterContainer header={header} table={table} />
-                          </Box>
-                        );
-                      } else {
-                        return (
-                          <>
-                            <Box
-                              component="th"
-                              key={header.id}
-                              sx={theme => ({
-                                width: `calc(1rem * ${
-                                  String(table.getRowModel().rows.length).length
-                                })`,
-                                maxWidth: `calc(1rem * ${
-                                  String(table.getRowModel().rows.length).length
-                                })`,
-                                position: "sticky",
-                                top: 0,
-                                backgroundColor:
-                                  theme.colorScheme === "dark"
-                                    ? theme.colors.dark[7]
-                                    : theme.colors.gray[0],
-                                display: "table-cell"
-                              })}
-                            >
-                              <Box>
-                                {header.isPlaceholder
-                                  ? null
-                                  : flexRender(
-                                      header.column.columnDef.Header ??
-                                        header.column.columnDef.header,
-                                      header.getContext()
-                                    )}
-                              </Box>
+                            <Box>
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.Header ??
+                                      header.column.columnDef.header,
+                                    header.getContext()
+                                  )}
                             </Box>
-                          </>
-                        );
-                      }
+                          </Box>
+                        </>
+                      );
+                    }
+                  })}
+                  <Box
+                    component="th"
+                    key={"placeholder"}
+                    sx={theme => ({
+                      backgroundColor:
+                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                      align: "center",
+                      height: 60,
+                      paddingBottom: 10,
+                      width: 20,
+                      position: "sticky",
+                      top: 0,
+                      display: "table-cell",
+                      textAlign: "center"
                     })}
-                    <Box
-                      component="th"
-                      key={"placeholder"}
-                      sx={theme => ({
-                        backgroundColor:
-                          theme.colorScheme === "dark"
-                            ? theme.colors.dark[7]
-                            : theme.colors.gray[0],
-                        align: "center",
-                        height: 60,
-                        paddingBottom: 10,
-                        width: 20,
-                        position: "sticky",
-                        top: 0,
-                        display: "table-cell",
-                        textAlign: "center"
-                      })}
-                    >
-                      <OptionsMenu>
-                        <PlusSVG />
-                      </OptionsMenu>
-                    </Box>
+                  >
+                    <OptionsMenu>
+                      <PlusSVG />
+                    </OptionsMenu>
                   </Box>
+                </Box>
+              ))}
+            </Box>
+            {isData && (
+              <Box component="tbody">
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map(cell => (
+                      <MRT_TableBodyCell
+                        key={cell.id}
+                        cell={cell}
+                        rowIndex={row.index}
+                        table={table}
+                      />
+                    ))}
+                  </tr>
                 ))}
               </Box>
-              {isData && (
-                <Box component="tbody">
-                  {table.getRowModel().rows.map(row => (
-                    <tr key={row.id}>
-                      {row.getVisibleCells().map(cell => (
-                        <MRT_TableBodyCell
-                          key={cell.id}
-                          cell={cell}
-                          rowIndex={row.index}
-                          table={table}
-                        />
-                      ))}
-                    </tr>
-                  ))}
-                </Box>
-              )}
-            </Table>
-            {!isData && <NoRecords />}
-          </Box>
-          <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-          <TableFooter table={table} result={result} />
-        </Flex>
+            )}
+          </Table>
+          {!isData && <NoRecords />}
+        </Box>
+        <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
+        <TableFooter table={table} result={result} />
       </Flex>
     </Box>
   );
