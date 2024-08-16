@@ -1,20 +1,20 @@
-import type {PlainCube} from "@datawheel/olap-client";
-import {filterMap} from "./array";
-import {getCaption, parseNumeric} from "./string";
-import type {AnyResultColumn, QueryParams} from "./structs";
-import type {Annotated} from "./types";
+import type { PlainCube } from "@datawheel/olap-client";
+import { filterMap } from "./array";
+import { getCaption, parseNumeric } from "./string";
+import type { AnyResultColumn, QueryParams } from "./structs";
+import type { Annotated } from "./types";
 
 /**
  * Wraps `Object.keys` for reusability.
  */
-export function getKeys<T>(map: {[s: string]: T}): string[] {
+export function getKeys<T>(map: { [s: string]: T }): string[] {
   return Object.keys(map);
 }
 
 /**
  * Wraps `Object.values` for reusability.
  */
-export function getValues<T>(map: {[s: string]: T}): T[] {
+export function getValues<T>(map: { [s: string]: T }): T[] {
   return Object.values(map);
 }
 
@@ -44,7 +44,7 @@ export function describeData(
   params: QueryParams,
   data: Record<string, any>[]
 ): Record<string, AnyResultColumn> {
-  const {locale} = params;
+  const { locale } = params;
 
   const measureMap = new Map(cube.measures.map(msr => [msr.name, msr]));
   const measures = filterMap(Object.values(params.measures), item =>
@@ -83,7 +83,7 @@ export function describeData(
   };
 
   return Object.fromEntries(
-    filterMap<string, [string, AnyResultColumn]>(Object.keys(data[0]), key => {
+    filterMap<string, [string, AnyResultColumn]>(Object.keys(data[0] || {}), key => {
       const entity = entityFinder(key);
       if (!entity) return null;
       const typeSet = new Set(data.map(item => typeof item[key]));
@@ -91,9 +91,9 @@ export function describeData(
       const valueType =
         typeSet.size === 1 ?
           typeSet.has("number") ? "number" :
-          typeSet.has("boolean") ? "boolean" :
+            typeSet.has("boolean") ? "boolean" :
           /* else */ "string" :
-        typeSet.has("number") ? "number" : "string";
+          typeSet.has("number") ? "number" : "string";
       /* eslint-enable indent, operator-linebreak */
       const isId = key !== entity.name;
       return [key, {

@@ -1,4 +1,4 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Table} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -12,6 +12,7 @@ import {
   MRT_ColumnFiltersState,
   MRT_PaginationState,
   MRT_ColumnFilterFnsState,
+  MRT_ToolbarAlertBanner,
   MRT_ProgressBar as ProgressBar
 } from "mantine-react-table";
 import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
@@ -37,12 +38,13 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-import type {MeasureItem, QueryResult, DrilldownItem, CutItem} from "../utils/structs";
+import type {MeasureItem, QueryResult, DrilldownItem, CutItem, FilterItem} from "../utils/structs";
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
 // import {LoadingOverlay} from "./LoadingOverlay";
 import {useQuery} from "@tanstack/react-query";
+import {ColumnFilter} from "@tanstack/table-core";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -113,13 +115,11 @@ const getColumnFilterOption = (entityType: EntityTypes) => {
   }
 };
 
-function getMemberFilterFn(data, key: string) {
-  const dd = data[0];
-  if (dd[key + " " + "ID"]) {
+function getMemberFilterFnTypes(data, key: string) {
+  if (data[key + " " + "ID"]) {
     return member => `${member.caption} ${member.key}`;
   }
-  // api changed
-  // return member => member.caption;
+  // api changed. return member => member.caption;
   return member => member.name;
 }
 
@@ -130,7 +130,8 @@ function getMantineFilterMultiSelectProps(
   entity: PlainLevel | PlainMeasure | PlainProperty,
   drilldowns: Record<string, DrilldownItem>,
   data: TData[],
-  columnKey: string
+  columnKey: string,
+  types: Record<string, AnyResultColumn>
 ) {
   let result: {
     filterVariant?: "multi-select" | "text";
@@ -149,10 +150,9 @@ function getMantineFilterMultiSelectProps(
         {}
       );
       const drilldwonData = dd[entity.uniqueName];
-      console.log(drilldwonData, "Key");
-      console.log(columnKey, "key");
+
       if (drilldwonData && drilldwonData.members) {
-        const getmemberFilterValue = getMemberFilterFn(data, columnKey);
+        const getmemberFilterValue = getMemberFilterFnTypes(types, columnKey);
         result = Object.assign({}, result, {
           mantineFilterMultiSelectProps: {
             data: drilldwonData.members.map(getmemberFilterValue)
@@ -200,9 +200,48 @@ function getLastWord(str) {
 }
 type UserApiResponse = any;
 
-const useTableDataType = {};
+interface Condition {
+  conditionOne: [string, string, number];
+  conditionTwo?: [string, string, number];
+  joint?: string;
+}
+
+type ComparisonFunction = (value: number[]) => Condition;
+
+function getFiltersConditions(fn: string, value: number[]) {
+  const comparisonMap = new Map<string, ComparisonFunction>([
+    [
+      "greaterThan",
+      (value: number[]): Condition => ({
+        conditionOne: [Comparison.GTE, String(value[0]), Number(value[0])]
+      })
+    ],
+    [
+      "lessThan",
+      (value: number[]): Condition => ({
+        conditionOne: [Comparison.LTE, String(value[0]), Number(value[0])]
+      })
+    ],
+    [
+      "between",
+      (values: number[]): Condition => {
+        const [min, max] = values;
+        if (min && max) {
+          return {
+            conditionOne: [Comparison.GTE, String(min), Number(min)],
+            conditionTwo: [Comparison.LTE, String(max), Number(max)],
+            joint: "and"
+          };
+        }
+      }
+    ]
+  ]);
+
+  return comparisonMap.get(fn)?.(value);
+}
 
 //refetch whenever the URL changes (columnFilters, globalFilter, sorting, pagination)
+
 function useTableData({offset, limit, columns}) {
   const actions = useActions();
   const key = ["table", limit, offset, ...columns];
@@ -210,11 +249,12 @@ function useTableData({offset, limit, columns}) {
   return useQuery<UserApiResponse>({
     queryKey: key,
     queryFn: () => {
-      return actions.willExecuteQuery();
+      console.log("agreagation Me LLama", key);
+      return actions.willExecuteQuery().then(data => {
+        return data ?? [];
+      });
     },
-    staleTime: 300000
-    // 5 min
-    // enabled
+    staleTime: 300000 // 5 min
   });
 }
 
@@ -239,7 +279,7 @@ export function useTable({
 
   // const finalUniqueKeys = finalKeys.map(c => c.entity?.fullName ?? c.entity?.name);
 
-  const {locale, measures, drilldowns, filters} = useSelector(selectCurrentQueryParams);
+  const {measures, drilldowns, filters} = useSelector(selectCurrentQueryParams);
 
   const finalUniqueKeys = [
     ...Object.keys(measures).reduce((prev, curr) => {
@@ -272,6 +312,7 @@ export function useTable({
     isLoading,
     isFetching,
     isError,
+    error,
     data: tableData,
     refetch
   } = useTableData({
@@ -279,6 +320,8 @@ export function useTable({
     limit,
     columns: finalUniqueKeys
   });
+
+  console.log(tableData, isError, error, "Error");
   //this will depend on your API response shape
   const fetchedTableData = tableData ?? [];
   // const totalRowCount = data?.meta?.totalRowCount ?? 0;
@@ -311,15 +354,48 @@ export function useTable({
     actions.updateCut({...item, members});
   }, []);
 
-  function notFound(cut: CutItem, columnFilters: MRT_ColumnFiltersState) {
-    // add case for measure
+  function isArrayEmpty(array: string[]): boolean {
+    return array.some(item => item === "");
+  }
+
+  function handleFilterCreate(value: unknown, columnFilter: ColumnFilter, filterFn: string) {
+    if (typeof value === "string") {
+      // Handle the case where value is a string
+      const conditions = getFiltersConditions(filterFn, [Number(value)]) ?? {};
+      return buildFilter({
+        active: true,
+        key: columnFilter.id,
+        name: columnFilter.id,
+        ...conditions
+      });
+    } else if (Array.isArray(value) && !isArrayEmpty(value)) {
+      const conditions =
+        getFiltersConditions(
+          filterFn,
+          value.map(item => Number(item))
+        ) ?? {};
+      return buildFilter({
+        active: true,
+        key: columnFilter.id,
+        name: columnFilter.id,
+        ...conditions
+      });
+    } else {
+      return null;
+    }
+  }
+
+  function notFoundCut(cut: CutItem, columnFilters: MRT_ColumnFiltersState) {
     const column = columnFilters.find(c => c.id === cut.uniqueName);
     return !column;
   }
+  function notFoundFilter(filter: FilterItem, columnFilters: MRT_ColumnFiltersState) {
+    const column = columnFilters.find(c => c.id === filter.measure);
+    return !column;
+  }
+
   useEffect(() => {
     let cleaned = false;
-    console.log(columnFilters, "CL"); // arr
-    console.log(columnFilterFns, "CL 1"); // object
 
     for (const columnFilter of columnFilters) {
       const column = finalKeys.find(f => {
@@ -344,25 +420,24 @@ export function useTable({
         const value = columnFilter.value;
         console.log(filterFn, value, "filters");
 
-        console.log(filters, "filters");
-        console.log(Comparison, "Compariosion");
-
-        const filter = buildFilter({
-          active: true,
-          key: columnFilter.id,
-          name: columnFilter.id,
-          conditionOne: [Comparison.GT, String(value), Number(value)]
-        });
-        actions.updateFilter(filter);
+        const filter = handleFilterCreate(value, columnFilter, filterFn);
+        filter && actions.updateFilter(filter);
+        filter && refetch();
         console.log(filter, "filter2");
-        refetch();
-        //find or create Filter
       }
     }
 
     for (const cut of itemsCuts) {
-      if (cut.active && notFound(cut, columnFilters)) {
+      if (cut.active && notFoundCut(cut, columnFilters)) {
         updatecutHandler({...cut, active: false}, []);
+        cleaned = true;
+      }
+    }
+
+    for (const key in filters) {
+      const filter = filters[key];
+      if (filter.active && notFoundFilter(filter, columnFilters)) {
+        actions.updateFilter({...filter, active: false});
         cleaned = true;
       }
     }
@@ -394,7 +469,8 @@ export function useTable({
         entity,
         drilldowns,
         data,
-        columnKey
+        columnKey,
+        types
       );
 
       return {
@@ -479,22 +555,25 @@ export function useTable({
     });
   }, [currentFormats, data, types, drilldowns, measures]);
 
-  console.log(columns, "columns");
-
   // maybe not render until we have derived columns data.
   useLayoutEffect(() => {
-    const fns = columns
-      .filter(({entityType}) => entityType === "measure")
-      .map(({id}) => [id, "greaterThan"]);
-    setColumnFilterFns(Object.fromEntries(fns));
+    // const fns = columns
+    //   .filter(({entityType}) => entityType === "measure")
+    //   .map(({id}) => [id, "greaterThan"]);
+    // setColumnFilterFns(Object.fromEntries(fns));
   }, [columns]);
 
   const [columnFilterFns, setColumnFilterFns] = useState<MRT_ColumnFilterFnsState>([]);
-  console.log(columnFilterFns, "columnFilterFns");
 
   const constTableProps = useMemo(
     () =>
       ({
+        mantineToolbarAlertBannerProps: isError
+          ? {
+              color: "red",
+              children: "Error loading data"
+            }
+          : undefined,
         enableBottomToolbar: isLimited,
         enableColumnFilterModes: true,
         enableColumnResizing: true,
@@ -608,6 +687,7 @@ type TableView = {
 } & ViewProps;
 
 export function TableView({table, result}: TableView) {
+  const isData = Boolean(table.getRowModel().rows.length);
   return (
     <Box sx={{height: "100%"}}>
       {/* <LoadingOverlay /> */}
@@ -616,8 +696,8 @@ export function TableView({table, result}: TableView) {
         <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
           <Box
             sx={{
-              flex: "1 1 auto",
-              height: "100%",
+              flex: isData ? "1 1 auto" : "0 0 auto",
+              height: isData ? "100%" : "auto",
               maxHeight: "calc(100vh - 210px)",
               position: "relative",
               overflow: "scroll"
@@ -704,23 +784,27 @@ export function TableView({table, result}: TableView) {
                   </Box>
                 ))}
               </Box>
-              <Box component="tbody">
-                {table.getRowModel().rows.map(row => (
-                  <tr key={row.id}>
-                    {row.getVisibleCells().map(cell => (
-                      <MRT_TableBodyCell
-                        key={cell.id}
-                        cell={cell}
-                        rowIndex={row.index}
-                        table={table}
-                      />
-                    ))}
-                  </tr>
-                ))}
-              </Box>
+              {isData && (
+                <Box component="tbody">
+                  {table.getRowModel().rows.map(row => (
+                    <tr key={row.id}>
+                      {row.getVisibleCells().map(cell => (
+                        <MRT_TableBodyCell
+                          key={cell.id}
+                          cell={cell}
+                          rowIndex={row.index}
+                          table={table}
+                        />
+                      ))}
+                    </tr>
+                  ))}
+                </Box>
+              )}
             </Table>
           </Box>
-          {/* <MRT_ToolbarAlertBanner stackAlertBanner table={table} /> */}
+          {!isData && <NoRecords />}
+
+          <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
           <TableFooter table={table} result={result} />
         </Flex>
         <Box px="xl" py={"sm"} sx={{alignSelf: "self-start"}}>
@@ -733,6 +817,15 @@ export function TableView({table, result}: TableView) {
   );
 }
 
+const NoRecords = () => {
+  return (
+    <Center style={{flex: "1 1 auto"}}>
+      <Text size="xl" color="gray" italic>
+        No records to display.
+      </Text>
+    </Center>
+  );
+};
 export default TableView;
 
 TableView.displayName = "TesseractExplorer:TableView";

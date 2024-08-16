@@ -26,7 +26,6 @@ import {PanelDescriptor} from "../utils/types";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {MRT_TopToolbar} from "mantine-react-table";
 import {useTable} from "./TableView";
-import {selectLoadingState} from "../state/loading";
 
 const useStyles = createStyles(() => ({
   container: {

@@ -7,7 +7,7 @@ import { keyBy } from "../utils/transform";
 import { FileDescriptor } from "../utils/types";
 import { isValidQuery } from "../utils/validation";
 import { loadingActions } from "./loading";
-import { queriesActions, selectCubeName, selectCurrentQueryParams, selectLocale, selectMeasureItems, selectQueryItems } from "./queries";
+import { queriesActions, selectCubeName, selectCurrentQueryItem, selectCurrentQueryParams, selectLocale, selectMeasureItems, selectQueryItems } from "./queries";
 import { selectOlapCubeMap, selectServerEndpoint, serverActions } from "./server";
 import { ExplorerThunk } from "./store";
 import { calcMaxMemberCount, hydrateDrilldownProperties } from "./utils";
@@ -68,6 +68,9 @@ export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
     const state = getState();
     const params = selectCurrentQueryParams(state);
     const endpoint = selectServerEndpoint(state);
+
+    const { result: currentResult } = selectCurrentQueryItem(state);
+
     if (!isValidQuery(params)) return Promise.resolve();
     return olapClient.getCube(params.cube)
       .then(cube => {
@@ -81,10 +84,13 @@ export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
           })
         ]).then(result => {
           const [aggregation] = result;
+          console.log(aggregation, "agregation")
+
+
           dispatch(
             queriesActions.updateResult({
               data: aggregation.data,
-              types: describeData(cube.toJSON(), params, aggregation.data),
+              types: aggregation.data.length ? describeData(cube.toJSON(), params, aggregation.data) : currentResult.types,
               headers: { ...aggregation.headers },
               sourceCall: query.toSource(),
               status: aggregation.status || 500,
