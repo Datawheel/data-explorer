@@ -1,5 +1,5 @@
-/* eslint-disable comma-dangle */
-import { translationFactory } from "@datawheel/use-translation";
+import {translationFactory} from "@datawheel/use-translation";
+import {translationDict as vizbuilderTranslationDict} from "@datawheel/vizbuilder";
 
 export const defaultTranslation = {
   action_copy: "Copy",
@@ -32,11 +32,12 @@ export const defaultTranslation = {
     json: "JSON",
     jsonarrays: "JSON Arrays",
     jsonrecords: "JSON Records",
-    xls: "XLS"
+    xls: "XLS",
   },
   loading: {
     title: "Loading...",
-    message_heavyquery: "The current query might contain a maximum of {{rows}} rows.\nPlease wait...",
+    message_heavyquery:
+      "The current query might contain a maximum of {{rows}} rows.\nPlease wait...",
     message_default: "Please wait...",
   },
   params: {
@@ -49,7 +50,8 @@ export const defaultTranslation = {
     dimmenu_dimension: "{{dimension}}",
     dimmenu_hierarchy: "{{abbr}}",
     dimmenu_level: "{{abbr}}",
-    error_no_cut_selected_detail: "You can add data filters based on selected drilldowns.",
+    error_no_cut_selected_detail:
+      "You can add data filters based on selected drilldowns.",
     error_no_cut_selected_title: "No cuts added",
     error_no_dimension_selected_detail: "You must add at least one drilldown.",
     error_no_dimension_selected_title: "No drilldowns selected",
@@ -104,10 +106,14 @@ export const defaultTranslation = {
   },
   pivot_view: {
     tab_label: "Pivot Data",
-    error_missingparams: "The current query doesn't have enough parameters. Two different drilldowns and a measure are needed.",
-    error_onedimension: "The rows and columns in a pivotted table need 2 different drilldowns.",
-    error_internal: "An internal error ocurred in the pivotting tool. We will fix it as soon as possible.",
-    error_internal_detail: "If you need to contact us about this error, please include this message:\n{error}",
+    error_missingparams:
+      "The current query doesn't have enough parameters. Two different drilldowns and a measure are needed.",
+    error_onedimension:
+      "The rows and columns in a pivotted table need 2 different drilldowns.",
+    error_internal:
+      "An internal error ocurred in the pivotting tool. We will fix it as soon as possible.",
+    error_internal_detail:
+      "If you need to contact us about this error, please include this message:\n{error}",
     label_ddcolumn: "Column drilldown",
     label_ddcolumnprop: "Column property",
     label_ddrow: "Row drilldown",
@@ -119,9 +125,12 @@ export const defaultTranslation = {
     title_download: "Download matrix",
     title_params: "Matrix params",
     warning: "Warning",
-    warning_notsummeasure: "The current query contains more than 2 drilldowns, and the aggregation type of the measure is not \"SUM\". The values you're getting might not be meaningful.",
-    warning_propertypivot: "Unlike Drilldown Members, Drilldown Properties are not guaranteed to be unique. In this view, data points are aggregated based on the property labels, so please ensure you're not missing information.",
-    warning_sumdimensions: "There's more than 2 drilldowns in this query. Remaining values will be summed.",
+    warning_notsummeasure:
+      'The current query contains more than 2 drilldowns, and the aggregation type of the measure is not "SUM". The values you\'re getting might not be meaningful.',
+    warning_propertypivot:
+      "Unlike Drilldown Members, Drilldown Properties are not guaranteed to be unique. In this view, data points are aggregated based on the property labels, so please ensure you're not missing information.",
+    warning_sumdimensions:
+      "There's more than 2 drilldowns in this query. Remaining values will be summed.",
   },
   placeholders: {
     incomplete: "[Incomplete parameters]",
@@ -131,10 +140,12 @@ export const defaultTranslation = {
   previewMode: {
     btn_get_all: "Show all rows",
     btn_get_preview: "Show preview",
-    description_full: "You are currently viewing all available rows. Turn off for faster performance.",
-    description_preview: "You are currently viewing a preview response of the first {{limit}} rows.",
+    description_full:
+      "You are currently viewing all available rows. Turn off for faster performance.",
+    description_preview:
+      "You are currently viewing a preview response of the first {{limit}} rows.",
     title_full: "All records",
-    title_preview: "Preview records"
+    title_preview: "Preview records",
   },
   queries: {
     action_create: "New query",
@@ -142,8 +153,10 @@ export const defaultTranslation = {
     error_not_query: "Please construct a valid query",
     error_no_drilldowns: "You must add at least one drilldown.",
     error_no_measures: "You must add at least one measure.",
-    error_one_hierarchy_per_dimension: "You must only select drilldowns of a single hierarchy.",
-    error_one_cut_per_dimension: "You must only apply cuts over levels of a single hierarchy.",
+    error_one_hierarchy_per_dimension:
+      "You must only select drilldowns of a single hierarchy.",
+    error_one_cut_per_dimension:
+      "You must only apply cuts over levels of a single hierarchy.",
     column_title: "Queries",
     unset_parameters: "No parameters set",
   },
@@ -153,7 +166,8 @@ export const defaultTranslation = {
     error_serveroffline_title: "There's a problem contacting with the server",
     error_serveroffline_detail: "Check the availability of the URL ",
     error_emptyresult_title: "Empty dataset",
-    error_emptyresult_detail: "The query didn't return elements. Try again with different parameters.",
+    error_emptyresult_detail:
+      "The query didn't return elements. Try again with different parameters.",
     count_rows: "{{n}} row",
     count_rows_plural: "{{n}} rows",
   },
@@ -175,14 +189,12 @@ export const defaultTranslation = {
     select_filtered: "Select filtered",
     unselect_filtered: "Unselect filtered",
     selected_items: "Selected items",
-    unselected_items: "Unselected items"
-  }
+    unselected_items: "Unselected items",
+  },
+  vizbuilder: vizbuilderTranslationDict,
 };
 
 export type TranslationDict = typeof defaultTranslation;
 
-export const {
-  useTranslation,
-  TranslationConsumer,
-  TranslationProvider
-} = translationFactory({ defaultLocale: "en", defaultTranslation });
+export const {useTranslation, TranslationConsumer, TranslationProvider} =
+  translationFactory({defaultLocale: "en", defaultTranslation});

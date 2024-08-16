@@ -1,3 +1,2 @@
-import {Translation} from "@datawheel/vizbuilder";
-
+export {Translation} from "@datawheel/vizbuilder";
 export {createVizbuilderView} from "./components/VizbuilderView";

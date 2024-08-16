@@ -6,7 +6,6 @@ import {
   defineConfig,
   loadEnv,
 } from "vite";
-import pluginDts from "vite-plugin-dts";
 
 import pkg from "./package.json";
 
@@ -34,14 +33,9 @@ export default defineConfig(({command, mode}) => {
         pkg.name,
         ...Object.keys(pkg.dependencies),
         ...Object.keys(pkg.peerDependencies),
-        ...Object.keys(pkg.optionalDependencies),
       ],
     },
   };
-
-  if (mode === "production") {
-    plugins.push(pluginDts({include: ["./src"]}));
-  }
 
   return {
     define: {
