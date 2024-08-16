@@ -15,7 +15,7 @@ import {
   MRT_TableInstance,
   MRT_TableBodyCellValue
 } from "mantine-react-table";
-import React, {useMemo, useState} from "react";
+import React, {useMemo, useRef, useState, useEffect} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
 import {AnyResultColumn} from "../utils/structs";
@@ -273,6 +273,7 @@ export function useTable({
           }
           return 0;
         },
+        getFilterValue: () => {},
         Header: ({column}) => {
           return (
             <Box mb={rem(5)}>
@@ -316,34 +317,25 @@ export function useTable({
         formatterKey,
         id: columnKey,
         dataType: valueType,
-        accessorFn: item => {
-          if (item[columnKey + " " + "ID"]) {
-            return {value: item[columnKey], id: item[columnKey + " " + "ID"]};
-          }
-          return item[columnKey];
-        },
+        accessorFn: item => item[columnKey],
         Cell: isNumeric
           ? ({cell}) => formatter(cell.getValue<number>())
-          : ({renderedCellValue}) => {
-              if (renderedCellValue && typeof renderedCellValue === "object") {
-                return (
-                  <Flex justify="space-between" sx={{width: "100%"}} gap="sm">
-                    <Text
-                      size="sm"
+          : ({cell, renderedCellValue, row}) => {
+              const cellId = row.original[`${cell.column.id} ID`];
+              return (
+                <Flex justify="space-between" sx={{width: "100%"}} gap="sm">
+                  <Text size="sm"
                       sx={{
                         whiteSpace: "nowrap",
                         overflow: "hidden",
                         textOverflow: "ellipsis"
-                        }}>
-                          {renderedCellValue.value}
-                    </Text>
+                        }}>{renderedCellValue}</Text>
                     <Box>
-                      <Text color="dimmed" size="sm">{renderedCellValue.id}</Text>
-                    </Box>
-                  </Flex>
-                );
-              }
-            }
+                    {cellId && <Text color="dimmed">{cellId}</Text>}
+                  </Box>
+                </Flex>
+              );
+          }
       };
     });
   }, [currentFormats, data, types, drilldowns, measures]);
@@ -377,7 +369,7 @@ export function useTable({
           }
         },
         enableRowVirtualization: false,
-        globalFilterFn: "contains",
+        // globalFilterFn: "contains",
         initialState: {
           density: "xs",
           showColumnFilters: true,

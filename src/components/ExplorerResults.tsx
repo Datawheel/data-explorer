@@ -25,11 +25,11 @@ import {selectServerState} from "../state/server";
 import {QueryParams, QueryResult} from "../utils/structs";
 import {PanelDescriptor} from "../utils/types";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
-import {MRT_TopToolbar} from "mantine-react-table";
 import {useTable} from "./TableView";
 import {selectLoadingState} from "../state/loading";
-import CubeSource from "./CubeSource";
+import Toolbar from "./Toolbar";
 import { ExplorerTabs } from "./ExplorerTabs";
+import { useFullscreen } from "@mantine/hooks";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -38,7 +38,6 @@ const useStyles = createStyles(() => ({
     flexFlow: "column nowrap"
   }
 }));
-
 /**
  * Renders the result area in the UI.
  */
@@ -196,6 +195,8 @@ function SuccessResult(props: {
 
   const {table} = useTable({cube, result});
 
+  const fullscreen = useFullscreen();
+
   const [CurrentComponent, panelKey, panelMeta] = useMemo(() => {
     const currentPanel = queryItem.panel || `${panels[0].key}-`;
     const [panelKey, ...panelMeta] = currentPanel.split("-");
@@ -209,13 +210,19 @@ function SuccessResult(props: {
 
   return (
     <Flex gap="xs" direction="column" w="100%" className={props.className}>
-      <Paper id="query-results-success" h={"100%"}>
-        <Flex justify={"space-between"} mih={56}>
+      <Paper ref={fullscreen.ref} id="query-results-success" h={"100%"}>
+        <Flex
+          sx={t => ({
+            alignItems: "center",
+            background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[1],
+            justifyContent: "space-between"
+          })}
+          w="100%">
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Box sx={{display: "flex", flex: "1 1 auto"}}>
-              <MRT_TopToolbar table={table} />
+            <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
+              <Toolbar table={table} fullscreen={fullscreen}/>
             </Box>
           )}
         </Flex>

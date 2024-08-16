@@ -3,7 +3,7 @@ import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {ActionIcon, Menu, Box, Flex, Text, Loader, Button, Group} from "@mantine/core";
 import {useTranslation} from "../hooks/translation";
-import {IconCopy, IconDownload} from "@tabler/icons-react";
+import {IconCopy, IconDotsVertical, IconDownload} from "@tabler/icons-react";
 import type {ViewProps} from "../main";
 import type {MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
@@ -49,7 +49,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
   const {translate: t} = useTranslation();
   return (
     <Box id="query-results-debug-view">
-      <Group spacing="sm">
+      <Group spacing="xs">
         {url && (
           <Button
             variant="filled"
@@ -99,7 +99,7 @@ const DownloadQuery = () => {
   /* <Input.Wrapper label={t("params.title_downloaddata")}> */
   return (
     <Box id="button-group-download-results">
-      <Group>
+      <Group spacing={"xs"}>
         {components}
         <MenuOpts formats={formats.filter(f => f !== "csv")} />
       </Group>
@@ -212,14 +212,25 @@ function MenuOpts({formats}: MenuOptsProps) {
   return (
     <Menu shadow="md" width={200} opened={opened}>
       <Menu.Target>
-        <Button
+        <ActionIcon
+          onClick={() => setOpened(o => !o)}
+          variant="filled"
+          color="gray"
+          sx={{
+            width: 20,
+            minWidth: 0
+          }}
+        >
+          <IconDotsVertical  size="0.8rem"/>
+        </ActionIcon>
+        {/* <Button
           onClick={() => setOpened(o => !o)}
           variant="filled"
           color="dark"
           sx={{height: 30, backgroundColor: "#5A5A5A"}}
         >
           All
-        </Button>
+        </Button> */}
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{t("params.title_downloaddata")}</Menu.Label>

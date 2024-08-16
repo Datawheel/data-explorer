@@ -116,4 +116,55 @@ function SortSVG() {
   );
 }
 
-export { IconChevronLeft, IconChevronRight, DataSetSVG, HomeSVG, PlusSVG, StackSVG, BarsSVG, EyeSVG, SortSVG };
+function SearchSVG () {
+  return (
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clip-path="url(#clip0_905_15769)">
+        <path d="M2.25 7.5C2.25 8.18944 2.3858 8.87213 2.64963 9.50909C2.91347 10.146 3.30018 10.7248 3.78769 11.2123C4.2752 11.6998 4.85395 12.0865 5.49091 12.3504C6.12787 12.6142 6.81056 12.75 7.5 12.75C8.18944 12.75 8.87213 12.6142 9.50909 12.3504C10.146 12.0865 10.7248 11.6998 11.2123 11.2123C11.6998 10.7248 12.0865 10.146 12.3504 9.50909C12.6142 8.87213 12.75 8.18944 12.75 7.5C12.75 6.81056 12.6142 6.12787 12.3504 5.49091C12.0865 4.85395 11.6998 4.2752 11.2123 3.78769C10.7248 3.30018 10.146 2.91347 9.50909 2.64963C8.87213 2.3858 8.18944 2.25 7.5 2.25C6.81056 2.25 6.12787 2.3858 5.49091 2.64963C4.85395 2.91347 4.2752 3.30018 3.78769 3.78769C3.30018 4.2752 2.91347 4.85395 2.64963 5.49091C2.3858 6.12787 2.25 6.81056 2.25 7.5Z" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M15.75 15.75L11.25 11.25" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <defs>
+        <clipPath id="clip0_905_15769">
+          <rect width="18" height="18" fill="white"/>
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+function FullScreenSVG () {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clip-path="url(#clip0_905_15763)">
+        <path d="M3.33325 6.66668V5.00001C3.33325 4.55798 3.50885 4.13406 3.82141 3.8215C4.13397 3.50894 4.55789 3.33334 4.99992 3.33334H6.66659" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M3.33325 13.3333V15C3.33325 15.442 3.50885 15.866 3.82141 16.1785C4.13397 16.4911 4.55789 16.6667 4.99992 16.6667H6.66659" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M13.3333 3.33334H14.9999C15.4419 3.33334 15.8659 3.50894 16.1784 3.8215C16.491 4.13406 16.6666 4.55798 16.6666 5.00001V6.66668" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M13.3333 16.6667H14.9999C15.4419 16.6667 15.8659 16.4911 16.1784 16.1785C16.491 15.866 16.6666 15.442 16.6666 15V13.3333" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <defs>
+        <clipPath id="clip0_905_15763">
+          <rect width="20" height="20" fill="white"/>
+        </clipPath>
+      </defs>
+    </svg>
+
+  )
+}
+
+function ClearSVG () {
+  return (
+    <svg width="17" height="16" viewBox="0 0 17 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <g clip-path="url(#clip0_1545_1134)">
+        <path d="M13.4072 10.6882C13.9751 9.56054 14.172 8.28312 13.9697 7.03754C13.7675 5.79196 13.1766 4.64164 12.2808 3.75013C11.3851 2.85861 10.2303 2.27129 8.98048 2.07166C7.73068 1.87204 6.44956 2.07028 5.31928 2.63819M3.7671 3.75952C2.63879 4.88519 2.00527 6.41157 2.0059 8.00288C2.00652 9.59419 2.64125 11.1201 3.77044 12.2449C4.89964 13.3696 6.4308 14.0012 8.02709 14.0006C9.62339 13.9999 11.1541 13.3672 12.2824 12.2415" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M2.00626 2L14.0439 14" stroke="black" stroke-linecap="round" stroke-linejoin="round"/>
+      </g>
+      <defs>
+        <clipPath id="clip0_1545_1134">
+          <rect width="16.0501" height="16" fill="white"/>
+        </clipPath>
+      </defs>
+    </svg>
+
+  )
+}
+export { IconChevronLeft, IconChevronRight, DataSetSVG, HomeSVG, PlusSVG, StackSVG, BarsSVG, EyeSVG, SortSVG, SearchSVG, FullScreenSVG, ClearSVG };
