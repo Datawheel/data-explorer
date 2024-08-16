@@ -1,7 +1,13 @@
 import {useState} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
-import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
+import {
+  CSSObject,
+  Center,
+  createStyles,
+  Header,
+  useMantineTheme
+} from "@mantine/core";
 import React, {useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
@@ -9,10 +15,7 @@ import {useTranslation} from "../hooks/translation";
 import {selectServerState} from "../state/server";
 import {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
-import {ExplorerParams} from "./ExplorerParams";
-import {ExplorerQueries} from "./ExplorerQueries";
 import {ExplorerResults} from "./ExplorerResults";
-import {LoadingOverlay} from "./LoadingOverlay";
 import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
 import {HomeSVG} from "./icons";
@@ -38,7 +41,7 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
 
   flexCol: {
     flex: "1 1 auto",
-
+    height: "calc(100vh - 50px)",
     [theme.fn.largerThan("md")]: {
       width: 0
     }

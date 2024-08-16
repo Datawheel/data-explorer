@@ -1,5 +1,5 @@
 import React, {PropsWithChildren, useState, useMemo, useEffect} from "react";
-import {Box, Flex, ActionIcon, Text, rem, ScrollArea, Input} from "@mantine/core";
+import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group, Title} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
@@ -8,8 +8,8 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {getKeys} from "./SelectCubes";
 import {AnnotatedCube} from "./SelectCubes";
+import { LocaleSelector } from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
-import {CubeAnnotation, CubeSourceAnchor} from "./SelectCubes";
 import {selectOlapCube} from "../state/selectors";
 import {AreaCuts} from "./AreaCuts";
 
@@ -31,7 +31,6 @@ export const [useSideBar, Provider] =
   createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
 
 export function SideBarProvider(props: PropsWithChildren<{}>) {
-  const {code: locale} = useSelector(selectLocale);
   const [input, setInput] = useState<string>("");
   const [expanded, setExpanded] = useState<boolean>(false);
   const [results, setResults] = useState<string[]>([]);
@@ -66,89 +65,77 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
-  const {translate: t, locale} = useTranslation();
-  const selectedItem = useSelector(selectOlapCube);
 
   return (
     <Box
-      py="xs"
-      pl="sm"
-      pr="xs"
+      py="md"
       sx={t => ({
         height: "calc(100vh - 75px)",
-        border: "1px solid",
-        backgroundColor: t.colors.gray[2],
-        borderColor: t.colors.gray[1],
+        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[2],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        maxWidth: 375
+        maxWidth: 300,
+        padding: 0,
       })}
     >
-      <Flex h="100%" direction="column" justify="space-between">
-        <ScrollArea>
+      <Flex h="100%" direction="column" justify="flex-start">
+        <Box px="sm">
           <Flex direction="column" sx={{flex: 1}}>
-            <Flex align="center" py="xs">
+            <Flex align="center" justify="center">
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
-                sx={t => ({alignSelf: "center", color: t.colors.gray[7]})}
+                sx={t => ({alignSelf: "center", color: t.colorScheme === "dark" ? t.white: t.colors.gray[7]})}
               >
                 <DataSetSVG />
               </ActionIcon>
-              <Text
-                ml="sm"
+              <Group
+                position="apart"
+                noWrap
                 sx={{
                   overflow: "hidden",
                   whiteSpace: "nowrap",
-                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  width: expanded ? 315 : 0
-                }}
-              >
-                {t("params.label_dataset")}
-              </Text>
+                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  width: expanded ? 300 : 0,
+                }}>
+                <Text sx={t => ({color: t.colorScheme === "dark" ? t.white: t.black})} ml={"sm"}>
+                  Select Dataset
+                </Text>
+                <LocaleSelector />
+              </Group>
             </Flex>
-            <Auto />
-
+            <Box my="md">
+              <Auto />
+            </Box>
             <Box sx={{flexGrow: 1}}></Box>
-            <Box my="sm">{props.children}</Box>
+            
           </Flex>
+        </Box>
+        <ScrollArea sx={theme => (
+          {
+            borderTopColor: theme.colorScheme === "dark" ? theme.colors.dark[6] :theme.colors.gray[3],
+            borderTopWidth: "1px",
+            borderTopStyle: expanded ? "solid": "none"
+          }
+          )}>
+          <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
         </ScrollArea>
-        <Box mt="sm">
-          {selectedItem && (
-            <Text
-              mt="sm"
-              sx={{
-                "& p": {margin: 0},
-                overflow: "hidden",
-                whiteSpace: "nowrap",
-                transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                width: expanded ? 315 : 0
-              }}
-            >
-              <CubeAnnotation
-                annotation="description"
-                className="dex-cube-description"
-                item={selectedItem}
-                locale={locale}
-              />
-              <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
-              <CubeAnnotation
-                annotation="source_description"
-                className="dex-cube-srcdescription"
-                fz="xs"
-                item={selectedItem}
-                locale={locale}
-              />
-            </Text>
-          )}
+        <Group
+          align="center"
+          position={expanded ? "right": "center"}
+          w="100%"
+          p="md"
+          sx={{alignSelf: "flex-end", marginTop: "auto"}}
+          noWrap
+        >
           <ActionIcon
-            my={rem(10)}
             onClick={() => setExpanded(!expanded)}
             variant="subtle"
-            sx={t => ({alignSelf: "center", color: t.colors.gray[7], margin: "0 auto"})}
+            mt="auto"
+            sx={t => ({alignSelf: "flex-end", color: t.colors.gray[7]})}
           >
             {expanded ? <IconChevronLeft /> : <IconChevronRight />}
           </ActionIcon>
-        </Box>
+        </Group>
       </Flex>
     </Box>
   );
@@ -156,8 +143,8 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
 
 export default SideBar;
 
-type SideBarItemPropos = {};
-export function SideBarItem({children}: PropsWithChildren<SideBarItemPropos>) {
+type SideBarItemProps = {};
+export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
   const {expanded} = useSideBar();
 
   return (
@@ -165,7 +152,7 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemPropos>) {
       sx={{
         overflow: "hidden",
         whiteSpace: "nowrap",
-        width: expanded ? 315 : 0,
+        width: expanded ? 300 : 0,
         transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
       }}
     >
@@ -203,12 +190,19 @@ function Auto() {
         placeholder="Search"
         value={input}
         onInput={e => setInput(e.currentTarget.value)}
-        sx={t => ({
-          overflow: "hidden",
-          whiteSpace: "nowrap",
-          width: expanded ? 315 : 0,
-          transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-        })}
+        styles={{
+          wrapper: {
+            whiteSpace: "nowrap",
+            width: expanded ? "100%" : 0,
+            overflow: "hidden",
+            animation: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+          },
+          input: {
+            whiteSpace: "nowrap",
+            width: expanded ? "100%" : 0,
+            overflow: "hidden",
+          },
+        }}
       />
     </Box>
   );

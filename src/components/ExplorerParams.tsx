@@ -10,7 +10,7 @@ import {ButtonExecuteQuery} from "./ButtonExecuteQuery";
 import {CollapsiblePanel} from "./Layout/CollapsiblePanel";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {SelectCube} from "./SelectCube";
-import {SelectLocale} from "./SelectLocale";
+// import {SelectLocale} from "./LocaleSelector";
 
 /** Defines which panel will be opened by default on the first load. */
 export const ExplorerParams = (props: {defaultOpen: string}) => {
@@ -18,7 +18,7 @@ export const ExplorerParams = (props: {defaultOpen: string}) => {
 
   return (
     <CollapsiblePanel id="layout-column-explorer-params" title={t("params.column_title")}>
-      <SelectLocale />
+      {/* <SelectLocale /> */}
       <SelectCube />
       <Accordion
         multiple

@@ -99,7 +99,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   }, [selectedItem, cube]);
 
   return (
-    <Stack id="select-cube" spacing={"xs"} w={320}>
+    <Stack id="select-cube" spacing={"xs"} w={"100%"}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
     </Stack>
   );
@@ -248,17 +248,25 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
       onChange={setValue}
       key={"topic"}
       chevronPosition="left"
-      w={300}
+      w={"100%"}
       styles={t => ({
         control: {
+          background: t.colorScheme === "dark" ? t.colors.dark[7] :t.colors.gray[1],
+          borderLeft: 8,
+          borderLeftColor: "transparent",
+          borderLeftStyle: "solid",
           "&[data-active]": {
-            borderLeft: 5,
-            borderLeftColor: t.colors.blue[4],
-            borderLeftStyle: "solid"
+            borderLeft: 8,
+            borderLeftColor: t.colors[t.primaryColor][t.fn.primaryShade()],
+            borderLeftStyle: "solid",
+            color: t.colors[t.primaryColor][t.fn.primaryShade()],
           }
         },
         content: {
-          paddingLeft: 0
+          padding: 0,
+          "& > *": {
+            marginLeft: 0
+          }
         }
       })}
     >
@@ -307,12 +315,21 @@ function CubeButton({
     <Text
       key={`table-${item}`}
       fz="sm"
+      pl={60}
+      maw={240}
+      pr="md"
       component="a"
       className={
         isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
           ? `${classes.link} ${classes.linkActive}`
           : classes.link
       }
+      sx={t => ({
+        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale)) ?t.fn.primaryColor(): t.colorScheme === "dark" ? t.colors.dark[6]: t.colors.gray[3],
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+      })}
       onClick={() => {
         onSelectCube(item, subtopic);
         setExpanded(false);
@@ -347,18 +364,23 @@ function SubtopicAccordion({
       onChange={setValue}
       key={`subtopic-${parent}`}
       chevronPosition="left"
-      w={315}
+      w={300}
+      ml={0}
       styles={t => ({
         control: {
+          fontSize: 14,
+          background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[2],
+          borderLeft: 8,
+          borderLeftColor: "transparent",
+          borderLeftStyle: "solid",
           "&[data-active]": {
-            borderLeft: 5,
-            borderLeftColor: t.colors.blue[4],
+            borderLeft: 8,
+            borderLeftColor: t.colors[t.primaryColor][4],
             borderLeftStyle: "solid"
           }
         },
         content: {
-          paddingLeft: 0,
-          paddingRight: 0
+          padding: 0,
         }
       })}
     >
@@ -385,44 +407,5 @@ function SubtopicAccordion({
         );
       })}
     </Accordion>
-  );
-}
-
-export function CubeAnnotation(
-  props: TextProps & {
-    annotation: string;
-    item: Annotated;
-    locale: string;
-  }
-) {
-  const {annotation, item, locale, ...textProps} = props;
-  const content = getAnnotation(item, annotation, locale);
-  return content ? (
-    <Text component="p" {...textProps}>
-      {content}
-    </Text>
-  ) : null;
-}
-
-/** */
-export function CubeSourceAnchor(
-  props: TextProps & {
-    item: Annotated;
-    locale: string;
-  }
-) {
-  const {item, locale, ...textProps} = props;
-  const {translate: t} = useTranslation();
-
-  const srcName = getAnnotation(item, "source_name", locale);
-  const srcLink = getAnnotation(item, "source_link", locale);
-
-  if (!srcName) return null;
-
-  return (
-    <Text component="p" {...textProps}>
-      {`${t("params.label_source")}: `}
-      {srcLink ? <Anchor href={srcLink}>{srcName}</Anchor> : <Text span>{srcName}</Text>}
-    </Text>
   );
 }

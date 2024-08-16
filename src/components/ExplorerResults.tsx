@@ -3,6 +3,7 @@ import {
   Alert,
   Anchor,
   Box,
+  Center,
   Flex,
   Group,
   Paper,
@@ -24,8 +25,10 @@ import {selectServerState} from "../state/server";
 import {QueryParams, QueryResult} from "../utils/structs";
 import {PanelDescriptor} from "../utils/types";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
-import {MRT_TopToolbar} from "mantine-react-table";
 import {useTable} from "./TableView";
+import Toolbar from "./Toolbar";
+import { ExplorerTabs } from "./ExplorerTabs";
+import { useFullscreen } from "@mantine/hooks";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -34,7 +37,6 @@ const useStyles = createStyles(() => ({
     flexFlow: "column nowrap"
   }
 }));
-
 /**
  * Renders the result area in the UI.
  */
@@ -191,6 +193,8 @@ function SuccessResult(props: {
 
   const {table} = useTable({cube, result});
 
+  const fullscreen = useFullscreen();
+
   const [CurrentComponent, panelKey, panelMeta] = useMemo(() => {
     const currentPanel = queryItem.panel || `${panels[0].key}-`;
     const [panelKey, ...panelMeta] = currentPanel.split("-");
@@ -203,53 +207,53 @@ function SuccessResult(props: {
   }, []);
 
   return (
-    <Paper id="query-results-success" className={props.className} radius="md" withBorder m="md">
-      <Flex sx={{alignItems: "center"}}>
-        <Tabs color="blue" id="query-results-tabs" onTabChange={tabHandler} value={panelKey}>
-          <Tabs.List>
-            {panels.map(panel => (
-              <Tabs.Tab key={panel.key} id={panel.key} value={panel.key}>
-                {t(panel.label)}
-              </Tabs.Tab>
-            ))}
-          </Tabs.List>
-        </Tabs>
-        {/* need to update this logic */}
-        {(!queryItem.panel || queryItem.panel === "table") && (
-          <Box sx={{display: "flex", flex: "1 1 auto"}} mr={92}>
-            <MRT_TopToolbar table={table} />
-          </Box>
-        )}
-      </Flex>
-      {isPreviewMode && (
-        <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
-          <Group position="apart">
-            <Text>
-              <Text fw={700} span>
-                {t("previewMode.title_preview")}:{" "}
-              </Text>
-              <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
-            </Text>
-            <PreviewModeSwitch />
-          </Group>
-        </Alert>
-      )}
-
-      <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
-        <Suspense fallback={props.children}>
-          <Flex h="100%">
-            <Box sx={{flex: "1 1"}}>
-              <CurrentComponent
-                panelKey={`${panelKey}-${panelMeta}`}
-                cube={cube}
-                params={params}
-                result={result}
-                table={table}
-              />
+    <Flex gap="xs" direction="column" w="100%" className={props.className}>
+      <Paper ref={fullscreen.ref} id="query-results-success" h={"100%"}>
+        <Flex
+          sx={t => ({
+            alignItems: "center",
+            background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[1],
+            justifyContent: "space-between"
+          })}
+          w="100%">
+          <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
+          {/* need to update this logic */}
+          {(!queryItem.panel || queryItem.panel === "table") && (
+            <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
+              <Toolbar table={table} fullscreen={fullscreen}/>
             </Box>
-          </Flex>
-        </Suspense>
-      </Box>
-    </Paper>
+          )}
+        </Flex>
+        {isPreviewMode && (
+          <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
+            <Group position="apart">
+              <Text>
+                <Text fw={700} span>
+                  {t("previewMode.title_preview")}:{" "}
+                </Text>
+                <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
+              </Text>
+              <PreviewModeSwitch />
+            </Group>
+          </Alert>
+        )}
+
+        <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
+          <Suspense fallback={props.children}>
+            <Flex h="100%">
+              <Box sx={{flex: "1 1"}}>
+                <CurrentComponent
+                  panelKey={`${panelKey}-${panelMeta}`}
+                  cube={cube}
+                  params={params}
+                  result={result}
+                  table={table}
+                />
+              </Box>
+            </Flex>
+          </Suspense>
+        </Box>
+      </Paper>
+    </Flex>
   );
 }

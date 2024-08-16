@@ -1,12 +1,11 @@
-import {Button, Group, Input, Select, useMantineTheme} from "@mantine/core";
-import React, {useCallback, useMemo} from "react";
+import {Button, Group, Input, Select, SelectProps} from "@mantine/core";
+import React, {useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
-import {IconLanguage, IconChevronDown} from "@tabler/icons-react";
 
 type PropertyAccesor<T> = (T extends string | number ? never : keyof T) | ((item: T) => string);
 
 /** */
-export function SelectObject<T>(props: {
+export const SelectObject = forwardRef(function<T>(props: {
   disabled?: boolean;
   getLabel?: PropertyAccesor<T>;
   getValue?: PropertyAccesor<T>;
@@ -17,9 +16,9 @@ export function SelectObject<T>(props: {
   onItemSelect?: (item: T) => void;
   searchable?: boolean;
   selectedItem?: T | string | null;
-}) {
-  const theme = useMantineTheme();
-  const {getLabel, getValue = identity, items, onItemSelect, selectedItem} = props;
+  selectProps?: Partial<SelectProps>;
+}, ref) {
+  const {getLabel, getValue = identity, items, onItemSelect, selectedItem, selectProps = {}} = props;
 
   const [itemList, itemMap] = useMemo(() => {
     const valueAccessor = accesorFactory(getValue);
@@ -51,6 +50,7 @@ export function SelectObject<T>(props: {
 
   return (
     <Select
+      ref={ref}
       data={itemList}
       disabled={props.loading || props.disabled}
       hidden={props.hidden}
@@ -60,11 +60,10 @@ export function SelectObject<T>(props: {
       onFocus={inputFocusHandler}
       searchable={props.searchable ?? props.items.length > 6}
       value={selected}
-      icon={<IconLanguage size="1rem" color={theme.colors[theme.primaryColor][5]} />}
-      rightSection={<IconChevronDown size="1rem" />}
+      {...selectProps}
     />
   );
-}
+})
 
 /** */
 export function SelectWithButtons<T>(props: {

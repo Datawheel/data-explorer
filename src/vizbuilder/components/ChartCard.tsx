@@ -1,13 +1,19 @@
-import {Measure} from "@datawheel/olap-client";
-import {useTranslation} from "@datawheel/data-explorer";
-import {Chart, ChartType, D3plusConfig, createChartConfig} from "@datawheel/vizbuilder";
+import type {Measure} from "@datawheel/olap-client";
+import {type Chart, type ChartType, type D3plusConfig, createChartConfig} from "@datawheel/vizbuilder";
 import {Box, Button, Group, Paper, Stack} from "@mantine/core";
-import {IconArrowsMaximize, IconArrowsMinimize, IconDownload, IconPhotoDown, IconVectorTriangle} from "@tabler/icons-react";
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconDownload,
+  IconPhotoDown,
+  IconVectorTriangle,
+} from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
-import React, {useMemo, useRef} from "react";
+import {useMemo, useRef} from "react";
 import {asArray} from "../tooling/collection";
 import {ErrorBoundary} from "./ErrorBoundary";
+import {useTranslation} from "../../main";
 
 export const chartComponents: Record<ChartType, React.ComponentType<{config: any}>> = {
   barchart: BarChart,
@@ -18,13 +24,13 @@ export const chartComponents: Record<ChartType, React.ComponentType<{config: any
   lineplot: LinePlot,
   pie: Pie,
   stacked: StackedArea,
-  treemap: Treemap
+  treemap: Treemap,
 };
 
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,
-  svg: IconVectorTriangle
+  svg: IconVectorTriangle,
 };
 
 /**  */
@@ -47,15 +53,19 @@ export function ChartCard(props: {
 
   const ChartComponent = chartComponents[chart.chartType];
 
-  const config = useMemo(() => createChartConfig(chart, {
-    currentChart,
-    isSingleChart,
-    isUniqueChart: isSingleChart,
-    measureConfig: props.measureConfig,
-    showConfidenceInt: Boolean(props.showConfidenceInt),
-    translate: (template, data) => translate(`vizbuilder.${template}`, data),
-    userConfig: props.userConfig || {}
-  }), [chart, isSingleChart, locale]);
+  const config = useMemo(
+    () =>
+      createChartConfig(chart, {
+        currentChart,
+        isSingleChart,
+        isUniqueChart: isSingleChart,
+        measureConfig: props.measureConfig,
+        showConfidenceInt: Boolean(props.showConfidenceInt),
+        translate: (template, data) => translate(`vizbuilder.${template}`, data),
+        userConfig: props.userConfig || {},
+      }),
+    [chart, currentChart, isSingleChart, locale],
+  );
 
   const downloadButtons = useMemo(() => {
     if (!isFocused && !isSingleChart) return [];
@@ -76,9 +86,14 @@ export function ChartCard(props: {
           onClick={() => {
             const {current: boxElement} = nodeRef;
             const svgElement = boxElement && boxElement.querySelector("svg");
-            svgElement && saveElement(svgElement, {filename, type: formatLower}, {
-              background: getBackground(svgElement)
-            });
+            svgElement &&
+              saveElement(
+                svgElement,
+                {filename, type: formatLower},
+                {
+                  background: getBackground(svgElement),
+                },
+              );
           }}
           size="sm"
           variant="light"

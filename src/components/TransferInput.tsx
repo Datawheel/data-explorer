@@ -131,10 +131,9 @@ export function TransferInput<T extends QueryParamsItem>(props: {
         <Group mr="xs" noWrap spacing="xs">
           <Badge
             leftSection={<Avatar
-              color="blue"
-              radius="xl"
-              size="xs"
-            >
+            radius="xl"
+            size="xs"
+          >
               <IconSearch size={15} />
             </Avatar>}
             onClick={pickNextPredicate}

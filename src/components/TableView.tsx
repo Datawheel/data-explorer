@@ -1,4 +1,4 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MantineTheme} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -176,6 +176,10 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
       return <IconArrowsSort />;
   }
 }
+
+const tableHeadStyles = (t: MantineTheme) => ({
+  border: `0.0625rem solid ${t.colors.gray[9]}`
+});
 
 type TableProps = {
   cube: PlainCube;
@@ -488,6 +492,7 @@ export function useTable({
           }
           return 0;
         },
+        getFilterValue: () => {},
         Header: ({column}) => {
           return (
             <Box mb={rem(5)}>
@@ -495,9 +500,7 @@ export function useTable({
                 <Box sx={{flexGrow: 1}}>
                   <Flex gap="xs" align="center">
                     {getActionIcon(entityType)}
-                    <Text size="md" color="black">
-                      {column.columnDef.header}
-                    </Text>
+                    <Text size="sm">{column.columnDef.header}</Text>
                     <ActionIcon
                       key={`sort-${column.columnDef.header}`}
                       size={22}
@@ -531,25 +534,26 @@ export function useTable({
         formatterKey,
         id: entity.fullName ?? entity.name,
         dataType: valueType,
-        accessorFn: item => {
-          if (item[columnKey + " " + "ID"]) {
-            return {value: item[columnKey], id: item[columnKey + " " + "ID"]};
-          }
-          return item[columnKey];
-        },
+        accessorFn: item => item[columnKey],
         Cell: isNumeric
           ? ({cell}) => formatter(cell.getValue<number>())
-          : ({renderedCellValue}) => {
-              if (renderedCellValue && typeof renderedCellValue === "object") {
-                return (
-                  <Flex justify="space-between" sx={{width: "100%"}}>
-                    <Box>{renderedCellValue.value}</Box>
-                    <Box>
-                      <Text color="dimmed">{renderedCellValue.id}</Text>
-                    </Box>
-                  </Flex>
-                );
-              }
+          : ({cell, renderedCellValue, row}) => {
+              const cellId = row.original[`${cell.column.id} ID`];
+              return (
+                <Flex justify="space-between" sx={{width: "100%"}} gap="sm">
+                  <Text
+                    size="sm"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis"
+                    }}
+                  >
+                    {renderedCellValue}
+                  </Text>
+                  <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
+                </Flex>
+              );
             }
       };
     });
@@ -590,11 +594,17 @@ export function useTable({
           "mrt-row-numbers": {
             size: 10,
             maxSize: 25,
-            enableOrdering: true
+            enableOrdering: true,
+            mantineTableBodyCellProps: {
+              sx: (t: MantineTheme) => ({
+                fontSize: t.fontSizes.sm,
+                color: t.colors.gray[6]
+              })
+            }
           }
         },
         enableRowVirtualization: false,
-        globalFilterFn: "contains",
+        // globalFilterFn: "contains",
         initialState: {
           density: "xs",
           showColumnFilters: true
@@ -704,7 +714,6 @@ export function TableView({table, result}: TableView) {
             }}
           >
             <Table
-              sx={{overflow: "scroll"}}
               captionSide="top"
               fontSize="md"
               highlightOnHover
@@ -718,7 +727,6 @@ export function TableView({table, result}: TableView) {
                 component="thead"
                 sx={{
                   position: "relative",
-                  opacity: 0.97,
                   top: 0
                 }}
               >
@@ -733,12 +741,16 @@ export function TableView({table, result}: TableView) {
                             component="th"
                             key={header.id}
                             sx={theme => ({
-                              backgroundColor: theme.colors.gray[0],
+                              backgroundColor:
+                                theme.colorScheme === "dark"
+                                  ? theme.colors.dark[7]
+                                  : theme.colors.gray[0],
                               align: isNumeric ? "right" : "left",
                               height: 60,
                               paddingBottom: 10,
                               width: 300,
                               position: "sticky",
+                              fontSize: theme.fontSizes.sm,
                               top: 0,
                               display: "table-cell"
                             })}
@@ -758,12 +770,19 @@ export function TableView({table, result}: TableView) {
                             <Box
                               component="th"
                               key={header.id}
-                              sx={() => ({
-                                width: 100,
-                                maxWidth: 140,
+                              sx={theme => ({
+                                width: `calc(1rem * ${
+                                  String(table.getRowModel().rows.length).length
+                                })`,
+                                maxWidth: `calc(1rem * ${
+                                  String(table.getRowModel().rows.length).length
+                                })`,
                                 position: "sticky",
                                 top: 0,
-                                backgroundColor: "white",
+                                backgroundColor:
+                                  theme.colorScheme === "dark"
+                                    ? theme.colors.dark[7]
+                                    : theme.colors.gray[0],
                                 display: "table-cell"
                               })}
                             >
@@ -781,6 +800,28 @@ export function TableView({table, result}: TableView) {
                         );
                       }
                     })}
+                    <Box
+                      component="th"
+                      key={"placeholder"}
+                      sx={theme => ({
+                        backgroundColor:
+                          theme.colorScheme === "dark"
+                            ? theme.colors.dark[7]
+                            : theme.colors.gray[0],
+                        align: "center",
+                        height: 60,
+                        paddingBottom: 10,
+                        width: 20,
+                        position: "sticky",
+                        top: 0,
+                        display: "table-cell",
+                        textAlign: "center"
+                      })}
+                    >
+                      <OptionsMenu>
+                        <PlusSVG />
+                      </OptionsMenu>
+                    </Box>
                   </Box>
                 ))}
               </Box>
@@ -801,17 +842,11 @@ export function TableView({table, result}: TableView) {
                 </Box>
               )}
             </Table>
+            {!isData && <NoRecords />}
           </Box>
-          {!isData && <NoRecords />}
-
           <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
           <TableFooter table={table} result={result} />
         </Flex>
-        <Box px="xl" py={"sm"} sx={{alignSelf: "self-start"}}>
-          <OptionsMenu>
-            <PlusSVG />
-          </OptionsMenu>
-        </Box>
       </Flex>
     </Box>
   );
@@ -826,6 +861,7 @@ const NoRecords = () => {
     </Center>
   );
 };
+
 export default TableView;
 
 TableView.displayName = "TesseractExplorer:TableView";
