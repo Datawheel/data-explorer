@@ -33,4 +33,4 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_PROJECT_NAME: ${{ secrets.CLOUDFLARE_PROJECT_NAME }}
-        run: npx wrangler pages deploy dist/ --project-name $CLOUDFLARE_PROJECT_NAME
+        run: npx wrangler pages deploy dist/ --project-name $CLOUDFLARE_PROJECT_NAME --branch production
