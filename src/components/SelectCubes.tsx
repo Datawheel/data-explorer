@@ -15,6 +15,7 @@ import type {PlainLevel} from "@datawheel/olap-client";
 import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
 import Results, {useStyles as useLinkStyles} from "./Results";
+import yn from "yn";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -156,11 +157,15 @@ function useBuildGraph(items, locale, graph, setGraph) {
       const topic = getAnnotation(item, "topic", locale);
       const subtopic = getAnnotation(item, "subtopic", locale);
       const table = getAnnotation(item, "table", locale);
-      graph.addNode(topic);
-      graph.addNode(subtopic);
-      graph.addNode(table);
-      graph.addEdge(topic, subtopic);
-      graph.addEdge(subtopic, table);
+      const hide = getAnnotation(item, "hide_in_ui", locale);
+
+      if(!yn(hide)) {
+        graph.addNode(topic);
+        graph.addNode(subtopic);
+        graph.addNode(table);
+        graph.addEdge(topic, subtopic);
+        graph.addEdge(subtopic, table);
+      }
 
       return item;
     });

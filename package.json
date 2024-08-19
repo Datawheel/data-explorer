@@ -25,7 +25,8 @@
     "match-sorter": "^6.3.4",
     "postcss-modules": "^6.0.0",
     "react-redux": "^7.0.0",
-    "react-viewport-list": "^3.0.0"
+    "react-viewport-list": "^3.0.0",
+    "yn": "^5.0.0"
   },
   "peerDependencies": {
     "@datawheel/vizbuilder": "^0.5.0",
