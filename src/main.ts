@@ -6,3 +6,13 @@ export {SettingsConsumer, useSettings} from "./hooks/settings";
 export {TranslationConsumer, type TranslationDict, defaultTranslation as translationDict, useTranslation} from "./hooks/translation";
 export {type ExplorerState, reducer as explorerReducer, thunkExtraArg as explorerThunkExtraArg} from "./state";
 export type {ViewProps} from "./utils/types";
+
+import type {Translation} from "@datawheel/vizbuilder";
+
+export {createVizbuilderView} from "./vizbuilder/components/VizbuilderView";
+
+declare module "@datawheel/data-explorer" {
+  interface TranslationDict {
+    vizbuilder: Translation;
+  }
+}

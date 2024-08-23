@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
-import {useMemo, useRef} from "react";
+import React,{useMemo, useRef} from "react";
 import {asArray} from "../tooling/collection";
 import {ErrorBoundary} from "./ErrorBoundary";
 import {useTranslation} from "../../main";

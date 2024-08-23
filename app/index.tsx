@@ -1,4 +1,4 @@
-import {Explorer, PivotView, TableView, translationDict as explorerTranslation} from "../src/main";
+import {Explorer, PivotView, TableView, translationDict as explorerTranslation, createVizbuilderView} from "../src/main";
 import {
   MantineProvider,
   useMantineTheme,
@@ -15,7 +15,6 @@ import {
 import {IconPalette, IconSun, IconMoon} from "@tabler/icons-react";
 import React, {useMemo, useState, forwardRef} from "react";
 import {createRoot} from "react-dom/client";
-import {createVizbuilderView} from "../src/vizbuilder";
 
 const VizbuilderView = createVizbuilderView({
   downloadFormats: ["png", "svg"]
