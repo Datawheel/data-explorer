@@ -1,4 +1,4 @@
-import {useState} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
 import {
@@ -8,7 +8,6 @@ import {
   Header,
   useMantineTheme
 } from "@mantine/core";
-import React, {useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
