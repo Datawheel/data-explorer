@@ -1,9 +1,19 @@
 import formUrlEncode from "form-urlencoded";
-import { SERIAL_BOOLEAN } from "../enums";
-import { asArray, filterMap } from "./array";
-import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, buildCut, buildDrilldown, buildFilter, buildMeasure } from "./structs";
-import { keyBy, parseName, stringifyName } from "./transform";
-import { isActiveCut, isActiveItem } from "./validation";
+import {SERIAL_BOOLEAN} from "../enums";
+import {asArray, filterMap} from "./array";
+import {
+  CutItem,
+  DrilldownItem,
+  FilterItem,
+  MeasureItem,
+  QueryParams,
+  buildCut,
+  buildDrilldown,
+  buildFilter,
+  buildMeasure
+} from "./structs";
+import {keyBy, parseName, stringifyName} from "./transform";
+import {isActiveCut, isActiveItem} from "./validation";
 
 export interface SerializedQuery {
   cube: string;
@@ -70,11 +80,9 @@ function serializeStateToSearchParams(query: QueryParams): SerializedQuery {
 
   /** */
   function serializeDrilldown(item: DrilldownItem): string {
-    return [stringifyName(item)].concat(
-      filterMap(item.properties, prop =>
-        isActiveItem(prop) ? prop.name : null
-      )
-    ).join(",");
+    return [stringifyName(item)]
+      .concat(filterMap(item.properties, prop => (isActiveItem(prop) ? prop.name : null)))
+      .join(",");
   }
 
   /** */
@@ -116,13 +124,14 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
   /** */
   function cutReducer(cuts: Record<string, CutItem>, item: string) {
     const [fullName, ...members] = item.split(",");
-    const cut = buildCut({ ...parseName(fullName), active: true, members });
+    const cut = buildCut({...parseName(fullName), active: true, members});
 
     // fullName is normalized into descriptor, so this is better for comparison
-    const matchingCut = Object.values(cuts).find(item =>
-      item.dimension === cut.dimension &&
-      item.hierarchy === cut.hierarchy &&
-      item.level === cut.level
+    const matchingCut = Object.values(cuts).find(
+      item =>
+        item.dimension === cut.dimension &&
+        item.hierarchy === cut.hierarchy &&
+        item.level === cut.level
     );
     if (matchingCut) {
       const memberSet = new Set([...matchingCut.members, ...cut.members]);
@@ -137,8 +146,8 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
   function drilldownReducer(drilldowns: Record<string, DrilldownItem>, item: string) {
     const [fullName, ...props] = item.split(",");
     const nameParts = parseName(fullName);
-    const properties = props.map(name => ({ active: true, level: nameParts.level, name }));
-    const ddn = buildDrilldown({ ...nameParts, active: true, properties, key: fullName });
+    const properties = props.map(name => ({active: true, level: nameParts.level, name}));
+    const ddn = buildDrilldown({...nameParts, active: true, properties, key: fullName});
     drilldowns[ddn.key] = ddn;
     return drilldowns;
   }
@@ -160,9 +169,13 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
   /** */
   function parseFilter(item: string): FilterItem {
     const [measure, ...comparisons] = item.split(",");
-    const conditionOne = comparisons.slice(1, 3);
-    const conditionTwo = comparisons.length > 2 ? comparisons.slice(4, 6) : undefined;
-    const joint = comparisons.length > 2 ? comparisons[3] : undefined;
+    // const conditionOne = comparisons.slice(1, 3);
+    const conditionOne = comparisons.slice(0, 3);
+    // const conditionTwo = comparisons.length > 2 ? comparisons.slice(4, 6) : undefined;
+    const conditionTwo = comparisons.length > 2 ? comparisons.slice(3, 5) : undefined;
+    //  ['gte', '500', 'and', 'gt', '0']
+    // const joint = comparisons.length > 2 ? comparisons[3] : undefined;
+    const joint = comparisons.length > 2 ? comparisons[2] : undefined;
     return buildFilter({
       active: true,
       measure,
@@ -176,6 +189,7 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
       const comparison = cond[0] as "gt";
       const inputtedValue = cond[1];
       const interpretedValue = Number.parseFloat(cond[1]);
+      console.log("Entro parse", comparison, inputtedValue, interpretedValue);
       return [comparison, inputtedValue, interpretedValue];
     }
   }
