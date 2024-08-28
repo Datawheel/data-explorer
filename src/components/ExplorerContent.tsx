@@ -57,12 +57,13 @@ export function ExplorerContent(props: {
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
   uiLocale: string | undefined;
   withMultiQuery: boolean;
+  defaultCube?: string;
 }) {
   const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
   const translation = useTranslation();
 
-  const isSetupDone = useSetup(props.source, props.dataLocale);
+  const isSetupDone = useSetup(props.source, props.dataLocale, props.defaultCube);
   const serverState = useSelector(selectServerState);
 
   const {classes} = useStyles({height: props.height});

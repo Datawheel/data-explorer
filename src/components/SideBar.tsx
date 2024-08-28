@@ -1,16 +1,15 @@
-import React, {PropsWithChildren, useState, useMemo, useEffect} from "react";
-import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group, Title} from "@mantine/core";
+import React, {PropsWithChildren, useState, useEffect} from "react";
+import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group} from "@mantine/core";
+import { CloseButton } from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
 import {selectLocale} from "../state/queries";
 import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
-import {getKeys} from "./SelectCubes";
-import {AnnotatedCube} from "./SelectCubes";
 import { LocaleSelector } from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
-import {selectOlapCube} from "../state/selectors";
+import { useDebouncedValue } from "@mantine/hooks";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -64,22 +63,23 @@ type SidebarProps = {};
 
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
-
+  const {translate: t} = useTranslation();
   return (
     <Box
       py="md"
       sx={t => ({
         height: "calc(100vh - 75px)",
-        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[2],
+        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[1],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
         maxWidth: 300,
         padding: 0,
+        zIndex: 99,
       })}
     >
       <Flex h="100%" direction="column" justify="flex-start">
-        <Box px="sm">
+        <Box px="sm" my="xs">
           <Flex direction="column" sx={{flex: 1}}>
-            <Flex align="center" justify="center">
+            <Flex align="center" justify="apart">
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
@@ -97,19 +97,26 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   width: expanded ? 300 : 0,
                 }}>
                 <Text sx={t => ({color: t.colorScheme === "dark" ? t.white: t.black})} ml={"sm"}>
-                  Select Dataset
+                  {t("params.label_dataset")}
                 </Text>
                 <LocaleSelector />
               </Group>
             </Flex>
-            <Box my="md">
+            <Box
+              my="md"
+              sx={{
+                  overflow: "hidden",
+                  whiteSpace: "nowrap",
+                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  width: expanded ? "100%" : 0,
+                }}>
               <Auto />
-            </Box>
+            </Box> 
             <Box sx={{flexGrow: 1}}></Box>
             
           </Flex>
         </Box>
-        <ScrollArea sx={theme => (
+        {expanded && <ScrollArea sx={theme => (
           {
             borderTopColor: theme.colorScheme === "dark" ? theme.colors.dark[6] :theme.colors.gray[3],
             borderTopWidth: "1px",
@@ -117,7 +124,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           }
           )}>
           <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
-        </ScrollArea>
+        </ScrollArea>}
         <Group
           align="center"
           position={expanded ? "right": "center"}
@@ -162,47 +169,42 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
 
 function Auto() {
   const {code: locale} = useSelector(selectLocale);
+  const {translate: t} = useTranslation();
   const {expanded, graph, setResults, input, setInput, setMap} = useSideBar();
-  const items = graph.items;
-  const roots = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items]);
-
+  const [debouncedInput] = useDebouncedValue(input, 200)
   useEffect(() => {
     if (graph.items.length > 0) {
-      let matches: string[] = [];
-      let maps = new Map();
-      roots.forEach(root => {
-        const {matches: result, map} = graph.filter(locale, root, input);
-        matches = [...matches, ...result];
-        maps = new Map([...maps, ...map]);
-      });
+      const {matches, map} = graph.filter(locale, debouncedInput);
       setResults(matches);
-      setMap(maps);
+      setMap(map);
     }
-  }, [input, graph]);
+  }, [debouncedInput, graph]);
 
   return (
-    <Box>
       <Input
         icon={<IconSearch />}
         radius="xl"
         size="md"
-        placeholder="Search"
+        placeholder={t("params.label_search")}
         value={input}
         onInput={e => setInput(e.currentTarget.value)}
         styles={{
           wrapper: {
-            whiteSpace: "nowrap",
             width: expanded ? "100%" : 0,
             overflow: "hidden",
-            animation: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+            transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
           },
           input: {
             whiteSpace: "nowrap",
-            width: expanded ? "100%" : 0,
-            overflow: "hidden",
           },
         }}
+        rightSection={
+          <CloseButton
+            aria-label="Clear input"
+            onClick={() => setInput('')}
+            style={{ display: input ? undefined : 'none' }}
+        />
+        }
       />
-    </Box>
   );
 }

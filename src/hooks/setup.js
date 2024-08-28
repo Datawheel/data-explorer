@@ -14,7 +14,7 @@ import {useActions} from "./settings";
  * @param {import("@datawheel/olap-client").ServerConfig} serverConfig
  * @param {string | string[]} locale
  */
-export function useSetup(serverConfig, locale) {
+export function useSetup(serverConfig, locale, defaultCube) {
   const actions = useActions();
 
   const [done, setDone] = useState(false);
@@ -69,8 +69,8 @@ export function useSetup(serverConfig, locale) {
         }
 
         if (!query || !hasOwnProperty(cubeMap, query.params.cube)) {
-          const defaultCube = Object.keys(cubeMap)[0];
-          return actions.willHydrateParams(defaultCube);
+          const cube = defaultCube && hasOwnProperty(cubeMap, defaultCube) ? defaultCube: Object.keys(cubeMap)[0];
+          return actions.willHydrateParams(cube);
         }
 
         query.params.locale = query.params.locale || cleanLocale[0];

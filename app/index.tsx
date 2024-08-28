@@ -10,11 +10,14 @@ import {
   ActionIcon,
   Dialog,
   Stack,
-  MantineThemeOverride
+  MantineThemeOverride,
+  Divider
 } from "@mantine/core";
-import {IconPalette, IconSun, IconMoon} from "@tabler/icons-react";
-import React, {useMemo, useState, forwardRef} from "react";
+import {IconPalette, IconSun, IconMoon, IconTextDirectionLtr, IconTextDirectionRtl, IconLanguage} from "@tabler/icons-react";
+import React, {useMemo, useState, forwardRef, useEffect} from "react";
 import {createRoot} from "react-dom/client";
+
+import translations from "../translations";
 
 const VizbuilderView = createVizbuilderView({
   downloadFormats: ["png", "svg"]
@@ -25,6 +28,8 @@ const formatters = {
   "Metric Ton": n => `${n.toFixed()} 📦`,
   Sheep: n => `🐑 ${n.toFixed()}`
 };
+
+const locales = Object.keys(translations);
 
 const container = document.getElementById("app");
 container && mount(container);
@@ -46,7 +51,16 @@ const ColorElement = forwardRef<HTMLDivElement, ItemProps>(({hex, label, ...othe
     </div>
   );
 });
-function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
+function SiteSettings({
+  primaryColor,
+  setPrimaryColor,
+  toggleColorScheme,
+  direction,
+  setDirection,
+  locales,
+  locale,
+  setLocale,
+}) {
   const [opened, setOpened] = useState(false);
   const theme = useMantineTheme();
 
@@ -56,7 +70,7 @@ function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
     hex: theme.colors[c][theme.fn.primaryShade()]
   }));
 
-  const position = {top: "0.65rem", right: "0.5rem"};
+  const position = direction === "ltr" ? {top: "0.65rem", right: "0.5rem"} : {top: "0.65rem", left: "0.5rem"};
 
   return (
     <>
@@ -72,10 +86,37 @@ function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
         onClose={() => setOpened(false)}
         withCloseButton
       >
-        <Group>
+        <Text fw={700}>Settings</Text>
+        <Divider label="Text" labelPosition="center"/>
+        <Group position="apart">
+          <Text size="xs" fw={500}>
+              Direction
+          </Text>
+          <ActionIcon onClick={() => setDirection(d => d === "rtl" ? "ltr": "rtl")}>
+            {direction === "ltr" ? <IconTextDirectionLtr /> : <IconTextDirectionRtl />}
+          </ActionIcon>
+        </Group>
+
+        <Group position="apart">
+          <Text size="xs" fw={500}>Language</Text>
           <Select
             size="xs"
-            label={"Color"}
+            icon={
+              <IconLanguage size="0.9rem" />
+            }
+            value={locale}
+            w={120}
+            data={locales}
+            onChange={setLocale}
+          />
+        </Group>
+        
+        <Divider label="Theme" labelPosition="center"/>
+
+        <Group position="apart">
+          <Text size="xs" fw={500}>Color</Text>
+          <Select
+            size="xs"
             icon={
               <Box
                 sx={{
@@ -92,21 +133,23 @@ function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
             data={data}
             onChange={setPrimaryColor}
           />
-          <Stack spacing={0}>
-            <Text size="xs" fw={500}>
-              Theme
-            </Text>
-            <ActionIcon onClick={() => toggleColorScheme()}>
-              {theme.colorScheme === "dark" ? <IconSun /> : <IconMoon />}
-            </ActionIcon>
-          </Stack>
+        </Group>
+        
+        <Group position="apart">
+          <Text size="xs" fw={500}>
+            Theme
+          </Text>
+          <ActionIcon onClick={() => toggleColorScheme()}>
+            {theme.colorScheme === "dark" ? <IconSun /> : <IconMoon />}
+          </ActionIcon>
         </Group>
       </Dialog>
     </>
   );
 }
-function ThemeProvider({children}) {
+function SettingsProvider({children, locales, locale, setLocale}) {
   const [primaryColor, setPrimaryColor] = useState("blue");
+  const [direction, setDirection] = useState<"ltr"|"rtl">("ltr")
   const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
 
   const toggleColorScheme = value =>
@@ -115,47 +158,65 @@ function ThemeProvider({children}) {
   const theme: MantineThemeOverride = useMemo(
     () => ({
       primaryColor,
-      colorScheme
+      colorScheme,
+      dir: direction
     }),
-    [primaryColor, colorScheme]
+    [primaryColor, colorScheme, direction]
   );
+
+  useEffect(() => {
+    document.querySelector("html")?.setAttribute("dir", direction)
+  }, [direction])
 
   return (
     <MantineProvider inherit withNormalizeCSS theme={theme}>
-      <ColorPicker
+      <SiteSettings
         primaryColor={primaryColor}
         setPrimaryColor={setPrimaryColor}
         toggleColorScheme={toggleColorScheme}
+        direction={direction}
+        setDirection={setDirection}
+        locales={locales}
+        locale={locale}
+        setLocale={setLocale}
       />
       {children}
     </MantineProvider>
   );
 }
+
+function App() {
+  const [locale, setLocale] = useState(locales[0]);
+  return (
+    <SettingsProvider locales={locales} locale={locale} setLocale={setLocale}>
+    <Explorer
+      source={process.env.TESSERACT_SERVER}
+      // source={"https://api.oec.world/tesseract/"}
+      // source={"https://api.datasaudi.sa/"}
+      defaultCube="foreign_trade"
+      formatters={formatters}
+      dataLocale={locales.join(",")}
+      previewLimit={75}
+      panels={[
+        {key: "table", label: "Data Table", component: TableView},
+        {key: "matrix", label: "Pivot Table", component: PivotView},
+        {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
+      ]}
+      translations={translations}
+      uiLocale={locale}
+      defaultOpenParams="drilldowns"
+      withinMantineProvider={false}
+      withinReduxProvider
+      withMultiQuery
+      withPermalink
+    />
+  </SettingsProvider>
+  )
+}
 /** */
 function mount(container) {
   const root = createRoot(container);
-  root.render(
-    <ThemeProvider>
-      <Explorer
-        source={process.env.TESSERACT_SERVER}
-        // source={"https://api.oec.world/tesseract/"}
-        // source={"https://api.datasaudi.sa/"}
-        formatters={formatters}
-        dataLocale="en,ar"
-        // height="90vh"
-        previewLimit={75}
-        panels={[
-          {key: "table", label: "Data Table", component: TableView},
-          {key: "matrix", label: "Pivot Table", component: PivotView},
-          {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
-        ]}
-        translations={{en: explorerTranslation}}
-        defaultOpenParams="drilldowns"
-        withinMantineProvider={false}
-        withinReduxProvider
-        withMultiQuery
-        withPermalink
-      />
-    </ThemeProvider>
-  );
+  
+  
+  root.render(<App />);
 }

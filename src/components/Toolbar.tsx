@@ -1,9 +1,9 @@
 import React, { ReactNode, useEffect, useState, useRef } from "react";
-import { Text, UnstyledButton, Group, Sx, UnstyledButtonProps, TextInput, Box } from "@mantine/core";
-import { IconClearAll, IconSearch } from "@tabler/icons-react";
+import { Text, UnstyledButton, Group, Sx, TextInput, Box } from "@mantine/core";
 import { ClearSVG, FullScreenSVG, SearchSVG } from "./icons";
 import { MRT_TableInstance } from "mantine-react-table";
-import { useDebouncedValue, useDisclosure } from "@mantine/hooks";
+import { useDebouncedValue } from "@mantine/hooks";
+import { useTranslation } from "../main";
 
 const toolbarSx: Sx = (t) => ({
     background: t.colorScheme === "dark" ? t.black: t.white,
@@ -18,7 +18,7 @@ interface ToolBarButtonProps {
 
 function ToolbarButton ({icon, label, onClick = () => undefined}: ToolBarButtonProps) {
     return (
-        <UnstyledButton onClick={onClick} py={4} sx={t => ({"& svg path": {stroke: t.colorScheme === "dark" ? "white": "black"}})}>
+        <UnstyledButton onClick={onClick} sx={t => ({"& svg path": {stroke: t.colorScheme === "dark" ? "white": "black"}})}>
             <Group spacing={"xs"} noWrap>
                 {icon}
                 <Text size="sm">{label}</Text>
@@ -29,11 +29,11 @@ function ToolbarButton ({icon, label, onClick = () => undefined}: ToolBarButtonP
 
 function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
     // MRT table store
+    const {translate: t} = useTranslation();
     const {setShowGlobalFilter, setGlobalFilter} = table;
-    const {globalFilter, showGlobalFilter} = table.getState();
+    const {showGlobalFilter} = table.getState();
 
     const inputRef = useRef<HTMLInputElement>(null);
-    const [searchActive, setSearchActive] = useState<boolean>(false);
     const [query, setQuery] = useState<string>(table.getState().globalFilter);
     const [debouncedQuery] = useDebouncedValue(query, 200);
     
@@ -57,12 +57,12 @@ function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
         <Group position="left">
             <ToolbarButton
                 icon={<ClearSVG />}
-                label="Clear"
+                label={t("params.label_clear")}
                 onClick={handleClear}
             />
             <ToolbarButton
                 icon={<SearchSVG />}
-                label="Search"
+                label={t("params.label_search")}
                 onClick={() => handleShowFilter(!showGlobalFilter)}
             />
             <Box
@@ -87,10 +87,11 @@ function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
     )
 }
 export default function Toolbar({table, fullscreen}: {table: MRT_TableInstance, fullscreen: {toggle: () => void; fullscreen: boolean}}) {
+    const {translate: t} = useTranslation();
     return (
-      <Group sx={toolbarSx} my="sm" p="xs" px="md" noWrap>
+      <Group sx={toolbarSx} p="0.325rem" px="md" noWrap>
         <ToolbarSearch table={table} />
-        <ToolbarButton icon={<FullScreenSVG />} label="Full screen" onClick={fullscreen.toggle}/>
+        <ToolbarButton icon={<FullScreenSVG />} label={t("params.label_fullscreen")} onClick={fullscreen.toggle}/>
       </Group>
     )
   }
