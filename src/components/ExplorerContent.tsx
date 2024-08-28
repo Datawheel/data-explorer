@@ -1,25 +1,16 @@
 import React, {useState, useEffect, useMemo} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
-import {
-  CSSObject,
-  Center,
-  createStyles,
-  Header,
-  useMantineTheme,
-  Box
-} from "@mantine/core";
-import {useSelector} from "react-redux";
+import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
-import {selectServerState} from "../state/server";
 import {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
 import {ExplorerResults} from "./ExplorerResults";
 import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
 import {HomeSVG} from "./icons";
-
+import {AppProviders} from "../context";
 const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
     height: "100%",
@@ -31,17 +22,16 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
   root: {
     display: "flex",
     flexFlow: "column nowrap",
-    height: "calc(100% - 50px)",
+    height: "calc(100% - 70px)",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row"
       // height: params.height,
       // width: "100%"
     }
   },
-
   flexCol: {
     flex: "1 1 auto",
-    height: "calc(100vh - 50px)",
+    height: "calc(100vh - 70px)",
     [theme.fn.largerThan("md")]: {
       width: 0,
       paddingLeft: 0,
@@ -65,8 +55,7 @@ export function ExplorerContent(props: {
   const [opened, setOpened] = useState(false);
   const translation = useTranslation();
 
-  const isSetupDone = useSetup(props.source, props.dataLocale, props.defaultCube);
-  const serverState = useSelector(selectServerState);
+  useSetup(props.source, props.dataLocale, props.defaultCube);
 
   const {classes} = useStyles({height: props.height});
 
@@ -94,37 +83,17 @@ export function ExplorerContent(props: {
         </div>
       </Header>
       <div className={classes.root}>
-        <SideBarProvider>
-          <SideBar>
-            <SideBarItem>
-              <ParamsExplorer />
-            </SideBarItem>
-            <SideBarItem />
-          </SideBar>
-        </SideBarProvider>
-        {/* <LoadingOverlay /> */}
-        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        <AppProviders>
+          <SideBarProvider>
+            <SideBar>
+              <SideBarItem>
+                <ParamsExplorer />
+              </SideBarItem>
+            </SideBar>
+          </SideBarProvider>
+          <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        </AppProviders>
       </div>
     </div>
   );
-
-  // return (
-  //   <div className={classes.root}>
-
-  //     <LoadingOverlay />
-  //     {isSetupDone && serverState.online && props.withMultiQuery
-  //       ? <ExplorerQueries />
-  //       : null
-  //     }
-  //     {isSetupDone && serverState.online
-  //       ? <ExplorerParams defaultOpen={props.defaultOpenParams} />
-  //       : null
-  //     }
-  //     <ExplorerResults
-  //       className={classes.flexCol}
-  //       panels={props.panels}
-  //       splash={splash}
-  //     />
-  //   </div>
-  // );
 }

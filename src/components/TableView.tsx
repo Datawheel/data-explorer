@@ -1,30 +1,51 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, ScrollArea, Table, MantineTheme} from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Box,
+  Flex,
+  Text,
+  rem,
+  Table,
+  Center,
+  MantineTheme,
+  MultiSelect,
+  Group
+} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
   MRT_TableOptions as TableOptions,
   useMantineReactTable,
   flexRender,
-  MRT_GlobalFilterTextInput,
-  MRT_TablePagination,
-  MRT_ToolbarAlertBanner,
-  MRT_ColumnActionMenu,
-  MRT_TableHeadCellFilterContainer,
   MRT_TableBodyCell,
-  MRT_TableHeadCell,
   MRT_TableInstance,
-  MRT_TableBodyCellValue
+  MRT_PaginationState,
+  MRT_ToolbarAlertBanner,
+  MRT_ProgressBar as ProgressBar,
+  MRT_Header
 } from "mantine-react-table";
-import React, {useMemo, useRef, useState, useEffect} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
 import {AnyResultColumn} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
-import {selectCurrentQueryParams} from "../state/queries";
+import {
+  selectCurrentQueryParams,
+  selectCutItems,
+  selectDrilldownItems,
+  selectFilterItems,
+  selectMeasureItems,
+  selectPaginationParams
+} from "../state/queries";
 import {useSelector} from "react-redux";
-import {PlainCube, PlainLevel, PlainMeasure, PlainProperty} from "@datawheel/olap-client";
+import {
+  PlainCube,
+  PlainLevel,
+  PlainMeasure,
+  PlainProperty,
+  Comparison
+} from "@datawheel/olap-client";
 import {ViewProps} from "../utils/types";
-import OptionsMenu from "./OptionsMenu";
 import {
   IconSortAscendingLetters as SortAsc,
   IconSortDescendingLetters as SortDesc,
@@ -32,10 +53,21 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-import type {MeasureItem, QueryResult, DrilldownItem} from "../utils/structs";
+import type {MeasureItem, QueryResult, DrilldownItem, CutItem, FilterItem} from "../utils/structs";
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
+import {useQuery, useQueryClient, keepPreviousData} from "@tanstack/react-query";
+import {isActiveCut, isActiveItem, isNumeric} from "../utils/validation";
+import {
+  FilterFnsMenu,
+  getFilterFn,
+  getFilterfnText,
+  getFilterValue,
+  MinMax,
+  NumberInputComponent
+} from "./DrawerMenu";
+import debounce from "lodash.debounce";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -46,19 +78,20 @@ const removeColumn = (
   measures: Record<string, MeasureItem>,
   drilldowns: Record<string, DrilldownItem>
 ) => {
+  // check for measure
   if (entity._type === "measure") {
     if (entity.name) {
-      const measure = measures[entity.name];
-      actions.updateMeasure({...measure, active: false});
+      // const measure = measures[entity.name];
+      const measure = Object.values(measures).find(d => d.name === entity.name);
+      measure && actions.updateMeasure({...measure, active: false});
+      actions.willRequestQuery();
     }
   }
   if (entity._type === "level") {
-    if (entity.fullName) {
-      const drilldown = drilldowns[entity.fullName];
-      actions.updateDrilldown({...drilldown, active: false});
-    }
+    const drilldown = Object.values(drilldowns).find(d => d.uniqueName === entity?.uniqueName);
+    drilldown && actions.updateDrilldown({...drilldown, active: false});
+    actions.willRequestQuery();
   }
-  actions.willRequestQuery();
   // maybe need to handle case for property columns.
 };
 
@@ -97,7 +130,9 @@ const getEntityText = (entityType: EntityTypes) => {
 const getColumnFilterOption = (entityType: EntityTypes) => {
   switch (entityType) {
     case "measure":
-      return {columnFilterModeOptions: ["between", "greaterThan", "lessThan"]};
+      return {
+        columnFilterModeOptions: ["between", "greaterThan", "lessThan"]
+      };
     case "level":
       return {columnFilterModeOptions: true};
     default:
@@ -105,22 +140,20 @@ const getColumnFilterOption = (entityType: EntityTypes) => {
   }
 };
 
-function getMemberFilterFn(data, key: string) {
-  const dd = data[0];
-  if (dd[key + " " + "ID"]) {
-    return member => `${member.caption} ${member.key}`;
-  }
-  return member => member.caption;
+function getMemberFilterFnTypes(member) {
+  return {
+    value: String(member.key),
+    label: member.caption ? `${member.caption} ${member.key}` : member.name
+  };
 }
-
 function getMantineFilterMultiSelectProps(
   isId: Boolean,
   isNumeric: Boolean,
   range,
   entity: PlainLevel | PlainMeasure | PlainProperty,
   drilldowns: Record<string, DrilldownItem>,
-  data: TData[],
-  columnKey: string
+  columnKey: string,
+  types: Record<string, AnyResultColumn>
 ) {
   let result: {
     filterVariant?: "multi-select" | "text";
@@ -129,36 +162,26 @@ function getMantineFilterMultiSelectProps(
 
   // const filterVariant = !isId && isNumeric && range && (range[1] - range[0] <= 50) ? "multi-select" : "text"
   const filterVariant =
-    !isId && (!range || (range && range[1] - range[0] <= 50)) ? "multi-select" : "text";
+    !isId && !isNumeric && (!range || (range && range[1] - range[0] <= 100))
+      ? "multi-select"
+      : "text";
   result = Object.assign({}, result, {filterVariant});
 
   if (result.filterVariant === "multi-select") {
     if (entity._type === "level") {
-      if (entity.fullName) {
-        const dd = Object.keys(drilldowns).reduce(
-          (prev, key) => ({...prev, [drilldowns[key].fullName]: drilldowns[key]}),
-          {}
-        );
-        const drilldwonData = dd[entity.fullName];
+      const dd = Object.keys(drilldowns).reduce(
+        (prev, key) => ({...prev, [drilldowns[key].uniqueName]: drilldowns[key]}),
+        {}
+      );
+      const drilldwonData = dd[entity.uniqueName];
 
-        if (drilldwonData && drilldwonData.members) {
-          const getmemberFilterValue = getMemberFilterFn(data, columnKey);
-          result = Object.assign({}, result, {
-            mantineFilterMultiSelectProps: {
-              data: drilldwonData.members.map(getmemberFilterValue)
-            },
-            filterFn: (row, id, filterValue) => {
-              if (filterValue.length) {
-                const rowValue = row.getValue(id);
-                if (typeof rowValue === "object") {
-                  return filterValue.includes(String(rowValue.value + " " + rowValue.id));
-                }
-                return filterValue.includes(String(rowValue));
-              }
-              return true;
-            }
-          });
-        }
+      if (drilldwonData && drilldwonData.members) {
+        result = Object.assign({}, result, {
+          mantineFilterMultiSelectProps: {
+            data: drilldwonData.members.map(getMemberFilterFnTypes),
+            placeholder: columnKey
+          }
+        });
       }
     }
   }
@@ -178,10 +201,6 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
   }
 }
 
-const tableHeadStyles = (t: MantineTheme) => ({
-  border: `0.0625rem solid ${t.colors.gray[9]}`
-})
-
 type TableProps = {
   cube: PlainCube;
   result: QueryResult<Record<string, string | number>>;
@@ -199,7 +218,136 @@ type TableProps = {
   columnSorting?: (a: AnyResultColumn, b: AnyResultColumn) => number;
 };
 
-// ViewPros
+function getLastWord(str) {
+  const words = str.trim().split(" ");
+  return words[words.length - 1];
+}
+type UserApiResponse = any;
+
+interface Condition {
+  conditionOne: [string, string, number];
+  conditionTwo?: [string, string, number];
+  joint?: string;
+}
+
+type ComparisonFunction = (value: number[]) => Condition;
+
+export function getFiltersConditions(fn: string, value: number[]) {
+  const comparisonMap = new Map<string, ComparisonFunction>([
+    [
+      "greaterThan",
+      (value: number[]): Condition => ({
+        conditionOne: [Comparison.GTE, String(value[0]), Number(value[0])],
+        conditionTwo: [Comparison.GT, "0", 0]
+      })
+    ],
+    [
+      "lessThan",
+      (value: number[]): Condition => ({
+        conditionOne: [Comparison.LTE, String(value[0]), Number(value[0])],
+        conditionTwo: [Comparison.GT, "0", 0]
+      })
+    ],
+    [
+      "between",
+      (values: number[]): Condition => {
+        const [min, max] = values;
+        return {
+          conditionOne: [Comparison.GTE, String(min), Number(min)],
+          conditionTwo: [Comparison.LTE, String(max), Number(max)],
+          joint: "and"
+        };
+      }
+    ]
+  ]);
+
+  return comparisonMap.get(fn)?.(value);
+}
+
+type useTableDataType = {
+  cuts: CutItem[];
+  columns: string[];
+  filters: FilterItem[];
+  limit: number;
+  offset: number;
+};
+
+function useTableData({offset, limit, columns, filters, cuts}: useTableDataType) {
+  // Workaround on keys Ideally use the function to get the url for querying using olap client.
+  const normalizedFilters = filters.map(filter => ({
+    id: filter.measure,
+    value: getFilterValue(filter),
+    fn: getFilterFn(filter)
+  }));
+  const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
+  const filterKey = JSON.stringify(normalizedFilters);
+  const cutKey = JSON.stringify(normalizedCuts);
+  const actions = useActions();
+  const [filterKeydebouced, setDebouncedTerm] = useState<string | string[]>("");
+
+  const page = offset;
+  useEffect(() => {
+    const handler = debounce(() => {
+      const term = [limit, offset, ...columns.sort(), filterKey, cutKey, page];
+      setDebouncedTerm(term);
+    }, 700);
+    handler();
+    return () => {
+      handler.cancel();
+    };
+  }, [...columns, offset, filterKey, cutKey, page]);
+
+  return useQuery<UserApiResponse>({
+    queryKey: ["table", filterKeydebouced],
+    queryFn: () => {
+      return actions.willExecuteQuery().then(res => {
+        const {data, types} = res;
+        return {data: data ?? [], types};
+      });
+    },
+    staleTime: 300000,
+    enabled: !!filterKeydebouced
+    // placeholderData: keepPreviousData
+  });
+}
+
+type usePrefetchType = {
+  data: any;
+  isPlaceholderData: boolean;
+  limit: number;
+  offset: number;
+  totalRowCount: number;
+  columns: string[];
+};
+
+// update when pagination api is set.
+function usePrefetch({
+  data,
+  isPlaceholderData,
+  limit,
+  offset,
+  totalRowCount,
+  columns
+}: usePrefetchType) {
+  const queryClient = useQueryClient();
+  const actions = useActions();
+  const hasMore = true;
+  const page = offset + limit;
+  const key = ["table", limit, page, ...columns];
+
+  React.useEffect(() => {
+    if (!isPlaceholderData && hasMore) {
+      queryClient.prefetchQuery({
+        queryKey: [key, page],
+        queryFn: () => {
+          return actions.willExecuteQuery({offset: page, limit});
+        },
+        staleTime: 300000
+      });
+    }
+  }, [data, limit, page, isPlaceholderData, key, queryClient]);
+}
+
 export function useTable({
   cube,
   result,
@@ -208,33 +356,99 @@ export function useTable({
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const {types} = result;
-  const {locale, measures, drilldowns} = useSelector(selectCurrentQueryParams);
+  const {measures, drilldowns} = useSelector(selectCurrentQueryParams);
+  const filterItems = useSelector(selectFilterItems);
+
+  const finalUniqueKeys = [
+    ...Object.keys(measures).reduce((prev, curr) => {
+      const measure = measures[curr];
+      if (measure.active) {
+        return [...prev, curr];
+      }
+      return prev;
+    }, []),
+    ...Object.keys(drilldowns).reduce((prev, curr) => {
+      const dd = drilldowns[curr];
+      if (dd.active) {
+        return [...prev, curr];
+      }
+      return prev;
+    }, [])
+  ];
+
   const actions = useActions();
+  const itemsCuts = useSelector(selectCutItems);
+  const {limit, offset} = useSelector(selectPaginationParams);
 
-  const data = useMemo(
-    () =>
-      window.navigator.userAgent.includes("Firefox") ? result.data.slice(0, 10000) : result.data,
-    [result.data]
-  );
+  const [pagination, setPagination] = useState<MRT_PaginationState>({
+    pageIndex: offset,
+    pageSize: limit
+  });
 
-  const isLimited = result.data.length !== data.length;
-  const {translate: t} = useTranslation();
-  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
-    cube.measures
-  );
+  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
+    offset,
+    limit,
+    columns: finalUniqueKeys,
+    filters: filterItems.filter(isActiveItem),
+    cuts: itemsCuts.filter(isActiveCut)
+  });
+
+  console.log(isLoading, isFetching, isError, data);
+
+  // check no data
+  const tableData = data?.data || [];
+  const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
 
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
    * and its contents, for later use.
    */
-  const finalKeys = Object.values(types)
+  const finalKeys = Object.values(tableTypes)
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
 
+  //So far this is a hardcoded count until api returns value
+  const totalRowCount = result.data.length === limit ? limit * 10 : result.data.length;
+  // usePrefetch({
+  //   data: tableData,
+  //   isPlaceholderData,
+  //   offset,
+  //   limit,
+  //   totalRowCount,
+  //   columns: finalUniqueKeys
+  // });
+
+  const fetchedTableData = tableData ?? [];
+  // const totalRowCount = data?.meta?.totalRowCount ?? 0;
+
+  useEffect(() => {
+    actions.updatePagination({
+      limit: pagination.pageSize,
+      offset: pagination.pageIndex * pagination.pageSize
+    });
+  }, [pagination]);
+
+  const {translate: t} = useTranslation();
+
+  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
+    cube.measures
+  );
+
   const columns = useMemo<ColumnDef<TData>[]>(() => {
-    return finalKeys.map(column => {
+    const indexColumn = {
+      id: "#",
+      Header: "#",
+      Cell: ({row}) => row.index + 1,
+      minWidth: 50,
+      maxWidth: 50,
+      width: 50,
+      maxSize: 50,
+      size: 50
+    };
+
+    const columnsDef = finalKeys.map(column => {
       const {
         entity,
         entityType,
@@ -244,7 +458,7 @@ export function useTable({
         range,
         isId
       } = column;
-      const isNumeric = valueType === "number";
+      const isNumeric = valueType === "number" && columnKey !== "Year";
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
       const filterOption = getColumnFilterOption(entityType);
@@ -254,10 +468,9 @@ export function useTable({
         range,
         entity,
         drilldowns,
-        data,
-        columnKey
+        columnKey,
+        types
       );
-
       return {
         ...filterOption,
         ...mantineFilterVariantObject,
@@ -273,7 +486,6 @@ export function useTable({
           }
           return 0;
         },
-        getFilterValue: () => {},
         Header: ({column}) => {
           return (
             <Box mb={rem(5)}>
@@ -281,9 +493,7 @@ export function useTable({
                 <Box sx={{flexGrow: 1}}>
                   <Flex gap="xs" align="center">
                     {getActionIcon(entityType)}
-                    <Text size="sm">
-                      {column.columnDef.header}
-                    </Text>
+                    <Text size="sm">{column.columnDef.header}</Text>
                     <ActionIcon
                       key={`sort-${column.columnDef.header}`}
                       size={22}
@@ -312,10 +522,9 @@ export function useTable({
             </Box>
           );
         },
-        size: isId ? 80 : undefined,
         formatter,
         formatterKey,
-        id: columnKey,
+        id: entity.fullName ?? entity.name,
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
@@ -323,27 +532,35 @@ export function useTable({
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
               return (
-                <Flex justify="space-between" sx={{width: "100%"}} gap="sm">
-                  <Text size="sm"
-                      sx={{
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis"
-                        }}>{renderedCellValue}</Text>
-                    <Box>
-                    {cellId && <Text color="dimmed">{cellId}</Text>}
-                  </Box>
+                <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
+                  <Text
+                    size="sm"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis"
+                    }}
+                  >
+                    {renderedCellValue}
+                  </Text>
+                  <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
                 </Flex>
               );
-          }
+            }
       };
     });
-  }, [currentFormats, data, types, drilldowns, measures]);
+    return columnsDef.length ? [indexColumn, ...columnsDef] : [];
+  }, [currentFormats, tableData, tableTypes, drilldowns, measures]);
 
   const constTableProps = useMemo(
     () =>
       ({
-        enableBottomToolbar: isLimited,
+        mantineToolbarAlertBannerProps: isError
+          ? {
+              color: "red",
+              children: "Error loading data."
+            }
+          : undefined,
         enableColumnFilterModes: true,
         enableColumnResizing: true,
         enableDensityToggle: false,
@@ -353,36 +570,21 @@ export function useTable({
           showRowsPerPage: false
         },
         paginationDisplayMode: "pages",
-        enableRowNumbers: true,
-        rowNumberMode: "static",
-        displayColumnDefOptions: {
-          "mrt-row-numbers": {
-            size: 10,
-            maxSize: 25,
-            enableOrdering: true,
-            mantineTableBodyCellProps: {
-              sx: (t:MantineTheme) => ({
-                fontSize: t.fontSizes.sm,
-                color: t.colors.gray[6]
-              }),
-            },
-          }
-        },
         enableRowVirtualization: false,
-        // globalFilterFn: "contains",
+        globalFilterFn: "contains",
         initialState: {
-          density: "xs",
-          showColumnFilters: true,
-          pagination: {pageSize: 100, pageIndex: 0}
+          density: "xs"
         },
         mantineBottomToolbarProps: {
           id: "query-results-table-view-footer"
         },
+
         mantineTableProps: {
           sx: {
             "& td": {
-              padding: "7px 10px!important"
-            }
+              padding: "7px 10px !important"
+            },
+            tableLayout: "fixed"
           },
           withColumnBorders: true
         },
@@ -413,7 +615,7 @@ export function useTable({
           }
         },
         renderBottomToolbar() {
-          const [isOpen, setIsOpen] = useState(isLimited);
+          const [isOpen, setIsOpen] = useState(false);
           if (!isOpen) return null;
           return (
             <Alert
@@ -427,18 +629,29 @@ export function useTable({
           );
         }
       } as const),
-    [isLimited]
+    [isError]
   );
 
   const table = useMantineReactTable({
     columns,
-    data,
+    data: fetchedTableData,
+    onPaginationChange: setPagination,
     enableHiding: false,
+    manualFiltering: true,
+    manualPagination: true,
+    manualSorting: false,
+    rowCount: totalRowCount,
+    state: {
+      isLoading: isLoading || isFetching || data === undefined,
+      pagination,
+      showAlertBanner: isError,
+      showProgressBars: isFetching || isLoading
+    },
     ...constTableProps,
     ...mantineTableProps
   });
 
-  return {table};
+  return {table, isError, isLoading};
 }
 
 type TableView = {
@@ -446,16 +659,19 @@ type TableView = {
   getColumn(id: String): AnyResultColumn | undefined;
 } & ViewProps;
 
-export function TableView({table, result}: TableView) {
+export function TableView({table, result, isError, isLoading}: TableView) {
+  const isData = Boolean(table.getRowModel().rows.length);
+
   return (
-    <Flex justify="space-between" align="center" sx={{height: "100%"}}>
+    <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
-        <ScrollArea.Autosize mah="calc(100vh - 70px)" maw={"100vw"}
+        <ProgressBar isTopToolbar={false} table={table} />
+        <Box
           sx={{
             flex: "1 1 auto",
-            height: "100%",
+            height: isData ? "100%" : "auto",
             position: "relative",
-            overflowY: "scroll"
+            overflow: "scroll"
           }}
         >
           <Table
@@ -472,115 +688,203 @@ export function TableView({table, result}: TableView) {
               component="thead"
               sx={{
                 position: "relative",
-                top: 0
+                top: 0,
+                zIndex: 10
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (
-                <Box component="tr" key={headerGroup.id}>
+                <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-                    if (column.id !== "mrt-row-numbers") {
-                      const isNumeric = column.columnDef.dataType === "number";
-                      return (
-                        <Box
-                          component="th"
-                          key={header.id}
-                          sx={theme => ({
-                            backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
-                            align: isNumeric ? "right" : "left",
-                            height: 60,
-                            paddingBottom: 10,
-                            width: 300,
-                            position: "sticky",
-                            fontSize: theme.fontSizes.sm,
-                            top: 0,
-                            display: "table-cell"
-                          })}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.Header ?? header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                          <MRT_TableHeadCellFilterContainer header={header} table={table} />
-                        </Box>
-                      );
-                    } else {
-                      return (
-                        <>
-                          <Box
-                            component="th"
-                            key={header.id}
-                            sx={(theme) => ({
-                              width: `calc(1rem * ${String(table.getRowModel().rows.length).length})`,
-                              maxWidth: `calc(1rem * ${String(table.getRowModel().rows.length).length})`,
-                              position: "sticky",
-                              top: 0,
-                              backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
-                              display: "table-cell"
-                            })}
-                          >
-                            <Box>
-                              {header.isPlaceholder
-                                ? null
-                                : flexRender(
-                                    header.column.columnDef.Header ??
-                                      header.column.columnDef.header,
-                                    header.getContext()
-                                  )}
-                            </Box>
-                          </Box>
-                        </>
-                      );
-                    }
+                    const isNumeric = column.columnDef.dataType === "number";
+                    const isRowIndex = column.id === "#";
+                    const base = theme => ({
+                      backgroundColor:
+                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                      align: isNumeric ? "right" : "left",
+                      height: 60,
+                      paddingBottom: 10,
+                      minWidth: 210,
+                      width: 300,
+                      maxWidth: 450,
+                      position: "sticky",
+                      fontSize: theme.fontSizes.sm,
+                      top: 0,
+                      display: "table-cell"
+                    });
+
+                    const index = theme => ({
+                      ...base(theme),
+                      minWidth: 50,
+                      width: 50,
+                      maxWidth: 50,
+                      size: 50
+                    });
+
+                    return (
+                      <Box
+                        component="th"
+                        key={header.id}
+                        sx={theme => (isRowIndex ? index(theme) : base(theme))}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.Header ?? header.column.columnDef.header,
+                              header.getContext()
+                            )}
+
+                        {!isRowIndex && (
+                          <ColumnFilterCell isNumeric={isNumeric} header={header} table={table} />
+                        )}
+                      </Box>
+                    );
                   })}
-                  <Box 
+                  {/* <Box
                     component="th"
                     key={"placeholder"}
                     sx={theme => ({
-                        backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7]: theme.colors.gray[0],
-                        align: "center",
-                        height: 60,
-                        paddingBottom: 10,
-                        width: 20,
-                        position: "sticky",
-                        top: 0,
-                        display: "table-cell",
-                        textAlign: "center",
-                      })}>
+                      backgroundColor:
+                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                      align: "center",
+                      height: 60,
+                      paddingBottom: 10,
+                      width: 20,
+                      position: "sticky",
+                      top: 0,
+                      display: "table-cell",
+                      textAlign: "center"
+                    })}
+                  >
                     <OptionsMenu>
                       <PlusSVG />
                     </OptionsMenu>
-                  </Box>
+                  </Box> */}
                 </Box>
               ))}
             </Box>
-            <Box component="tbody">
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    
+            {isData && (
+              <Box component="tbody">
+                {table.getRowModel().rows.map(row => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map(cell => (
                       <MRT_TableBodyCell
                         key={cell.id}
                         cell={cell}
                         rowIndex={row.index}
                         table={table}
                       />
-                    
-                  ))}
-                </tr>
-              ))}
-            </Box>
+                    ))}
+                  </tr>
+                ))}
+              </Box>
+            )}
           </Table>
-        </ScrollArea.Autosize>
-        {/* <MRT_ToolbarAlertBanner stackAlertBanner table={table} /> */}
+          {!isData && !isError && !isLoading && <NoRecords />}
+        </Box>
+        <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
         <TableFooter table={table} result={result} />
       </Flex>
-    </Flex>
+    </Box>
   );
 }
 
+const ColumnFilterCell = ({
+  header,
+  table,
+  isNumeric
+}: {
+  header: MRT_Header<TData>;
+  table: MRT_TableInstance<TData>;
+  isNumeric: boolean;
+}) => {
+  header;
+  const filterVariant = header.column.columnDef.filterVariant;
+  const isMulti = filterVariant === "multi-select";
+
+  if (isMulti) {
+    return <MultiFilter header={header} />;
+  }
+
+  if (isNumeric) {
+    return <NumericFilter header={header} />;
+  }
+};
+
+function NumericFilter({header}: {header: MRT_Header<TData>}) {
+  const filters = useSelector(selectFilterItems);
+  const filter = filters.find(f => f.measure === header.column.id);
+
+  if (filter) {
+    const filterFn = getFilterFn(filter);
+    const text = getFilterfnText(filterFn);
+    const isBetween = filterFn === "between";
+
+    return (
+      <Flex gap="xs" style={{fontWeight: "normal"}}>
+        <Box sx={{flex: "1 1 auto"}}>
+          {isBetween ? (
+            <MinMax filter={filter} hideControls />
+          ) : (
+            <NumberInputComponent text={text} filter={filter} />
+          )}
+        </Box>
+        <Box sx={{alignSelf: "flex-end"}}>
+          <FilterFnsMenu filter={filter} />
+        </Box>
+      </Flex>
+    );
+  }
+}
+
+function MultiFilter({header}: {header: MRT_Header<TData>}) {
+  const cutItems = useSelector(selectCutItems);
+  const drilldownItems = useSelector(selectDrilldownItems);
+  const label = header.column.id;
+  const drilldown = drilldownItems.find(c => c.uniqueName === header.column.id);
+  const actions = useActions();
+
+  const cut = cutItems.find(cut => {
+    return cut.uniqueName === drilldown?.uniqueName;
+  });
+
+  const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
+    actions.updateCut({...item, members});
+  }, []);
+  return (
+    drilldown &&
+    cut && (
+      <Box pt="md" style={{fontWeight: "normal"}}>
+        <MultiSelect
+          sx={{flex: "1 1 100%"}}
+          searchable
+          onChange={value => {
+            updatecutHandler({...cut, active: true}, value);
+          }}
+          placeholder={`Filter by ${label}`}
+          value={cut.members || []}
+          data={drilldown.members.map(m => ({
+            value: String(m.key),
+            label: m.caption ? `${m.caption} ${m.key}` : m.name
+          }))}
+          clearButtonProps={{"aria-label": "Clear selection"}}
+          clearable
+          nothingFound="Nothing found"
+        />
+      </Box>
+    )
+  );
+}
+
+const NoRecords = () => {
+  return (
+    <Center style={{height: "calc(100% - 210px)"}}>
+      <Text size="xl" color="gray" italic>
+        No records to display.
+      </Text>
+    </Center>
+  );
+};
 
 export default TableView;
 

@@ -74,11 +74,6 @@ function SiteSettings({
 
   return (
     <>
-      <Affix position={position}>
-        <ActionIcon onClick={() => setOpened(v => !v)}>
-          <IconPalette />
-        </ActionIcon>
-      </Affix>
       <Dialog
         w={250}
         opened={opened}
@@ -190,9 +185,7 @@ function App() {
   return (
     <SettingsProvider locales={locales} locale={locale} setLocale={setLocale}>
     <Explorer
-      source={process.env.TESSERACT_SERVER}
-      // source={"https://api.oec.world/tesseract/"}
-      // source={"https://api.datasaudi.sa/"}
+      source={process.env.TESSERACT_SERVER}      
       defaultCube="gastat_gdp"
       formatters={formatters}
       dataLocale={"en,ar"}
@@ -220,3 +213,7 @@ function mount(container) {
   
   root.render(<App />);
 }
+
+// <ActionIcon onClick={() => setOpened(v => !v)}>
+// <IconPalette />
+// </ActionIcon>

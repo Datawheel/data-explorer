@@ -7,9 +7,9 @@ import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
 import {selectLocale} from "../state/queries";
 import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
-import { LocaleSelector } from "./LocaleSelector";
+import {LocaleSelector} from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
-import { useDebouncedValue } from "@mantine/hooks";
+import {useDebouncedValue} from "@mantine/hooks";
 
 type SidebarProviderProps = {
   expanded: boolean;
@@ -35,9 +35,7 @@ export function SideBarProvider(props: PropsWithChildren<{}>) {
   const [map, setMap] = useState<Map<string, string[]>>();
   const [graph, setGraph] = useState(new Graph());
 
-  const resetGraph = () => {
-    setGraph(new Graph());
-  };
+  const resetGraph = () => setGraph(new Graph());
 
   return (
     <Provider
@@ -95,7 +93,10 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
               <ActionIcon
                 onClick={() => setExpanded(!expanded)}
                 variant="subtle"
-                sx={t => ({alignSelf: "center", color: t.colorScheme === "dark" ? t.white: t.colors.gray[7]})}
+                sx={t => ({
+                  alignSelf: "center",
+                  color: t.colorScheme === "dark" ? t.white : t.colors.gray[7]
+                })}
               >
                 <DataSetSVG />
               </ActionIcon>
@@ -125,21 +126,21 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
               <Auto />
             </Box> 
             <Box sx={{flexGrow: 1}}></Box>
-            
           </Flex>
         </Box>
-        <ScrollArea sx={theme => (
-          {
-            borderTopColor: theme.colorScheme === "dark" ? theme.colors.dark[6] :theme.colors.gray[3],
+        <ScrollArea
+          sx={theme => ({
+            borderTopColor:
+              theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[3],
             borderTopWidth: "1px",
-            borderTopStyle: expanded ? "solid": "none"
-          }
-          )}>
-          <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
+            borderTopStyle: expanded ? "solid" : "none"
+          })}
+        >
+          <Box h={expanded ? "auto" : "0px"}>{props.children}</Box>
         </ScrollArea>
         <Group
           align="center"
-          position={expanded ? "right": "center"}
+          position={expanded ? "right" : "center"}
           w="100%"
           p="md"
           sx={{alignSelf: "flex-end", marginTop: "auto"}}

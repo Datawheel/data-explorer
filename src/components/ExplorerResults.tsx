@@ -24,10 +24,10 @@ import {QueryParams, QueryResult} from "../utils/structs";
 import {PanelDescriptor} from "../utils/types";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
-import {selectLoadingState} from "../state/loading";
 import Toolbar from "./Toolbar";
-import { ExplorerTabs } from "./ExplorerTabs";
-import { useFullscreen } from "@mantine/hooks";
+import {ExplorerTabs} from "./ExplorerTabs";
+import {useFullscreen} from "@mantine/hooks";
+import AddColumnsDrawer from "./DrawerMenu";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -46,9 +46,7 @@ export function ExplorerResults(props: {
 }) {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
-  const {isDirty, params, result} = useSelector(selectCurrentQueryItem);
-
-  const {loading: isLoading} = useSelector(selectLoadingState);
+  const {params, result} = useSelector(selectCurrentQueryItem);
 
   const {online: isServerOnline, url: serverUrl} = serverStatus;
   const {data, error} = result;
@@ -92,7 +90,8 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
-  if (isServerOnline == null || !cube || isDirty || isLoading) {
+
+  if (isServerOnline == null || !cube) {
     return (
       <Paper
         className={cx(classes.container, props.className)}
@@ -121,16 +120,16 @@ export function ExplorerResults(props: {
   }
 
   // Check if query executed but returned empty dataset
-  if (data.length === 0) {
-    return (
-      <FailureResult
-        className={cx(classes.container, props.className)}
-        icon={<IconBox color="orange" size="5rem" />}
-        title={t("results.error_emptyresult_title")}
-        description={t("results.error_emptyresult_detail")}
-      />
-    );
-  }
+  // if (data.length === 0) {
+  //   return (
+  //     <FailureResult
+  //       className={cx(classes.container, props.className)}
+  //       icon={<IconBox color="orange" size="5rem" />}
+  //       title={t("results.error_emptyresult_title")}
+  //       description={t("results.error_emptyresult_detail")}
+  //     />
+  //   );
+  // }
 
   return (
     <SuccessResult
@@ -191,7 +190,7 @@ function SuccessResult(props: {
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
 
-  const {table} = useTable({cube, result});
+  const {table, isError, isLoading} = useTable({cube, result});
 
   const fullscreen = useFullscreen();
 
@@ -212,15 +211,17 @@ function SuccessResult(props: {
         <Flex
           sx={t => ({
             alignItems: "center",
-            background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[1],
+            background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
             justifyContent: "space-between"
           })}
-          w="100%">
+          w="100%"
+        >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
             <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
-              <Toolbar table={table} fullscreen={fullscreen}/>
+              <AddColumnsDrawer />
+              <Toolbar table={table} fullscreen={fullscreen} />
             </Box>
           )}
         </Flex>
@@ -241,20 +242,22 @@ function SuccessResult(props: {
         <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
           <Suspense fallback={props.children}>
             <Flex h="100%">
-              <Box sx={{flex: "1 1"}}>
-                  <CurrentComponent
-                    panelKey={`${panelKey}-${panelMeta}`}
-                    cube={cube}
-                    params={params}
-                    result={result}
-                    table={table}
-                  />
+              <Box sx={{flex: "1 1", overflowX: "scroll"}}>
+                <CurrentComponent
+                  panelKey={`${panelKey}-${panelMeta}`}
+                  cube={cube}
+                  params={params}
+                  result={result}
+                  table={table}
+                  isError={isError}
+                  isLoading={isLoading}
+                />
               </Box>
             </Flex>
           </Suspense>
         </Box>
       </Paper>
+      {/* <ReactQueryDevtools initialIsOpen /> */}
     </Flex>
-
   );
 }

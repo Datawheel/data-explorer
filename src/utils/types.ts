@@ -1,7 +1,7 @@
-import { PlainCube } from "@datawheel/olap-client";
+import {PlainCube} from "@datawheel/olap-client";
 import React from "react";
-import { QueryParams, QueryResult } from "./structs";
-import type { MRT_TableInstance } from "mantine-react-table";
+import {QueryParams, QueryResult} from "./structs";
+import type {MRT_TableInstance} from "mantine-react-table";
 
 export interface Annotated {
   annotations: Record<string, string | undefined>;
@@ -39,4 +39,6 @@ export interface ViewProps<TData = Record<string, string | number>> {
   params: QueryParams;
   result: QueryResult<TData>;
   table?: MRT_TableInstance<TData & Record<string, any>>;
+  isError: boolean;
+  isLoading: boolean;
 }

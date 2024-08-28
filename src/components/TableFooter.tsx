@@ -98,7 +98,11 @@ const DownloadQuery = () => {
     );
   }
 
-  if (components.length === 0 || isDirty || result.data.length === 0) {
+  // if (components.length === 0 || isDirty || result.data.length === 0) {
+  //   return null;
+  // }
+
+  if (components.length === 0 || result.data.length === 0) {
     return null;
   }
 
@@ -227,7 +231,7 @@ function MenuOpts({formats}: MenuOptsProps) {
             minWidth: 0
           }}
         >
-          <IconDotsVertical  size="0.8rem"/>
+          <IconDotsVertical size="0.8rem" />
         </ActionIcon>
         {/* <Button
           onClick={() => setOpened(o => !o)}

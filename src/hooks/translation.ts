@@ -1,5 +1,5 @@
-import {translationFactory} from "@datawheel/use-translation";
-import {translationDict as vizbuilderTranslationDict} from "@datawheel/vizbuilder";
+import { translationFactory } from "@datawheel/use-translation";
+import { translationDict as vizbuilderTranslationDict } from "@datawheel/vizbuilder";
 
 export const defaultTranslation = {
   action_copy: "Copy",
@@ -7,6 +7,9 @@ export const defaultTranslation = {
   action_download: "Download",
   action_open: "Open",
   action_reload: "Reload",
+  sidebar: {
+    dataset: "Select Dataset"
+  },
   comparison: {
     EQ: "Equal to",
     GT: "Greater than",
@@ -200,5 +203,5 @@ export const defaultTranslation = {
 
 export type TranslationDict = typeof defaultTranslation;
 
-export const {useTranslation, TranslationConsumer, TranslationProvider} =
-  translationFactory({defaultLocale: "en", defaultTranslation});
+export const { useTranslation, TranslationConsumer, TranslationProvider } =
+  translationFactory({ defaultLocale: "en", defaultTranslation });
