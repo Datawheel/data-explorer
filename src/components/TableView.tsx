@@ -387,7 +387,7 @@ export function useTable({
     pageSize: limit
   });
 
-  const {isLoading, isFetching, isError, data, error, isPlaceholderData} = useTableData({
+  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
     offset,
     limit,
     columns: finalUniqueKeys,
@@ -578,10 +578,11 @@ export function useTable({
         mantineBottomToolbarProps: {
           id: "query-results-table-view-footer"
         },
+
         mantineTableProps: {
           sx: {
             "& td": {
-              padding: "7px 10px!important"
+              padding: "7px 10px !important"
             },
             tableLayout: "fixed"
           },
@@ -641,10 +642,10 @@ export function useTable({
     manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      isLoading,
+      isLoading: isLoading || isFetching,
       pagination,
       showAlertBanner: isError,
-      showProgressBars: isFetching
+      showProgressBars: isFetching || isLoading
     },
     ...constTableProps,
     ...mantineTableProps
@@ -692,7 +693,7 @@ export function TableView({table, result, isError, isLoading}: TableView) {
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (
-                <Box component="tr" key={headerGroup.id}>
+                <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
                     const isNumeric = column.columnDef.dataType === "number";
@@ -788,38 +789,6 @@ export function TableView({table, result, isError, isLoading}: TableView) {
   );
 }
 
-// {
-//   /* <Box
-// component="th"
-// key={header.id}
-// sx={theme => ({
-//   width: `calc(1rem * ${
-//     String(table.getRowModel().rows.length).length
-//   })`,
-//   maxWidth: `calc(1rem * ${
-//     String(table.getRowModel().rows.length).length
-//   })`,
-//   position: "sticky",
-//   top: 0,
-//   backgroundColor:
-//     theme.colorScheme === "dark"
-//       ? theme.colors.dark[7]
-//       : theme.colors.gray[0],
-//   display: "table-cell"
-// })}
-// >
-// <Box>
-//   {header.isPlaceholder
-//     ? null
-//     : flexRender(
-//         header.column.columnDef.Header ??
-//           header.column.columnDef.header,
-//         header.getContext()
-//       )}
-// </Box>
-// </Box> */
-// }
-
 const ColumnFilterCell = ({
   header,
   table,
@@ -852,7 +821,7 @@ function NumericFilter({header}: {header: MRT_Header<TData>}) {
     const isBetween = filterFn === "between";
 
     return (
-      <Flex gap="xs">
+      <Flex gap="xs" style={{fontWeight: "normal"}}>
         <Box sx={{flex: "1 1 auto"}}>
           {isBetween ? (
             <MinMax filter={filter} hideControls />
@@ -885,7 +854,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   return (
     drilldown &&
     cut && (
-      <Box pt="md">
+      <Box pt="md" style={{fontWeight: "normal"}}>
         <MultiSelect
           sx={{flex: "1 1 100%"}}
           searchable
