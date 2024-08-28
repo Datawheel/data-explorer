@@ -27,9 +27,15 @@ function TableFooter(props: Props) {
 
   return (
     <Box w="100%" sx={{flex: "0 0 70px"}}>
-      <Flex p="md" justify="space-between" align="center">
+      <Flex
+        p="md"
+        justify="space-between"
+        align="flex-end"
+        direction={{base: "column-reverse", md: "row"}}
+        gap="sm"
+      >
         <CubeSource />
-        <Group noWrap>
+        <Group position="right" spacing="sm">
           <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
           <MRT_TablePagination table={table} />
           <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />

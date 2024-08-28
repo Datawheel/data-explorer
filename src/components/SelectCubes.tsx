@@ -88,6 +88,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
           .map(k => itemMap[k])
           .shift();
         const dimension = [...dimensions].shift();
+        console.log({dimensions})
         if (measure && dimension) {
           updateMeasure({...measure, active: true});
           addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {

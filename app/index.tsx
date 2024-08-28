@@ -193,9 +193,9 @@ function App() {
       source={process.env.TESSERACT_SERVER}
       // source={"https://api.oec.world/tesseract/"}
       // source={"https://api.datasaudi.sa/"}
-      defaultCube="foreign_trade"
+      defaultCube="gastat_gdp"
       formatters={formatters}
-      dataLocale={locales.join(",")}
+      dataLocale={"en,ar"}
       previewLimit={75}
       panels={[
         {key: "table", label: "Data Table", component: TableView},

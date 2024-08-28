@@ -1,4 +1,4 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Tooltip, Table, MantineTheme} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, ScrollArea, Table, MantineTheme} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -450,11 +450,10 @@ export function TableView({table, result}: TableView) {
   return (
     <Flex justify="space-between" align="center" sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
-        <Box
+        <ScrollArea.Autosize mah="calc(100vh - 70px)" maw={"100vw"}
           sx={{
             flex: "1 1 auto",
             height: "100%",
-            maxHeight: "calc(100vh - 70px)",
             position: "relative",
             overflowY: "scroll"
           }}
@@ -574,7 +573,7 @@ export function TableView({table, result}: TableView) {
               ))}
             </Box>
           </Table>
-        </Box>
+        </ScrollArea.Autosize>
         {/* <MRT_ToolbarAlertBanner stackAlertBanner table={table} /> */}
         <TableFooter table={table} result={result} />
       </Flex>

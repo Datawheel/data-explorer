@@ -62,6 +62,7 @@ export function LocaleSelector() {
     if (currentCode !== l.value) {
       resetGraph();
       actions.updateLocale(l.value);
+      actions.willRequestQuery();
     }
   };
 

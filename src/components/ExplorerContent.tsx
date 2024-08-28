@@ -6,7 +6,8 @@ import {
   Center,
   createStyles,
   Header,
-  useMantineTheme
+  useMantineTheme,
+  Box
 } from "@mantine/core";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
@@ -42,7 +43,8 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     flex: "1 1 auto",
     height: "calc(100vh - 50px)",
     [theme.fn.largerThan("md")]: {
-      width: 0
+      width: 0,
+      paddingLeft: 0,
     }
   }
 }));

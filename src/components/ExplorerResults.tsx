@@ -242,13 +242,13 @@ function SuccessResult(props: {
           <Suspense fallback={props.children}>
             <Flex h="100%">
               <Box sx={{flex: "1 1"}}>
-                <CurrentComponent
-                  panelKey={`${panelKey}-${panelMeta}`}
-                  cube={cube}
-                  params={params}
-                  result={result}
-                  table={table}
-                />
+                  <CurrentComponent
+                    panelKey={`${panelKey}-${panelMeta}`}
+                    cube={cube}
+                    params={params}
+                    result={result}
+                    table={table}
+                  />
               </Box>
             </Flex>
           </Suspense>

@@ -66,18 +66,30 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {translate: t} = useTranslation();
   return (
     <Box
+      id="dex-sidebar"
       py="md"
       sx={t => ({
         height: "calc(100vh - 75px)",
         backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[1],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        maxWidth: 300,
+        maxWidth: expanded ? 300: 54,
         padding: 0,
         zIndex: 99,
+        [t.fn.smallerThan("md")]: {
+          position: "absolute",
+          width: expanded ? 300: 54,
+          height: expanded ? "calc(100vh - 75px)": 54,
+          bottom: expanded ? "unset" : t.spacing.md,
+          left: expanded ? "unset" : t.spacing.md,
+          overflow: "hidden",
+          paddingTop: expanded ? t.spacing.md: 0,
+          paddingBottom: expanded ? t.spacing.md: 0,
+          borderRadius: expanded ? 0: "100%",
+        }
       })}
     >
       <Flex h="100%" direction="column" justify="flex-start">
-        <Box px="sm" my="xs">
+        <Box px="sm" my={"sm"}>
           <Flex direction="column" sx={{flex: 1}}>
             <Flex align="center" justify="apart">
               <ActionIcon

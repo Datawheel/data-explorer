@@ -1,9 +1,10 @@
 import React, { ReactNode, useEffect, useState, useRef } from "react";
-import { Text, UnstyledButton, Group, Sx, TextInput, Box } from "@mantine/core";
+import { Text, UnstyledButton, Group, Sx, TextInput, Box, Flex, Menu, ActionIcon } from "@mantine/core";
 import { ClearSVG, FullScreenSVG, SearchSVG } from "./icons";
 import { MRT_TableInstance } from "mantine-react-table";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useTranslation } from "../main";
+import { IconSettings } from "@tabler/icons-react";
 
 const toolbarSx: Sx = (t) => ({
     background: t.colorScheme === "dark" ? t.black: t.white,
@@ -18,7 +19,11 @@ interface ToolBarButtonProps {
 
 function ToolbarButton ({icon, label, onClick = () => undefined}: ToolBarButtonProps) {
     return (
-        <UnstyledButton onClick={onClick} sx={t => ({"& svg path": {stroke: t.colorScheme === "dark" ? "white": "black"}})}>
+        <UnstyledButton
+            onClick={onClick}
+            py={{base: "0.2rem", md: 0}}
+            sx={t => ({"& svg path": {stroke: t.colorScheme === "dark" ? "white": "black"}})}
+        >
             <Group spacing={"xs"} noWrap>
                 {icon}
                 <Text size="sm">{label}</Text>
@@ -54,7 +59,7 @@ function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
     }
 
     return (
-        <Group position="left">
+        <Flex justify="flex-start" direction={{base: "column", md: "row"}}>
             <ToolbarButton
                 icon={<ClearSVG />}
                 label={t("params.label_clear")}
@@ -67,6 +72,7 @@ function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
             />
             <Box
                 w={showGlobalFilter ? 120: 0}
+                h={showGlobalFilter ? "auto": 0}
                 sx={{
                     transition: "width .2s cubic-bezier(0.4, 0, 0.2, 1)",
                     overflow: "hidden"
@@ -83,15 +89,36 @@ function ToolbarSearch ({table}: {table: MRT_TableInstance}) {
                 />
             </Box>
            
-        </Group>
+        </Flex>
     )
 }
 export default function Toolbar({table, fullscreen}: {table: MRT_TableInstance, fullscreen: {toggle: () => void; fullscreen: boolean}}) {
     const {translate: t} = useTranslation();
+
+    const settings = (
+        <Flex
+            direction={{base: "column", md: "row"}}
+            justify={"flex-start"}
+            sx={toolbarSx}
+            p="0.325rem"
+            px="md"
+            wrap="nowrap"
+        >
+            <ToolbarSearch table={table} />
+            <ToolbarButton icon={<FullScreenSVG />} label={t("params.label_fullscreen")} onClick={fullscreen.toggle}/>
+        </Flex>
+    )
     return (
-      <Group sx={toolbarSx} p="0.325rem" px="md" noWrap>
-        <ToolbarSearch table={table} />
-        <ToolbarButton icon={<FullScreenSVG />} label={t("params.label_fullscreen")} onClick={fullscreen.toggle}/>
-      </Group>
+       <Menu>
+        <Menu.Target>
+            <ActionIcon>
+                <IconSettings />
+            </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+            {settings}
+        </Menu.Dropdown>
+       </Menu> 
+      
     )
   }
