@@ -133,13 +133,9 @@ function mount(container) {
   root.render(
     <ThemeProvider>
       <Explorer
-        // source={process.env.TESSERACT_SERVER}
-        // source={"https://api.oec.world/tesseract/"}
-        // source={"https://api.datasaudi.sa/"}
-        source={"https://datasaudi-pytesseract-dev.datawheel.us/tesseract/"}
+        source={process.env.TESSERACT_SERVER}
         formatters={formatters}
         dataLocale="en,ar"
-        // height="90vh"
         previewLimit={75}
         panels={[
           {key: "table", label: "Data Table", component: TableView},
