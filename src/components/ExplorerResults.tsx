@@ -219,10 +219,10 @@ function SuccessResult(props: {
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
+            <Group sx={{display: "flex", flex: "0 1 auto"}} mr="sm" noWrap>
               <AddColumnsDrawer />
               <Toolbar table={table} fullscreen={fullscreen} />
-            </Box>
+            </Group>
           )}
         </Flex>
         {isPreviewMode && (

@@ -15,6 +15,7 @@ import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import yn from "yn";
+import {deriveDrilldowns} from "../state/utils";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -70,7 +71,13 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
       const [dimension] = dimensions;
       if (measure && dimension) {
         updateMeasure({...measure, active: true});
-        addDrilldown(dimension.hierarchies[0].levels[0]);
+        const drilldowns = deriveDrilldowns(dimensions);
+        if (measure && drilldowns.length > 0) {
+          updateMeasure({...measure, active: true});
+          for (const level of drilldowns) {
+            addDrilldown(level, dimensions);
+          }
+        }
       }
     }
   }, [selectedItem, cube]);
@@ -141,7 +148,7 @@ function useBuildGraph(items, locale, graph, setGraph) {
       const table = getAnnotation(item, "table", locale);
       const hide = getAnnotation(item, "hide_in_ui", locale);
 
-      if(!yn(hide)) {
+      if (!yn(hide)) {
         graph.addNode(topic);
         graph.addNode(subtopic);
         graph.addNode(table);
@@ -185,9 +192,13 @@ function CubeTree({
 
   const topics = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items, locale]);
 
-  if (input.length > 0 && (map && !(map.size > 0))) {
+  if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
-    return <Text ta="center" fz="xs" my="sm" italic>{t("params.label_no_results")}</Text>
+    return (
+      <Text ta="center" fz="xs" my="sm" italic>
+        {t("params.label_no_results")}
+      </Text>
+    );
   }
   return map && map.size > 0 ? (
     <Results
@@ -237,7 +248,7 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
       w={"100%"}
       styles={t => ({
         control: {
-          background: t.colorScheme === "dark" ? t.colors.dark[7] :t.colors.gray[1],
+          background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
           borderLeft: 6,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
@@ -344,12 +355,13 @@ function CubeButton({
       })}
       onClick={() => {
         onSelectCube(item, subtopic).then(({cube, measures, dimensions}) => {
-          console.log(cube, measures, dimensions, "cubeData");
           const [measure]: MeasureItem[] = Object.values(measures);
-          const [dimension] = dimensions;
-          if (measure && dimension) {
+          const drilldowns = deriveDrilldowns(dimensions);
+          if (measure && drilldowns.length > 0) {
             updateMeasure({...measure, active: true});
-            addDrilldown(dimension.hierarchies[0].levels[0], dimensions);
+            for (const level of drilldowns) {
+              addDrilldown(level, dimensions);
+            }
           }
         });
       }}
@@ -388,12 +400,12 @@ function SubtopicAccordion({
       styles={t => ({
         control: {
           fontSize: t.fontSizes.sm,
-          background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[2],
+          background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[2],
           borderLeft: 8,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
           "&[data-active] span": {
-            color: t.fn.primaryColor(),
+            color: t.fn.primaryColor()
           }
         },
         content: {
