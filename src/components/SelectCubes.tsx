@@ -1,15 +1,15 @@
 import {type PlainCube} from "@datawheel/olap-client";
-import {Anchor, Stack, Text, TextProps, Box, Accordion, AccordionControlProps} from "@mantine/core";
+import {Stack, Text, TextProps, Box, Accordion, AccordionControlProps} from "@mantine/core";
 import React, {PropsWithChildren, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLocale, selectMeasureMap, selectValidQueryStatus} from "../state/queries";
+import {selectLocale, selectMeasureMap} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
-import {buildDrilldown} from "../utils/structs";
+import {buildDrilldown, buildCut, MeasureItem} from "../utils/structs";
 import type {Annotated} from "../utils/types";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {useSideBar} from "./SideBar";
@@ -32,16 +32,22 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
-  const {willRequestQuery, updateMeasure, updateDrilldown, willFetchMembers} = useActions();
-  const initRef = useRef(false);
+  const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
 
   const cube = useSelector(selectCubeName);
   const itemMap = useSelector(selectMeasureMap);
   const dimensions = useSelector(selectOlapDimensionItems);
 
+  const createCutHandler = React.useCallback((level: PlainLevel) => {
+    const cutItem = buildCut({...level});
+    cutItem.active = false;
+    updateCut(cutItem);
+  }, []);
+
   const addDrilldown = useCallback(
     (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown({...level, key: level.fullName});
+      const drilldownItem = buildDrilldown(level);
+      createCutHandler(level);
       updateDrilldown(drilldownItem);
       return willFetchMembers({...level, level: level.name}).then(members => {
         const dimension = dimensions.find(dim => dim.name === level.dimension);
@@ -60,35 +66,12 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
-
-    //autoload if not params
     if (selectedItem && cube && !cubeParam) {
-      initRef.current = true;
-      const measure = Object.keys(itemMap)
-        .map(k => itemMap[k])
-        .shift();
-      const dimension = [...dimensions].shift();
+      const [measure] = Object.values(itemMap);
+      const [dimension] = dimensions;
       if (measure && dimension) {
         updateMeasure({...measure, active: true});
-        addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-          willRequestQuery();
-        });
-      }
-    }
-    if (selectedItem && cube && cubeParam) {
-      if (!initRef.current) {
-        initRef.current = true;
-      } else {
-        const measure = Object.keys(itemMap)
-          .map(k => itemMap[k])
-          .shift();
-        const dimension = [...dimensions].shift();
-        if (measure && dimension) {
-          updateMeasure({...measure, active: true});
-          addDrilldown(dimension.hierarchies[0].levels[0]).then(() => {
-            willRequestQuery();
-          });
-        }
+        addDrilldown(dimension.hierarchies[0].levels[0]);
       }
     }
   }, [selectedItem, cube]);
@@ -189,6 +172,7 @@ function CubeTree({
   const {graph, setGraph, map} = useSideBar();
   useBuildGraph(items, locale, graph, setGraph);
   const actions = useActions();
+
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
       item =>
@@ -196,7 +180,7 @@ function CubeTree({
         getAnnotation(item, "subtopic", locale) === subtopic
     );
     if (cube) {
-      actions.willSetCube(cube.name);
+      return actions.willSetCube(cube.name);
     }
   };
 
@@ -250,7 +234,7 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
       w={"100%"}
       styles={t => ({
         control: {
-          background: t.colorScheme === "dark" ? t.colors.dark[7] :t.colors.gray[1],
+          background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
           borderLeft: 8,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
@@ -258,7 +242,7 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
             borderLeft: 8,
             borderLeftColor: t.colors[t.primaryColor][t.fn.primaryShade()],
             borderLeftStyle: "solid",
-            color: t.colors[t.primaryColor][t.fn.primaryShade()],
+            color: t.colors[t.primaryColor][t.fn.primaryShade()]
           }
         },
         content: {
@@ -306,8 +290,31 @@ function CubeButton({
   locale: string;
   parent?: string;
 }) {
-  const {setExpanded} = useSideBar();
+  const {updateMeasure, updateCut, updateDrilldown, willFetchMembers} = useActions();
   const {classes} = useLinkStyles();
+
+  const createCutHandler = React.useCallback((level: PlainLevel) => {
+    const cutItem = buildCut({...level});
+    cutItem.active = false;
+    updateCut(cutItem);
+  }, []);
+
+  const addDrilldown = useCallback((level: PlainLevel, dimensions) => {
+    const drilldownItem = buildDrilldown(level);
+    createCutHandler(level);
+    updateDrilldown(drilldownItem);
+    return willFetchMembers({...level, level: level.name}).then(members => {
+      const dimension = dimensions.find(dim => dim.name === level.dimension);
+      if (!dimension) return;
+      return updateDrilldown({
+        ...drilldownItem,
+        dimType: dimension.dimensionType,
+        memberCount: members.length,
+        members
+      });
+    });
+  }, []);
+
   const table = item;
   const subtopic = parent ?? "";
   return (
@@ -324,14 +331,23 @@ function CubeButton({
           : classes.link
       }
       sx={t => ({
-        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale)) ?t.fn.primaryColor(): t.colorScheme === "dark" ? t.colors.dark[6]: t.colors.gray[3],
-        whiteSpace: "nowrap",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
+        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
+          ? t.fn.primaryColor()
+          : t.colorScheme === "dark"
+          ? t.colors.dark[6]
+          : t.colors.gray[3],
+        overflow: "hidden"
       })}
       onClick={() => {
-        onSelectCube(item, subtopic);
-        setExpanded(false);
+        onSelectCube(item, subtopic).then(({cube, measures, dimensions}) => {
+          console.log(cube, measures, dimensions, "cubeData");
+          const [measure]: MeasureItem[] = Object.values(measures);
+          const [dimension] = dimensions;
+          if (measure && dimension) {
+            updateMeasure({...measure, active: true});
+            addDrilldown(dimension.hierarchies[0].levels[0], dimensions);
+          }
+        });
       }}
     >
       {item}
@@ -368,7 +384,7 @@ function SubtopicAccordion({
       styles={t => ({
         control: {
           fontSize: 14,
-          background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[2],
+          background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[2],
           borderLeft: 8,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
@@ -379,7 +395,7 @@ function SubtopicAccordion({
           }
         },
         content: {
-          padding: 0,
+          padding: 0
         }
       })}
     >

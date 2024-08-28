@@ -60,11 +60,6 @@ function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
 
   return (
     <>
-      <Affix position={position}>
-        <ActionIcon onClick={() => setOpened(v => !v)}>
-          <IconPalette />
-        </ActionIcon>
-      </Affix>
       <Dialog
         w={250}
         opened={opened}
@@ -138,11 +133,8 @@ function mount(container) {
     <ThemeProvider>
       <Explorer
         source={process.env.TESSERACT_SERVER}
-        // source={"https://api.oec.world/tesseract/"}
-        // source={"https://api.datasaudi.sa/"}
         formatters={formatters}
         dataLocale="en,ar"
-        // height="90vh"
         previewLimit={75}
         panels={[
           {key: "table", label: "Data Table", component: TableView},
@@ -159,3 +151,7 @@ function mount(container) {
     </ThemeProvider>
   );
 }
+
+// <ActionIcon onClick={() => setOpened(v => !v)}>
+// <IconPalette />
+// </ActionIcon>

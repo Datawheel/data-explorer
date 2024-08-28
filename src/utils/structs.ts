@@ -4,7 +4,6 @@ import { asArray } from "./array";
 import { parseNumeric, randomKey } from "./string";
 import { joinName } from "./transform";
 
-
 export interface QueryItem {
   created: string;
   isDirty: boolean;
@@ -156,7 +155,7 @@ export function buildQueryParams(props): QueryParams {
     isPreview: props.isPreview || false,
     locale: props.locale || "",
     measures: props.measures || {},
-    pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 0,
+    pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
     sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
     sortKey: props.sortKey || props.sortProperty || ""
@@ -213,6 +212,7 @@ export function buildDrilldown(props): DrilldownItem {
     uniqueName: props.uniqueName || props.name || props.level
   };
 }
+
 
 /**
  * Creates a FilterItem object.

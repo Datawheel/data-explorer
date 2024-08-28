@@ -1,17 +1,33 @@
-import { Format, LevelDescriptor, Client as OLAPClient, PlainCube, PlainMember, ServerConfig, TesseractDataSource } from "@datawheel/olap-client";
-import { filterMap } from "../utils/array";
-import { describeData } from "../utils/object";
-import { applyQueryParams, extractQueryParams } from "../utils/query";
-import { QueryItem, buildMeasure, buildQuery } from "../utils/structs";
-import { keyBy } from "../utils/transform";
-import { FileDescriptor } from "../utils/types";
-import { isValidQuery } from "../utils/validation";
-import { loadingActions } from "./loading";
-import { queriesActions, selectCubeName, selectCurrentQueryParams, selectLocale, selectMeasureItems, selectQueryItems } from "./queries";
-import { selectOlapCubeMap, selectServerEndpoint, serverActions } from "./server";
-import { ExplorerThunk } from "./store";
-import { calcMaxMemberCount, hydrateDrilldownProperties } from "./utils";
-
+import {
+  Format,
+  LevelDescriptor,
+  Client as OLAPClient,
+  PlainCube,
+  PlainMember,
+  ServerConfig,
+  TesseractDataSource
+} from "@datawheel/olap-client";
+import {filterMap} from "../utils/array";
+import {describeData} from "../utils/object";
+import {applyQueryParams, extractQueryParams} from "../utils/query";
+import {QueryItem, buildMeasure, buildQuery} from "../utils/structs";
+import {keyBy} from "../utils/transform";
+import {FileDescriptor} from "../utils/types";
+import {isValidQuery} from "../utils/validation";
+import {loadingActions} from "./loading";
+import {
+  queriesActions,
+  selectCubeName,
+  selectCurrentQueryItem,
+  selectCurrentQueryParams,
+  selectLocale,
+  selectMeasureItems,
+  selectQueryItems
+} from "./queries";
+import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
+import {ExplorerThunk} from "./store";
+import {calcMaxMemberCount, hydrateDrilldownProperties} from "./utils";
+import {selectOlapDimensionItems} from "./selectors";
 /**
  * Initiates a new download of the queried data by the current parameters.
  *
@@ -19,42 +35,36 @@ import { calcMaxMemberCount, hydrateDrilldownProperties } from "./utils";
  *   The format the user wants the data to be. Must be a string equal to one
  *   in OlapClient.Format.
  */
-export function willDownloadQuery(
-  format: Format
-): ExplorerThunk<Promise<FileDescriptor>> {
-  return (dispatch, getState, { olapClient, previewLimit }) => {
+export function willDownloadQuery(format: Format): ExplorerThunk<Promise<FileDescriptor>> {
+  return (dispatch, getState, {olapClient, previewLimit}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-    // const dimensions = selectOlapDimensionItems;
     if (!isValidQuery(params)) {
       return Promise.reject(new Error("The current query is not valid."));
     }
 
     const axios = olapClient.datasource.axiosInstance;
 
-    return olapClient.getCube(params.cube)
-      .then(cube => {
-        const filename = `${cube.name}_${new Date().toISOString()}`;
-        const query = applyQueryParams(cube.query, params, { previewLimit }).setFormat(format);
-        const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
+    return olapClient.getCube(params.cube).then(cube => {
+      const filename = `${cube.name}_${new Date().toISOString()}`;
 
-        return Promise.all([
-          axios({ url: dataURL, responseType: "blob" })
-            .then(response => response.data),
-          calcMaxMemberCount(query, params)
-            .then(maxRows => {
-              if (maxRows > 50000) {
-                dispatch(
-                  loadingActions.setLoadingMessage({ type: "HEAVY_QUERY", rows: maxRows })
-                );
-              }
-            })
-        ]).then(result => ({
-          content: result[0],
-          extension: format.replace(/json\w+/, "json"),
-          name: filename
-        }));
-      });
+      const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
+      const query = applyQueryParams(cube.query, queryParams, {previewLimit}).setFormat(format);
+      const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
+
+      return Promise.all([
+        axios({url: dataURL, responseType: "blob"}).then(response => response.data),
+        calcMaxMemberCount(query, params).then(maxRows => {
+          if (maxRows > 50000) {
+            dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
+          }
+        })
+      ]).then(result => ({
+        content: result[0],
+        extension: format.replace(/json\w+/, "json"),
+        name: filename
+      }));
+    });
   };
 }
 
@@ -64,46 +74,68 @@ export function willDownloadQuery(
  * This operation does not activate the Loading overlay in the UI; you must use
  * `willRequestQuery()` for that.
  */
-export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, { olapClient, previewLimit }) => {
+type willExecuteQueryType = {
+  limit?: number;
+  offset?: number;
+};
+export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): ExplorerThunk<
+  Promise<void>
+> {
+  return (dispatch, getState, {olapClient, previewLimit}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
     const endpoint = selectServerEndpoint(state);
+    const isPrefetch = limit && offset;
 
+    const allParams = isPrefetch ? {...params, pagiLimit: limit, pagiOffset: offset} : params;
+    const {result: currentResult} = selectCurrentQueryItem(state);
     if (!isValidQuery(params)) return Promise.resolve();
-
-    return olapClient.getCube(params.cube)
-      .then(cube => {
-        const query = applyQueryParams(cube.query, params, { previewLimit });
-        return Promise.all([
-          olapClient.execQuery(query, endpoint),
-          calcMaxMemberCount(query, params, dispatch).then(maxRows => {
-            if (maxRows > 50000) {
-              dispatch(loadingActions.setLoadingMessage({ type: "HEAVY_QUERY", rows: maxRows }));
-            }
-          })
-        ]).then(result => {
+    return olapClient.getCube(params.cube).then(cube => {
+      const query = applyQueryParams(cube.query, allParams, {previewLimit});
+      return Promise.all([
+        olapClient.execQuery(query, endpoint),
+        calcMaxMemberCount(query, allParams, dispatch).then(maxRows => {
+          if (maxRows > 50000) {
+            dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
+          }
+        })
+      ]).then(
+        result => {
           const [aggregation] = result;
+          !isPrefetch &&
+            dispatch(
+              queriesActions.updateResult({
+                data: aggregation.data,
+                types: aggregation.data.length
+                  ? describeData(cube.toJSON(), params, aggregation.data)
+                  : currentResult.types,
+                headers: {...aggregation.headers},
+                sourceCall: query.toSource(),
+                status: aggregation.status || 500,
+                url: query.toString(endpoint)
+              })
+            );
+
+          return {
+            data: aggregation.data,
+            types: aggregation.data.length
+              ? describeData(cube.toJSON(), params, aggregation.data)
+              : currentResult.types
+          };
+        },
+        error => {
           dispatch(
             queriesActions.updateResult({
-              data: aggregation.data,
-              types: describeData(cube.toJSON(), params, aggregation.data),
-              headers: { ...aggregation.headers },
-              sourceCall: query.toSource(),
-              status: aggregation.status || 500,
+              data: [],
+              types: {},
+              error: error.message,
+              status: error?.response?.status ?? 500,
               url: query.toString(endpoint)
             })
           );
-        }, error => {
-          dispatch(queriesActions.updateResult({
-            data: [],
-            types: {},
-            error: error.message,
-            status: error?.response?.status ?? 500,
-            url: query.toString(endpoint)
-          }));
-        });
-      });
+        }
+      );
+    });
   };
 }
 
@@ -113,18 +145,17 @@ export function willExecuteQuery(): ExplorerThunk<Promise<void>> {
  * @param levelRef
  *   The descriptor to the Level for whom we want to retrieve members.
  */
-export function willFetchMembers(
-  levelRef: LevelDescriptor
-): ExplorerThunk<Promise<PlainMember[]>> {
-  return (dispatch, getState, { olapClient }) => {
+export function willFetchMembers(levelRef: LevelDescriptor): ExplorerThunk<Promise<PlainMember[]>> {
+  return (dispatch, getState, {olapClient}) => {
     const state = getState();
     const cubeName = selectCubeName(state);
     const locale = selectLocale(state);
 
-    return olapClient.getCube(cubeName)
+    return olapClient
+      .getCube(cubeName)
       .then(cube => {
         const level = cube.getLevel(levelRef);
-        return cube.datasource.fetchMembers(level, { locale: locale.code });
+        return cube.datasource.fetchMembers(level, {locale: locale.code});
       })
       .catch(() => {
         const serialRef = JSON.stringify(levelRef);
@@ -140,57 +171,60 @@ export function willFetchMembers(
  * @param suggestedCube
  *   The cube to resolve the missing data from.
  */
-export function willHydrateParams(
-  suggestedCube?: string
-): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, { olapClient }) => {
+export function willHydrateParams(suggestedCube?: string): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState, {olapClient}) => {
     const state = getState();
     const cubeMap = selectOlapCubeMap(state);
     const queries = selectQueryItems(state);
 
     const queryPromises = queries.map(queryItem => {
-      const { params } = queryItem;
-      const { cube: paramCube, measures: measureItems } = params;
+      const {params} = queryItem;
+      const {cube: paramCube, measures: measureItems} = params;
 
       // if params.cube is "" (default), use the suggested cube
       // if was set from permalink/state, check if valid, else use suggested
       /* eslint-disable indent, operator-linebreak */
       const cubeName =
-        paramCube && cubeMap[paramCube] ? paramCube :
-          suggestedCube && cubeMap[suggestedCube] ? suggestedCube :
-        /* else                              */   Object.keys(cubeMap)[0];
+        paramCube && cubeMap[paramCube]
+          ? paramCube
+          : suggestedCube && cubeMap[suggestedCube]
+          ? suggestedCube
+          : /* else                              */ Object.keys(cubeMap)[0];
       /* eslint-enable */
 
-      return olapClient.getCube(cubeName)
-        .then((cube): QueryItem => {
-          const resolvedMeasures = cube.measures
-            .map(measure => buildMeasure(measureItems[measure.name] || {
+      return olapClient.getCube(cubeName).then((cube): QueryItem => {
+        const resolvedMeasures = cube.measures.map(measure =>
+          buildMeasure(
+            measureItems[measure.name] || {
               active: false,
               key: measure.name,
               name: measure.name
-            }));
-          const resolvedDrilldowns = filterMap(Object.values(params.drilldowns), item =>
-            hydrateDrilldownProperties(cube, item) || null
-          );
-
-          return {
-            ...queryItem,
-            params: {
-              ...params,
-              locale: params.locale || state.explorerServer.localeOptions[0],
-              cube: cubeName,
-              drilldowns: keyBy(resolvedDrilldowns, item => item.key),
-              measures: keyBy(resolvedMeasures, item => item.key)
             }
-          };
-        });
+          )
+        );
+
+        const resolvedDrilldowns = filterMap(
+          Object.values(params.drilldowns),
+          item => hydrateDrilldownProperties(cube, item) || null
+        );
+
+        return {
+          ...queryItem,
+          params: {
+            ...params,
+            locale: params.locale || state.explorerServer.localeOptions[0],
+            cube: cubeName,
+            drilldowns: keyBy(resolvedDrilldowns, item => item.key),
+            measures: keyBy(resolvedMeasures, item => item.key)
+          }
+        };
+      });
     });
 
-    return Promise.all(queryPromises)
-      .then(resolvedQueries => {
-        const queryMap = keyBy(resolvedQueries, i => i.key);
-        dispatch(queriesActions.resetQueries(queryMap));
-      });
+    return Promise.all(queryPromises).then(resolvedQueries => {
+      const queryMap = keyBy(resolvedQueries, i => i.key);
+      dispatch(queriesActions.resetQueries(queryMap));
+    });
   };
 }
 
@@ -198,32 +232,30 @@ export function willHydrateParams(
  * Parses a query URL into a olap-client Query object, then into a QueryParam
  * object, and inyects it into a new QueryItem in the UI.
  */
-export function willParseQueryUrl(
-  url: string | URL
-): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, { olapClient }) =>
-    olapClient.parseQueryURL(url.toString(), { anyServer: true })
-      .then(query => {
-        const queryItem = buildQuery({
-          params: extractQueryParams(query)
-        });
-        dispatch(queriesActions.updateQuery(queryItem));
-        dispatch(queriesActions.selectQuery(queryItem.key));
+export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState, {olapClient}) =>
+    olapClient.parseQueryURL(url.toString(), {anyServer: true}).then(query => {
+      extractQueryParams(query);
+      const queryItem = buildQuery({
+        params: extractQueryParams(query)
       });
+      dispatch(queriesActions.updateQuery(queryItem));
+      dispatch(queriesActions.selectQuery(queryItem.key));
+    });
 }
 
 /**
  * Performs a full replacement of the cubes stored in the state with fresh data
  * from the server.
  */
-export function willReloadCubes(): ExplorerThunk<Promise<{ [k: string]: PlainCube }>> {
-  return (dispatch, getState, { olapClient }) => olapClient.getCubes()
-    .then(cubes => {
+export function willReloadCubes(): ExplorerThunk<Promise<{[k: string]: PlainCube}>> {
+  return (dispatch, getState, {olapClient}) =>
+    olapClient.getCubes().then(cubes => {
       const plainCubes = filterMap(cubes, cube =>
         cube.annotations.hide_in_ui === "true" ? null : cube.toJSON()
       );
       const cubeMap = keyBy(plainCubes, i => i.name);
-      dispatch(serverActions.updateServer({ cubeMap }));
+      dispatch(serverActions.updateServer({cubeMap}));
       return cubeMap;
     });
 }
@@ -238,11 +270,14 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
     const params = selectCurrentQueryParams(state);
     if (!isValidQuery(params)) return Promise.resolve();
     dispatch(loadingActions.setLoadingState("FETCHING"));
-    return dispatch(willExecuteQuery()).then(() => {
-      dispatch(loadingActions.setLoadingState("SUCCESS"));
-    }, error => {
-      dispatch(loadingActions.setLoadingState("FAILURE", error.message));
-    });
+    return dispatch(willExecuteQuery()).then(
+      () => {
+        dispatch(loadingActions.setLoadingState("SUCCESS"));
+      },
+      error => {
+        dispatch(loadingActions.setLoadingState("FAILURE", error.message));
+      }
+    );
   };
 }
 
@@ -255,25 +290,31 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
  *   The name of the cube we intend to switch to.
  */
 export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, { olapClient }) => {
+  return (dispatch, getState, {olapClient}) => {
     const state = getState();
     const currentMeasures = selectMeasureItems(state);
     const currentActiveMeasures = filterMap(currentMeasures, item =>
       item.active ? item.name : null
     );
 
-    return olapClient.getCube(cubeName)
-      .then(cube => {
-        const measures = filterMap(cube.measures, measure => buildMeasure({
+    return olapClient.getCube(cubeName).then(cube => {
+      const measures = filterMap(cube.measures, measure =>
+        buildMeasure({
           active: currentActiveMeasures.includes(measure.name),
           key: measure.name,
           name: measure.name
-        }));
-        dispatch(queriesActions.updateCube({
+        })
+      );
+      dispatch(
+        queriesActions.updateCube({
           cube: cube.name,
           measures: keyBy(measures, item => item.key)
-        }));
-      });
+        })
+      );
+
+      const dimensions = selectOlapDimensionItems(getState());
+      return {cube, measures, dimensions};
+    });
   };
 }
 
@@ -282,32 +323,38 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
  * Sets a new DataSource to the client instance, gets the server info, and
  * initializes the general state accordingly.
  */
-export function willSetupClient(
-  serverConfig: ServerConfig
-): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, { olapClient: client }) =>
+export function willSetupClient(serverConfig: ServerConfig): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState, {olapClient: client}) =>
     OLAPClient.dataSourceFromURL(serverConfig)
       .then(datasource => {
         client.setDataSource(datasource);
         return client.checkStatus();
       })
-      .then(serverInfo => {
-        dispatch(serverActions.updateServer({
-          online: serverInfo.online,
-          software: serverInfo.software,
-          url: serverInfo.url,
-          version: serverInfo.version,
-          endpoint: serverInfo.software === TesseractDataSource.softwareName
-            ? "logiclayer"
-            : "aggregate"
-        }));
-      }, error => {
-        dispatch(serverActions.updateServer({
-          online: false,
-          software: "",
-          url: error.config.url,
-          version: ""
-        }));
-        throw error;
-      });
+      .then(
+        serverInfo => {
+          dispatch(
+            serverActions.updateServer({
+              online: serverInfo.online,
+              software: serverInfo.software,
+              url: serverInfo.url,
+              version: serverInfo.version,
+              endpoint:
+                serverInfo.software === TesseractDataSource.softwareName
+                  ? "logiclayer"
+                  : "aggregate"
+            })
+          );
+        },
+        error => {
+          dispatch(
+            serverActions.updateServer({
+              online: false,
+              software: "",
+              url: error.config.url,
+              version: ""
+            })
+          );
+          throw error;
+        }
+      );
 }

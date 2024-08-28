@@ -27,7 +27,7 @@ function TableFooter(props: Props) {
 
   return (
     <Box w="100%" sx={{flex: "0 0 70px"}}>
-      <Flex p="md" justify="space-between" align="center">
+      <Flex px="md" pt="md" justify="space-between" align="center">
         <CubeSource />
         <Group noWrap>
           <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
@@ -92,7 +92,11 @@ const DownloadQuery = () => {
     );
   }
 
-  if (components.length === 0 || isDirty || result.data.length === 0) {
+  // if (components.length === 0 || isDirty || result.data.length === 0) {
+  //   return null;
+  // }
+
+  if (components.length === 0 || result.data.length === 0) {
     return null;
   }
 
@@ -221,7 +225,7 @@ function MenuOpts({formats}: MenuOptsProps) {
             minWidth: 0
           }}
         >
-          <IconDotsVertical  size="0.8rem"/>
+          <IconDotsVertical size="0.8rem" />
         </ActionIcon>
         {/* <Button
           onClick={() => setOpened(o => !o)}

@@ -3,15 +3,12 @@ import {Menu, ActionIcon, ActionIconProps, UnstyledButton, Group, Text} from "@m
 import {IconChevronRight, IconStack2} from "@tabler/icons-react";
 import {DimensionMenu} from "./MenuDimension";
 import MeasuresMenu from "./MeasuresMenu";
-import {IconArrowsLeftRight} from "@tabler/icons-react";
-import {useMantineTheme} from "@mantine/core";
-import {useMediaQuery} from "@mantine/hooks";
 import {stringifyName} from "../utils/transform";
 import {useSelector} from "react-redux";
 import {selectDrilldownItems} from "../state/queries";
 import {selectOlapDimensionItems} from "../state/selectors";
 import {useActions} from "../hooks/settings";
-import {buildDrilldown} from "../utils/structs";
+import {buildDrilldown, buildCut} from "../utils/structs";
 import type {LevelDescriptor} from "../utils/types";
 import type {ComponentProps, ReactNode} from "react";
 import type {PlainLevel} from "@datawheel/olap-client";
@@ -22,9 +19,18 @@ function OptionsMenu({children}: {children: ReactNode}) {
   const dimensions = useSelector(selectOlapDimensionItems);
   const {willRequestQuery} = useActions();
 
+  const createCutHandler = React.useCallback((level: PlainLevel) => {
+    const cutItem = buildCut({...level, key: level.fullName});
+    cutItem.active = false;
+    actions.updateCut(cutItem);
+  }, []);
+
   const createHandler = useCallback(
     (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown({...level, key: level.fullName});
+      // find or create drilldown
+      const drilldownItem =
+        items.find(item => item.uniqueName === level.uniqueName) ?? buildDrilldown({...level});
+      createCutHandler(level);
       actions.updateDrilldown(drilldownItem);
       actions
         .willFetchMembers({...level, level: level.name})
@@ -59,9 +65,11 @@ function OptionsMenu({children}: {children: ReactNode}) {
       </Menu.Target>
       <Menu.Dropdown>
         <MeasuresMenu>Metrics</MeasuresMenu>
-        <NestedMenu selectedItems={items} onItemSelect={createHandler}>
+
+        <NestedMenu selectedItems={items.filter(i => i.active)} onItemSelect={createHandler}>
           Dimensions
         </NestedMenu>
+        
         {/* <Menu.Item icon={<IconArrowsLeftRight size={14} />}>Calculations</Menu.Item> */}
       </Menu.Dropdown>
     </Menu>

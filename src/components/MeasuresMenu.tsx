@@ -1,25 +1,24 @@
-import React, { useState, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { Menu, UnstyledButton, Group, Text } from "@mantine/core";
-import { IconStack3, IconChevronRight } from "@tabler/icons-react";
-import { useActions } from "../hooks/settings";
-import { useTranslation } from "../hooks/translation";
-import { selectLocale, selectMeasureMap } from "../state/queries";
-import { selectOlapMeasureItems, selectOlapMeasureMap } from "../state/selectors";
+import React, {useState, useMemo} from "react";
+import {useSelector} from "react-redux";
+import {Menu, UnstyledButton, Group, Text} from "@mantine/core";
+import {IconStack3, IconChevronRight} from "@tabler/icons-react";
+import {useActions} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
+import {selectLocale, selectMeasureMap} from "../state/queries";
+import {selectOlapMeasureItems, selectOlapMeasureMap} from "../state/selectors";
+import {filterMap} from "../utils/array";
+import {getCaption} from "../utils/string";
+import {buildMeasure} from "../utils/structs";
+import {keyBy, safeRegExp} from "../utils/transform";
+import {isActiveItem} from "../utils/validation";
+import {LayoutParamsArea} from "./LayoutParamsArea";
 
-import { filterMap } from "../utils/array";
-import { getCaption } from "../utils/string";
-import { buildMeasure } from "../utils/structs";
-import { keyBy, safeRegExp } from "../utils/transform";
-import { isActiveItem } from "../utils/validation";
-import { LayoutParamsArea } from "./LayoutParamsArea";
-
-type Props = { children };
+type Props = {children};
 
 function MeasuresMenu(props: Props) {
   const actions = useActions();
 
-  const { code: locale } = useSelector(selectLocale);
+  const {code: locale} = useSelector(selectLocale);
   // param measures
   const itemMap = useSelector(selectMeasureMap);
   // selecter map server
@@ -28,8 +27,8 @@ function MeasuresMenu(props: Props) {
   const measures = useSelector(selectOlapMeasureItems);
 
   const [filter, setFilter] = useState("");
-  const { translate: t } = useTranslation();
-  const { children } = props;
+  const {translate: t} = useTranslation();
+  const {children} = props;
 
   // no need to filter. remove for this implementation.
   const filteredItems = useMemo(() => {
@@ -38,7 +37,7 @@ function MeasuresMenu(props: Props) {
       if (query && !query.test(getCaption(measure, locale))) {
         return null;
       }
-      return itemMap[measure.name] || buildMeasure({ active: false, ...measure });
+      return itemMap[measure.name] || buildMeasure({active: false, ...measure});
     });
   }, [itemMap, measures, filter, locale]);
 
@@ -49,8 +48,8 @@ function MeasuresMenu(props: Props) {
       disabled={activeItems.map(active => active.name).includes(item.name)}
       key={item.name}
       onClick={() => {
-        actions.updateMeasure({ ...item, active: !item.active });
-        actions.willRequestQuery()
+        actions.updateMeasure({...item, active: !item.active});
+        // actions.willRequestQuery();
       }}
     >
       {item.name}
