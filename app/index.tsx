@@ -61,11 +61,6 @@ function ColorPicker({primaryColor, setPrimaryColor, toggleColorScheme}) {
 
   return (
     <>
-      <Affix position={position}>
-        <ActionIcon onClick={() => setOpened(v => !v)}>
-          <IconPalette />
-        </ActionIcon>
-      </Affix>
       <Dialog
         w={250}
         opened={opened}
@@ -161,3 +156,7 @@ function mount(container) {
     </ThemeProvider>
   );
 }
+
+// <ActionIcon onClick={() => setOpened(v => !v)}>
+// <IconPalette />
+// </ActionIcon>
