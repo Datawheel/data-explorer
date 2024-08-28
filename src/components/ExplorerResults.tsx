@@ -27,7 +27,6 @@ import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
 import {ExplorerTabs} from "./ExplorerTabs";
 import {useFullscreen} from "@mantine/hooks";
-import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import AddColumnsDrawer from "./DrawerMenu";
 
 const useStyles = createStyles(() => ({
@@ -220,10 +219,10 @@ function SuccessResult(props: {
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
+            <Group sx={{display: "flex", flex: "0 1 auto"}} mr="sm" noWrap>
               <AddColumnsDrawer />
               <Toolbar table={table} fullscreen={fullscreen} />
-            </Box>
+            </Group>
           )}
         </Flex>
         {isPreviewMode && (

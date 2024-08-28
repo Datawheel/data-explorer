@@ -3,6 +3,9 @@ import { MantineTheme, Tabs } from "@mantine/core"
 import { useTranslation } from "../main";
 
 const tabsStyles = (t: MantineTheme) => ({
+    root: {
+        alignSelf: "flex-end"
+    },
     tab: {
         fontWeight: 700,
         color: t.colors.gray[6],

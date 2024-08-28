@@ -393,8 +393,6 @@ export function useTable({
     cuts: itemsCuts.filter(isActiveCut)
   });
 
-  console.log(isLoading, isFetching, isError, data);
-
   // check no data
   const tableData = data?.data || [];
   const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
@@ -715,10 +713,10 @@ export function TableView({table, result, isError, isLoading}: TableView) {
 
                     const index = theme => ({
                       ...base(theme),
-                      minWidth: 50,
-                      width: 50,
-                      maxWidth: 50,
-                      size: 50
+                      minWidth: 10,
+                      width: 10,
+                      maxWidth: 10,
+                      size: 10
                     });
 
                     return (
@@ -870,6 +868,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable
           nothingFound="Nothing found"
+          size="xs"
         />
       </Box>
     )
