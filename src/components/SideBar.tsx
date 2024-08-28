@@ -116,7 +116,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
             
           </Flex>
         </Box>
-        {expanded && <ScrollArea sx={theme => (
+        <ScrollArea sx={theme => (
           {
             borderTopColor: theme.colorScheme === "dark" ? theme.colors.dark[6] :theme.colors.gray[3],
             borderTopWidth: "1px",
@@ -124,7 +124,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           }
           )}>
           <Box h={expanded ? "auto": "0px"}>{props.children}</Box>
-        </ScrollArea>}
+        </ScrollArea>
         <Group
           align="center"
           position={expanded ? "right": "center"}

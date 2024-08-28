@@ -62,6 +62,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
 
     //autoload if not params
     if (selectedItem && cube && !cubeParam) {
+      console.log("autoload")
       initRef.current = true;
       const measure = Object.keys(itemMap)
         .map(k => itemMap[k])
@@ -79,6 +80,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
       }
     }
     if (selectedItem && cube && cubeParam) {
+      console.log("use params")
       if (!initRef.current) {
         initRef.current = true;
       } else {
