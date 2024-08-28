@@ -252,13 +252,11 @@ export function getFiltersConditions(fn: string, value: number[]) {
       "between",
       (values: number[]): Condition => {
         const [min, max] = values;
-        // if (!Number.isNaN(min) && !Number.isNaN(max)) {
         return {
           conditionOne: [Comparison.GTE, String(min), Number(min)],
           conditionTwo: [Comparison.LTE, String(max), Number(max)],
           joint: "and"
         };
-        // }
       }
     ]
   ]);
@@ -394,6 +392,8 @@ export function useTable({
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut)
   });
+
+  console.log(isLoading, isFetching, isError, data);
 
   // check no data
   const tableData = data?.data || [];
@@ -642,7 +642,7 @@ export function useTable({
     manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      isLoading: isLoading || isFetching,
+      isLoading: isLoading || isFetching || data === undefined,
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching || isLoading
