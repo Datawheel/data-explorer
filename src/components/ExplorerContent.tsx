@@ -1,8 +1,7 @@
-import {useState} from "react";
+import React, {useState, useEffect, useMemo} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
 import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
-import React, {useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
@@ -98,24 +97,4 @@ export function ExplorerContent(props: {
       </div>
     </div>
   );
-
-  // return (
-  //   <div className={classes.root}>
-
-  //     <LoadingOverlay />
-  //     {isSetupDone && serverState.online && props.withMultiQuery
-  //       ? <ExplorerQueries />
-  //       : null
-  //     }
-  //     {isSetupDone && serverState.online
-  //       ? <ExplorerParams defaultOpen={props.defaultOpenParams} />
-  //       : null
-  //     }
-  //     <ExplorerResults
-  //       className={classes.flexCol}
-  //       panels={props.panels}
-  //       splash={splash}
-  //     />
-  //   </div>
-  // );
 }
