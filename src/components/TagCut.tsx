@@ -39,7 +39,6 @@ const MembersTransferInput = TransferInput<MemberItem>;
 /** */
 export function TagCut(props: {item: CutItem}) {
   const {item} = props;
-
   const theme = useMantineTheme();
   const {actions, defaultMembersFilter} = useSettings();
   const {translate: t} = useTranslation();

@@ -1,13 +1,7 @@
 import {useState} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
-import {
-  CSSObject,
-  Center,
-  createStyles,
-  Header,
-  useMantineTheme
-} from "@mantine/core";
+import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
 import React, {useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
@@ -31,17 +25,16 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
   root: {
     display: "flex",
     flexFlow: "column nowrap",
-    height: "calc(100% - 50px)",
+    height: "calc(100% - 70px)",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row"
       // height: params.height,
       // width: "100%"
     }
   },
-
   flexCol: {
     flex: "1 1 auto",
-    height: "calc(100vh - 50px)",
+    height: "calc(100vh - 70px)",
     [theme.fn.largerThan("md")]: {
       width: 0
     }

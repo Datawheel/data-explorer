@@ -65,9 +65,11 @@ function OptionsMenu({children}: {children: ReactNode}) {
       </Menu.Target>
       <Menu.Dropdown>
         <MeasuresMenu>Metrics</MeasuresMenu>
+
         <NestedMenu selectedItems={items.filter(i => i.active)} onItemSelect={createHandler}>
           Dimensions
         </NestedMenu>
+        
         {/* <Menu.Item icon={<IconArrowsLeftRight size={14} />}>Calculations</Menu.Item> */}
       </Menu.Dropdown>
     </Menu>

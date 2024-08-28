@@ -27,8 +27,10 @@ import {PanelDescriptor} from "../utils/types";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
-import { ExplorerTabs } from "./ExplorerTabs";
-import { useFullscreen } from "@mantine/hooks";
+import {ExplorerTabs} from "./ExplorerTabs";
+import {useFullscreen} from "@mantine/hooks";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import AddColumnsDrawer from "./DrawerMenu";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -191,7 +193,7 @@ function SuccessResult(props: {
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
 
-  const {table} = useTable({cube, result});
+  const {table, isError, isLoading} = useTable({cube, result});
 
   const fullscreen = useFullscreen();
 
@@ -212,15 +214,17 @@ function SuccessResult(props: {
         <Flex
           sx={t => ({
             alignItems: "center",
-            background: t.colorScheme === "dark" ? t.colors.dark[7]: t.colors.gray[1],
+            background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
             justifyContent: "space-between"
           })}
-          w="100%">
+          w="100%"
+        >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
             <Box sx={{display: "flex", flex: "0 1 auto"}} mr="sm">
-              <Toolbar table={table} fullscreen={fullscreen}/>
+              <AddColumnsDrawer />
+              <Toolbar table={table} fullscreen={fullscreen} />
             </Box>
           )}
         </Flex>
@@ -241,19 +245,22 @@ function SuccessResult(props: {
         <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
           <Suspense fallback={props.children}>
             <Flex h="100%">
-              <Box sx={{flex: "1 1"}}>
+              <Box sx={{flex: "1 1", overflowX: "scroll"}}>
                 <CurrentComponent
                   panelKey={`${panelKey}-${panelMeta}`}
                   cube={cube}
                   params={params}
                   result={result}
                   table={table}
+                  isError={isError}
+                  isLoading={isLoading}
                 />
               </Box>
             </Flex>
           </Suspense>
         </Box>
       </Paper>
+      {/* <ReactQueryDevtools initialIsOpen /> */}
     </Flex>
   );
 }
