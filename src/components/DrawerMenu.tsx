@@ -1,5 +1,5 @@
 import React, {useMemo, useCallback, useState} from "react";
-import {useDisclosure} from "@mantine/hooks";
+import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   Drawer,
   Button,
@@ -8,9 +8,12 @@ import {
   MultiSelect,
   ActionIcon,
   Menu,
-  Switch,
+  Text,
   Box,
-  Flex
+  Flex,
+  Checkbox,
+  ThemeIcon,
+  useMantineTheme
 } from "@mantine/core";
 import {useSelector} from "react-redux";
 import {
@@ -56,19 +59,54 @@ import {abbreviateFullName} from "../utils/format";
 import {stringifyName} from "../utils/transform";
 import {Comparison} from "@datawheel/olap-client";
 import {getFiltersConditions} from "./TableView";
+import {BarsSVG, StackSVG} from "./icons";
 
 function AddColumnsDrawer() {
-  const [opened, {open, close}] = useDisclosure(true);
+  const [opened, {open, close}] = useDisclosure(false);
+  const theme = useMantineTheme();
+  const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
   return (
     <>
-      <Drawer opened={opened} position="right" onClose={close} title="Columns">
+      <Drawer
+        opened={opened}
+        position="right"
+        onClose={close}
+        title={
+          <Group>
+            <IconStack3 size="0.75rem" />
+            <Text fw={700}>Add Columns</Text>
+          </Group>
+        }
+        styles={t => ({
+          inner: {
+            position: "absolute",
+            inset: 0
+          },
+          header: {
+            background: "transparent"
+          },
+          content: {
+            backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
+          }
+        })}
+        overlayProps={{
+          opacity: 0.1
+        }}
+        withinPortal={false}
+      >
         <MeasuresOptions />
         <DrillDownOptions />
       </Drawer>
       <Group position="center">
-        <Button leftIcon={<IconStack3 />} onClick={open} m="md">
-          Add Columns
-        </Button>
+        {smallerThanMd ? (
+          <ActionIcon onClick={open} size="md" variant="filled" color={theme.primaryColor}>
+            <IconStack3 size="0.75rem" />
+          </ActionIcon>
+        ) : (
+          <Button leftIcon={<IconStack3 size="0.75rem" />} onClick={open} m="md" size="xs">
+            Add Columns
+          </Button>
+        )}
       </Group>
     </>
   );
@@ -260,7 +298,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   return (
     <>
       <Group mt="sm" position="apart" key={level.uri} noWrap>
-        <Switch
+        <Checkbox
           onChange={() => {
             if (cut) {
               const active = checked ? false : cut.members.length ? true : false;
@@ -271,10 +309,14 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
           checked={checked}
           label={label}
         />
-
-        <ActionIcon onClick={() => setActiveFilter(value => !value)}>
-          {activeFilter ? <IconFilterOff /> : <IconFilter />}
-        </ActionIcon>
+        <Group>
+          <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
+            {activeFilter ? <IconFilterOff /> : <IconFilter />}
+          </ActionIcon>
+          <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+            <StackSVG />
+          </ThemeIcon>
+        </Group>
       </Group>
       {activeFilter && (
         <Box pt="md">
@@ -369,6 +411,7 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
       value={getFilterValue(filter)}
       onChange={value => onInputChange({filter, value})}
       sx={{flex: "1 1 auto"}}
+      size="xs"
     />
   );
 }
@@ -421,7 +464,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
     <>
       <Menu shadow="md" width={200}>
         <Menu.Target>
-          <ActionIcon>
+          <ActionIcon size="xs">
             <IconSettings />
           </ActionIcon>
         </Menu.Target>
@@ -510,7 +553,7 @@ function MeasuresOptions() {
     return (
       <Box key={measure.name}>
         <Group mt="sm" position="apart">
-          <Switch
+          <Checkbox
             onChange={() => {
               actions.updateMeasure({...measure, active: !measure.active});
               actions.updateFilter({...filter, active: checked ? false : true});
@@ -520,9 +563,12 @@ function MeasuresOptions() {
           />
           <Group>
             <FilterFnsMenu filter={filter} />
-            <ActionIcon onClick={() => setActiveFilter(value => !value)}>
+            <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
               {activeFilter ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
+            <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+              <BarsSVG />
+            </ThemeIcon>
           </Group>
         </Group>
         {activeFilter && (

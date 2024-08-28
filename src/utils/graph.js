@@ -68,7 +68,7 @@ class Graph {
     return subtopic;
   }
 
-  filter(locale, startingNode, filter) {
+  filter(locale, filter) {
     function addItemToSubtopic(map, subtopic, item) {
       if (map.has(subtopic)) {
         // Si el subtopic existe, agregar el ítem a items
@@ -83,24 +83,22 @@ class Graph {
     const matches = [];
 
     if (filter !== "") {
-      this.depthFirstTraversal(startingNode, node => {
-        const items = this.isTable(locale, node);
-        if (items.length) {
-          if (filter) {
-            for (const item of items) {
-              const list = matchSorter([node], filter);
-              if (list.length) {
-                const subtopic = getAnnotation(item, "subtopic", locale);
-                const topic = getAnnotation(item, "topic", locale);
-                addItemToSubtopic(map, `${topic} - ${subtopic}`, list[0]);
-                matches.push(...list);
-              }
-            }
-          } else {
-            matches.push(node);
-          }
-        }
-      });
+      const results = matchSorter(this.items, filter, {
+        keys: ['name', 
+          item => getAnnotation(item, "topic", locale) || "",
+          item => getAnnotation(item, "subtopic", locale) || "",
+          item => getAnnotation(item, "table", locale) || "",
+        ]
+    });
+
+      for (const item of results) {
+          const topic = getAnnotation(item, "topic", locale);
+          const subtopic = getAnnotation(item, "subtopic", locale);
+          const title = getAnnotation(item, "table", locale);
+          addItemToSubtopic(map, `${topic} - ${subtopic}`, title);
+          matches.push(title);
+      }
+
     }
     return {matches, map};
   }

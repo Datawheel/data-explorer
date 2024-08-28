@@ -34,6 +34,11 @@ export function ExplorerComponent(props: {
   dataLocale?: string | string[];
 
   /**
+   * Defines the default cube that will be opened when the component first loads.
+   * @default undefined
+   */
+  defaultCube?: string | undefined;
+  /**
    * Defines the parameter panel which will be opened when the component first loads.
    * Available options are `measures`, `drilldowns`, `cuts`, and `options`.
    * @default "measures"
@@ -183,6 +188,7 @@ export function ExplorerComponent(props: {
           source={props.source}
           splash={props.splash}
           uiLocale={props.uiLocale}
+          defaultCube={props.defaultCube}
           withMultiQuery={withMultiQuery}
         />
       </TranslationProvider>
@@ -232,7 +238,7 @@ export function ExplorerComponent(props: {
   return content;
 }
 
-ExplorerComponent.defaultProps = {
-  version: process.env.BUILD_VERSION || "dev"
-};
+// ExplorerComponent.defaultProps = {
+//   version: process.env.BUILD_VERSION || "dev"
+// };
 ExplorerComponent.displayName = "TesseractExplorer";

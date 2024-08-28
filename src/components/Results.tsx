@@ -28,16 +28,19 @@ function Results(props: Props) {
   if (map) {
     for (let [key, items] of map) {
       const [topic, subtopic] = key.split(" - ");
+      
       const component = (
         <div key={key}>
           <Divider my="xs" label={key} />
-          {items.map(item => (
+          {items.map(item => {
+            const cube =  getCube(graph.items, item, subtopic, locale);
+            return (
             <Text
-              key={item}
+              key={cube.name}
               component="a"
-              fz="sm"
+              fz="xs"
               className={
-                isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
+                isSelected(selectedItem, cube)
                   ? `${classes.link} ${classes.linkActive}`
                   : classes.link
               }
@@ -49,13 +52,13 @@ function Results(props: Props) {
             >
               {item}
             </Text>
-          ))}
+          )})}
         </div>
       );
       result.push(component);
     }
   }
-  return result;
+  return <Box px="sm">{result}</Box>;
 }
 
 export const useStyles = createStyles(theme => ({
