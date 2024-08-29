@@ -1,16 +1,4 @@
-import {
-  ActionIcon,
-  Alert,
-  Box,
-  Flex,
-  Text,
-  rem,
-  Table,
-  Center,
-  MantineTheme,
-  MultiSelect,
-  Group
-} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MultiSelect} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -68,6 +56,9 @@ import {
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
+import {selectOlapCubeKeys} from "../state/server";
+import {describeData} from "../utils/object";
+import {selectOlapCube} from "../state/selectors";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -283,19 +274,26 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
   const filterKey = JSON.stringify(normalizedFilters);
   const cutKey = JSON.stringify(normalizedCuts);
   const actions = useActions();
-  const [filterKeydebouced, setDebouncedTerm] = useState<string | string[]>("");
-
+  const columnsStr = JSON.stringify(columns.sort());
   const page = offset;
+
+  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>([
+    limit,
+    offset,
+    columnsStr,
+    filterKey,
+    cutKey,
+    page
+  ]);
+
   useEffect(() => {
     const handler = debounce(() => {
-      const term = [limit, offset, ...columns.sort(), filterKey, cutKey, page];
+      const term = [limit, offset, columnsStr, filterKey, cutKey, page];
       setDebouncedTerm(term);
     }, 700);
     handler();
-    return () => {
-      handler.cancel();
-    };
-  }, [...columns, offset, filterKey, cutKey, page]);
+    return () => handler.cancel();
+  }, [columnsStr, offset, filterKey, cutKey, page]);
 
   return useQuery<UserApiResponse>({
     queryKey: ["table", filterKeydebouced],
@@ -359,39 +357,66 @@ export function useTable({
   const {measures, drilldowns} = useSelector(selectCurrentQueryParams);
   const filterItems = useSelector(selectFilterItems);
 
-  const finalUniqueKeys = [
-    ...Object.keys(measures).reduce((prev, curr) => {
-      const measure = measures[curr];
-      if (measure.active) {
-        return [...prev, curr];
-      }
-      return prev;
-    }, []),
-    ...Object.keys(drilldowns).reduce((prev, curr) => {
-      const dd = drilldowns[curr];
-      if (dd.active) {
-        return [...prev, curr];
-      }
-      return prev;
-    }, [])
-  ];
+  const finalUniqueKeys = useMemo(
+    () => [
+      ...Object.keys(measures).reduce((prev, curr) => {
+        const measure = measures[curr];
+        if (measure.active) {
+          return [...prev, curr];
+        }
+        return prev;
+      }, []),
+      ...Object.keys(drilldowns).reduce((prev, curr) => {
+        const dd = drilldowns[curr];
+        if (dd.active) {
+          return [...prev, curr];
+        }
+        return prev;
+      }, [])
+    ],
+    [measures, drilldowns]
+  );
 
   const actions = useActions();
   const itemsCuts = useSelector(selectCutItems);
   const {limit, offset} = useSelector(selectPaginationParams);
+
+  const params = useSelector(selectCurrentQueryParams);
+
+  const dat = useMemo(
+    () => [
+      ...Object.keys(measures).reduce((prev, curr) => {
+        const measure = measures[curr];
+        if (measure.active) {
+          return [...prev, curr];
+        }
+        return prev;
+      }, []),
+      ...Object.keys(drilldowns).reduce((prev, curr) => {
+        const dd = drilldowns[curr];
+        if (dd.active) {
+          return [...prev, curr];
+        }
+        return prev;
+      }, [])
+    ],
+    [measures, drilldowns]
+  );
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
     pageSize: limit
   });
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
-    offset,
-    limit,
-    columns: finalUniqueKeys,
-    filters: filterItems.filter(isActiveItem),
-    cuts: itemsCuts.filter(isActiveCut)
-  });
+  const {isLoading, isFetching, isError, data, status, isPending, isPlaceholderData} = useTableData(
+    {
+      offset,
+      limit,
+      columns: finalUniqueKeys,
+      filters: filterItems.filter(isActiveItem),
+      cuts: itemsCuts.filter(isActiveCut)
+    }
+  );
 
   // check no data
   const tableData = data?.data || [];
@@ -649,7 +674,7 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading};
+  return {table, isError, isLoading, data: fetchedTableData};
 }
 
 type TableView = {
@@ -657,9 +682,9 @@ type TableView = {
   getColumn(id: String): AnyResultColumn | undefined;
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading}: TableView) {
+export function TableView({table, result, isError, isLoading, data}: TableView) {
+  // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
-
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
@@ -781,7 +806,7 @@ export function TableView({table, result, isError, isLoading}: TableView) {
           {!isData && !isError && !isLoading && <NoRecords />}
         </Box>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} result={result} />
+        <TableFooter table={table} data={data} result={result} />
       </Flex>
     </Box>
   );
@@ -789,11 +814,10 @@ export function TableView({table, result, isError, isLoading}: TableView) {
 
 const ColumnFilterCell = ({
   header,
-  table,
   isNumeric
 }: {
   header: MRT_Header<TData>;
-  table: MRT_TableInstance<TData>;
+  table?: MRT_TableInstance<TData>;
   isNumeric: boolean;
 }) => {
   header;
