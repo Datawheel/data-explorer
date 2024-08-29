@@ -50,6 +50,7 @@ ${params.chartConfig.replace(
  * @param {string} [locale]
  */
 export function getCaption(item, locale = "en") {
+  console.log(item, locale);
   return getAnnotation(item, "caption", locale) || item.caption || item.name;
 }
 

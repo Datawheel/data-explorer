@@ -150,7 +150,7 @@ export function willFetchMembers(levelRef: LevelDescriptor): ExplorerThunk<Promi
     const state = getState();
     const cubeName = selectCubeName(state);
     const locale = selectLocale(state);
-
+    console.log(locale)
     return olapClient
       .getCube(cubeName)
       .then(cube => {

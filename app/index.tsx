@@ -1,23 +1,38 @@
-import {Explorer, PivotView, TableView, translationDict as explorerTranslation, createVizbuilderView} from "../src/main";
+import {Explorer, PivotView, TableView, createVizbuilderView} from "../src/main";
 import {
   MantineProvider,
   useMantineTheme,
-  Affix,
+  Header,
   Select,
   Text,
   Group,
   Box,
   ActionIcon,
   Dialog,
-  Stack,
   MantineThemeOverride,
-  Divider
+  Divider,
+  Flex,
+  createEmotionCache
 } from "@mantine/core";
-import {IconPalette, IconSun, IconMoon, IconTextDirectionLtr, IconTextDirectionRtl, IconLanguage} from "@tabler/icons-react";
+import {
+  IconSettings,
+  IconSun,
+  IconMoon,
+  IconTextDirectionLtr,
+  IconTextDirectionRtl,
+  IconLanguage
+} from "@tabler/icons-react";
 import React, {useMemo, useState, forwardRef, useEffect} from "react";
 import {createRoot} from "react-dom/client";
-
+import {HomeSVG} from "../src/components/icons";
 import translations from "../translations";
+
+import rtlPlugin from "stylis-plugin-rtl";
+
+const rtlCache = createEmotionCache({
+  key: "mantine-rtl",
+  stylisPlugins: [rtlPlugin]
+});
 
 const VizbuilderView = createVizbuilderView({
   downloadFormats: ["png", "svg"]
@@ -59,7 +74,7 @@ function SiteSettings({
   setDirection,
   locales,
   locale,
-  setLocale,
+  setLocale
 }) {
   const [opened, setOpened] = useState(false);
   const theme = useMantineTheme();
@@ -70,7 +85,8 @@ function SiteSettings({
     hex: theme.colors[c][theme.fn.primaryShade()]
   }));
 
-  const position = direction === "ltr" ? {top: "0.65rem", right: "0.5rem"} : {top: "0.65rem", left: "0.5rem"};
+  const position =
+    direction === "ltr" ? {top: "0.65rem", right: "0.5rem"} : {top: "0.65rem", left: "0.5rem"};
 
   return (
     <>
@@ -82,34 +98,36 @@ function SiteSettings({
         withCloseButton
       >
         <Text fw={700}>Settings</Text>
-        <Divider label="Text" labelPosition="center"/>
+        <Divider label="Text" labelPosition="center" />
         <Group position="apart">
           <Text size="xs" fw={500}>
-              Direction
+            Direction
           </Text>
-          <ActionIcon onClick={() => setDirection(d => d === "rtl" ? "ltr": "rtl")}>
+          <ActionIcon onClick={() => setDirection(d => (d === "rtl" ? "ltr" : "rtl"))}>
             {direction === "ltr" ? <IconTextDirectionLtr /> : <IconTextDirectionRtl />}
           </ActionIcon>
         </Group>
 
         <Group position="apart">
-          <Text size="xs" fw={500}>Language</Text>
+          <Text size="xs" fw={500}>
+            Language
+          </Text>
           <Select
             size="xs"
-            icon={
-              <IconLanguage size="0.9rem" />
-            }
+            icon={<IconLanguage size="0.9rem" />}
             value={locale}
             w={120}
             data={locales}
             onChange={setLocale}
           />
         </Group>
-        
-        <Divider label="Theme" labelPosition="center"/>
+
+        <Divider label="Theme" labelPosition="center" />
 
         <Group position="apart">
-          <Text size="xs" fw={500}>Color</Text>
+          <Text size="xs" fw={500}>
+            Color
+          </Text>
           <Select
             size="xs"
             icon={
@@ -129,7 +147,7 @@ function SiteSettings({
             onChange={setPrimaryColor}
           />
         </Group>
-        
+
         <Group position="apart">
           <Text size="xs" fw={500}>
             Theme
@@ -139,12 +157,15 @@ function SiteSettings({
           </ActionIcon>
         </Group>
       </Dialog>
+      <ActionIcon onClick={() => setOpened(v => !v)}>
+        <IconSettings />
+      </ActionIcon>
     </>
   );
 }
 function SettingsProvider({children, locales, locale, setLocale}) {
   const [primaryColor, setPrimaryColor] = useState("blue");
-  const [direction, setDirection] = useState<"ltr"|"rtl">("ltr")
+  const [direction, setDirection] = useState<"ltr" | "rtl">("ltr");
   const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
 
   const toggleColorScheme = value =>
@@ -154,27 +175,45 @@ function SettingsProvider({children, locales, locale, setLocale}) {
     () => ({
       primaryColor,
       colorScheme,
-      dir: direction
+      dir: direction,
+      emotionCache: direction === "rtl" ? rtlCache : undefined
     }),
     [primaryColor, colorScheme, direction]
   );
 
   useEffect(() => {
-    document.querySelector("html")?.setAttribute("dir", direction)
-  }, [direction])
+    document.querySelector("html")?.setAttribute("dir", direction);
+  }, [direction]);
 
   return (
-    <MantineProvider inherit withNormalizeCSS theme={theme}>
-      <SiteSettings
-        primaryColor={primaryColor}
-        setPrimaryColor={setPrimaryColor}
-        toggleColorScheme={toggleColorScheme}
-        direction={direction}
-        setDirection={setDirection}
-        locales={locales}
-        locale={locale}
-        setLocale={setLocale}
-      />
+    <MantineProvider inherit withNormalizeCSS withGlobalStyles theme={theme}>
+      <Header height={{base: 50}} p="md">
+        <Flex
+          align="center"
+          justify="space-between"
+          p={"xs"}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            height: "100%",
+            padding: 5,
+            justifyContent: "space-between"
+          }}
+        >
+          <HomeSVG />
+          <SiteSettings
+            primaryColor={primaryColor}
+            setPrimaryColor={setPrimaryColor}
+            toggleColorScheme={toggleColorScheme}
+            direction={direction}
+            setDirection={setDirection}
+            locales={locales}
+            locale={locale}
+            setLocale={setLocale}
+          />
+        </Flex>
+      </Header>
+
       {children}
     </MantineProvider>
   );
@@ -184,36 +223,32 @@ function App() {
   const [locale, setLocale] = useState(locales[0]);
   return (
     <SettingsProvider locales={locales} locale={locale} setLocale={setLocale}>
-    <Explorer
-      source={process.env.TESSERACT_SERVER}      
-      defaultCube="gastat_gdp"
-      formatters={formatters}
-      dataLocale={"en,ar"}
-      previewLimit={75}
-      panels={[
-        {key: "table", label: "Data Table", component: TableView},
-        {key: "matrix", label: "Pivot Table", component: PivotView},
-        {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
-      ]}
-      translations={translations}
-      uiLocale={locale}
-      defaultOpenParams="drilldowns"
-      withinMantineProvider={false}
-      withinReduxProvider
-      withMultiQuery
-      withPermalink
-    />
-  </SettingsProvider>
-  )
+      <Explorer
+        source={process.env.TESSERACT_SERVER}
+        defaultCube="gastat_gdp"
+        formatters={formatters}
+        dataLocale={"en,ar"}
+        previewLimit={75}
+        height={"calc(100vh - 50px)"}
+        panels={[
+          {key: "table", label: "Data Table", component: TableView},
+          {key: "matrix", label: "Pivot Table", component: PivotView},
+          {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
+        ]}
+        translations={translations}
+        uiLocale={locale}
+        defaultOpenParams="drilldowns"
+        withinMantineProvider={false}
+        withinReduxProvider
+        withMultiQuery
+        withPermalink
+      />
+    </SettingsProvider>
+  );
 }
 /** */
 function mount(container) {
   const root = createRoot(container);
-  
-  
+
   root.render(<App />);
 }
-
-// <ActionIcon onClick={() => setOpened(v => !v)}>
-// <IconPalette />
-// </ActionIcon>

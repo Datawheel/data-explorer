@@ -43,6 +43,7 @@ export default {
       action_clear: "مسح الاستعلام",
       action_clear_description: "مسح جميع المعلمات من الاستعلام الحالي",
       action_execute: "تنفيذ الاستعلام",
+      add_columns: "إضافة أعمدة",
       column_title: "المعلمات",
       current_endpoint: "نقطة النهاية الحالية: {{label}}",
       dimmenu_abbrjoint: ": ",
