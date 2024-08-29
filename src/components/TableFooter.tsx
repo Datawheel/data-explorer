@@ -15,10 +15,12 @@ import {useAsync} from "../hooks/useAsync";
 import CubeSource from "./CubeSource";
 
 type TData = Record<string, any> & Record<string, string | number>;
-type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result">;
+type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
+    data?: Record<string, string | number>[];
+  };
 
 function TableFooter(props: Props) {
-  const {result, table} = props;
+  const {result, table, data = []} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
 
@@ -36,7 +38,7 @@ function TableFooter(props: Props) {
       >
         <CubeSource />
         <Group position="right" spacing="sm">
-          <Text c="dimmed">{t("results.count_rows", {n: result.data.length})}</Text>
+          <Text c="dimmed">{t("results.count_rows", {n: data.length})}</Text>
           <MRT_TablePagination table={table} />
           <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />
         </Group>

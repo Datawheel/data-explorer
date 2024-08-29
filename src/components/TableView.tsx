@@ -1,15 +1,4 @@
-import {
-  ActionIcon,
-  Alert,
-  Box,
-  Flex,
-  Text,
-  rem,
-  Table,
-  Center,
-  MultiSelect,
-  LoadingOverlay
-} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MultiSelect} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -303,9 +292,7 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
       setDebouncedTerm(term);
     }, 700);
     handler();
-    return () => {
-      handler.cancel();
-    };
+    return () => handler.cancel();
   }, [columnsStr, offset, filterKey, cutKey, page]);
 
   return useQuery<UserApiResponse>({
@@ -318,8 +305,8 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
       });
     },
     staleTime: 300000,
-    enabled: !!filterKeydebouced,
-    placeholderData: keepPreviousData
+    enabled: !!filterKeydebouced
+    // placeholderData: keepPreviousData
   });
 }
 
@@ -679,8 +666,7 @@ export function useTable({
     manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      // isLoading: isLoading || isFetching || data === undefined, isPending
-      isLoading: true,
+      isLoading: isLoading || isFetching || data === undefined,
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching || isLoading
@@ -702,7 +688,6 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
   const isData = Boolean(table.getRowModel().rows.length);
   return (
     <Box sx={{height: "100%"}}>
-      <LoadingOverlay visible={!isData} />
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
         <ProgressBar isTopToolbar={false} table={table} />
         <Box
@@ -822,7 +807,7 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
           {!isData && !isError && !isLoading && <NoRecords />}
         </Box>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} data={data} />
+        <TableFooter table={table} data={data} result={result} />
       </Flex>
     </Box>
   );

@@ -13,7 +13,8 @@ import {
   Flex,
   Checkbox,
   ThemeIcon,
-  useMantineTheme
+  useMantineTheme,
+  Switch
 } from "@mantine/core";
 import {useSelector} from "react-redux";
 import {
@@ -73,7 +74,7 @@ function AddColumnsDrawer() {
         onClose={close}
         title={
           <Group>
-            <IconStack3 size="0.75rem" />
+            <IconStack3 size="1rem" />
             <Text fw={700}>Add Columns</Text>
           </Group>
         }
@@ -103,7 +104,7 @@ function AddColumnsDrawer() {
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
-          <Button leftIcon={<IconStack3 size="0.75rem" />} onClick={open} m="md" size="xs">
+          <Button leftIcon={<IconStack3 size="1rem" />} onClick={open} m="md" size="xs">
             Add Columns
           </Button>
         )}
@@ -297,7 +298,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   return (
     <>
       <Group mt="sm" position="apart" key={level.uri} noWrap>
-        <Checkbox
+        <Switch
           onChange={() => {
             if (cut) {
               const active = checked ? false : cut.members.length ? true : false;
@@ -552,7 +553,7 @@ function MeasuresOptions() {
     return (
       <Box key={measure.name}>
         <Group mt="sm" position="apart">
-          <Checkbox
+          <Switch
             onChange={() => {
               actions.updateMeasure({...measure, active: !measure.active});
               actions.updateFilter({...filter, active: checked ? false : true});
