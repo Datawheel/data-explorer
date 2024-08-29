@@ -49,6 +49,8 @@ export default {
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",
       dimmenu_level: "{{abbr}}",
+      filter_mode: "过滤模式",
+      filter_by: "按{{name}}过滤",
       error_no_cut_selected_detail:
         "你可以根据所选细分添加数据筛选。",
       error_no_cut_selected_title: "未添加切分",

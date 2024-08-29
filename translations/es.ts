@@ -49,6 +49,8 @@ export default {
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",
       dimmenu_level: "{{abbr}}",
+      filter_mode: "Modo de filtro",
+      filter_by: "Filtrar por {{name}}",
       error_no_cut_selected_detail:
         "Puedes agregar filtros de datos basados en los detalles seleccionados.",
       error_no_cut_selected_title: "No se han agregado cortes",

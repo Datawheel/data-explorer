@@ -50,6 +50,8 @@ export default {
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",
       dimmenu_level: "{{abbr}}",
+      filter_mode: "وضع التصفية",
+      filter_by: "التصفية بواسطة {{name}}",
       error_no_cut_selected_detail:
         "يمكنك إضافة فلاتر البيانات بناءً على التفاصيل المحددة.",
       error_no_cut_selected_title: "لم تتم إضافة قطع",
