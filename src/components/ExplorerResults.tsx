@@ -12,7 +12,7 @@ import {
   Title,
   createStyles
 } from "@mantine/core";
-import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
+import {IconAlertTriangle, IconWorld} from "@tabler/icons-react";
 import React, {Suspense, useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSettings} from "../hooks/settings";
@@ -190,7 +190,7 @@ function SuccessResult(props: {
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
 
-  const {table, isError, isLoading} = useTable({cube, result});
+  const {table, isError, isLoading, data} = useTable({cube, result});
 
   const fullscreen = useFullscreen();
 
@@ -251,6 +251,7 @@ function SuccessResult(props: {
                   table={table}
                   isError={isError}
                   isLoading={isLoading}
+                  data={data}
                 />
               </Box>
             </Flex>

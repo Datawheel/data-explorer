@@ -1,16 +1,4 @@
-import {
-  ActionIcon,
-  Alert,
-  Box,
-  Flex,
-  Text,
-  rem,
-  Table,
-  Center,
-  MantineTheme,
-  MultiSelect,
-  Group
-} from "@mantine/core";
+import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MultiSelect} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -27,14 +15,16 @@ import {
 import React, {useEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn} from "../utils/structs";
+import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
 import {
   selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
   selectFilterItems,
+  selectFilterMap,
   selectMeasureItems,
+  selectMeasureMap,
   selectPaginationParams
 } from "../state/queries";
 import {useSelector} from "react-redux";
@@ -58,7 +48,7 @@ import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
 import {useQuery, useQueryClient, keepPreviousData} from "@tanstack/react-query";
-import {isActiveCut, isActiveItem, isNumeric} from "../utils/validation";
+import {isActiveCut, isActiveItem} from "../utils/validation";
 import {
   FilterFnsMenu,
   getFilterFn,
@@ -68,6 +58,8 @@ import {
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
+import {selectOlapMeasureItems} from "../state/selectors";
+import {filterMap} from "../utils/array";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -75,22 +67,18 @@ type TData = Record<string, any> & Record<string, string | number>;
 const removeColumn = (
   actions: ExplorerBoundActionMap,
   entity: PlainMeasure | PlainProperty | PlainLevel,
-  measures: Record<string, MeasureItem>,
-  drilldowns: Record<string, DrilldownItem>
+  measures: MeasureItem[],
+  drilldowns: DrilldownItem[]
 ) => {
-  // check for measure
   if (entity._type === "measure") {
     if (entity.name) {
-      // const measure = measures[entity.name];
-      const measure = Object.values(measures).find(d => d.name === entity.name);
+      const measure = measures.find(d => d.name === entity.name);
       measure && actions.updateMeasure({...measure, active: false});
-      actions.willRequestQuery();
     }
   }
   if (entity._type === "level") {
-    const drilldown = Object.values(drilldowns).find(d => d.uniqueName === entity?.uniqueName);
+    const drilldown = drilldowns.find(d => d.uniqueName === entity?.uniqueName);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
-    actions.willRequestQuery();
   }
   // maybe need to handle case for property columns.
 };
@@ -127,64 +115,22 @@ const getEntityText = (entityType: EntityTypes) => {
   }
 };
 
-const getColumnFilterOption = (entityType: EntityTypes) => {
-  switch (entityType) {
-    case "measure":
-      return {
-        columnFilterModeOptions: ["between", "greaterThan", "lessThan"]
-      };
-    case "level":
-      return {columnFilterModeOptions: true};
-    default:
-      return {columnFilterModeOptions: true};
-  }
-};
-
 function getMemberFilterFnTypes(member) {
   return {
     value: String(member.key),
     label: member.caption ? `${member.caption} ${member.key}` : member.name
   };
 }
-function getMantineFilterMultiSelectProps(
-  isId: Boolean,
-  isNumeric: Boolean,
-  range,
-  entity: PlainLevel | PlainMeasure | PlainProperty,
-  drilldowns: Record<string, DrilldownItem>,
-  columnKey: string,
-  types: Record<string, AnyResultColumn>
-) {
+function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
     mantineFilterMultiSelectProps?: {data: unknown};
   } = {};
-
-  // const filterVariant = !isId && isNumeric && range && (range[1] - range[0] <= 50) ? "multi-select" : "text"
   const filterVariant =
     !isId && !isNumeric && (!range || (range && range[1] - range[0] <= 100))
       ? "multi-select"
       : "text";
   result = Object.assign({}, result, {filterVariant});
-
-  if (result.filterVariant === "multi-select") {
-    if (entity._type === "level") {
-      const dd = Object.keys(drilldowns).reduce(
-        (prev, key) => ({...prev, [drilldowns[key].uniqueName]: drilldowns[key]}),
-        {}
-      );
-      const drilldwonData = dd[entity.uniqueName];
-
-      if (drilldwonData && drilldwonData.members) {
-        result = Object.assign({}, result, {
-          mantineFilterMultiSelectProps: {
-            data: drilldwonData.members.map(getMemberFilterFnTypes),
-            placeholder: columnKey
-          }
-        });
-      }
-    }
-  }
   return result;
 }
 
@@ -276,26 +222,33 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
   // Workaround on keys Ideally use the function to get the url for querying using olap client.
   const normalizedFilters = filters.map(filter => ({
     id: filter.measure,
-    value: getFilterValue(filter),
-    fn: getFilterFn(filter)
+    value: getFilterValue(filter)
+    // fn: getFilterFn(filter)
   }));
   const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
   const filterKey = JSON.stringify(normalizedFilters);
   const cutKey = JSON.stringify(normalizedCuts);
   const actions = useActions();
-  const [filterKeydebouced, setDebouncedTerm] = useState<string | string[]>("");
-
+  const columnsStr = JSON.stringify(columns.sort());
   const page = offset;
+
+  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>([
+    limit,
+    offset,
+    columnsStr,
+    filterKey,
+    cutKey,
+    page
+  ]);
+
   useEffect(() => {
     const handler = debounce(() => {
-      const term = [limit, offset, ...columns.sort(), filterKey, cutKey, page];
+      const term = [limit, offset, columnsStr, filterKey, cutKey, page];
       setDebouncedTerm(term);
     }, 700);
     handler();
-    return () => {
-      handler.cancel();
-    };
-  }, [...columns, offset, filterKey, cutKey, page]);
+    return () => handler.cancel();
+  }, [columnsStr, offset, filterKey, cutKey, page]);
 
   return useQuery<UserApiResponse>({
     queryKey: ["table", filterKeydebouced],
@@ -307,7 +260,6 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
     },
     staleTime: 300000,
     enabled: !!filterKeydebouced
-    // placeholderData: keepPreviousData
   });
 }
 
@@ -356,26 +308,12 @@ export function useTable({
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const {types} = result;
-  const {measures, drilldowns} = useSelector(selectCurrentQueryParams);
   const filterItems = useSelector(selectFilterItems);
-
-  const finalUniqueKeys = [
-    ...Object.keys(measures).reduce((prev, curr) => {
-      const measure = measures[curr];
-      if (measure.active) {
-        return [...prev, curr];
-      }
-      return prev;
-    }, []),
-    ...Object.keys(drilldowns).reduce((prev, curr) => {
-      const dd = drilldowns[curr];
-      if (dd.active) {
-        return [...prev, curr];
-      }
-      return prev;
-    }, [])
-  ];
-
+  const filtersMap = useSelector(selectFilterMap);
+  const measuresOlap = useSelector(selectOlapMeasureItems);
+  const measuresMap = useSelector(selectMeasureMap);
+  const drilldowns = useSelector(selectDrilldownItems);
+  const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const itemsCuts = useSelector(selectCutItems);
   const {limit, offset} = useSelector(selectPaginationParams);
@@ -384,8 +322,41 @@ export function useTable({
     pageIndex: offset,
     pageSize: limit
   });
+  const finalUniqueKeys = useMemo(
+    () =>
+      [
+        ...measures.map(m => (m.active ? m.name : null)),
+        ...drilldowns.map(d => (d.active ? d.uniqueName : null))
+      ].filter(a => a !== null),
+    [measures, drilldowns]
+  );
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
+  function handlerCreateMeasure(data: MeasureItem) {
+    const measure = buildMeasure(data);
+    actions.updateMeasure(measure);
+    return measure;
+  }
+  function handlerCreateFilter(data: FilterItem) {
+    const filter = buildFilter(data);
+    actions.updateFilter(filter);
+    return filter;
+  }
+  useMemo(() => {
+    return filterMap(measuresOlap, (m: MeasureItem) => {
+      const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
+      const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
+      const filter =
+        foundFilter ||
+        handlerCreateFilter({
+          measure: measure.name,
+          active: false,
+          key: measure.name
+        } as FilterItem);
+      return {measure, filter};
+    });
+  }, [measuresMap, measuresOlap, filtersMap, filterItems]);
+
+  const {isLoading, isFetching, isError, data} = useTableData({
     offset,
     limit,
     columns: finalUniqueKeys,
@@ -459,18 +430,8 @@ export function useTable({
       const isNumeric = valueType === "number" && columnKey !== "Year";
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
-      const filterOption = getColumnFilterOption(entityType);
-      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(
-        isId,
-        isNumeric,
-        range,
-        entity,
-        drilldowns,
-        columnKey,
-        types
-      );
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
-        ...filterOption,
         ...mantineFilterVariantObject,
         entityType,
         header,
@@ -522,7 +483,7 @@ export function useTable({
         },
         formatter,
         formatterKey,
-        id: entity.fullName ?? entity.name,
+        id: entity.uniqueName ?? entity.name,
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
@@ -649,7 +610,7 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading};
+  return {table, isError, isLoading, data: fetchedTableData};
 }
 
 type TableView = {
@@ -657,9 +618,9 @@ type TableView = {
   getColumn(id: String): AnyResultColumn | undefined;
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading}: TableView) {
+export function TableView({table, result, isError, isLoading, data}: TableView) {
+  // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
-
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
@@ -781,7 +742,7 @@ export function TableView({table, result, isError, isLoading}: TableView) {
           {!isData && !isError && !isLoading && <NoRecords />}
         </Box>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} result={result} />
+        <TableFooter table={table} data={data} result={result} />
       </Flex>
     </Box>
   );
@@ -789,11 +750,10 @@ export function TableView({table, result, isError, isLoading}: TableView) {
 
 const ColumnFilterCell = ({
   header,
-  table,
   isNumeric
 }: {
   header: MRT_Header<TData>;
-  table: MRT_TableInstance<TData>;
+  table?: MRT_TableInstance<TData>;
   isNumeric: boolean;
 }) => {
   header;
