@@ -111,3 +111,28 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
 
   return drilldownItem;
 }
+
+/**
+ * Derives drilldowns from dimensions
+ */
+
+export function deriveDrilldowns(dimensions) {
+  const drilldowns: any[] = []
+  const findDefaultHierarchy = d => d.hierarchies.find(h => h.name === d.defaultHierarchy)
+  const timeDim = dimensions.find(d => d.dimensionType === "time");
+
+  if(timeDim) {
+    const timeDrilldown = findDefaultHierarchy(timeDim).levels[0];
+    drilldowns.push(timeDrilldown);
+  }
+
+  for (const dim of dimensions) {
+    if(dim.type !== "time" && drilldowns.length < 4) {
+      const {levels} = findDefaultHierarchy(dim);
+      // uses deeper level for geo dimensions
+      const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
+      drilldowns.push(levels[levelIndex])
+    }
+  }
+  return drilldowns;
+}

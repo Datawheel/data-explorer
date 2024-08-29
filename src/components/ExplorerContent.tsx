@@ -2,10 +2,8 @@ import React, {useState, useEffect, useMemo} from "react";
 import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps} from "@datawheel/use-translation";
 import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
-import {useSelector} from "react-redux";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
-import {selectServerState} from "../state/server";
 import {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
 import {ExplorerResults} from "./ExplorerResults";
@@ -24,6 +22,7 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
   root: {
     display: "flex",
     flexFlow: "column nowrap",
+    position: "relative",
     height: "calc(100% - 70px)",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row"
@@ -35,7 +34,8 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     flex: "1 1 auto",
     height: "calc(100vh - 70px)",
     [theme.fn.largerThan("md")]: {
-      width: 0
+      width: 0,
+      paddingLeft: 0
     }
   }
 }));
@@ -50,13 +50,13 @@ export function ExplorerContent(props: {
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
   uiLocale: string | undefined;
   withMultiQuery: boolean;
+  defaultCube?: string;
 }) {
   const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
   const translation = useTranslation();
 
-  const isSetupDone = useSetup(props.source, props.dataLocale);
-  const serverState = useSelector(selectServerState);
+  useSetup(props.source, props.dataLocale, props.defaultCube);
 
   const {classes} = useStyles({height: props.height});
 
