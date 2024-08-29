@@ -56,6 +56,7 @@ export const defaultTranslation = {
     dimmenu_hierarchy: "{{abbr}}",
     dimmenu_level: "{{abbr}}",
     filter_mode: "Filter Mode",
+    filter_by: "Filter by {{name}}",
     error_no_cut_selected_detail:
       "You can add data filters based on selected drilldowns.",
     error_no_cut_selected_title: "No cuts added",

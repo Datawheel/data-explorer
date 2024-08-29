@@ -57,7 +57,6 @@ export default defineConfig(({command, mode}) => {
           followRedirects: true,
           rewrite: path => {
             const newPath = path.replace(/^\/olap\//, target.pathname);
-            console.log(target.origin, newPath);
             return newPath;
           },
         },

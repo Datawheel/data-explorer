@@ -41,26 +41,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
     Level.isLevel(level)
       ? drills[level.uniqueName] ||
         ds.fetchMembers(level).then(async members => {
-          const {cube, name, dimension, fullName, depth, properties, hierarchy, annotations, key} =
-            level;
-          const lv: PlainLevel = {
-            cube: cube.name,
-            dimension: dimension.name,
-            fullName,
-            depth,
-            _type: "level",
-            name,
-            uri: level._source.uri,
-            properties: properties.map((p: Property) => ({
-              name: p.name,
-              annotations: p.annotations,
-              uri: p._source.uri,
-              _type: "property"
-            })),
-            hierarchy: hierarchy.name,
-            annotations: annotations
-          };
-
+          const {dimension} = level;
           const drilldown = Object.values(params.drilldowns).find(
             d => d.uniqueName === level.uniqueName
           );
@@ -117,21 +98,21 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
  */
 
 export function deriveDrilldowns(dimensions) {
-  const drilldowns: any[] = []
-  const findDefaultHierarchy = d => d.hierarchies.find(h => h.name === d.defaultHierarchy)
+  const drilldowns: any[] = [];
+  const findDefaultHierarchy = d => d.hierarchies.find(h => h.name === d.defaultHierarchy);
   const timeDim = dimensions.find(d => d.dimensionType === "time");
 
-  if(timeDim) {
+  if (timeDim) {
     const timeDrilldown = findDefaultHierarchy(timeDim).levels[0];
     drilldowns.push(timeDrilldown);
   }
 
   for (const dim of dimensions) {
-    if(dim.type !== "time" && drilldowns.length < 4) {
+    if (dim.type !== "time" && drilldowns.length < 4) {
       const {levels} = findDefaultHierarchy(dim);
       // uses deeper level for geo dimensions
       const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
-      drilldowns.push(levels[levelIndex])
+      drilldowns.push(levels[levelIndex]);
     }
   }
   return drilldowns;
