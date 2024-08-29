@@ -39,6 +39,7 @@ export interface ViewProps<TData = Record<string, string | number>> {
   params: QueryParams;
   result: QueryResult<TData>;
   table?: MRT_TableInstance<TData & Record<string, any>>;
-  isError: boolean;
-  isLoading: boolean;
+  isError?: boolean;
+  isLoading?: boolean;
+  data?: Record<string, string | number>[];
 }
