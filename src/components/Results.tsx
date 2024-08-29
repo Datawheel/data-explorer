@@ -5,6 +5,7 @@ import {type PlainCube} from "@datawheel/olap-client";
 import Graph from "../utils/graph";
 import {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
+import {useSelectCube} from "../hooks/useSelectCube";
 
 type Props = {
   onSelectCube: (name: string, subtopic: string) => void;
@@ -24,35 +25,38 @@ function Results(props: Props) {
   const {onSelectCube, graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
+  const callback = useSelectCube(onSelectCube);
   const result: React.ReactElement[] = [];
+
   if (map) {
     for (let [key, items] of map) {
       const [topic, subtopic] = key.split(" - ");
-      
+
       const component = (
         <div key={key}>
           <Divider my="xs" label={key} />
           {items.map(item => {
-            const cube =  getCube(graph.items, item, subtopic, locale);
+            const cube = getCube(graph.items, item, subtopic, locale);
             return (
-            <Text
-              key={cube.name}
-              component="a"
-              fz="xs"
-              className={
-                isSelected(selectedItem, cube)
-                  ? `${classes.link} ${classes.linkActive}`
-                  : classes.link
-              }
-              onClick={() => {
-                onSelectCube(item, subtopic);
-                setExpanded(false);
-                setInput("");
-              }}
-            >
-              {item}
-            </Text>
-          )})}
+              <Text
+                key={cube.name}
+                component="a"
+                fz="xs"
+                className={
+                  isSelected(selectedItem, cube)
+                    ? `${classes.link} ${classes.linkActive}`
+                    : classes.link
+                }
+                onClick={() => {
+                  callback(item, subtopic)();
+                  setExpanded(false);
+                  setInput("");
+                }}
+              >
+                {item}
+              </Text>
+            );
+          })}
         </div>
       );
       result.push(component);

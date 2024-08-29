@@ -1,4 +1,15 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MultiSelect} from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Box,
+  Flex,
+  Text,
+  rem,
+  Table,
+  Center,
+  MultiSelect,
+  ScrollArea
+} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -15,14 +26,16 @@ import {
 import React, {useEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn} from "../utils/structs";
+import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
 import {
   selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
   selectFilterItems,
+  selectFilterMap,
   selectMeasureItems,
+  selectMeasureMap,
   selectPaginationParams
 } from "../state/queries";
 import {useSelector} from "react-redux";
@@ -46,19 +59,18 @@ import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
 import {useQuery, useQueryClient, keepPreviousData} from "@tanstack/react-query";
-import {isActiveCut, isActiveItem, isNumeric} from "../utils/validation";
+import {isActiveCut, isActiveItem} from "../utils/validation";
 import {
   FilterFnsMenu,
   getFilterFn,
-  getFilterfnText,
+  getFilterfnKey,
   getFilterValue,
   MinMax,
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
-import {selectOlapCubeKeys} from "../state/server";
-import {describeData} from "../utils/object";
-import {selectOlapCube} from "../state/selectors";
+import {selectOlapMeasureItems} from "../state/selectors";
+import {filterMap} from "../utils/array";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -66,22 +78,18 @@ type TData = Record<string, any> & Record<string, string | number>;
 const removeColumn = (
   actions: ExplorerBoundActionMap,
   entity: PlainMeasure | PlainProperty | PlainLevel,
-  measures: Record<string, MeasureItem>,
-  drilldowns: Record<string, DrilldownItem>
+  measures: MeasureItem[],
+  drilldowns: DrilldownItem[]
 ) => {
-  // check for measure
   if (entity._type === "measure") {
     if (entity.name) {
-      // const measure = measures[entity.name];
-      const measure = Object.values(measures).find(d => d.name === entity.name);
+      const measure = measures.find(d => d.name === entity.name);
       measure && actions.updateMeasure({...measure, active: false});
-      actions.willRequestQuery();
     }
   }
   if (entity._type === "level") {
-    const drilldown = Object.values(drilldowns).find(d => d.uniqueName === entity?.uniqueName);
+    const drilldown = drilldowns.find(d => d.uniqueName === entity?.uniqueName);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
-    actions.willRequestQuery();
   }
   // maybe need to handle case for property columns.
 };
@@ -118,64 +126,22 @@ const getEntityText = (entityType: EntityTypes) => {
   }
 };
 
-const getColumnFilterOption = (entityType: EntityTypes) => {
-  switch (entityType) {
-    case "measure":
-      return {
-        columnFilterModeOptions: ["between", "greaterThan", "lessThan"]
-      };
-    case "level":
-      return {columnFilterModeOptions: true};
-    default:
-      return {columnFilterModeOptions: true};
-  }
-};
-
 function getMemberFilterFnTypes(member) {
   return {
     value: String(member.key),
     label: member.caption ? `${member.caption} ${member.key}` : member.name
   };
 }
-function getMantineFilterMultiSelectProps(
-  isId: Boolean,
-  isNumeric: Boolean,
-  range,
-  entity: PlainLevel | PlainMeasure | PlainProperty,
-  drilldowns: Record<string, DrilldownItem>,
-  columnKey: string,
-  types: Record<string, AnyResultColumn>
-) {
+function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
     mantineFilterMultiSelectProps?: {data: unknown};
   } = {};
-
-  // const filterVariant = !isId && isNumeric && range && (range[1] - range[0] <= 50) ? "multi-select" : "text"
   const filterVariant =
     !isId && !isNumeric && (!range || (range && range[1] - range[0] <= 100))
       ? "multi-select"
       : "text";
   result = Object.assign({}, result, {filterVariant});
-
-  if (result.filterVariant === "multi-select") {
-    if (entity._type === "level") {
-      const dd = Object.keys(drilldowns).reduce(
-        (prev, key) => ({...prev, [drilldowns[key].uniqueName]: drilldowns[key]}),
-        {}
-      );
-      const drilldwonData = dd[entity.uniqueName];
-
-      if (drilldwonData && drilldwonData.members) {
-        result = Object.assign({}, result, {
-          mantineFilterMultiSelectProps: {
-            data: drilldwonData.members.map(getMemberFilterFnTypes),
-            placeholder: columnKey
-          }
-        });
-      }
-    }
-  }
   return result;
 }
 
@@ -267,8 +233,8 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
   // Workaround on keys Ideally use the function to get the url for querying using olap client.
   const normalizedFilters = filters.map(filter => ({
     id: filter.measure,
-    value: getFilterValue(filter),
-    fn: getFilterFn(filter)
+    value: getFilterValue(filter)
+    // fn: getFilterFn(filter)
   }));
   const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
   const filterKey = JSON.stringify(normalizedFilters);
@@ -305,7 +271,6 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
     },
     staleTime: 300000,
     enabled: !!filterKeydebouced
-    // placeholderData: keepPreviousData
   });
 }
 
@@ -354,74 +319,65 @@ export function useTable({
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const {types} = result;
-  const {measures, drilldowns} = useSelector(selectCurrentQueryParams);
   const filterItems = useSelector(selectFilterItems);
-
-  const finalUniqueKeys = useMemo(
-    () => [
-      ...Object.keys(measures).reduce((prev, curr) => {
-        const measure = measures[curr];
-        if (measure.active) {
-          return [...prev, curr];
-        }
-        return prev;
-      }, []),
-      ...Object.keys(drilldowns).reduce((prev, curr) => {
-        const dd = drilldowns[curr];
-        if (dd.active) {
-          return [...prev, curr];
-        }
-        return prev;
-      }, [])
-    ],
-    [measures, drilldowns]
-  );
-
+  const filtersMap = useSelector(selectFilterMap);
+  const measuresOlap = useSelector(selectOlapMeasureItems);
+  const measuresMap = useSelector(selectMeasureMap);
+  const drilldowns = useSelector(selectDrilldownItems);
+  const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const itemsCuts = useSelector(selectCutItems);
   const {limit, offset} = useSelector(selectPaginationParams);
-
-  const params = useSelector(selectCurrentQueryParams);
-
-  const dat = useMemo(
-    () => [
-      ...Object.keys(measures).reduce((prev, curr) => {
-        const measure = measures[curr];
-        if (measure.active) {
-          return [...prev, curr];
-        }
-        return prev;
-      }, []),
-      ...Object.keys(drilldowns).reduce((prev, curr) => {
-        const dd = drilldowns[curr];
-        if (dd.active) {
-          return [...prev, curr];
-        }
-        return prev;
-      }, [])
-    ],
-    [measures, drilldowns]
-  );
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
     pageSize: limit
   });
-
-  const {isLoading, isFetching, isError, data, status, isPending, isPlaceholderData} = useTableData(
-    {
-      offset,
-      limit,
-      columns: finalUniqueKeys,
-      filters: filterItems.filter(isActiveItem),
-      cuts: itemsCuts.filter(isActiveCut)
-    }
+  const finalUniqueKeys = useMemo(
+    () =>
+      [
+        ...measures.map(m => (m.active ? m.name : null)),
+        ...drilldowns.map(d => (d.active ? d.uniqueName : null))
+      ].filter(a => a !== null),
+    [measures, drilldowns]
   );
+
+  function handlerCreateMeasure(data: MeasureItem) {
+    const measure = buildMeasure(data);
+    actions.updateMeasure(measure);
+    return measure;
+  }
+  function handlerCreateFilter(data: FilterItem) {
+    const filter = buildFilter(data);
+    actions.updateFilter(filter);
+    return filter;
+  }
+  useMemo(() => {
+    return filterMap(measuresOlap, (m: MeasureItem) => {
+      const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
+      const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
+      const filter =
+        foundFilter ||
+        handlerCreateFilter({
+          measure: measure.name,
+          active: false,
+          key: measure.name
+        } as FilterItem);
+      return {measure, filter};
+    });
+  }, [measuresMap, measuresOlap, filtersMap, filterItems]);
+
+  const {isLoading, isFetching, isError, data} = useTableData({
+    offset,
+    limit,
+    columns: finalUniqueKeys,
+    filters: filterItems.filter(isActiveItem),
+    cuts: itemsCuts.filter(isActiveCut)
+  });
 
   // check no data
   const tableData = data?.data || [];
   const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
-
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
@@ -431,7 +387,6 @@ export function useTable({
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
-
   //So far this is a hardcoded count until api returns value
   const totalRowCount = result.data.length === limit ? limit * 10 : result.data.length;
   // usePrefetch({
@@ -484,18 +439,8 @@ export function useTable({
       const isNumeric = valueType === "number" && columnKey !== "Year";
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
-      const filterOption = getColumnFilterOption(entityType);
-      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(
-        isId,
-        isNumeric,
-        range,
-        entity,
-        drilldowns,
-        columnKey,
-        types
-      );
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
-        ...filterOption,
         ...mantineFilterVariantObject,
         entityType,
         header,
@@ -526,9 +471,9 @@ export function useTable({
                       {getSortIcon(column.getIsSorted(), entityType)}
                     </ActionIcon>
                   </Flex>
-                  <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
+                  {/* <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
                     {getEntityText(entityType)}
-                  </Text>
+                  </Text> */}
                 </Box>
                 <CustomActionIcon
                   label={`At least one ${getEntityText(entityType)} is required.`}
@@ -547,7 +492,7 @@ export function useTable({
         },
         formatter,
         formatterKey,
-        id: entity.fullName ?? entity.name,
+        id: entity.uniqueName ?? entity.name,
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
@@ -689,10 +634,10 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
         <ProgressBar isTopToolbar={false} table={table} />
-        <Box
+        <ScrollArea
+          h={isData ? "100%" : "auto"}
           sx={{
             flex: "1 1 auto",
-            height: isData ? "100%" : "auto",
             position: "relative",
             overflow: "scroll"
           }}
@@ -804,7 +749,7 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
             )}
           </Table>
           {!isData && !isError && !isLoading && <NoRecords />}
-        </Box>
+        </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
         <TableFooter table={table} data={data} result={result} />
       </Flex>
@@ -835,11 +780,12 @@ const ColumnFilterCell = ({
 
 function NumericFilter({header}: {header: MRT_Header<TData>}) {
   const filters = useSelector(selectFilterItems);
+  const {translate: t} = useTranslation();
   const filter = filters.find(f => f.measure === header.column.id);
 
   if (filter) {
     const filterFn = getFilterFn(filter);
-    const text = getFilterfnText(filterFn);
+    const text = t(`comparison.${getFilterfnKey(filterFn)}`);
     const isBetween = filterFn === "between";
 
     return (
@@ -860,6 +806,7 @@ function NumericFilter({header}: {header: MRT_Header<TData>}) {
 }
 
 function MultiFilter({header}: {header: MRT_Header<TData>}) {
+  const {translate: t} = useTranslation();
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
@@ -873,6 +820,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   }, []);
+
   return (
     drilldown &&
     cut && (
@@ -883,11 +831,11 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
           }}
-          placeholder={`Filter by ${label}`}
+          placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => ({
             value: String(m.key),
-            label: m.caption ? `${m.caption} ${m.key}` : m.name
+            label: m.caption ? `${m.caption} (${m.key})` : m.name
           }))}
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable

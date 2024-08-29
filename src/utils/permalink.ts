@@ -189,7 +189,6 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
       const comparison = cond[0] as "gt";
       const inputtedValue = cond[1];
       const interpretedValue = Number.parseFloat(cond[1]);
-      console.log("Entro parse", comparison, inputtedValue, interpretedValue);
       return [comparison, inputtedValue, interpretedValue];
     }
   }

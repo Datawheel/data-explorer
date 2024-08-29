@@ -189,7 +189,6 @@ function SuccessResult(props: {
 
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
-
   const {table, isError, isLoading, data} = useTable({cube, result});
 
   const fullscreen = useFullscreen();

@@ -45,7 +45,6 @@ export function describeData(
   data: Record<string, any>[]
 ): Record<string, AnyResultColumn> {
   const { locale } = params;
-
   const measureMap = new Map(cube.measures.map(msr => [msr.name, msr]));
   const measures = filterMap(Object.values(params.measures), item =>
     measureMap.get(item.name) || null

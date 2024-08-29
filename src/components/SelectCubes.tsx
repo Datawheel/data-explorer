@@ -16,6 +16,7 @@ import Graph from "../utils/graph";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import yn from "yn";
 import {deriveDrilldowns} from "../state/utils";
+import {useSelectCube} from "../hooks/useSelectCube";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -305,30 +306,8 @@ function CubeButton({
   locale: string;
   parent?: string;
 }) {
-  const {updateMeasure, updateCut, updateDrilldown, willFetchMembers} = useActions();
+  const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
-
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level});
-    cutItem.active = false;
-    updateCut(cutItem);
-  }, []);
-
-  const addDrilldown = useCallback((level: PlainLevel, dimensions) => {
-    const drilldownItem = buildDrilldown(level);
-    createCutHandler(level);
-    updateDrilldown(drilldownItem);
-    return willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
-      return updateDrilldown({
-        ...drilldownItem,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
-      });
-    });
-  }, []);
 
   const table = item;
   const subtopic = parent ?? "";
@@ -353,18 +332,7 @@ function CubeButton({
           : t.colors.gray[3],
         overflow: "hidden"
       })}
-      onClick={() => {
-        onSelectCube(item, subtopic).then(({cube, measures, dimensions}) => {
-          const [measure]: MeasureItem[] = Object.values(measures);
-          const drilldowns = deriveDrilldowns(dimensions);
-          if (measure && drilldowns.length > 0) {
-            updateMeasure({...measure, active: true});
-            for (const level of drilldowns) {
-              addDrilldown(level, dimensions);
-            }
-          }
-        });
-      }}
+      onClick={callback(item, subtopic)}
     >
       {item}
     </Text>

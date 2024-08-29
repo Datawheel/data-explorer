@@ -78,11 +78,6 @@ export function ExplorerContent(props: {
 
   return (
     <div className={classes.container}>
-      <Header height={{base: 50}} p="md">
-        <div style={{display: "flex", alignItems: "center", height: "100%", padding: 5}}>
-          <HomeSVG />
-        </div>
-      </Header>
       <div className={classes.root}>
         <AppProviders>
           <SideBarProvider>
