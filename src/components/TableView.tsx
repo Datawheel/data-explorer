@@ -298,7 +298,6 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
   return useQuery<UserApiResponse>({
     queryKey: ["table", filterKeydebouced],
     queryFn: () => {
-      console.log("me llama", filterKeydebouced);
       return actions.willExecuteQuery().then(res => {
         const {data, types} = res;
         return {data: data ?? [], types};
