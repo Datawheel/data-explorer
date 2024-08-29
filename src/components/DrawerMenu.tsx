@@ -13,8 +13,7 @@ import {
   Flex,
   Checkbox,
   ThemeIcon,
-  useMantineTheme,
-  Switch
+  useMantineTheme
 } from "@mantine/core";
 import {useSelector} from "react-redux";
 import {
@@ -298,7 +297,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   return (
     <>
       <Group mt="sm" position="apart" key={level.uri} noWrap>
-        <Switch
+        <Checkbox
           onChange={() => {
             if (cut) {
               const active = checked ? false : cut.members.length ? true : false;
@@ -310,9 +309,10 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
           label={label}
         />
         <Group>
-          <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
+          <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
             {activeFilter ? <IconFilterOff /> : <IconFilter />}
           </ActionIcon>
+
           <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
             <StackSVG />
           </ThemeIcon>
@@ -505,13 +505,11 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
 
 function MeasuresOptions() {
   // param measures
-  const [activeFilter, setActiveFilter] = useState(false);
   const {code: locale} = useSelector(selectLocale);
   const itemMap = useSelector(selectMeasureMap);
   const filtersMap = useSelector(selectFilterMap);
   const filtersItems = useSelector(selectFilterItems);
   // server
-  const measureMap = useSelector(selectOlapMeasureMap);
   const measures = useSelector(selectOlapMeasureItems);
   //actions
   const actions = useActions();
@@ -531,7 +529,6 @@ function MeasuresOptions() {
     return filterMap(measures, (m: MeasureItem) => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
       const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
-
       const filter =
         foundFilter ||
         handlerCreateFilter({
@@ -541,50 +538,66 @@ function MeasuresOptions() {
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems, locale]);
+  }, [itemMap, measures, filtersMap, filtersItems]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
   const options = filteredItems.map(({measure, filter}) => {
-    const filterFn = getFilterFn(filter);
-    const text = getFilterfnText(filterFn);
-    const isBetween = filterFn === "between";
-    const checked = activeItems.map(active => active.measure.name).includes(measure.name);
-    return (
-      <Box key={measure.name}>
-        <Group mt="sm" position="apart">
-          <Switch
-            onChange={() => {
-              actions.updateMeasure({...measure, active: !measure.active});
-              actions.updateFilter({...filter, active: checked ? false : true});
-            }}
-            checked={checked}
-            label={measure.name}
-          />
-          <Group>
-            <FilterFnsMenu filter={filter} />
-            <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
-              {activeFilter ? <IconFilterOff /> : <IconFilter />}
-            </ActionIcon>
-            <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
-              <BarsSVG />
-            </ThemeIcon>
-          </Group>
-        </Group>
-        {activeFilter && (
-          <Box pt="md">
-            {isBetween ? (
-              <MinMax filter={filter} />
-            ) : (
-              <NumberInputComponent text={text} filter={filter} />
-            )}
-          </Box>
-        )}
-      </Box>
-    );
+    return <FilterItem measure={measure} filter={filter} activeItems={activeItems} />;
   });
 
   return options;
 }
 
+function FilterItem({
+  measure,
+  filter,
+  activeItems
+}: {
+  measure: MeasureItem;
+  filter: FilterItem;
+  activeItems: {
+    measure: MeasureItem;
+    filter: FilterItem;
+  }[];
+}) {
+  const [activeFilter, setActiveFilter] = useState(false);
+  const filterFn = getFilterFn(filter);
+  const text = getFilterfnText(filterFn);
+  const isBetween = filterFn === "between";
+  const checked = activeItems.map(active => active.measure.name).includes(measure.name);
+  const actions = useActions();
+  return (
+    <Box key={measure.name}>
+      <Group mt="sm" position="apart">
+        <Checkbox
+          onChange={() => {
+            actions.updateMeasure({...measure, active: !measure.active});
+            actions.updateFilter({...filter, active: checked ? false : true});
+          }}
+          checked={checked}
+          label={measure.name}
+        />
+        <Group>
+          {activeFilter && <FilterFnsMenu filter={filter} />}
+          <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
+            {activeFilter ? <IconFilterOff /> : <IconFilter />}
+          </ActionIcon>
+          <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+            <BarsSVG />
+          </ThemeIcon>
+        </Group>
+      </Group>
+      {activeFilter && (
+        <Box pt="md">
+          {isBetween ? (
+            <MinMax filter={filter} />
+          ) : (
+            <NumberInputComponent text={text} filter={filter} />
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+}
 export default AddColumnsDrawer;
