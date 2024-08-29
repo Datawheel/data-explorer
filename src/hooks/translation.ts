@@ -11,6 +11,7 @@ export const defaultTranslation = {
     dataset: "Select Dataset"
   },
   comparison: {
+    BT: "Between",
     EQ: "Equal to",
     GT: "Greater than",
     GTE: "Equal or greater than",
@@ -47,12 +48,15 @@ export const defaultTranslation = {
     action_clear: "Clear query",
     action_clear_description: "Clear all parameters from your current query",
     action_execute: "Execute query",
+    add_columns: "Add columns",
     column_title: "Parameters",
     current_endpoint: "Current endpoint: {{label}}",
     dimmenu_abbrjoint: ": ",
     dimmenu_dimension: "{{dimension}}",
     dimmenu_hierarchy: "{{abbr}}",
     dimmenu_level: "{{abbr}}",
+    filter_mode: "Filter Mode",
+    filter_by: "Filter by {{name}}",
     error_no_cut_selected_detail:
       "You can add data filters based on selected drilldowns.",
     error_no_cut_selected_title: "No cuts added",

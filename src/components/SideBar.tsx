@@ -1,6 +1,6 @@
 import React, {PropsWithChildren, useState, useEffect} from "react";
 import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group} from "@mantine/core";
-import { CloseButton } from "@mantine/core";
+import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch} from "@tabler/icons-react";
 import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
@@ -67,22 +67,23 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
       id="dex-sidebar"
       py="md"
       sx={t => ({
-        height: "calc(100vh - 75px)",
-        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8]:  t.colors.gray[1],
+        height: "calc(100vh - 50px)",
+        backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1],
         boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
-        maxWidth: expanded ? 300: 54,
+        maxWidth: expanded ? 300 : 54,
         padding: 0,
         zIndex: 99,
+        boxSizing: "border-box",
         [t.fn.smallerThan("md")]: {
           position: "absolute",
-          width: expanded ? 300: 54,
-          height: expanded ? "calc(100vh - 75px)": 54,
+          width: expanded ? 300 : 54,
+          height: expanded ? "calc(100vh - 75px)" : 54,
           bottom: expanded ? "unset" : t.spacing.md,
           left: expanded ? "unset" : t.spacing.md,
           overflow: "hidden",
-          paddingTop: expanded ? t.spacing.md: 0,
-          paddingBottom: expanded ? t.spacing.md: 0,
-          borderRadius: expanded ? 0: "100%",
+          paddingTop: expanded ? t.spacing.md : 0,
+          paddingBottom: expanded ? t.spacing.md : 0,
+          borderRadius: expanded ? 0 : "100%"
         }
       })}
     >
@@ -106,10 +107,12 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                 sx={{
                   overflow: "hidden",
                   whiteSpace: "nowrap",
-                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  width: expanded ? 300 : 0,
-                }}>
-                <Text sx={t => ({color: t.colorScheme === "dark" ? t.white: t.black})} ml={"sm"}>
+                  transition:
+                    "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                  width: expanded ? 300 : 0
+                }}
+              >
+                <Text sx={t => ({color: t.colorScheme === "dark" ? t.white : t.black})} ml={"sm"}>
                   {t("params.label_dataset")}
                 </Text>
                 <LocaleSelector />
@@ -118,13 +121,15 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
             <Box
               my="md"
               sx={{
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                  width: expanded ? "100%" : 0,
-                }}>
+                overflow: "hidden",
+                whiteSpace: "nowrap",
+                transition:
+                  "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                width: expanded ? "100%" : 0
+              }}
+            >
               <Auto />
-            </Box> 
+            </Box>
             <Box sx={{flexGrow: 1}}></Box>
           </Flex>
         </Box>
@@ -184,7 +189,7 @@ function Auto() {
   const {code: locale} = useSelector(selectLocale);
   const {translate: t} = useTranslation();
   const {expanded, graph, setResults, input, setInput, setMap} = useSideBar();
-  const [debouncedInput] = useDebouncedValue(input, 200)
+  const [debouncedInput] = useDebouncedValue(input, 200);
   useEffect(() => {
     if (graph.items.length > 0) {
       const {matches, map} = graph.filter(locale, debouncedInput);
@@ -194,30 +199,31 @@ function Auto() {
   }, [debouncedInput, graph]);
 
   return (
-      <Input
-        icon={<IconSearch />}
-        radius="xl"
-        size="md"
-        placeholder={t("params.label_search")}
-        value={input}
-        onInput={e => setInput(e.currentTarget.value)}
-        styles={{
-          wrapper: {
-            width: expanded ? "100%" : 0,
-            overflow: "hidden",
-            transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-          },
-          input: {
-            whiteSpace: "nowrap",
-          },
-        }}
-        rightSection={
-          <CloseButton
-            aria-label="Clear input"
-            onClick={() => setInput('')}
-            style={{ display: input ? undefined : 'none' }}
-        />
+    <Input
+      icon={<IconSearch />}
+      radius="xl"
+      size="md"
+      placeholder={t("params.label_search")}
+      value={input}
+      onInput={e => setInput(e.currentTarget.value)}
+      styles={{
+        wrapper: {
+          width: expanded ? "100%" : 0,
+          overflow: "hidden",
+          transition:
+            "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
+        },
+        input: {
+          whiteSpace: "nowrap"
         }
-      />
+      }}
+      rightSection={
+        <CloseButton
+          aria-label="Clear input"
+          onClick={() => setInput("")}
+          style={{display: input ? undefined : "none"}}
+        />
+      }
+    />
   );
 }

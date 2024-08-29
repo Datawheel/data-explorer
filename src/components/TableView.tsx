@@ -1,4 +1,15 @@
-import {ActionIcon, Alert, Box, Flex, Text, rem, Table, Center, MultiSelect} from "@mantine/core";
+import {
+  ActionIcon,
+  Alert,
+  Box,
+  Flex,
+  Text,
+  rem,
+  Table,
+  Center,
+  MultiSelect,
+  ScrollArea
+} from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
   MRT_ColumnDef as ColumnDef,
@@ -52,7 +63,7 @@ import {isActiveCut, isActiveItem} from "../utils/validation";
 import {
   FilterFnsMenu,
   getFilterFn,
-  getFilterfnText,
+  getFilterfnKey,
   getFilterValue,
   MinMax,
   NumberInputComponent
@@ -367,7 +378,6 @@ export function useTable({
   // check no data
   const tableData = data?.data || [];
   const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
-
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
@@ -377,7 +387,6 @@ export function useTable({
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
-
   //So far this is a hardcoded count until api returns value
   const totalRowCount = result.data.length === limit ? limit * 10 : result.data.length;
   // usePrefetch({
@@ -462,9 +471,9 @@ export function useTable({
                       {getSortIcon(column.getIsSorted(), entityType)}
                     </ActionIcon>
                   </Flex>
-                  <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
+                  {/* <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
                     {getEntityText(entityType)}
-                  </Text>
+                  </Text> */}
                 </Box>
                 <CustomActionIcon
                   label={`At least one ${getEntityText(entityType)} is required.`}
@@ -625,10 +634,10 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
         <ProgressBar isTopToolbar={false} table={table} />
-        <Box
+        <ScrollArea
+          h={isData ? "100%" : "auto"}
           sx={{
             flex: "1 1 auto",
-            height: isData ? "100%" : "auto",
             position: "relative",
             overflow: "scroll"
           }}
@@ -740,7 +749,7 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
             )}
           </Table>
           {!isData && !isError && !isLoading && <NoRecords />}
-        </Box>
+        </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
         <TableFooter table={table} data={data} result={result} />
       </Flex>
@@ -771,11 +780,12 @@ const ColumnFilterCell = ({
 
 function NumericFilter({header}: {header: MRT_Header<TData>}) {
   const filters = useSelector(selectFilterItems);
+  const {translate: t} = useTranslation();
   const filter = filters.find(f => f.measure === header.column.id);
 
   if (filter) {
     const filterFn = getFilterFn(filter);
-    const text = getFilterfnText(filterFn);
+    const text = t(`comparison.${getFilterfnKey(filterFn)}`);
     const isBetween = filterFn === "between";
 
     return (
@@ -796,6 +806,7 @@ function NumericFilter({header}: {header: MRT_Header<TData>}) {
 }
 
 function MultiFilter({header}: {header: MRT_Header<TData>}) {
+  const {translate: t} = useTranslation();
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
@@ -809,6 +820,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   }, []);
+
   return (
     drilldown &&
     cut && (
@@ -819,11 +831,11 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
           }}
-          placeholder={`Filter by ${label}`}
+          placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => ({
             value: String(m.key),
-            label: m.caption ? `${m.caption} ${m.key}` : m.name
+            label: m.caption ? `${m.caption} (${m.key})` : m.name
           }))}
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable
