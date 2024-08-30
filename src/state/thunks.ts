@@ -28,6 +28,7 @@ import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
 import {ExplorerThunk} from "./store";
 import {calcMaxMemberCount, hydrateDrilldownProperties} from "./utils";
 import {selectOlapDimensionItems} from "./selectors";
+
 /**
  * Initiates a new download of the queried data by the current parameters.
  *
@@ -44,17 +45,15 @@ export function willDownloadQuery(format: Format): ExplorerThunk<Promise<FileDes
     }
 
     const axios = olapClient.datasource.axiosInstance;
-
     return olapClient.getCube(params.cube).then(cube => {
       const filename = `${cube.name}_${new Date().toISOString()}`;
-
       const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
       const query = applyQueryParams(cube.query, queryParams, {previewLimit}).setFormat(format);
       const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
 
       return Promise.all([
         axios({url: dataURL, responseType: "blob"}).then(response => response.data),
-        calcMaxMemberCount(query, params).then(maxRows => {
+        calcMaxMemberCount(query, params, dispatch).then(maxRows => {
           if (maxRows > 50000) {
             dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
           }
@@ -90,10 +89,19 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
     const allParams = isPrefetch ? {...params, pagiLimit: limit, pagiOffset: offset} : params;
     const {result: currentResult} = selectCurrentQueryItem(state);
     if (!isValidQuery(params)) return Promise.resolve();
-    return olapClient.getCube(params.cube).then(cube => {
+    return olapClient.getCube(params.cube).then(async cube => {
       const query = applyQueryParams(cube.query, allParams, {previewLimit});
+      const axios = olapClient.datasource.axiosInstance;
+      const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
       return Promise.all([
-        olapClient.execQuery(query, endpoint),
+        axios({url: dataURL}).then(response => {
+          return {
+            data: response.data,
+            headers: {...response.headers} as Record<string, string>,
+            query,
+            status: response.status
+          };
+        }),
         calcMaxMemberCount(query, allParams, dispatch).then(maxRows => {
           if (maxRows > 50000) {
             dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
@@ -102,24 +110,26 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
       ]).then(
         result => {
           const [aggregation] = result;
+          const {data, headers, status} = aggregation;
+
           !isPrefetch &&
             dispatch(
               queriesActions.updateResult({
-                data: aggregation.data,
-                types: aggregation.data.length
-                  ? describeData(cube.toJSON(), params, aggregation.data)
+                data,
+                types: data?.data.length
+                  ? describeData(cube.toJSON(), params, data?.data)
                   : currentResult.types,
-                headers: {...aggregation.headers},
+                headers: {...headers},
                 sourceCall: query.toSource(),
-                status: aggregation.status || 500,
+                status: status || 500,
                 url: query.toString(endpoint)
               })
             );
 
           return {
-            data: aggregation.data,
-            types: aggregation.data.length
-              ? describeData(cube.toJSON(), params, aggregation.data)
+            data,
+            types: data?.data.length
+              ? describeData(cube.toJSON(), params, data?.data)
               : currentResult.types
           };
         },
@@ -327,6 +337,7 @@ export function willSetupClient(serverConfig: ServerConfig): ExplorerThunk<Promi
     OLAPClient.dataSourceFromURL(serverConfig)
       .then(datasource => {
         client.setDataSource(datasource);
+
         return client.checkStatus();
       })
       .then(
