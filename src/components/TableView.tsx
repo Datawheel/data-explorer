@@ -243,13 +243,7 @@ function useTableData({offset, limit, columns, filters, cuts, pagination}: useTa
   const actions = useActions();
   const columnsStr = JSON.stringify(columns.sort());
   const page = pagination.pageIndex;
-
-  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>([
-    columnsStr,
-    filterKey,
-    cutKey,
-    page
-  ]);
+  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>("");
 
   useEffect(() => {
     const handler = debounce(() => {
@@ -258,7 +252,7 @@ function useTableData({offset, limit, columns, filters, cuts, pagination}: useTa
     }, 700);
     handler();
     return () => handler.cancel();
-  }, [columnsStr, offset, filterKey, cutKey, page]);
+  }, [columnsStr, filterKey, cutKey, page]);
 
   return useQuery<UserApiResponse>({
     queryKey: ["table", filterKeydebouced],

@@ -68,9 +68,7 @@ export function LocaleSelector() {
     if (currentCode !== l.value) {
       resetGraph();
       actions.updateLocale(l.value);
-      // seems that it si being triggered twice on mount and making a duplicated request
-      // we could update useQuery in table to include locale. or willExecute to not trigger loading
-      // actions.willExecuteQuery();
+      actions.willRequestQuery();
     }
   };
 
