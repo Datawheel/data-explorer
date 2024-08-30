@@ -243,16 +243,20 @@ function useTableData({offset, limit, columns, filters, cuts, pagination}: useTa
   const actions = useActions();
   const columnsStr = JSON.stringify(columns.sort());
   const page = pagination.pageIndex;
-  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>("");
+
+  const enabled = Boolean(columns.length) || Boolean(filters.length) || Boolean(cuts.length);
+  const initialKey = enabled ? [columnsStr, filterKey, cutKey, page] : "";
+  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>(initialKey);
 
   useEffect(() => {
+    if (!enabled) return;
     const handler = debounce(() => {
       const term = [columnsStr, filterKey, cutKey, page];
       setDebouncedTerm(term);
     }, 700);
     handler();
     return () => handler.cancel();
-  }, [columnsStr, filterKey, cutKey, page]);
+  }, [columnsStr, filterKey, cutKey, page, enabled]);
 
   return useQuery<UserApiResponse>({
     queryKey: ["table", filterKeydebouced],
@@ -264,7 +268,7 @@ function useTableData({offset, limit, columns, filters, cuts, pagination}: useTa
       });
     },
     staleTime: 300000,
-    enabled: !!filterKeydebouced
+    enabled: enabled && !!filterKeydebouced
   });
 }
 
