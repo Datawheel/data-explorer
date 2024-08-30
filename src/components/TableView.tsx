@@ -58,7 +58,7 @@ import type {MeasureItem, QueryResult, DrilldownItem, CutItem, FilterItem} from 
 import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
 import TableFooter from "./TableFooter";
 import CustomActionIcon from "./CustomActionIcon";
-import {useQuery, useQueryClient, keepPreviousData} from "@tanstack/react-query";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
 import {isActiveCut, isActiveItem} from "../utils/validation";
 import {
   FilterFnsMenu,
@@ -227,9 +227,10 @@ type useTableDataType = {
   filters: FilterItem[];
   limit: number;
   offset: number;
+  pagination: MRT_PaginationState;
 };
 
-function useTableData({offset, limit, columns, filters, cuts}: useTableDataType) {
+function useTableData({offset, limit, columns, filters, cuts, pagination}: useTableDataType) {
   // Workaround on keys Ideally use the function to get the url for querying using olap client.
   const normalizedFilters = filters.map(filter => ({
     id: filter.measure,
@@ -241,11 +242,9 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
   const cutKey = JSON.stringify(normalizedCuts);
   const actions = useActions();
   const columnsStr = JSON.stringify(columns.sort());
-  const page = offset;
+  const page = pagination.pageIndex;
 
   const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>([
-    limit,
-    offset,
     columnsStr,
     filterKey,
     cutKey,
@@ -254,7 +253,7 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
 
   useEffect(() => {
     const handler = debounce(() => {
-      const term = [limit, offset, columnsStr, filterKey, cutKey, page];
+      const term = [columnsStr, filterKey, cutKey, page];
       setDebouncedTerm(term);
     }, 700);
     handler();
@@ -266,7 +265,8 @@ function useTableData({offset, limit, columns, filters, cuts}: useTableDataType)
     queryFn: () => {
       return actions.willExecuteQuery().then(res => {
         const {data, types} = res;
-        return {data: data ?? [], types};
+        const {data: tableData, page} = data;
+        return {data: tableData ?? [], types, page};
       });
     },
     staleTime: 300000,
@@ -280,7 +280,10 @@ type usePrefetchType = {
   limit: number;
   offset: number;
   totalRowCount: number;
+  cuts: CutItem[];
   columns: string[];
+  filters: FilterItem[];
+  pagination: MRT_PaginationState;
 };
 
 // update when pagination api is set.
@@ -290,25 +293,43 @@ function usePrefetch({
   limit,
   offset,
   totalRowCount,
-  columns
+  columns,
+  cuts,
+  filters,
+  pagination
 }: usePrefetchType) {
   const queryClient = useQueryClient();
   const actions = useActions();
-  const hasMore = true;
-  const page = offset + limit;
-  const key = ["table", limit, page, ...columns];
+  const page = pagination.pageIndex + 1;
+  const hasMore = page * pagination.pageSize <= totalRowCount;
+  const off = page * pagination.pageSize;
+
+  const normalizedFilters = filters.map(filter => ({
+    id: filter.measure,
+    value: getFilterValue(filter)
+    // fn: getFilterFn(filter)
+  }));
+  const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
+  const filterKey = JSON.stringify(normalizedFilters);
+  const cutKey = JSON.stringify(normalizedCuts);
+  const columnsStr = JSON.stringify(columns.sort());
+  const key = [columnsStr, filterKey, cutKey, page];
 
   React.useEffect(() => {
     if (!isPlaceholderData && hasMore) {
       queryClient.prefetchQuery({
-        queryKey: [key, page],
+        queryKey: ["table", key],
         queryFn: () => {
-          return actions.willExecuteQuery({offset: page, limit});
+          return actions.willExecuteQuery({offset: off, limit}).then(res => {
+            const {data, types} = res;
+            const {data: tableData, page} = data;
+            return {data: tableData ?? [], types, page};
+          });
         },
         staleTime: 300000
       });
     }
-  }, [data, limit, page, isPlaceholderData, key, queryClient]);
+  }, [data, limit, offset, page, isPlaceholderData, key, queryClient, hasMore, off]);
 }
 
 export function useTable({
@@ -367,17 +388,20 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isError, data} = useTableData({
+  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
     offset,
     limit,
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
-    cuts: itemsCuts.filter(isActiveCut)
+    cuts: itemsCuts.filter(isActiveCut),
+    pagination
   });
 
   // check no data
   const tableData = data?.data || [];
   const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
+  const totalRowCount = data?.page.total;
+
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
@@ -387,19 +411,18 @@ export function useTable({
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
-  //So far this is a hardcoded count until api returns value
-  const totalRowCount = result.data.length === limit ? limit * 10 : result.data.length;
-  // usePrefetch({
-  //   data: tableData,
-  //   isPlaceholderData,
-  //   offset,
-  //   limit,
-  //   totalRowCount,
-  //   columns: finalUniqueKeys
-  // });
 
-  const fetchedTableData = tableData ?? [];
-  // const totalRowCount = data?.meta?.totalRowCount ?? 0;
+  usePrefetch({
+    data: tableData,
+    isPlaceholderData,
+    offset,
+    limit,
+    totalRowCount,
+    columns: finalUniqueKeys,
+    filters: filterItems.filter(isActiveItem),
+    cuts: itemsCuts.filter(isActiveCut),
+    pagination
+  });
 
   useEffect(() => {
     actions.updatePagination({
@@ -602,7 +625,7 @@ export function useTable({
 
   const table = useMantineReactTable({
     columns,
-    data: fetchedTableData,
+    data: tableData,
     onPaginationChange: setPagination,
     enableHiding: false,
     manualFiltering: true,
@@ -619,7 +642,7 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading, data: fetchedTableData};
+  return {table, isError, isLoading, data: tableData};
 }
 
 type TableView = {
