@@ -20,13 +20,18 @@ type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
   };
 
 function TableFooter(props: Props) {
-  const {result, table, data = []} = props;
+  const {result, table} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
 
   const {copy, copied} = useClipboard({timeout: 1000});
   const copyHandler = useCallback(() => copy(url), [url]);
 
+  const totalRowCount = table.options.rowCount;
+  const {
+    pagination: {pageSize}
+  } = table.getState();
+  const showPagination = totalRowCount && Boolean(totalRowCount > pageSize);
   return (
     <Box w="100%" sx={{flex: "0 0 70px"}}>
       <Flex
@@ -38,8 +43,8 @@ function TableFooter(props: Props) {
       >
         <CubeSource />
         <Group position="right" spacing="sm">
-          <Text c="dimmed">{t("results.count_rows", {n: data.length})}</Text>
-          <MRT_TablePagination table={table} />
+          <Text c="dimmed">{t("results.count_rows", {n: totalRowCount})}</Text>
+          {showPagination && <MRT_TablePagination table={table} />}
           <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />
         </Group>
       </Flex>
