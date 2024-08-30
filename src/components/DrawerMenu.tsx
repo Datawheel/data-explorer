@@ -56,7 +56,7 @@ import {
 import type {PlainLevel} from "@datawheel/olap-client";
 import {getCaption} from "../utils/string";
 import {abbreviateFullName} from "../utils/format";
-import {stringifyName} from "../utils/transform";
+import {levelRefToArray, joinName, stringifyName} from "../utils/transform";
 import {Comparison} from "@datawheel/olap-client";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
@@ -238,6 +238,10 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const cutItems = useSelector(selectCutItems);
   const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
+  const stringifyNameInternal = level => joinName(levelRefToArray(level));
+  const [currentDrilldown, setCurrentDrilldown] = useState(
+    drilldowns[stringifyNameInternal(level)] || drilldowns[stringifyName(level)]
+  );
 
   const label = useMemo(() => {
     const captions = [
@@ -264,30 +268,34 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
-    actions.updateDrilldown(drilldown);
-    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
-    if (!cut) {
-      createCutHandler({...level, key: stringifyName(level)});
-    }
+    // actions.updateDrilldown(drilldown);
+    // const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+    // if (!cut) {
+    //   createCutHandler({...level, key: stringifyName(level)});
+    // }
 
-    actions.willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
-      actions.updateDrilldown({
-        ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
-      });
-    });
+    // actions.willFetchMembers({...level, level: level.name}).then(members => {
+    //   const dimension = dimensions.find(dim => dim.name === level.dimension);
+    //   if (!dimension) return;
+    //   actions.updateDrilldown({
+    //     ...drilldown,
+    //     dimType: dimension.dimensionType,
+    //     memberCount: members.length,
+    //     members
+    //   });
+    // });
 
     return drilldown;
   }
 
-  const currentDrilldown = drilldowns[stringifyName(level)] || createDrilldown(level, cutItems);
+  React.useEffect(() => {
+    if (!currentDrilldown) {
+      setCurrentDrilldown(createDrilldown(level, cutItems));
+    }
+  }, []);
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === currentDrilldown.uniqueName;
+    return cut.uniqueName === currentDrilldown?.uniqueName;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
@@ -295,6 +303,8 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   const checked = activeItems.map(stringifyName).includes(stringifyName(level));
+
+  if (!currentDrilldown) return;
   return (
     <>
       <Group mt="sm" position="apart" key={level.uri} noWrap>
@@ -304,6 +314,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
               const active = checked ? false : cut.members.length ? true : false;
               actions.updateCut({...cut, active});
             }
+            console.log({currentDrilldown});
             actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
           }}
           checked={checked}

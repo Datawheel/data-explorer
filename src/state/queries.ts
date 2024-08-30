@@ -196,7 +196,7 @@ export const queriesSlice = createSlice({
      */
     updateCut(state, { payload }: Action<CutItem>) {
       const query = taintCurrentQuery(state);
-      query.params.cuts[payload.key] = payload;
+      query.params.cuts[payload.fullName] = payload;
     },
 
     /**
@@ -204,7 +204,7 @@ export const queriesSlice = createSlice({
      */
     updateDrilldown(state, { payload }: Action<DrilldownItem>) {
       const query = taintCurrentQuery(state);
-      query.params.drilldowns[payload.key] = payload;
+      query.params.drilldowns[payload.fullName] = payload;
     },
 
     /**
@@ -231,7 +231,7 @@ export const queriesSlice = createSlice({
      */
     updateMeasure(state, { payload }: Action<MeasureItem>) {
       const query = taintCurrentQuery(state);
-      query.params.measures[payload.key] = payload;
+      query.params.measures[payload.name] = payload;
     },
 
     /**
