@@ -8,28 +8,34 @@ import {selectLocale} from "../state/queries";
 import {selectServerState} from "../state/server";
 import {SelectObject} from "./Select";
 import {useSideBar} from "./SideBar";
-import { IconLanguage } from "@tabler/icons-react";
+import {IconLanguage} from "@tabler/icons-react";
 
-const localeSelectorStyle = (theme:MantineTheme) => ({
+const localeSelectorStyle = (theme: MantineTheme) => ({
   input: {
     border: "none",
-    background: theme.colorScheme === "dark" ? theme.fn.darken(theme.fn.primaryColor(), 0.1): theme.fn.lighten(theme.fn.primaryColor(), 0.8),
+    background:
+      theme.colorScheme === "dark"
+        ? theme.fn.darken(theme.fn.primaryColor(), 0.1)
+        : theme.fn.lighten(theme.fn.primaryColor(), 0.8),
     borderRadius: theme.radius.sm,
-    color: theme.colorScheme === "dark" ?  theme.fn.lighten(theme.fn.primaryColor(), 0.7): theme.fn.primaryColor(),
+    color:
+      theme.colorScheme === "dark"
+        ? theme.fn.lighten(theme.fn.primaryColor(), 0.7)
+        : theme.fn.primaryColor(),
     fontSize: 12,
     fontWeight: 700,
     width: 94,
-    textTransform: "uppercase" as const,
+    textTransform: "uppercase" as const
   },
   item: {
     fontSize: 12,
     textTransform: "uppercase" as const
   },
   rightSection: {
-      pointerEvents: "none",
-  // weird hack, seems like CSSObject is not completely right defined inside mantine.
+    pointerEvents: "none"
+    // weird hack, seems like CSSObject is not completely right defined inside mantine.
   } as CSSObject
-})
+});
 
 type LocaleOptions = {label: string; value: LanguageCode};
 
@@ -62,14 +68,16 @@ export function LocaleSelector() {
     if (currentCode !== l.value) {
       resetGraph();
       actions.updateLocale(l.value);
-      actions.willRequestQuery();
+      // seems that it si being triggered twice on mount and making a duplicated request
+      // we could update useQuery in table to include locale. or willExecute to not trigger loading
+      // actions.willExecuteQuery();
     }
   };
 
   if (localeOptions.length < 2) {
     return null;
   }
-  
+
   return (
     <Box id="select-locale">
       <Tooltip label={t("params.label_locale")}>
@@ -81,7 +89,16 @@ export function LocaleSelector() {
           selectedItem={currentCode}
           selectProps={{
             styles: localeSelectorStyle,
-            icon: <IconLanguage size="0.8rem" color={theme.colorScheme === "dark" ?  theme.fn.lighten(theme.fn.primaryColor(), 0.8): theme.fn.primaryColor()}/>
+            icon: (
+              <IconLanguage
+                size="0.8rem"
+                color={
+                  theme.colorScheme === "dark"
+                    ? theme.fn.lighten(theme.fn.primaryColor(), 0.8)
+                    : theme.fn.primaryColor()
+                }
+              />
+            )
           }}
         />
       </Tooltip>
