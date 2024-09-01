@@ -259,7 +259,6 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
-    console.log(" me llama 2");
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
     actions.updateDrilldown(drilldown);
     const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);

@@ -29,7 +29,6 @@ const createCutHandler = (
 export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: ExplorerDispatch) {
   const ds = query.cube.datasource;
 
-  console.log("me llama 1");
   // Rollback response type to default
   ds.axiosInstance.defaults.responseType = undefined;
 
@@ -48,7 +47,6 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
             d => d.uniqueName === level.uniqueName
           );
           if (drilldown) {
-            console.log("me llama 3", level);
             const ddd = {
               ...drilldown,
               dimType: dimension.dimensionType,

@@ -72,7 +72,6 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
     if (selectedItem && cube && !cubeParam) {
-      console.log("me llama cero");
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
       if (measure && dimension) {
