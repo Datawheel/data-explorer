@@ -1,4 +1,4 @@
-import React, {useMemo, useCallback, useState} from "react";
+import React, {useMemo, useState} from "react";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   Drawer,
@@ -18,7 +18,6 @@ import {
 import {useSelector} from "react-redux";
 import {
   selectCutItems,
-  selectCutMap,
   selectDrilldownItems,
   selectDrilldownMap,
   selectFilterItems,
@@ -120,37 +119,8 @@ export function DrawerMenu() {
 
 function DrillDownOptions() {
   const locale = useSelector(selectLocale);
-  const actions = useActions();
   const selectedDimensions = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems) || [];
-
-  // const createCutHandler = React.useCallback((level: PlainLevel) => {
-  //   const cutItem = buildCut({...level, key: level.fullName, members: []});
-  //   cutItem.active = false;
-  //   actions.updateCut(cutItem);
-  // }, []);
-
-  // const createHandler = useCallback(
-  //   (level: PlainLevel) => {
-  //     // find or create drilldown
-  //     const drilldownItem =
-  //       selectedDimensions.find(item => item.uniqueName === level.uniqueName) ??
-  //       buildDrilldown({...level});
-  //     createCutHandler(level);
-  //     actions.updateDrilldown(drilldownItem);
-  //     actions.willFetchMembers({...level, level: level.name}).then(members => {
-  //       const dimension = dimensions.find(dim => dim.name === level.dimension);
-  //       if (!dimension) return;
-  //       actions.updateDrilldown({
-  //         ...drilldownItem,
-  //         dimType: dimension.dimensionType,
-  //         memberCount: members.length,
-  //         members
-  //       });
-  //     });
-  //   },
-  //   [dimensions]
-  // );
 
   const activeItems = selectedDimensions.filter(i => i.active);
 
