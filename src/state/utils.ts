@@ -5,6 +5,7 @@ import {isActiveItem} from "../utils/validation";
 import {actions} from ".";
 import {ExplorerDispatch} from "./store";
 import {buildCut} from "../utils/structs";
+import {stringifyName} from "../utils/transform";
 
 const createCutHandler = (
   cuts: Record<string, CutItem>,
@@ -28,6 +29,7 @@ const createCutHandler = (
 export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: ExplorerDispatch) {
   const ds = query.cube.datasource;
 
+  console.log("me llama 1");
   // Rollback response type to default
   ds.axiosInstance.defaults.responseType = undefined;
 
@@ -46,13 +48,15 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
             d => d.uniqueName === level.uniqueName
           );
           if (drilldown) {
+            console.log("me llama 3", level);
             const ddd = {
               ...drilldown,
               dimType: dimension.dimensionType,
               memberCount: members.length,
               members
             };
-            dispatch(actions.updateDrilldown(ddd));
+
+            dispatch(actions.updateDrilldown({...ddd, key: stringifyName(ddd)}));
             createCutHandler(params.cuts, ddd, dispatch);
           }
           return members.length;

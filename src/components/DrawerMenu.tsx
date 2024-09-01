@@ -27,11 +27,7 @@ import {
   selectMeasureMap
 } from "../state/queries";
 import {useTranslation} from "../hooks/translation";
-import {
-  selectOlapMeasureMap,
-  selectOlapMeasureItems,
-  selectOlapDimensionItems
-} from "../state/selectors";
+import {selectOlapMeasureItems, selectOlapDimensionItems} from "../state/selectors";
 import {useActions} from "../hooks/settings";
 import {filterMap} from "../utils/array";
 import {
@@ -128,33 +124,33 @@ function DrillDownOptions() {
   const selectedDimensions = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems) || [];
 
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, key: level.fullName, members: []});
-    cutItem.active = false;
-    actions.updateCut(cutItem);
-  }, []);
+  // const createCutHandler = React.useCallback((level: PlainLevel) => {
+  //   const cutItem = buildCut({...level, key: level.fullName, members: []});
+  //   cutItem.active = false;
+  //   actions.updateCut(cutItem);
+  // }, []);
 
-  const createHandler = useCallback(
-    (level: PlainLevel) => {
-      // find or create drilldown
-      const drilldownItem =
-        selectedDimensions.find(item => item.uniqueName === level.uniqueName) ??
-        buildDrilldown({...level});
-      createCutHandler(level);
-      actions.updateDrilldown(drilldownItem);
-      actions.willFetchMembers({...level, level: level.name}).then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
-        actions.updateDrilldown({
-          ...drilldownItem,
-          dimType: dimension.dimensionType,
-          memberCount: members.length,
-          members
-        });
-      });
-    },
-    [dimensions]
-  );
+  // const createHandler = useCallback(
+  //   (level: PlainLevel) => {
+  //     // find or create drilldown
+  //     const drilldownItem =
+  //       selectedDimensions.find(item => item.uniqueName === level.uniqueName) ??
+  //       buildDrilldown({...level});
+  //     createCutHandler(level);
+  //     actions.updateDrilldown(drilldownItem);
+  //     actions.willFetchMembers({...level, level: level.name}).then(members => {
+  //       const dimension = dimensions.find(dim => dim.name === level.dimension);
+  //       if (!dimension) return;
+  //       actions.updateDrilldown({
+  //         ...drilldownItem,
+  //         dimType: dimension.dimensionType,
+  //         memberCount: members.length,
+  //         members
+  //       });
+  //     });
+  //   },
+  //   [dimensions]
+  // );
 
   const activeItems = selectedDimensions.filter(i => i.active);
 
@@ -168,7 +164,7 @@ function DrillDownOptions() {
           activeItems={activeItems}
         />
       )),
-    [dimensions, activeItems, createCutHandler]
+    [dimensions, activeItems]
   );
 
   return options;
@@ -263,6 +259,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
+    console.log(" me llama 2");
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
     actions.updateDrilldown(drilldown);
     const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);

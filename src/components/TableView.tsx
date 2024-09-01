@@ -439,7 +439,7 @@ export function useTable({
     const indexColumn = {
       id: "#",
       Header: "#",
-      Cell: ({row}) => row.index + 1,
+      Cell: ({row}) => row.index + 1 + offset,
       minWidth: 50,
       maxWidth: 50,
       width: 50,
