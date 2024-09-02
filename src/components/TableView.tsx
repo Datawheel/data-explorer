@@ -33,9 +33,8 @@ import {
   buildFilter,
   buildMeasure
 } from "../utils/structs";
-import {BarsSVG, StackSVG, PlusSVG} from "./icons";
+import {BarsSVG, StackSVG} from "./icons";
 import {
-  selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
   selectDrilldownMap,
@@ -233,12 +232,10 @@ type useTableDataType = {
   cuts: CutItem[];
   columns: string[];
   filters: FilterItem[];
-  limit: number;
-  offset: number;
   pagination: MRT_PaginationState;
 };
 
-function useTableData({offset, limit, columns, filters, cuts, pagination}: useTableDataType) {
+function useTableData({columns, filters, cuts, pagination}: useTableDataType) {
   // Workaround on keys Ideally use the function to get the url for querying using olap client.
   const normalizedFilters = filters.map(filter => ({
     id: filter.measure,
@@ -382,6 +379,7 @@ export function useTable({
     actions.updateFilter(filter);
     return filter;
   }
+
   useLayoutEffect(() => {
     filterMap(measuresOlap, (m: MeasureItem) => {
       const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
@@ -397,40 +395,7 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const dimensions = useSelector(selectOlapDimensionItems);
-  const drilldownsMap = useSelector(selectDrilldownMap);
-
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, members: [], key: level.fullName});
-    cutItem.active = false;
-    actions.updateCut(cutItem);
-  }, []);
-
-  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
-    actions.updateDrilldown(drilldown);
-    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
-    if (!cut) {
-      createCutHandler({...level, key: stringifyName(level)});
-    }
-
-    actions.willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
-      actions.updateDrilldown({
-        ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
-      });
-    });
-
-    return drilldown;
-  }
-
   const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
-    offset,
-    limit,
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),

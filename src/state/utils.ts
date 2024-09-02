@@ -44,7 +44,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
         ds.fetchMembers(level).then(async members => {
           const {dimension} = level;
           const drilldown = Object.values(params.drilldowns).find(
-            d => d.uniqueName === level.uniqueName
+            d => d.uniqueName === buildDrilldown(level).uniqueName
           );
           if (drilldown) {
             const ddd = {
@@ -53,8 +53,8 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
               memberCount: members.length,
               members
             };
-
-            dispatch(actions.updateDrilldown({...ddd, key: stringifyName(ddd)}));
+            // seems no need to update it in here.
+            // dispatch(actions.updateDrilldown(buildDrilldown({...ddd})));
             createCutHandler(params.cuts, ddd, dispatch);
           }
           return members.length;
@@ -77,6 +77,7 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
     if (level.matches(drilldownItem)) {
       return buildDrilldown({
         ...drilldownItem,
+        key: stringifyName(drilldownItem),
         fullName: level.fullName,
         uniqueName: level.uniqueName,
         dimType: level.dimension.dimensionType,

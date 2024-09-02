@@ -204,6 +204,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const cutItems = useSelector(selectCutItems);
   const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
+  const ditems = useSelector(selectDrilldownItems);
 
   const label = useMemo(() => {
     const captions = [
@@ -231,6 +232,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
     actions.updateDrilldown(drilldown);
+
     const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
     if (!cut) {
       createCutHandler({...level, key: stringifyName(level)});
@@ -252,10 +254,13 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const currentDrilldown = drilldowns[stringifyName(level)];
 
   useLayoutEffect(() => {
-    if (!drilldowns[stringifyName(level)]) {
+    if (
+      !drilldowns[stringifyName(level)] &&
+      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+    ) {
       createDrilldown(level, cutItems);
     }
-  }, [level]);
+  }, [level, ditems]);
 
   const cut = cutItems.find(cut => {
     return cut.uniqueName === currentDrilldown?.uniqueName;

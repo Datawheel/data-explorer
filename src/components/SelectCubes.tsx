@@ -4,7 +4,13 @@ import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} fro
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectCutItems, selectLocale, selectMeasureMap} from "../state/queries";
+import {
+  selectCutItems,
+  selectDrilldownItems,
+  selectDrilldownMap,
+  selectLocale,
+  selectMeasureMap
+} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {selectCubeName} from "../state/queries";
@@ -41,6 +47,9 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   const itemMap = useSelector(selectMeasureMap);
   const dimensions = useSelector(selectOlapDimensionItems);
 
+  const drilldowns = useSelector(selectDrilldownMap);
+  const ditems = useSelector(selectDrilldownItems);
+
   const createCutHandler = React.useCallback((level: PlainLevel) => {
     const cutItem = buildCut({...level});
     cutItem.active = false;
@@ -48,24 +57,29 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   }, []);
 
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
-    updateDrilldown(drilldown);
-    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
-    if (!cut) {
-      createCutHandler({...level, key: stringifyName(level)});
-    }
+    if (
+      !drilldowns[stringifyName(level)] &&
+      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+    ) {
+      const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
+      updateDrilldown(drilldown);
+      const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+      if (!cut) {
+        createCutHandler({...level, key: stringifyName(level)});
+      }
 
-    willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
-      updateDrilldown({
-        ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
+      willFetchMembers({...level, level: level.name}).then(members => {
+        const dimension = dimensions.find(dim => dim.name === level.dimension);
+        if (!dimension) return;
+        updateDrilldown({
+          ...drilldown,
+          dimType: dimension.dimensionType,
+          memberCount: members.length,
+          members
+        });
       });
-    });
-    return drilldown;
+      return drilldown;
+    }
   }
 
   useEffect(() => {
@@ -190,7 +204,6 @@ function CubeTree({
       actions.resetDrilldowns({});
       actions.resetCuts({});
       actions.resetMeasures({});
-
       return actions.willSetCube(cube.name);
     }
   };
