@@ -54,6 +54,12 @@ class Graph {
     return topic;
   }
 
+  getName(node, locale) {
+    const item = this.items.find(item => item.name === node);
+    const name = getAnnotation(item, "table", locale);
+    return name;
+  }
+
   getSubtopic(startingNode, locale) {
     let found = false;
     let subtopic = null;
@@ -88,6 +94,7 @@ class Graph {
           item => getAnnotation(item, "topic", locale) || "",
           item => getAnnotation(item, "subtopic", locale) || "",
           item => getAnnotation(item, "table", locale) || "",
+          item => item.name.replace(/_/g, ' '),
         ]
     });
 
@@ -95,8 +102,8 @@ class Graph {
           const topic = getAnnotation(item, "topic", locale);
           const subtopic = getAnnotation(item, "subtopic", locale);
           const title = getAnnotation(item, "table", locale);
-          addItemToSubtopic(map, `${topic} - ${subtopic}`, title);
-          matches.push(title);
+          addItemToSubtopic(map, `${topic} - ${subtopic}`, item.name);
+          matches.push(item.name);
       }
 
     }

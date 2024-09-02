@@ -51,7 +51,7 @@ import {
 import type {PlainLevel} from "@datawheel/olap-client";
 import {getCaption} from "../utils/string";
 import {abbreviateFullName} from "../utils/format";
-import {stringifyName} from "../utils/transform";
+import {levelRefToArray, joinName, stringifyName} from "../utils/transform";
 import {Comparison} from "@datawheel/olap-client";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
@@ -202,7 +202,6 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
-
   const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
 
@@ -236,7 +235,6 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     if (!cut) {
       createCutHandler({...level, key: stringifyName(level)});
     }
-
     actions.willFetchMembers({...level, level: level.name}).then(members => {
       const dimension = dimensions.find(dim => dim.name === level.dimension);
       if (!dimension) return;
@@ -268,6 +266,8 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   const checked = activeItems.map(stringifyName).includes(stringifyName(level));
+
+  if (!currentDrilldown) return;
   return (
     currentDrilldown && (
       <>
