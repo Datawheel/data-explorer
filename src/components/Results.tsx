@@ -6,6 +6,7 @@ import Graph from "../utils/graph";
 import {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
 import {useSelectCube} from "../hooks/useSelectCube";
+import {getAnnotation} from "../utils/string";
 
 type Props = {
   onSelectCube: (name: string, subtopic: string) => void;
@@ -37,6 +38,8 @@ function Results(props: Props) {
           <Divider my="xs" label={key} />
           {items.map(item => {
             const cube = getCube(graph.items, item, subtopic, locale);
+            const table = getAnnotation(cube, "table", locale);
+
             return (
               <Text
                 key={cube.name}
@@ -53,7 +56,7 @@ function Results(props: Props) {
                   setInput("");
                 }}
               >
-                {item}
+                {table}
               </Text>
             );
           })}

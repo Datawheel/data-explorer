@@ -133,9 +133,7 @@ function isSelected(selectedItem, currentItem) {
 
 function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale: string) {
   const cube = items.find(
-    item =>
-      getAnnotation(item, "table", locale) === table &&
-      getAnnotation(item, "subtopic", locale) === subtopic
+    item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
   );
   return cube;
 }
@@ -144,17 +142,17 @@ function useBuildGraph(items, locale, graph, setGraph) {
   useEffect(() => {
     const graph = new Graph();
     items.map(item => {
+      const {name} = item;
       const topic = getAnnotation(item, "topic", locale);
       const subtopic = getAnnotation(item, "subtopic", locale);
       const table = getAnnotation(item, "table", locale);
       const hide = getAnnotation(item, "hide_in_ui", locale);
-
       if (!yn(hide)) {
         graph.addNode(topic);
         graph.addNode(subtopic);
-        graph.addNode(table);
+        graph.addNode(name);
         graph.addEdge(topic, subtopic);
-        graph.addEdge(subtopic, table);
+        graph.addEdge(subtopic, name);
       }
 
       return item;
@@ -182,9 +180,7 @@ function CubeTree({
 
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
-      item =>
-        getAnnotation(item, "table", locale) === table &&
-        getAnnotation(item, "subtopic", locale) === subtopic
+      item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
     );
     if (cube) {
       return actions.willSetCube(cube.name);
@@ -309,7 +305,7 @@ function CubeButton({
   const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
 
-  const table = item;
+  const table = graph.getName(item, locale);
   const subtopic = parent ?? "";
   return (
     <Text
@@ -320,12 +316,12 @@ function CubeButton({
       pr="md"
       component="a"
       className={
-        isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
+        isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
           ? `${classes.link} ${classes.linkActive}`
           : classes.link
       }
       sx={t => ({
-        background: isSelected(selectedItem, getCube(graph.items, table, subtopic, locale))
+        background: isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
           ? t.fn.primaryColor()
           : t.colorScheme === "dark"
           ? t.colors.dark[6]
@@ -334,7 +330,7 @@ function CubeButton({
       })}
       onClick={callback(item, subtopic)}
     >
-      {item}
+      {table}
     </Text>
   );
 }
