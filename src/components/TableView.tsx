@@ -23,15 +23,21 @@ import {
   MRT_ProgressBar as ProgressBar,
   MRT_Header
 } from "mantine-react-table";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
-import {BarsSVG, StackSVG, PlusSVG} from "./icons";
 import {
-  selectCurrentQueryParams,
+  AnyResultColumn,
+  buildCut,
+  buildDrilldown,
+  buildFilter,
+  buildMeasure
+} from "../utils/structs";
+import {BarsSVG, StackSVG} from "./icons";
+import {
   selectCutItems,
   selectDrilldownItems,
+  selectDrilldownMap,
   selectFilterItems,
   selectFilterMap,
   selectMeasureItems,
@@ -69,8 +75,9 @@ import {
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
-import {selectOlapMeasureItems} from "../state/selectors";
+import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
+import {stringifyName} from "../utils/transform";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -225,12 +232,10 @@ type useTableDataType = {
   cuts: CutItem[];
   columns: string[];
   filters: FilterItem[];
-  limit: number;
-  offset: number;
   pagination: MRT_PaginationState;
 };
 
-function useTableData({offset, limit, columns, filters, cuts, pagination}: useTableDataType) {
+function useTableData({columns, filters, cuts, pagination}: useTableDataType) {
   // Workaround on keys Ideally use the function to get the url for querying using olap client.
   const normalizedFilters = filters.map(filter => ({
     id: filter.measure,
@@ -282,6 +287,7 @@ type usePrefetchType = {
   columns: string[];
   filters: FilterItem[];
   pagination: MRT_PaginationState;
+  isFetching: boolean;
 };
 
 // update when pagination api is set.
@@ -294,7 +300,8 @@ function usePrefetch({
   columns,
   cuts,
   filters,
-  pagination
+  pagination,
+  isFetching
 }: usePrefetchType) {
   const queryClient = useQueryClient();
   const actions = useActions();
@@ -314,7 +321,7 @@ function usePrefetch({
   const key = [columnsStr, filterKey, cutKey, page];
 
   React.useEffect(() => {
-    if (!isPlaceholderData && hasMore) {
+    if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
         queryFn: () => {
@@ -327,7 +334,7 @@ function usePrefetch({
         staleTime: 300000
       });
     }
-  }, [data, limit, offset, page, isPlaceholderData, key, queryClient, hasMore, off]);
+  }, [limit, page, isPlaceholderData, key, queryClient, hasMore, off, isFetching]);
 }
 
 export function useTable({
@@ -366,13 +373,15 @@ export function useTable({
     actions.updateMeasure(measure);
     return measure;
   }
+
   function handlerCreateFilter(data: FilterItem) {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
   }
-  useMemo(() => {
-    return filterMap(measuresOlap, (m: MeasureItem) => {
+
+  useLayoutEffect(() => {
+    filterMap(measuresOlap, (m: MeasureItem) => {
       const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
       const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
       const filter =
@@ -387,8 +396,6 @@ export function useTable({
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
   const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
-    offset,
-    limit,
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),
@@ -419,7 +426,8 @@ export function useTable({
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),
-    pagination
+    pagination,
+    isFetching: isFetching || isLoading
   });
 
   useEffect(() => {
@@ -427,7 +435,7 @@ export function useTable({
       limit: pagination.pageSize,
       offset: pagination.pageIndex * pagination.pageSize
     });
-  }, [pagination]);
+  }, [pagination, actions]);
 
   const {translate: t} = useTranslation();
 
@@ -439,7 +447,7 @@ export function useTable({
     const indexColumn = {
       id: "#",
       Header: "#",
-      Cell: ({row}) => row.index + 1,
+      Cell: ({row}) => row.index + 1 + offset,
       minWidth: 50,
       maxWidth: 50,
       width: 50,

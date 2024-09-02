@@ -4,12 +4,18 @@ import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} fro
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLocale, selectMeasureMap} from "../state/queries";
+import {
+  selectCutItems,
+  selectDrilldownItems,
+  selectDrilldownMap,
+  selectLocale,
+  selectMeasureMap
+} from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
-import {buildDrilldown, buildCut, MeasureItem} from "../utils/structs";
+import {buildDrilldown, buildCut, MeasureItem, CutItem} from "../utils/structs";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
@@ -17,6 +23,7 @@ import Results, {useStyles as useLinkStyles} from "./Results";
 import yn from "yn";
 import {deriveDrilldowns} from "../state/utils";
 import {useSelectCube} from "../hooks/useSelectCube";
+import {stringifyName} from "../utils/transform";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -34,10 +41,14 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
   const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
+  const cutItems = useSelector(selectCutItems);
 
   const cube = useSelector(selectCubeName);
   const itemMap = useSelector(selectMeasureMap);
   const dimensions = useSelector(selectOlapDimensionItems);
+
+  const drilldowns = useSelector(selectDrilldownMap);
+  const ditems = useSelector(selectDrilldownItems);
 
   const createCutHandler = React.useCallback((level: PlainLevel) => {
     const cutItem = buildCut({...level});
@@ -45,24 +56,31 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
     updateCut(cutItem);
   }, []);
 
-  const addDrilldown = useCallback(
-    (level: PlainLevel) => {
-      const drilldownItem = buildDrilldown(level);
-      createCutHandler(level);
-      updateDrilldown(drilldownItem);
-      return willFetchMembers({...level, level: level.name}).then(members => {
+  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
+    if (
+      !drilldowns[stringifyName(level)] &&
+      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+    ) {
+      const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
+      updateDrilldown(drilldown);
+      const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+      if (!cut) {
+        createCutHandler({...level, key: stringifyName(level)});
+      }
+
+      willFetchMembers({...level, level: level.name}).then(members => {
         const dimension = dimensions.find(dim => dim.name === level.dimension);
         if (!dimension) return;
-        return updateDrilldown({
-          ...drilldownItem,
+        updateDrilldown({
+          ...drilldown,
           dimType: dimension.dimensionType,
           memberCount: members.length,
           members
         });
       });
-    },
-    [dimensions]
-  );
+      return drilldown;
+    }
+  }
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -76,7 +94,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
         if (measure && drilldowns.length > 0) {
           updateMeasure({...measure, active: true});
           for (const level of drilldowns) {
-            addDrilldown(level, dimensions);
+            createDrilldown(level, cutItems);
           }
         }
       }
@@ -183,6 +201,9 @@ function CubeTree({
       item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
     );
     if (cube) {
+      actions.resetDrilldowns({});
+      actions.resetCuts({});
+      actions.resetMeasures({});
       return actions.willSetCube(cube.name);
     }
   };

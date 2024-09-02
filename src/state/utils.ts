@@ -5,6 +5,7 @@ import {isActiveItem} from "../utils/validation";
 import {actions} from ".";
 import {ExplorerDispatch} from "./store";
 import {buildCut} from "../utils/structs";
+import {stringifyName} from "../utils/transform";
 
 const createCutHandler = (
   cuts: Record<string, CutItem>,
@@ -43,7 +44,7 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
         ds.fetchMembers(level).then(async members => {
           const {dimension} = level;
           const drilldown = Object.values(params.drilldowns).find(
-            d => d.uniqueName === level.uniqueName
+            d => d.uniqueName === buildDrilldown(level).uniqueName
           );
           if (drilldown) {
             const ddd = {
@@ -52,7 +53,8 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
               memberCount: members.length,
               members
             };
-            dispatch(actions.updateDrilldown(ddd));
+            // seems no need to update it in here.
+            // dispatch(actions.updateDrilldown(buildDrilldown({...ddd})));
             createCutHandler(params.cuts, ddd, dispatch);
           }
           return members.length;
@@ -75,6 +77,7 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
     if (level.matches(drilldownItem)) {
       return buildDrilldown({
         ...drilldownItem,
+        key: stringifyName(drilldownItem),
         fullName: level.fullName,
         uniqueName: level.uniqueName,
         dimType: level.dimension.dimensionType,
@@ -109,10 +112,16 @@ export function deriveDrilldowns(dimensions) {
 
   for (const dim of dimensions) {
     if (dim.type !== "time" && drilldowns.length < 4) {
-      const {levels} = findDefaultHierarchy(dim);
-      // uses deeper level for geo dimensions
-      const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
-      drilldowns.push(levels[levelIndex]);
+      if (dim.hierarchies.length === 1) {
+        const {levels} = dim.hierarchies[0];
+        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
+        drilldowns.push(levels[levelIndex]);
+      } else {
+        const {levels} = findDefaultHierarchy(dim);
+        // uses deeper level for geo dimensions
+        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
+        drilldowns.push(levels[levelIndex]);
+      }
     }
   }
   return drilldowns;
