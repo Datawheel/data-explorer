@@ -512,7 +512,9 @@ function MeasuresOptions() {
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
   const options = filteredItems.map(({measure, filter}) => {
-    return <FilterItem measure={measure} filter={filter} activeItems={activeItems} />;
+    return (
+      <FilterItem key={measure.key} measure={measure} filter={filter} activeItems={activeItems} />
+    );
   });
 
   return options;

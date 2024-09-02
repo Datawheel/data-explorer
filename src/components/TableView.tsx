@@ -282,6 +282,7 @@ type usePrefetchType = {
   columns: string[];
   filters: FilterItem[];
   pagination: MRT_PaginationState;
+  isFetching: boolean;
 };
 
 // update when pagination api is set.
@@ -294,7 +295,8 @@ function usePrefetch({
   columns,
   cuts,
   filters,
-  pagination
+  pagination,
+  isFetching
 }: usePrefetchType) {
   const queryClient = useQueryClient();
   const actions = useActions();
@@ -314,7 +316,7 @@ function usePrefetch({
   const key = [columnsStr, filterKey, cutKey, page];
 
   React.useEffect(() => {
-    if (!isPlaceholderData && hasMore) {
+    if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
         queryFn: () => {
@@ -327,7 +329,7 @@ function usePrefetch({
         staleTime: 300000
       });
     }
-  }, [data, limit, offset, page, isPlaceholderData, key, queryClient, hasMore, off]);
+  }, [limit, page, isPlaceholderData, key, queryClient, hasMore, off, isFetching]);
 }
 
 export function useTable({
@@ -386,14 +388,15 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
-    offset,
-    limit,
-    columns: finalUniqueKeys,
-    filters: filterItems.filter(isActiveItem),
-    cuts: itemsCuts.filter(isActiveCut),
-    pagination
-  });
+  const {isLoading, isFetching, isError, data, isPlaceholderData, status, fetchStatus} =
+    useTableData({
+      offset,
+      limit,
+      columns: finalUniqueKeys,
+      filters: filterItems.filter(isActiveItem),
+      cuts: itemsCuts.filter(isActiveCut),
+      pagination
+    });
 
   // check no data
   const tableData = data?.data || [];
@@ -419,7 +422,8 @@ export function useTable({
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),
-    pagination
+    pagination,
+    isFetching
   });
 
   useEffect(() => {
