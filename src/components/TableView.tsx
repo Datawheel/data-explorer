@@ -23,15 +23,22 @@ import {
   MRT_ProgressBar as ProgressBar,
   MRT_Header
 } from "mantine-react-table";
-import React, {useEffect, useMemo, useState} from "react";
+import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
+import {
+  AnyResultColumn,
+  buildCut,
+  buildDrilldown,
+  buildFilter,
+  buildMeasure
+} from "../utils/structs";
 import {BarsSVG, StackSVG, PlusSVG} from "./icons";
 import {
   selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
+  selectDrilldownMap,
   selectFilterItems,
   selectFilterMap,
   selectMeasureItems,
@@ -69,8 +76,9 @@ import {
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
-import {selectOlapMeasureItems} from "../state/selectors";
+import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
+import {stringifyName} from "../utils/transform";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -368,13 +376,14 @@ export function useTable({
     actions.updateMeasure(measure);
     return measure;
   }
+
   function handlerCreateFilter(data: FilterItem) {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
   }
-  useMemo(() => {
-    return filterMap(measuresOlap, (m: MeasureItem) => {
+  useLayoutEffect(() => {
+    filterMap(measuresOlap, (m: MeasureItem) => {
       const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
       const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
       const filter =
@@ -388,15 +397,45 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData, status, fetchStatus} =
-    useTableData({
-      offset,
-      limit,
-      columns: finalUniqueKeys,
-      filters: filterItems.filter(isActiveItem),
-      cuts: itemsCuts.filter(isActiveCut),
-      pagination
+  const dimensions = useSelector(selectOlapDimensionItems);
+  const drilldownsMap = useSelector(selectDrilldownMap);
+
+  const createCutHandler = React.useCallback((level: PlainLevel) => {
+    const cutItem = buildCut({...level, members: [], key: level.fullName});
+    cutItem.active = false;
+    actions.updateCut(cutItem);
+  }, []);
+
+  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
+    const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
+    actions.updateDrilldown(drilldown);
+    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+    if (!cut) {
+      createCutHandler({...level, key: stringifyName(level)});
+    }
+
+    actions.willFetchMembers({...level, level: level.name}).then(members => {
+      const dimension = dimensions.find(dim => dim.name === level.dimension);
+      if (!dimension) return;
+      actions.updateDrilldown({
+        ...drilldown,
+        dimType: dimension.dimensionType,
+        memberCount: members.length,
+        members
+      });
     });
+
+    return drilldown;
+  }
+
+  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
+    offset,
+    limit,
+    columns: finalUniqueKeys,
+    filters: filterItems.filter(isActiveItem),
+    cuts: itemsCuts.filter(isActiveCut),
+    pagination
+  });
 
   // check no data
   const tableData = data?.data || [];
@@ -423,7 +462,7 @@ export function useTable({
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),
     pagination,
-    isFetching
+    isFetching: isFetching || isLoading
   });
 
   useEffect(() => {
@@ -431,7 +470,7 @@ export function useTable({
       limit: pagination.pageSize,
       offset: pagination.pageIndex * pagination.pageSize
     });
-  }, [pagination]);
+  }, [pagination, actions]);
 
   const {translate: t} = useTranslation();
 

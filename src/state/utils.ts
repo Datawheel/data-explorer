@@ -111,9 +111,6 @@ export function deriveDrilldowns(dimensions) {
 
   for (const dim of dimensions) {
     if (dim.type !== "time" && drilldowns.length < 4) {
-      // console.log(dim, "DIM 1");
-      // console.log(findDefaultHierarchy(dim), "DIM");
-
       if (dim.hierarchies.length === 1) {
         const {levels} = dim.hierarchies[0];
         const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;

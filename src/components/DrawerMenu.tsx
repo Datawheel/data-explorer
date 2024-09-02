@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from "react";
+import React, {useLayoutEffect, useMemo, useState} from "react";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   Drawer,
@@ -202,6 +202,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
+
   const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
 
@@ -250,10 +251,16 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     return drilldown;
   }
 
-  const currentDrilldown = drilldowns[stringifyName(level)] || createDrilldown(level, cutItems);
+  const currentDrilldown = drilldowns[stringifyName(level)];
+
+  useLayoutEffect(() => {
+    if (!drilldowns[stringifyName(level)]) {
+      createDrilldown(level, cutItems);
+    }
+  }, [level]);
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === currentDrilldown.uniqueName;
+    return cut.uniqueName === currentDrilldown?.uniqueName;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
@@ -262,56 +269,58 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   const checked = activeItems.map(stringifyName).includes(stringifyName(level));
   return (
-    <>
-      <Group mt="sm" position="apart" key={level.uri} noWrap>
-        <Checkbox
-          onChange={() => {
-            if (cut) {
-              const active = checked ? false : cut.members.length ? true : false;
-              actions.updateCut({...cut, active});
-            }
-            actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
-          }}
-          checked={checked}
-          label={label}
-          size="xs"
-        />
-        <Group>
-          <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
-            {activeFilter ? <IconFilterOff /> : <IconFilter />}
-          </ActionIcon>
-
-          <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
-            <StackSVG />
-          </ThemeIcon>
-        </Group>
-      </Group>
-      {activeFilter && (
-        <Box pt="md">
-          <MultiSelect
-            sx={{flex: "1 1 100%"}}
-            searchable
-            onChange={value => {
+    currentDrilldown && (
+      <>
+        <Group mt="sm" position="apart" key={level.uri} noWrap>
+          <Checkbox
+            onChange={() => {
               if (cut) {
-                if (currentDrilldown.active && !cut.active) {
-                  updatecutHandler({...cut, active: true}, value);
-                } else {
-                  updatecutHandler(cut, value);
-                }
+                const active = checked ? false : cut.members.length ? true : false;
+                actions.updateCut({...cut, active});
               }
+              actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
             }}
-            placeholder={`Filter by ${label}`}
-            value={cut?.members || []}
-            data={currentDrilldown.members.map(m => ({
-              value: String(m.key),
-              label: m.caption ? `${m.caption} ${m.key}` : m.name
-            }))}
-            clearable
-            nothingFound="Nothing found"
+            checked={checked}
+            label={label}
+            size="xs"
           />
-        </Box>
-      )}
-    </>
+          <Group>
+            <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
+              {activeFilter ? <IconFilterOff /> : <IconFilter />}
+            </ActionIcon>
+
+            <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+              <StackSVG />
+            </ThemeIcon>
+          </Group>
+        </Group>
+        {activeFilter && (
+          <Box pt="md">
+            <MultiSelect
+              sx={{flex: "1 1 100%"}}
+              searchable
+              onChange={value => {
+                if (cut) {
+                  if (currentDrilldown.active && !cut.active) {
+                    updatecutHandler({...cut, active: true}, value);
+                  } else {
+                    updatecutHandler(cut, value);
+                  }
+                }
+              }}
+              placeholder={`Filter by ${label}`}
+              value={cut?.members || []}
+              data={currentDrilldown.members.map(m => ({
+                value: String(m.key),
+                label: m.caption ? `${m.caption} ${m.key}` : m.name
+              }))}
+              clearable
+              nothingFound="Nothing found"
+            />
+          </Box>
+        )}
+      </>
+    )
   );
 }
 
