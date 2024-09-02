@@ -111,10 +111,19 @@ export function deriveDrilldowns(dimensions) {
 
   for (const dim of dimensions) {
     if (dim.type !== "time" && drilldowns.length < 4) {
-      const {levels} = findDefaultHierarchy(dim);
-      // uses deeper level for geo dimensions
-      const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
-      drilldowns.push(levels[levelIndex]);
+      // console.log(dim, "DIM 1");
+      // console.log(findDefaultHierarchy(dim), "DIM");
+
+      if (dim.hierarchies.length === 1) {
+        const {levels} = dim.hierarchies[0];
+        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
+        drilldowns.push(levels[levelIndex]);
+      } else {
+        const {levels} = findDefaultHierarchy(dim);
+        // uses deeper level for geo dimensions
+        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
+        drilldowns.push(levels[levelIndex]);
+      }
     }
   }
   return drilldowns;
