@@ -1,4 +1,4 @@
-import React, {useMemo, useCallback, useState} from "react";
+import React, {useLayoutEffect, useMemo, useState} from "react";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   Drawer,
@@ -18,7 +18,6 @@ import {
 import {useSelector} from "react-redux";
 import {
   selectCutItems,
-  selectCutMap,
   selectDrilldownItems,
   selectDrilldownMap,
   selectFilterItems,
@@ -27,11 +26,7 @@ import {
   selectMeasureMap
 } from "../state/queries";
 import {useTranslation} from "../hooks/translation";
-import {
-  selectOlapMeasureMap,
-  selectOlapMeasureItems,
-  selectOlapDimensionItems
-} from "../state/selectors";
+import {selectOlapMeasureItems, selectOlapDimensionItems} from "../state/selectors";
 import {useActions} from "../hooks/settings";
 import {filterMap} from "../utils/array";
 import {
@@ -124,37 +119,8 @@ export function DrawerMenu() {
 
 function DrillDownOptions() {
   const locale = useSelector(selectLocale);
-  const actions = useActions();
   const selectedDimensions = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems) || [];
-
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, key: level.fullName, members: []});
-    cutItem.active = false;
-    actions.updateCut(cutItem);
-  }, []);
-
-  const createHandler = useCallback(
-    (level: PlainLevel) => {
-      // find or create drilldown
-      const drilldownItem =
-        selectedDimensions.find(item => item.uniqueName === level.uniqueName) ??
-        buildDrilldown({...level});
-      createCutHandler(level);
-      actions.updateDrilldown(drilldownItem);
-      actions.willFetchMembers({...level, level: level.name}).then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
-        actions.updateDrilldown({
-          ...drilldownItem,
-          dimType: dimension.dimensionType,
-          memberCount: members.length,
-          members
-        });
-      });
-    },
-    [dimensions]
-  );
 
   const activeItems = selectedDimensions.filter(i => i.active);
 
@@ -168,7 +134,7 @@ function DrillDownOptions() {
           activeItems={activeItems}
         />
       )),
-    [dimensions, activeItems, createCutHandler]
+    [dimensions, activeItems]
   );
 
   return options;
@@ -238,10 +204,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const cutItems = useSelector(selectCutItems);
   const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
-  const stringifyNameInternal = level => joinName(levelRefToArray(level));
-  const [currentDrilldown, setCurrentDrilldown] = useState(
-    drilldowns[stringifyNameInternal(level)] || drilldowns[stringifyName(level)]
-  );
+  const ditems = useSelector(selectDrilldownItems);
 
   const label = useMemo(() => {
     const captions = [
@@ -268,31 +231,36 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
-    // actions.updateDrilldown(drilldown);
-    // const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
-    // if (!cut) {
-    //   createCutHandler({...level, key: stringifyName(level)});
-    // }
+    actions.updateDrilldown(drilldown);
 
-    // actions.willFetchMembers({...level, level: level.name}).then(members => {
-    //   const dimension = dimensions.find(dim => dim.name === level.dimension);
-    //   if (!dimension) return;
-    //   actions.updateDrilldown({
-    //     ...drilldown,
-    //     dimType: dimension.dimensionType,
-    //     memberCount: members.length,
-    //     members
-    //   });
-    // });
+    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+    if (!cut) {
+      createCutHandler({...level, key: stringifyName(level)});
+    }
+    actions.willFetchMembers({...level, level: level.name}).then(members => {
+      const dimension = dimensions.find(dim => dim.name === level.dimension);
+      if (!dimension) return;
+      actions.updateDrilldown({
+        ...drilldown,
+        dimType: dimension.dimensionType,
+        memberCount: members.length,
+        members
+      });
+    });
 
     return drilldown;
   }
 
-  React.useEffect(() => {
-    if (!currentDrilldown) {
-      setCurrentDrilldown(createDrilldown(level, cutItems));
+  const currentDrilldown = drilldowns[stringifyName(level)];
+
+  useLayoutEffect(() => {
+    if (
+      !drilldowns[stringifyName(level)] &&
+      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+    ) {
+      createDrilldown(level, cutItems);
     }
-  }, []);
+  }, [level, ditems]);
 
   const cut = cutItems.find(cut => {
     return cut.uniqueName === currentDrilldown?.uniqueName;
@@ -306,57 +274,58 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   if (!currentDrilldown) return;
   return (
-    <>
-      <Group mt="sm" position="apart" key={level.uri} noWrap>
-        <Checkbox
-          onChange={() => {
-            if (cut) {
-              const active = checked ? false : cut.members.length ? true : false;
-              actions.updateCut({...cut, active});
-            }
-            console.log({currentDrilldown});
-            actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
-          }}
-          checked={checked}
-          label={label}
-          size="xs"
-        />
-        <Group>
-          <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
-            {activeFilter ? <IconFilterOff /> : <IconFilter />}
-          </ActionIcon>
-
-          <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
-            <StackSVG />
-          </ThemeIcon>
-        </Group>
-      </Group>
-      {activeFilter && (
-        <Box pt="md">
-          <MultiSelect
-            sx={{flex: "1 1 100%"}}
-            searchable
-            onChange={value => {
+    currentDrilldown && (
+      <>
+        <Group mt="sm" position="apart" key={level.uri} noWrap>
+          <Checkbox
+            onChange={() => {
               if (cut) {
-                if (currentDrilldown.active && !cut.active) {
-                  updatecutHandler({...cut, active: true}, value);
-                } else {
-                  updatecutHandler(cut, value);
-                }
+                const active = checked ? false : cut.members.length ? true : false;
+                actions.updateCut({...cut, active});
               }
+              actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
             }}
-            placeholder={`Filter by ${label}`}
-            value={cut?.members || []}
-            data={currentDrilldown.members.map(m => ({
-              value: String(m.key),
-              label: m.caption ? `${m.caption} ${m.key}` : m.name
-            }))}
-            clearable
-            nothingFound="Nothing found"
+            checked={checked}
+            label={label}
+            size="xs"
           />
-        </Box>
-      )}
-    </>
+          <Group>
+            <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
+              {activeFilter ? <IconFilterOff /> : <IconFilter />}
+            </ActionIcon>
+
+            <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+              <StackSVG />
+            </ThemeIcon>
+          </Group>
+        </Group>
+        {activeFilter && (
+          <Box pt="md">
+            <MultiSelect
+              sx={{flex: "1 1 100%"}}
+              searchable
+              onChange={value => {
+                if (cut) {
+                  if (currentDrilldown.active && !cut.active) {
+                    updatecutHandler({...cut, active: true}, value);
+                  } else {
+                    updatecutHandler(cut, value);
+                  }
+                }
+              }}
+              placeholder={`Filter by ${label}`}
+              value={cut?.members || []}
+              data={currentDrilldown.members.map(m => ({
+                value: String(m.key),
+                label: m.caption ? `${m.caption} ${m.key}` : m.name
+              }))}
+              clearable
+              nothingFound="Nothing found"
+            />
+          </Box>
+        )}
+      </>
+    )
   );
 }
 
@@ -557,7 +526,9 @@ function MeasuresOptions() {
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
   const options = filteredItems.map(({measure, filter}) => {
-    return <FilterItem measure={measure} filter={filter} activeItems={activeItems} />;
+    return (
+      <FilterItem key={measure.key} measure={measure} filter={filter} activeItems={activeItems} />
+    );
   });
 
   return options;

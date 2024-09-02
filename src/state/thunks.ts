@@ -115,7 +115,7 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
           !isPrefetch &&
             dispatch(
               queriesActions.updateResult({
-                data,
+                data: data?.data,
                 types: data?.data.length
                   ? describeData(cube.toJSON(), params, data?.data)
                   : currentResult.types,
