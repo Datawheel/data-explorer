@@ -345,21 +345,15 @@ export function willSetupClient(serverConfig: ServerConfig): ExplorerThunk<Promi
           dispatch(
             serverActions.updateServer({
               online: serverInfo.online,
-              software: serverInfo.software,
               url: serverInfo.url,
               version: serverInfo.version,
-              endpoint:
-                serverInfo.software === TesseractDataSource.softwareName
-                  ? "logiclayer"
-                  : "aggregate"
-            })
+            }),
           );
         },
         error => {
           dispatch(
             serverActions.updateServer({
               online: false,
-              software: "",
               url: error.config.url,
               version: ""
             })

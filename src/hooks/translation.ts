@@ -50,7 +50,6 @@ export const defaultTranslation = {
     action_execute: "Execute query",
     add_columns: "Add columns",
     column_title: "Parameters",
-    current_endpoint: "Current endpoint: {{label}}",
     dimmenu_abbrjoint: ": ",
     dimmenu_dimension: "{{dimension}}",
     dimmenu_hierarchy: "{{abbr}}",

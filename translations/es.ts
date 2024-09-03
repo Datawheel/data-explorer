@@ -44,7 +44,6 @@ export default {
       action_clear_description: "Limpiar todos los parámetros de la consulta actual",
       action_execute: "Ejecutar consulta",
       column_title: "Parámetros",
-      current_endpoint: "Punto final actual: {{label}}",
       dimmenu_abbrjoint: ": ",
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",

@@ -44,7 +44,6 @@ export default {
       action_clear_description: "清除当前查询中的所有参数",
       action_execute: "执行查询",
       column_title: "参数",
-      current_endpoint: "当前端点：{{label}}",
       dimmenu_abbrjoint: ": ",
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",

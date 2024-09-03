@@ -45,7 +45,6 @@ export default {
       action_execute: "تنفيذ الاستعلام",
       add_columns: "إضافة أعمدة",
       column_title: "المعلمات",
-      current_endpoint: "نقطة النهاية الحالية: {{label}}",
       dimmenu_abbrjoint: ": ",
       dimmenu_dimension: "{{dimension}}",
       dimmenu_hierarchy: "{{abbr}}",
