@@ -30,7 +30,7 @@ export const [useSideBar, Provider] =
 
 export function SideBarProvider(props: PropsWithChildren<{}>) {
   const [input, setInput] = useState<string>("");
-  const [expanded, setExpanded] = useState<boolean>(false);
+  const [expanded, setExpanded] = useState<boolean>(true);
   const [results, setResults] = useState<string[]>([]);
   const [map, setMap] = useState<Map<string, string[]>>();
   const [graph, setGraph] = useState(new Graph());
