@@ -56,7 +56,6 @@ export function createVizbuilderView(settings: {
   /** Enclosed PanelView component. */
   function VizbuilderView(props: ViewProps) {
     const {cube, panelKey, params, result} = props;
-    // console.log(result);
     const {actions, formatters} = useSettings();
 
     const [panelName, currentChart] = useMemo(() => `${panelKey || ""}-`.split("-"), [panelKey]);
@@ -71,7 +70,7 @@ export function createVizbuilderView(settings: {
           [
             {
               cube,
-              dataset: result.data.data,
+              dataset: result.data,
               params: {
                 locale: params.locale || defaultLocale,
                 booleans: params.booleans,
@@ -106,7 +105,7 @@ export function createVizbuilderView(settings: {
           ],
           chartGenOptions
         ),
-      [cube, result.data.data, params]
+      [cube, result.data, params]
     );
 
     const content = useMemo(() => {
