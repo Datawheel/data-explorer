@@ -51,7 +51,7 @@ import {
 import type {PlainLevel} from "@datawheel/olap-client";
 import {getCaption} from "../utils/string";
 import {abbreviateFullName} from "../utils/format";
-import {levelRefToArray, joinName, stringifyName} from "../utils/transform";
+import {stringifyName} from "../utils/transform";
 import {Comparison} from "@datawheel/olap-client";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";

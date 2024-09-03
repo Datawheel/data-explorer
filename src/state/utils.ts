@@ -53,8 +53,9 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
               memberCount: members.length,
               members
             };
+
             // seems no need to update it in here.
-            // dispatch(actions.updateDrilldown(buildDrilldown({...ddd})));
+            dispatch(actions.updateDrilldown(buildDrilldown({...ddd, key: stringifyName(ddd)})));
             createCutHandler(params.cuts, ddd, dispatch);
           }
           return members.length;
@@ -77,7 +78,7 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
     if (level.matches(drilldownItem)) {
       return buildDrilldown({
         ...drilldownItem,
-        key: stringifyName(drilldownItem),
+        // key: stringifyName(drilldownItem),
         fullName: level.fullName,
         uniqueName: level.uniqueName,
         dimType: level.dimension.dimensionType,
