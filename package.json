@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "exports": {
     ".": {
       "import": "./dist/main.js"
