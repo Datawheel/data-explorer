@@ -56,7 +56,7 @@ export function createVizbuilderView(settings: {
   /** Enclosed PanelView component. */
   function VizbuilderView(props: ViewProps) {
     const {cube, panelKey, params, result} = props;
-    console.log(result);
+    // console.log(result);
     const {actions, formatters} = useSettings();
 
     const [panelName, currentChart] = useMemo(() => `${panelKey || ""}-`.split("-"), [panelKey]);

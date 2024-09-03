@@ -8,7 +8,8 @@ import {
   Table,
   Center,
   MultiSelect,
-  ScrollArea
+  ScrollArea,
+  LoadingOverlay
 } from "@mantine/core";
 import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
@@ -26,18 +27,11 @@ import {
 import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
 import {useFormatter} from "../hooks/formatter";
 import {useTranslation} from "../hooks/translation";
-import {
-  AnyResultColumn,
-  buildCut,
-  buildDrilldown,
-  buildFilter,
-  buildMeasure
-} from "../utils/structs";
+import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import {BarsSVG, StackSVG} from "./icons";
 import {
   selectCutItems,
   selectDrilldownItems,
-  selectDrilldownMap,
   selectFilterItems,
   selectFilterMap,
   selectMeasureItems,
@@ -75,9 +69,8 @@ import {
   NumberInputComponent
 } from "./DrawerMenu";
 import debounce from "lodash.debounce";
-import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
+import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
-import {stringifyName} from "../utils/transform";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -258,7 +251,7 @@ function useTableData({columns, filters, cuts, pagination}: useTableDataType) {
     const handler = debounce(() => {
       const term = [columnsStr, filterKey, cutKey, page];
       setDebouncedTerm(term);
-    }, 700);
+    }, 800);
     handler();
     return () => handler.cancel();
   }, [columnsStr, filterKey, cutKey, page, enabled]);
@@ -397,7 +390,10 @@ export function useTable({
 
   const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
     columns: finalUniqueKeys,
-    filters: filterItems.filter(isActiveItem),
+    filters: filterItems.filter(
+      f =>
+        isActiveItem(f) && isActiveItem(measures.find(m => m.name === f.measure) || {active: false})
+    ),
     cuts: itemsCuts.filter(isActiveCut),
     pagination
   });
@@ -465,6 +461,7 @@ export function useTable({
         range,
         isId
       } = column;
+
       const isNumeric = valueType === "number" && columnKey !== "Year";
       const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
@@ -648,17 +645,19 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading, data: tableData};
+  return {table, isError, isLoading, data: tableData, columns};
 }
 
 type TableView = {
   table: MRT_TableInstance<TData>;
   getColumn(id: String): AnyResultColumn | undefined;
+  columns: AnyResultColumn[];
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading, data}: TableView) {
+export function TableView({table, result, isError, isLoading = false, data, columns}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
+
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
@@ -671,6 +670,7 @@ export function TableView({table, result, isError, isLoading, data}: TableView) 
             overflow: "scroll"
           }}
         >
+          <LoadingOverlay visible={columns.length === 0 && isLoading} />
           <Table
             captionSide="top"
             fontSize="md"
