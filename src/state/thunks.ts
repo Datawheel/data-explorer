@@ -120,7 +120,6 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
                   ? describeData(cube.toJSON(), params, data?.data)
                   : currentResult.types,
                 headers: {...headers},
-                sourceCall: query.toSource(),
                 status: status || 500,
                 url: query.toString(endpoint)
               })

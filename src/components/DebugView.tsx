@@ -1,30 +1,21 @@
-import {Anchor, Box, Button, Group, Input, SimpleGrid, Stack, Text} from "@mantine/core";
-import {useClipboard} from "@mantine/hooks";
-import {Prism} from "@mantine/prism";
-import {IconClipboard, IconExternalLink, IconWorld} from "@tabler/icons-react";
-import React, {useCallback, useMemo} from "react";
-import {useTranslation} from "../hooks/translation";
-import {ViewProps} from "../utils/types";
+import { Anchor, Box, Button, Group, Input, SimpleGrid, Stack, Text } from "@mantine/core";
+import { useClipboard } from "@mantine/hooks";
+import { IconClipboard, IconExternalLink, IconWorld } from "@tabler/icons-react";
+import React, { useCallback, useMemo } from "react";
+import { useTranslation } from "../hooks/translation";
+import type { ViewProps } from "../utils/types";
 
 /** */
 export function DebugView(props: ViewProps) {
-  const {sourceCall, url} = props.result;
+  const { url } = props.result;
 
-  const {translate: t} = useTranslation();
+  const { translate: t } = useTranslation();
 
-  const {copy, copied} = useClipboard({timeout: 1000});
+  const { copy, copied } = useClipboard({ timeout: 1000 });
 
   const copyHandler = useCallback(() => copy(url), [url]);
 
   const openHandler = useCallback(() => window.open(url, "_blank"), [url]);
-
-  const jssourceLabel = (
-    <Box component="span">
-      {t("debug_view.jssource_prefix")}
-      <Anchor href="https://www.npmjs.com/package/@datawheel/olap-client">olap-client</Anchor>
-      {t("debug_view.jssource_suffix")}
-    </Box>
-  );
 
   const headers = useMemo(() => {
     const headers = Object.entries(props.result.headers || {});
@@ -32,7 +23,7 @@ export function DebugView(props: ViewProps) {
 
     return (
       <Input.Wrapper label={t("debug_view.httpheaders")}>
-        <Box component="dl" sx={{fontFamily: "monospace", overflowWrap: "break-word"}}>
+        <Box component="dl" sx={{ fontFamily: "monospace", overflowWrap: "break-word" }}>
           {headers.map(entry => (
             <React.Fragment key={entry[0]}>
               <Text component="dt" fw="bold" fz="sm">
@@ -67,17 +58,7 @@ export function DebugView(props: ViewProps) {
           </Input.Wrapper>
         )}
 
-        <SimpleGrid cols={2}>
-          {sourceCall && (
-            <Input.Wrapper label={jssourceLabel}>
-              <Prism language="javascript" styles={{line: {boxSizing: "border-box"}}}>
-                {sourceCall}
-              </Prism>
-            </Input.Wrapper>
-          )}
-
-          {headers}
-        </SimpleGrid>
+        {headers}
       </Stack>
     </Box>
   );
