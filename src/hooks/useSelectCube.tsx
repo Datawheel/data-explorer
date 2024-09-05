@@ -7,38 +7,19 @@ import {stringifyName} from "../utils/transform";
 
 export function useSelectCube(onSelectCube: (table: string, subtopic: string) => void) {
   const {updateMeasure, updateCut, updateDrilldown, willFetchMembers} = useActions();
-
-  const addDrilldown = useCallback((level: PlainLevel, dimensions) => {
-    const drilldownItem = buildDrilldown(level);
-    createCutHandler(level);
-    updateDrilldown(drilldownItem);
-    return willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
-      return updateDrilldown({
-        ...drilldownItem,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
-      });
-    });
-  }, []);
-
+  const actions = useActions();
   const createCutHandler = React.useCallback((level: PlainLevel) => {
     const cutItem = buildCut({...level});
     cutItem.active = false;
     updateCut(cutItem);
   }, []);
 
-  function createDrilldown(level: PlainLevel, dimensions) {
+  async function createDrilldown(level: PlainLevel, dimensions) {
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
     updateDrilldown(drilldown);
-    // const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
-    // if (!cut) {
     createCutHandler({...level, key: stringifyName(level)});
-    // }
 
-    willFetchMembers({...level, level: level.name}).then(members => {
+    await willFetchMembers({...level, level: level.name}).then(members => {
       const dimension = dimensions.find(dim => dim.name === level.dimension);
       if (!dimension) return;
       updateDrilldown({
@@ -48,6 +29,7 @@ export function useSelectCube(onSelectCube: (table: string, subtopic: string) =>
         members
       });
     });
+
     return drilldown;
   }
 
@@ -57,9 +39,8 @@ export function useSelectCube(onSelectCube: (table: string, subtopic: string) =>
       const drilldowns = deriveDrilldowns(dimensions);
       if (measure && drilldowns.length > 0) {
         updateMeasure({...measure, active: true});
-        for (const level of drilldowns) {
-          createDrilldown(level, dimensions);
-        }
+        const promises = drilldowns.map(level => createDrilldown(level, dimensions));
+        return Promise.all(promises).then(() => actions.setLoadingState("SUCCESS"));
       }
     });
 }

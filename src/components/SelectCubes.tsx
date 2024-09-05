@@ -5,6 +5,7 @@ import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
+  selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
   selectDrilldownMap,
@@ -195,15 +196,18 @@ function CubeTree({
   const {translate: t} = useTranslation();
   useBuildGraph(items, locale, graph, setGraph);
   const actions = useActions();
+  const query = useSelector(selectCurrentQueryParams);
 
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
       item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
     );
     if (cube) {
-      actions.resetDrilldowns({});
-      actions.resetCuts({});
-      actions.resetMeasures({});
+      const {drilldowns, cuts, filters, measures, ...newQuery} = query;
+      actions.setLoadingState("FETCHING");
+      actions.resetAllParams(newQuery);
+      actions.updateResult({data: [], types: {}, url: "", status: 200});
+
       return actions.willSetCube(cube.name);
     }
   };
