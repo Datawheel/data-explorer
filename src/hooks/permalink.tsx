@@ -15,9 +15,12 @@ export function usePermalink(
   const cubeMap = useSelector(selectOlapCubeMap);
   const {isDirty, panel, params} = useSelector(selectCurrentQueryItem);
 
-  const listener = useCallback((evt: PopStateEvent) => {
-    evt.state && options.onChange(evt.state);
-  }, [options.onChange]);
+  const listener = useCallback(
+    (evt: PopStateEvent) => {
+      evt.state && options.onChange(evt.state);
+    },
+    [options.onChange]
+  );
 
   // eslint-disable-next-line consistent-return
   useEffect(() => {
@@ -31,7 +34,6 @@ export function usePermalink(
     // We want to update the Permalink only when we are sure the current Query
     // is successful: this is when `isDirty` changes from `false` to `true`
     if (!isEnabled || isDirty || cubeMap[params.cube] == null) return;
-
     const currPermalink = window.location.search.slice(1);
     const nextPermalink = serializePermalink(params, panel);
 
@@ -41,12 +43,40 @@ export function usePermalink(
       // If only the panel changed, use replaceState
       if (oldPanel && oldPanel[1] !== panel) {
         window.history.replaceState(params, "", nextLocation);
-      }
-      else {
+      } else {
         window.history.pushState(params, "", nextLocation);
       }
     }
   }, [cubeMap, isDirty, panel]);
 
   return null;
+}
+
+export function useUpdatePermaLink({
+  isFetched,
+  cube,
+  enabled,
+  isLoading
+}: {
+  isFetched: boolean;
+  cube: string;
+  enabled: boolean;
+  isLoading: boolean;
+}) {
+  const {panel, params} = useSelector(selectCurrentQueryItem);
+  useEffect(() => {
+    if (isFetched && cube && enabled && !isLoading) {
+      const currPermalink = window.location.search.slice(1);
+      const nextPermalink = serializePermalink(params, panel);
+      if (currPermalink !== nextPermalink) {
+        const nextLocation = `${window.location.pathname}?${nextPermalink}`;
+        window.history.pushState(params, "", nextLocation);
+      }
+    }
+  }, [isFetched, cube, params, panel, enabled, isLoading]);
+}
+
+export function useKey() {
+  const {panel, params} = useSelector(selectCurrentQueryItem);
+  return serializePermalink(params, panel);
 }

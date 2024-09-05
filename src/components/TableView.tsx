@@ -30,10 +30,12 @@ import {useTranslation} from "../hooks/translation";
 import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import {BarsSVG, StackSVG} from "./icons";
 import {
+  selectCurrentQueryItem,
   selectCutItems,
   selectDrilldownItems,
   selectFilterItems,
   selectFilterMap,
+  selectLocale,
   selectMeasureItems,
   selectMeasureMap,
   selectPaginationParams
@@ -71,6 +73,8 @@ import {
 import debounce from "lodash.debounce";
 import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
+import {useUpdatePermaLink, useKey} from "../hooks/permalink";
+import {selectLoadingState} from "../state/loading";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -226,37 +230,32 @@ type useTableDataType = {
   columns: string[];
   filters: FilterItem[];
   pagination: MRT_PaginationState;
+  cube: string;
 };
 
-function useTableData({columns, filters, cuts, pagination}: useTableDataType) {
-  // Workaround on keys Ideally use the function to get the url for querying using olap client.
-  const normalizedFilters = filters.map(filter => ({
-    id: filter.measure,
-    value: getFilterValue(filter)
-    // fn: getFilterFn(filter)
-  }));
-  const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
-  const filterKey = JSON.stringify(normalizedFilters);
-  const cutKey = JSON.stringify(normalizedCuts);
-  const actions = useActions();
-  const columnsStr = JSON.stringify(columns.sort());
-  const page = pagination.pageIndex;
+type ApiResponse = {data: any; types: any};
 
+function useTableData({columns, filters, cuts, pagination, cube}: useTableDataType) {
+  const {code: locale} = useSelector(selectLocale);
+  const permaKey = useKey();
+
+  const actions = useActions();
+  const page = pagination.pageIndex;
   const enabled = Boolean(columns.length) || Boolean(filters.length) || Boolean(cuts.length);
-  const initialKey = enabled ? [columnsStr, filterKey, cutKey, page] : "";
+  const initialKey = [permaKey, page];
   const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>(initialKey);
 
   useEffect(() => {
     if (!enabled) return;
     const handler = debounce(() => {
-      const term = [columnsStr, filterKey, cutKey, page];
+      const term = [permaKey, page];
       setDebouncedTerm(term);
-    }, 800);
+    }, 700);
     handler();
     return () => handler.cancel();
-  }, [columnsStr, filterKey, cutKey, page, enabled]);
+  }, [page, enabled, cube, locale, permaKey]);
 
-  return useQuery<UserApiResponse>({
+  const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
     queryFn: () => {
       return actions.willExecuteQuery().then(res => {
@@ -267,51 +266,42 @@ function useTableData({columns, filters, cuts, pagination}: useTableDataType) {
     },
     staleTime: 300000,
     enabled: enabled && !!filterKeydebouced
+    // placeholderData: (previousData, previousQuery) => previousData
   });
+  const client = useQueryClient();
+  const cachedData = client.getQueryData(["table", filterKeydebouced]);
+  useUpdatePermaLink({isFetched: Boolean(cachedData), cube, enabled, isLoading: query.isLoading});
+  return query;
 }
 
 type usePrefetchType = {
-  data: any;
   isPlaceholderData: boolean;
   limit: number;
-  offset: number;
   totalRowCount: number;
   cuts: CutItem[];
   columns: string[];
   filters: FilterItem[];
   pagination: MRT_PaginationState;
   isFetching: boolean;
+  cube: string;
 };
 
 // update when pagination api is set.
 function usePrefetch({
-  data,
   isPlaceholderData,
   limit,
-  offset,
   totalRowCount,
-  columns,
-  cuts,
-  filters,
   pagination,
   isFetching
 }: usePrefetchType) {
+  const {code: locale} = useSelector(selectLocale);
   const queryClient = useQueryClient();
   const actions = useActions();
+  const paramKey = useKey();
   const page = pagination.pageIndex + 1;
   const hasMore = page * pagination.pageSize <= totalRowCount;
   const off = page * pagination.pageSize;
-
-  const normalizedFilters = filters.map(filter => ({
-    id: filter.measure,
-    value: getFilterValue(filter)
-    // fn: getFilterFn(filter)
-  }));
-  const normalizedCuts = cuts.map(cut => ({id: cut.uniqueName, members: cut.members}));
-  const filterKey = JSON.stringify(normalizedFilters);
-  const cutKey = JSON.stringify(normalizedCuts);
-  const columnsStr = JSON.stringify(columns.sort());
-  const key = [columnsStr, filterKey, cutKey, page];
+  const key = [paramKey, page];
 
   React.useEffect(() => {
     if (!isPlaceholderData && hasMore && !isFetching) {
@@ -327,7 +317,18 @@ function usePrefetch({
         staleTime: 300000
       });
     }
-  }, [limit, page, isPlaceholderData, key, queryClient, hasMore, off, isFetching]);
+  }, [
+    limit,
+    page,
+    isPlaceholderData,
+    key,
+    queryClient,
+    hasMore,
+    off,
+    isFetching,
+    locale,
+    paramKey
+  ]);
 }
 
 export function useTable({
@@ -344,8 +345,8 @@ export function useTable({
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const measures = useSelector(selectMeasureItems);
-  const actions = useActions();
   const itemsCuts = useSelector(selectCutItems);
+  const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -395,12 +396,14 @@ export function useTable({
         isActiveItem(f) && isActiveItem(measures.find(m => m.name === f.measure) || {active: false})
     ),
     cuts: itemsCuts.filter(isActiveCut),
-    pagination
+    pagination,
+    cube: cube.name
   });
 
   // check no data
   const tableData = data?.data || [];
-  const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
+  // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
+  const tableTypes = types;
   const totalRowCount = data?.page.total;
 
   /**
@@ -414,16 +417,15 @@ export function useTable({
     .sort(columnSorting);
 
   usePrefetch({
-    data: tableData,
     isPlaceholderData,
-    offset,
     limit,
     totalRowCount,
     columns: finalUniqueKeys,
     filters: filterItems.filter(isActiveItem),
     cuts: itemsCuts.filter(isActiveCut),
     pagination,
-    isFetching: isFetching || isLoading
+    isFetching: isFetching || isLoading,
+    cube: cube.name
   });
 
   useEffect(() => {
@@ -636,7 +638,7 @@ export function useTable({
     manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      isLoading: isLoading || isFetching || data === undefined,
+      isLoading: isLoading || data === undefined,
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching || isLoading
@@ -657,6 +659,7 @@ type TableView = {
 export function TableView({table, result, isError, isLoading = false, data, columns}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
+  const loadingState = useSelector(selectLoadingState);
 
   return (
     <Box sx={{height: "100%"}}>
@@ -670,7 +673,7 @@ export function TableView({table, result, isError, isLoading = false, data, colu
             overflow: "scroll"
           }}
         >
-          <LoadingOverlay visible={columns.length === 0 && isLoading} />
+          <LoadingOverlay visible={(columns.length === 0 && isLoading) || loadingState.loading} />
           <Table
             captionSide="top"
             fontSize="md"
@@ -737,26 +740,6 @@ export function TableView({table, result, isError, isLoading = false, data, colu
                       </Box>
                     );
                   })}
-                  {/* <Box
-                    component="th"
-                    key={"placeholder"}
-                    sx={theme => ({
-                      backgroundColor:
-                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
-                      align: "center",
-                      height: 60,
-                      paddingBottom: 10,
-                      width: 20,
-                      position: "sticky",
-                      top: 0,
-                      display: "table-cell",
-                      textAlign: "center"
-                    })}
-                  >
-                    <OptionsMenu>
-                      <PlusSVG />
-                    </OptionsMenu>
-                  </Box> */}
                 </Box>
               ))}
             </Box>
