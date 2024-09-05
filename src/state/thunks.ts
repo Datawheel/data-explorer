@@ -10,7 +10,7 @@ import {
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
 import {applyQueryParams, extractQueryParams} from "../utils/query";
-import {QueryItem, buildMeasure, buildQuery} from "../utils/structs";
+import {AnyResultColumn, QueryItem, buildMeasure, buildQuery} from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import {FileDescriptor} from "../utils/types";
 import {isValidQuery} from "../utils/validation";
@@ -27,7 +27,7 @@ import {
 import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
 import {ExplorerThunk} from "./store";
 import {calcMaxMemberCount, hydrateDrilldownProperties} from "./utils";
-import {selectOlapDimensionItems} from "./selectors";
+import {selectOlapCube, selectOlapDimensionItems} from "./selectors";
 
 /**
  * Initiates a new download of the queried data by the current parameters.
@@ -77,8 +77,14 @@ type willExecuteQueryType = {
   limit?: number;
   offset?: number;
 };
+
+type APIResponse = Partial<{
+  data: any;
+  types: Record<string, AnyResultColumn>;
+}>;
+
 export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): ExplorerThunk<
-  Promise<void>
+  Promise<APIResponse>
 > {
   return (dispatch, getState, {olapClient, previewLimit}) => {
     const state = getState();
@@ -88,9 +94,11 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
 
     const allParams = isPrefetch ? {...params, pagiLimit: limit, pagiOffset: offset} : params;
     const {result: currentResult} = selectCurrentQueryItem(state);
+
     if (!isValidQuery(params)) return Promise.resolve();
     return olapClient.getCube(params.cube).then(async cube => {
       const query = applyQueryParams(cube.query, allParams, {previewLimit});
+
       const axios = olapClient.datasource.axiosInstance;
       const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
       return Promise.all([
@@ -111,26 +119,23 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
         result => {
           const [aggregation] = result;
           const {data, headers, status} = aggregation;
-
-          !isPrefetch &&
-            dispatch(
-              queriesActions.updateResult({
-                data: data?.data,
-                types: data?.data.length
-                  ? describeData(cube.toJSON(), params, data?.data)
-                  : currentResult.types,
-                headers: {...headers},
-                sourceCall: query.toSource(),
-                status: status || 500,
-                url: query.toString(endpoint)
-              })
-            );
+          // !isPrefetch &&
+          dispatch(
+            queriesActions.updateResult({
+              data: data?.data,
+              types: data?.data.length
+                ? describeData(cube.toJSON(), params, data?.data)
+                : currentResult.types,
+              headers: {...headers},
+              sourceCall: query.toSource(),
+              status: status || 500,
+              url: query.toString(endpoint)
+            })
+          );
 
           return {
             data,
-            types: data?.data.length
-              ? describeData(cube.toJSON(), params, data?.data)
-              : currentResult.types
+            types: data?.data.length ? describeData(cube.toJSON(), params, data?.data) : {}
           };
         },
         error => {

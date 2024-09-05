@@ -13,6 +13,7 @@ import {selectServerFormatsEnabled} from "../state/server";
 import {FileDescriptor} from "../utils/types";
 import {useAsync} from "../hooks/useAsync";
 import CubeSource from "./CubeSource";
+import {selectLoadingState} from "../state/loading";
 
 type TData = Record<string, any> & Record<string, string | number>;
 type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
@@ -20,7 +21,8 @@ type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
   };
 
 function TableFooter(props: Props) {
-  const {result, table} = props;
+  const loading = useSelector(selectLoadingState);
+  const {result, table, data = []} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
 
@@ -42,11 +44,13 @@ function TableFooter(props: Props) {
         gap="sm"
       >
         <CubeSource />
-        <Group position="right" spacing="sm">
-          <Text c="dimmed">{t("results.count_rows", {n: totalRowCount})}</Text>
-          {showPagination && <MRT_TablePagination table={table} />}
-          <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} />
-        </Group>
+        {!loading.loading && (
+          <Group position="right" spacing="sm">
+            {totalRowCount && <Text c="dimmed">{t("results.count_rows", {n: totalRowCount})}</Text>}
+            {showPagination && <MRT_TablePagination table={table} />}
+            <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} data={data} />
+          </Group>
+        )}
       </Flex>
     </Box>
   );
@@ -58,7 +62,7 @@ type ApiAndCsvButtonsProps = {
   url: string;
 };
 const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
-  const {copied, copyHandler, url} = props;
+  const {copied, copyHandler, url, data} = props;
   const {translate: t} = useTranslation();
   return (
     <Box id="query-results-debug-view">
@@ -74,13 +78,13 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
             {copied ? t("action_copy_done") : t("action_copy")} API
           </Button>
         )}
-        <DownloadQuery />
+        <DownloadQuery data={data} />
       </Group>
     </Box>
   );
 };
 
-const DownloadQuery = () => {
+const DownloadQuery = ({data}) => {
   const actions = useActions();
   const {translate: t} = useTranslation();
   const {isDirty, result} = useSelector(selectCurrentQueryItem);
@@ -105,15 +109,10 @@ const DownloadQuery = () => {
     );
   }
 
-  // if (components.length === 0 || isDirty || result.data.length === 0) {
-  //   return null;
-  // }
-
-  if (components.length === 0 || result.data.length === 0) {
+  if (components.length === 0 || data.length === 0) {
     return null;
   }
 
-  /* <Input.Wrapper label={t("params.title_downloaddata")}> */
   return (
     <Box id="button-group-download-results">
       <Group spacing={"xs"}>
