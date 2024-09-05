@@ -763,7 +763,7 @@ export function TableView({table, result, isError, isLoading = false, data, colu
           {!isData && !isError && !isLoading && <NoRecords />}
         </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} data={data} result={result} />
+        <TableFooter table={table} data={data} result={result} isLoading={isLoading} />
       </Flex>
     </Box>
   );
