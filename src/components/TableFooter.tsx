@@ -18,11 +18,12 @@ import {selectLoadingState} from "../state/loading";
 type TData = Record<string, any> & Record<string, string | number>;
 type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
     data?: Record<string, string | number>[];
+    isLoading: boolean;
   };
 
 function TableFooter(props: Props) {
   const loading = useSelector(selectLoadingState);
-  const {result, table, data = []} = props;
+  const {result, table, data = [], isLoading} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
 
@@ -44,7 +45,7 @@ function TableFooter(props: Props) {
         gap="sm"
       >
         <CubeSource />
-        {!loading.loading && (
+        {!loading.loading && !isLoading && (
           <Group position="right" spacing="sm">
             {totalRowCount && <Text c="dimmed">{t("results.count_rows", {n: totalRowCount})}</Text>}
             {showPagination && <MRT_TablePagination table={table} />}
@@ -60,6 +61,7 @@ type ApiAndCsvButtonsProps = {
   copied: boolean;
   copyHandler: () => void;
   url: string;
+  data: Record<string, string | number>[];
 };
 const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
   const {copied, copyHandler, url, data} = props;
