@@ -78,5 +78,8 @@ export function useUpdatePermaLink({
 
 export function useKey() {
   const {panel, params} = useSelector(selectCurrentQueryItem);
-  return serializePermalink(params, panel);
+  if (Object.keys(params.drilldowns).length > 0 && Object.keys(params.measures).length > 0) {
+    return serializePermalink(params, panel);
+  }
+  return false;
 }
