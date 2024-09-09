@@ -28,7 +28,7 @@ import Toolbar from "./Toolbar";
 import {ExplorerTabs} from "./ExplorerTabs";
 import {useFullscreen} from "@mantine/hooks";
 import AddColumnsDrawer from "./DrawerMenu";
-// import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -259,7 +259,7 @@ function SuccessResult(props: {
           </Suspense>
         </Box>
       </Paper>
-      {/* <ReactQueryDevtools initialIsOpen /> */}
+      <ReactQueryDevtools initialIsOpen />
     </Flex>
   );
 }

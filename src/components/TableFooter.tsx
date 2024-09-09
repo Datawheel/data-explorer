@@ -89,7 +89,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 const DownloadQuery = ({data}) => {
   const actions = useActions();
   const {translate: t} = useTranslation();
-  const {isDirty, result} = useSelector(selectCurrentQueryItem);
+  // const {isDirty, result} = useSelector(selectCurrentQueryItem);
   const formats: string[] = useSelector(selectServerFormatsEnabled);
 
   const csv = formats.find(format => format === "csv");

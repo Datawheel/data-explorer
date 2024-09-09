@@ -30,7 +30,6 @@ import {useTranslation} from "../hooks/translation";
 import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import {BarsSVG, StackSVG} from "./icons";
 import {
-  selectCurrentQueryItem,
   selectCutItems,
   selectDrilldownItems,
   selectFilterItems,
@@ -66,7 +65,6 @@ import {
   FilterFnsMenu,
   getFilterFn,
   getFilterfnKey,
-  getFilterValue,
   MinMax,
   NumberInputComponent
 } from "./DrawerMenu";
@@ -231,26 +229,49 @@ type useTableDataType = {
   filters: FilterItem[];
   pagination: MRT_PaginationState;
   cube: string;
+  drilldowns: DrilldownItem[];
+  measures: MeasureItem[];
 };
 
 type ApiResponse = {data: any; types: any};
 
-function useTableData({columns, filters, cuts, pagination, cube}: useTableDataType) {
+function useTableData({
+  columns,
+  filters,
+  cuts,
+  pagination,
+  cube,
+  drilldowns,
+  measures
+}: useTableDataType) {
   const {code: locale} = useSelector(selectLocale);
   const permaKey = useKey();
+  console.log(permaKey, "params");
+
+  const loadingState = useSelector(selectLoadingState);
+  console.log(loadingState, "loadingState2");
 
   const actions = useActions();
   const page = pagination.pageIndex;
-  const enabled = Boolean(columns.length) || Boolean(filters.length) || Boolean(cuts.length);
-  const initialKey = [permaKey, page];
-  const [filterKeydebouced, setDebouncedTerm] = useState<string | (string | number)[]>(initialKey);
+  console.log(columns, filters, cuts, loadingState.loading, drilldowns, measures);
+
+  // const enabled = Boolean(columns.length) || Boolean(filters.length) || Boolean(cuts.length);
+  const enabled = Boolean(columns.length);
+
+  const initialKey = permaKey ? [permaKey, page] : permaKey;
+  const [filterKeydebouced, setDebouncedTerm] = useState<
+    string | boolean | (string | boolean | number)[]
+  >(initialKey);
 
   useEffect(() => {
-    if (!enabled) return;
-    const handler = debounce(() => {
-      const term = [permaKey, page];
-      setDebouncedTerm(term);
-    }, 700);
+    if (!enabled && permaKey) return;
+    const handler = debounce(
+      () => {
+        const term = [permaKey, page];
+        setDebouncedTerm(term);
+      },
+      loadingState.loading ? 0 : 700
+    );
     handler();
     return () => handler.cancel();
   }, [page, enabled, cube, locale, permaKey]);
@@ -261,6 +282,7 @@ function useTableData({columns, filters, cuts, pagination, cube}: useTableDataTy
       return actions.willExecuteQuery().then(res => {
         const {data, types} = res;
         const {data: tableData, page} = data;
+        // actions.setLoadingState("SUCCESS");
         return {data: tableData ?? [], types, page};
       });
     },
@@ -338,7 +360,7 @@ export function useTable({
   columnSorting = () => 0,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
-  const {types} = result;
+  // const {types} = result;
   const filterItems = useSelector(selectFilterItems);
   const filtersMap = useSelector(selectFilterMap);
   const measuresOlap = useSelector(selectOlapMeasureItems);
@@ -348,6 +370,9 @@ export function useTable({
   const itemsCuts = useSelector(selectCutItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
+
+  const loadingState = useSelector(selectLoadingState);
+  console.log(loadingState, "loadingState1");
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -389,21 +414,25 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData} = useTableData({
-    columns: finalUniqueKeys,
-    filters: filterItems.filter(
-      f =>
-        isActiveItem(f) && isActiveItem(measures.find(m => m.name === f.measure) || {active: false})
-    ),
-    cuts: itemsCuts.filter(isActiveCut),
-    pagination,
-    cube: cube.name
-  });
+  const {isLoading, isFetching, isError, data, isPlaceholderData, status, fetchStatus} =
+    useTableData({
+      columns: finalUniqueKeys,
+      filters: filterItems.filter(
+        f =>
+          isActiveItem(f) &&
+          isActiveItem(measures.find(m => m.name === f.measure) || {active: false})
+      ),
+      cuts: itemsCuts.filter(isActiveCut),
+      pagination,
+      cube: cube.name,
+      drilldowns,
+      measures
+    });
 
   // check no data
   const tableData = data?.data || [];
   // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
-  const tableTypes = types;
+  const tableTypes = data?.types || {};
   const totalRowCount = data?.page.total;
 
   /**
@@ -628,6 +657,9 @@ export function useTable({
     [isError]
   );
 
+  const isTransitionState = status !== "success" && !isError;
+  const isLoad = isLoading || data === undefined || isTransitionState;
+
   const table = useMantineReactTable({
     columns,
     data: tableData,
@@ -638,7 +670,7 @@ export function useTable({
     manualSorting: false,
     rowCount: totalRowCount,
     state: {
-      isLoading: isLoading || data === undefined,
+      isLoading: isLoading || data === undefined || isTransitionState,
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching || isLoading
@@ -647,7 +679,7 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading, data: tableData, columns};
+  return {table, isError, isLoading: isLoad, data: tableData, columns};
 }
 
 type TableView = {
@@ -661,6 +693,8 @@ export function TableView({table, result, isError, isLoading = false, data, colu
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
 
+  console.log(columns.length, isLoading, loadingState, "LOA");
+
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
@@ -673,7 +707,7 @@ export function TableView({table, result, isError, isLoading = false, data, colu
             overflow: "scroll"
           }}
         >
-          <LoadingOverlay visible={(columns.length === 0 && isLoading) || loadingState.loading} />
+          <LoadingOverlay visible={isLoading || loadingState.loading} />
           <Table
             captionSide="top"
             fontSize="md"
