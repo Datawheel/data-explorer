@@ -31,7 +31,7 @@ export default {
       json: "JSON",
       jsonarrays: "Matrices JSON",
       jsonrecords: "Registros JSON",
-      xls: "XLS",
+      xlsx: "XLSX",
     },
     loading: {
       title: "Cargando...",

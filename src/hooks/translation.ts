@@ -36,7 +36,7 @@ export const defaultTranslation = {
     json: "JSON",
     jsonarrays: "JSON Arrays",
     jsonrecords: "JSON Records",
-    xls: "XLS",
+    xlsx: "XLSX",
   },
   loading: {
     title: "Loading...",
