@@ -224,38 +224,19 @@ export function getFiltersConditions(fn: string, value: number[]) {
 }
 
 type useTableDataType = {
-  cuts: CutItem[];
   columns: string[];
-  filters: FilterItem[];
   pagination: MRT_PaginationState;
   cube: string;
-  drilldowns: DrilldownItem[];
-  measures: MeasureItem[];
 };
 
 type ApiResponse = {data: any; types: any};
 
-function useTableData({
-  columns,
-  filters,
-  cuts,
-  pagination,
-  cube,
-  drilldowns,
-  measures
-}: useTableDataType) {
+function useTableData({columns, pagination, cube}: useTableDataType) {
   const {code: locale} = useSelector(selectLocale);
   const permaKey = useKey();
-  console.log(permaKey, "params");
-
   const loadingState = useSelector(selectLoadingState);
-  console.log(loadingState, "loadingState2");
-
   const actions = useActions();
   const page = pagination.pageIndex;
-  console.log(columns, filters, cuts, loadingState.loading, drilldowns, measures);
-
-  // const enabled = Boolean(columns.length) || Boolean(filters.length) || Boolean(cuts.length);
   const enabled = Boolean(columns.length);
 
   const initialKey = permaKey ? [permaKey, page] : permaKey;
@@ -282,13 +263,11 @@ function useTableData({
       return actions.willExecuteQuery().then(res => {
         const {data, types} = res;
         const {data: tableData, page} = data;
-        // actions.setLoadingState("SUCCESS");
         return {data: tableData ?? [], types, page};
       });
     },
     staleTime: 300000,
     enabled: enabled && !!filterKeydebouced
-    // placeholderData: (previousData, previousQuery) => previousData
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
@@ -300,12 +279,8 @@ type usePrefetchType = {
   isPlaceholderData: boolean;
   limit: number;
   totalRowCount: number;
-  cuts: CutItem[];
-  columns: string[];
-  filters: FilterItem[];
   pagination: MRT_PaginationState;
   isFetching: boolean;
-  cube: string;
 };
 
 // update when pagination api is set.
@@ -372,7 +347,6 @@ export function useTable({
   const {limit, offset} = useSelector(selectPaginationParams);
 
   const loadingState = useSelector(selectLoadingState);
-  console.log(loadingState, "loadingState1");
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -414,19 +388,11 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData, status, fetchStatus} =
+  const {isLoading, isFetching, isFetched, isError, data, isPlaceholderData, status, fetchStatus} =
     useTableData({
       columns: finalUniqueKeys,
-      filters: filterItems.filter(
-        f =>
-          isActiveItem(f) &&
-          isActiveItem(measures.find(m => m.name === f.measure) || {active: false})
-      ),
-      cuts: itemsCuts.filter(isActiveCut),
       pagination,
-      cube: cube.name,
-      drilldowns,
-      measures
+      cube: cube.name
     });
 
   // check no data
@@ -449,12 +415,8 @@ export function useTable({
     isPlaceholderData,
     limit,
     totalRowCount,
-    columns: finalUniqueKeys,
-    filters: filterItems.filter(isActiveItem),
-    cuts: itemsCuts.filter(isActiveCut),
     pagination,
-    isFetching: isFetching || isLoading,
-    cube: cube.name
+    isFetching: isFetching || isLoading
   });
 
   useEffect(() => {
@@ -688,12 +650,10 @@ type TableView = {
   columns: AnyResultColumn[];
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading = false, data, columns}: TableView) {
+export function TableView({table, result, isError, isLoading = false, data}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
-
-  console.log(columns.length, isLoading, loadingState, "LOA");
 
   return (
     <Box sx={{height: "100%"}}>
