@@ -93,7 +93,7 @@ function AddColumnsDrawer() {
         <MeasuresOptions />
         <DrillDownOptions />
       </Drawer>
-      <Group position="center">
+      <Group position="center" sx={{flexWrap: "nowrap"}}>
         {smallerThanMd ? (
           <ActionIcon onClick={open} size="md" variant="filled" color={theme.primaryColor}>
             <IconStack3 size="0.75rem" />
@@ -202,7 +202,6 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
-  const dimensions = useSelector(selectOlapDimensionItems);
   const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
 
@@ -253,6 +252,11 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   const currentDrilldown = drilldowns[stringifyName(level)];
 
+  // Check if another hierarchy from the same dimension is already selected
+  const isOtherHierarchySelected = activeItems.some(
+    activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
+  );
+
   useLayoutEffect(() => {
     if (
       !drilldowns[stringifyName(level)] &&
@@ -272,6 +276,9 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   const checked = activeItems.map(stringifyName).includes(stringifyName(level));
 
+  // If another hierarchy in the same dimension is selected, this level is disabled
+  const isDisabled = isOtherHierarchySelected && !checked;
+
   if (!currentDrilldown) return;
   return (
     currentDrilldown && (
@@ -288,9 +295,14 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
             checked={checked}
             label={label}
             size="xs"
+            disabled={isDisabled} // Disable checkbox if another hierarchy is selected
           />
-          <Group>
-            <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
+          <Group sx={{flexWrap: "nowrap"}}>
+            <ActionIcon
+              size="sm"
+              onClick={() => setActiveFilter(value => !value)}
+              disabled={isDisabled}
+            >
               {activeFilter ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
 
@@ -321,6 +333,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
               }))}
               clearable
               nothingFound="Nothing found"
+              disabled={isDisabled} // Disable filter selection if disabled
             />
           </Box>
         )}
@@ -565,7 +578,7 @@ function FilterItem({
           label={measure.name}
           size="xs"
         />
-        <Group>
+        <Group sx={{flexWrap: "nowrap"}}>
           {activeFilter && <FilterFnsMenu filter={filter} />}
           <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
             {activeFilter ? <IconFilterOff /> : <IconFilter />}
