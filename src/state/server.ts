@@ -74,7 +74,12 @@ export const selectServerFormatsEnabled = createSelector(
   selectServerSoftware,
   software => software === TesseractDataSource.softwareName
     ? [Format.csv, Format.jsonarrays, Format.jsonrecords]
-    : [Format.csv, Format.json, Format.jsonrecords, Format.xls]
+    : [
+        Format.csv, 
+        // Format.jsonarrays,
+        Format.jsonrecords,
+        Format.xlsx
+    ]
 );
 
 export const selectServerBooleansEnabled = createSelector(

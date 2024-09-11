@@ -31,7 +31,7 @@ export default {
       json: "JSON",
       jsonarrays: "JSON 数组",
       jsonrecords: "JSON 记录",
-      xls: "XLS",
+      xlsx: "XLSX",
     },
     loading: {
       title: "加载中...",
