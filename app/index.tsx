@@ -22,7 +22,14 @@ import {
   IconTextDirectionRtl,
   IconLanguage
 } from "@tabler/icons-react";
-import React, {useMemo, useState, forwardRef, useEffect, useReducer} from "react";
+import React, {
+  useMemo,
+  useState,
+  forwardRef,
+  useEffect,
+  useReducer,
+  PropsWithChildren
+} from "react";
 import {createRoot} from "react-dom/client";
 import {HomeSVG} from "../src/components/icons";
 import translations from "../translations";
@@ -159,7 +166,29 @@ function SiteSettings({
     </>
   );
 }
-function SettingsProvider({children, locales, locale, setLocale, source, setSource, items}) {
+
+type Item = {
+  value: string;
+  label: string;
+};
+
+type ProviderType = {
+  locales: string[];
+  locale: string;
+  setLocale: React.Dispatch<React.SetStateAction<string>>;
+  setSource?: React.Dispatch<any>;
+  source: string;
+  items?: Item[];
+};
+function SettingsProvider({
+  children,
+  locales,
+  locale,
+  setLocale,
+  source,
+  setSource,
+  items
+}: PropsWithChildren<ProviderType>) {
   const [primaryColor, setPrimaryColor] = useState("blue");
   const [direction, setDirection] = useState<"ltr" | "rtl">("ltr");
   const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
@@ -249,13 +278,13 @@ function App() {
       locale={locale}
       setLocale={setLocale}
       source={source}
-      setSource={setSource}
+      // setSource={setSource}
       items={items}
     >
       <Explorer
         source={source.value}
         // defaultCube="gastat_gdp"
-        setSource={setSource}
+        // setSource={setSource}
         formatters={formatters}
         dataLocale={"en,ar,es"}
         previewLimit={75}
