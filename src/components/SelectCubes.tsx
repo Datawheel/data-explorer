@@ -86,7 +86,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
-    console.log(cube, "cube");
+
     if (selectedItem && cube && !cubeParam) {
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
@@ -201,7 +201,7 @@ function CubeTree({
   const {graph, setGraph, map, input} = useSideBar();
   const {translate: t} = useTranslation();
   const {filteredItems} = useBuildGraph(items, locale, graph, setGraph);
-  console.log(graph, "graph");
+
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
 
@@ -224,7 +224,6 @@ function CubeTree({
     [filteredItems, locale]
   );
 
-  console.log(topics, "TOPICs");
   topics = [topics[0], topics[1]];
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
@@ -342,7 +341,6 @@ function CubeButton({
   const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
 
-  console.log(item, locale, "ACA");
   const table = graph.getName(item, locale);
   const subtopic = parent ?? "";
   return (

@@ -91,9 +91,7 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
-
   if (isServerOnline == null || !cube) {
-    console.log(cube, "ac");
     return (
       <Paper
         className={cx(classes.container, props.className)}
