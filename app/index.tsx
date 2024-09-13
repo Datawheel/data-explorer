@@ -177,7 +177,7 @@ type ProviderType = {
   locale: string;
   setLocale: React.Dispatch<React.SetStateAction<string>>;
   setSource?: React.Dispatch<any>;
-  source: string;
+  source: SourceType;
   items?: Item[];
 };
 function SettingsProvider({
@@ -227,7 +227,7 @@ function SettingsProvider({
         >
           <HomeSVG />
           <Group>
-            {/* <Select
+            <Select
               disabled={source.loading}
               data={items}
               value={source.value}
@@ -236,7 +236,7 @@ function SettingsProvider({
                 window.history.pushState({}, "", nextLocation);
                 setSource({value});
               }}
-            /> */}
+            />
             <SiteSettings
               primaryColor={primaryColor}
               setPrimaryColor={setPrimaryColor}
@@ -256,8 +256,12 @@ function SettingsProvider({
   );
 }
 
-const reducer = (prev, state) => ({...prev, ...state});
+const reducer = (prev: SourceType, state: SourceType) => ({...prev, ...state});
 
+type SourceType = {
+  value?: string;
+  loading: boolean;
+};
 function App() {
   const [locale, setLocale] = useState(locales[0]);
   const [source, setSource] = useReducer(reducer, {
@@ -278,13 +282,13 @@ function App() {
       locale={locale}
       setLocale={setLocale}
       source={source}
-      // setSource={setSource}
+      setSource={setSource}
       items={items}
     >
       <Explorer
         source={source.value}
         // defaultCube="gastat_gdp"
-        // setSource={setSource}
+        setSource={setSource}
         formatters={formatters}
         dataLocale={"en,ar,es"}
         previewLimit={75}
