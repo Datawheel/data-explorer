@@ -29,7 +29,6 @@ export const serverSlice = createSlice({
   name,
   initialState,
   reducers: {
-
     /**
      * Replaces the specified keys in the ServerState with the provided values.
      */
@@ -37,11 +36,15 @@ export const serverSlice = createSlice({
       return {...state, ...action.payload};
     },
 
+    resetServer(state, action: PayloadAction<Partial<ServerState>>) {
+      return {...initialState};
+    },
     /**
      * Updates the type of endpoint to use in the current query.
      */
     updateEndpoint(state, action: PayloadAction<string | undefined>) {
-      state.endpoint = action.payload || (state.endpoint === "aggregate" ? "logiclayer" : "aggregate");
+      state.endpoint =
+        action.payload || (state.endpoint === "aggregate" ? "logiclayer" : "aggregate");
     },
 
     /**
@@ -70,9 +73,8 @@ export const selectServerSoftware = createSelector(selectServerState, server => 
 
 export const selectServerEndpoint = createSelector(selectServerState, server => server.endpoint);
 
-export const selectServerFormatsEnabled = createSelector(
-  selectServerSoftware,
-  software => software === TesseractDataSource.softwareName
+export const selectServerFormatsEnabled = createSelector(selectServerSoftware, software =>
+  software === TesseractDataSource.softwareName
     ? [Format.csv, Format.jsonarrays, Format.jsonrecords]
     : [
         Format.csv, 
@@ -82,16 +84,12 @@ export const selectServerFormatsEnabled = createSelector(
     ]
 );
 
-export const selectServerBooleansEnabled = createSelector(
-  selectServerSoftware,
-  software => software === TesseractDataSource.softwareName
+export const selectServerBooleansEnabled = createSelector(selectServerSoftware, software =>
+  software === TesseractDataSource.softwareName
     ? ["debug", "exclude_default_members", "parents", "sparse"]
     : ["debug", "distinct", "nonempty", "parents", "sparse"]
 );
 
-export const selectOlapCubeMap = createSelector(
-  selectServerState,
-  server => server.cubeMap
-);
+export const selectOlapCubeMap = createSelector(selectServerState, server => server.cubeMap);
 export const selectOlapCubeKeys = createSelector(selectOlapCubeMap, getKeys);
 export const selectOlapCubeItems = createSelector(selectOlapCubeMap, getValues);

@@ -91,7 +91,6 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
-
   if (isServerOnline == null || !cube) {
     return (
       <Paper
@@ -259,7 +258,7 @@ function SuccessResult(props: {
           </Suspense>
         </Box>
       </Paper>
-      <ReactQueryDevtools initialIsOpen />
+      {/* <ReactQueryDevtools initialIsOpen /> */}
     </Flex>
   );
 }
