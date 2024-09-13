@@ -25,7 +25,7 @@ jobs:
 
       - name: Build the project
         env:
-          DAEX_TESSERACT_SERVER: https://api.datasaudi.datawheel.us/tesseract/
+          DAEX_TESSERACT_SERVER: https://pytesseract-dev.oec.world/tesseract/
         run: npm run static
 
       - name: Deploy to Cloudflare Pages

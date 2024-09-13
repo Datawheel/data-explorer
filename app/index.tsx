@@ -22,11 +22,17 @@ import {
   IconTextDirectionRtl,
   IconLanguage
 } from "@tabler/icons-react";
-import React, {useMemo, useState, forwardRef, useEffect} from "react";
+import React, {
+  useMemo,
+  useState,
+  forwardRef,
+  useEffect,
+  useReducer,
+  PropsWithChildren
+} from "react";
 import {createRoot} from "react-dom/client";
 import {HomeSVG} from "../src/components/icons";
 import translations from "../translations";
-
 import rtlPlugin from "stylis-plugin-rtl";
 
 const rtlCache = createEmotionCache({
@@ -107,7 +113,6 @@ function SiteSettings({
             {direction === "ltr" ? <IconTextDirectionLtr /> : <IconTextDirectionRtl />}
           </ActionIcon>
         </Group>
-
         <Group position="apart">
           <Text size="xs" fw={500}>
             Language
@@ -121,9 +126,7 @@ function SiteSettings({
             onChange={setLocale}
           />
         </Group>
-
         <Divider label="Theme" labelPosition="center" />
-
         <Group position="apart">
           <Text size="xs" fw={500}>
             Color
@@ -163,7 +166,29 @@ function SiteSettings({
     </>
   );
 }
-function SettingsProvider({children, locales, locale, setLocale}) {
+
+type Item = {
+  value: string;
+  label: string;
+};
+
+type ProviderType = {
+  locales: string[];
+  locale: string;
+  setLocale: React.Dispatch<React.SetStateAction<string>>;
+  setSource?: React.Dispatch<any>;
+  source: SourceType;
+  items?: Item[];
+};
+function SettingsProvider({
+  children,
+  locales,
+  locale,
+  setLocale,
+  source,
+  setSource,
+  items
+}: PropsWithChildren<ProviderType>) {
   const [primaryColor, setPrimaryColor] = useState("blue");
   const [direction, setDirection] = useState<"ltr" | "rtl">("ltr");
   const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
@@ -201,16 +226,28 @@ function SettingsProvider({children, locales, locale, setLocale}) {
           }}
         >
           <HomeSVG />
-          <SiteSettings
-            primaryColor={primaryColor}
-            setPrimaryColor={setPrimaryColor}
-            toggleColorScheme={toggleColorScheme}
-            direction={direction}
-            setDirection={setDirection}
-            locales={locales}
-            locale={locale}
-            setLocale={setLocale}
-          />
+          <Group>
+            <Select
+              disabled={source.loading}
+              data={items}
+              value={source.value}
+              onChange={value => {
+                const nextLocation = `${window.location.pathname}`;
+                window.history.pushState({}, "", nextLocation);
+                setSource({value});
+              }}
+            />
+            <SiteSettings
+              primaryColor={primaryColor}
+              setPrimaryColor={setPrimaryColor}
+              toggleColorScheme={toggleColorScheme}
+              direction={direction}
+              setDirection={setDirection}
+              locales={locales}
+              locale={locale}
+              setLocale={setLocale}
+            />
+          </Group>
         </Flex>
       </Header>
 
@@ -219,15 +256,41 @@ function SettingsProvider({children, locales, locale, setLocale}) {
   );
 }
 
+const reducer = (prev: SourceType, state: SourceType) => ({...prev, ...state});
+
+type SourceType = {
+  value?: string;
+  loading: boolean;
+};
 function App() {
   const [locale, setLocale] = useState(locales[0]);
+  const [source, setSource] = useReducer(reducer, {
+    value: process.env.TESSERACT_SERVER,
+    loading: false
+  });
+  // would be a good idea to add formatters and default cube,
+  //  specific config for clients in this object.
+  const items = [
+    {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
+    {value: "https://pytesseract-dev.oec.world/tesseract/", label: "OEC"},
+    {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"}
+  ];
+
   return (
-    <SettingsProvider locales={locales} locale={locale} setLocale={setLocale}>
+    <SettingsProvider
+      locales={locales}
+      locale={locale}
+      setLocale={setLocale}
+      source={source}
+      setSource={setSource}
+      items={items}
+    >
       <Explorer
-        source={process.env.TESSERACT_SERVER}
-        defaultCube="gastat_gdp"
+        source={source.value}
+        // defaultCube="gastat_gdp"
+        setSource={setSource}
         formatters={formatters}
-        dataLocale={"en,ar"}
+        dataLocale={"en,ar,es"}
         previewLimit={75}
         height={"calc(100vh - 50px)"}
         panels={[

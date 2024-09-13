@@ -16,7 +16,6 @@ import {useActions} from "./settings";
  */
 export function useSetup(serverConfig, locale, defaultCube) {
   const actions = useActions();
-
   const [done, setDone] = useState(false);
 
   // ensure the locale variable is an array
@@ -35,6 +34,8 @@ export function useSetup(serverConfig, locale, defaultCube) {
 
   // Initialize the internal state, from permalink, history API, or default.
   useEffect(() => {
+    actions.resetServer({});
+    actions.resetAllParams({});
     actions.setLoadingState("FETCHING");
     setDone(false);
 

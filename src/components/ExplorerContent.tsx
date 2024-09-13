@@ -11,6 +11,7 @@ import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
 import {HomeSVG} from "./icons";
 import {AppProviders} from "../context";
+import {useActions} from "../hooks/settings";
 const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
     height: "100%",
@@ -47,16 +48,21 @@ export function ExplorerContent(props: {
   height: CSSObject["height"];
   panels: PanelDescriptor[];
   source: ServerConfig;
+  setSource?: React.Dispatch<any>;
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
   uiLocale: string | undefined;
   withMultiQuery: boolean;
   defaultCube?: string;
 }) {
-  const theme = useMantineTheme();
-  const [opened, setOpened] = useState(false);
+  const {setSource} = props;
   const translation = useTranslation();
+  const done = useSetup(props.source, props.dataLocale, props.defaultCube);
 
-  useSetup(props.source, props.dataLocale, props.defaultCube);
+  useEffect(() => {
+    if (setSource) {
+      setSource({loading: !done});
+    }
+  }, [setSource, done]);
 
   const {classes} = useStyles({height: props.height});
 

@@ -31,7 +31,7 @@ export default {
       json: "JSON",
       jsonarrays: "مصفوفات JSON",
       jsonrecords: "سجلات JSON",
-      xls: "XLS",
+      xlsx: "XLSX",
     },
     loading: {
       title: "جارٍ التحميل...",
