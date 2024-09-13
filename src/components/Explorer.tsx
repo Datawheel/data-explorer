@@ -2,7 +2,7 @@ import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps, TranslationProviderProps} from "@datawheel/use-translation";
 import {CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
-import React, {useMemo} from "react";
+import React, {useEffect, useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import {TranslationDict, TranslationProvider} from "../hooks/translation";
@@ -132,6 +132,7 @@ export function ExplorerComponent(props: {
    * @default false
    */
   withPermalink?: boolean;
+  setSource?: React.Dispatch<any>;
 }) {
   const {
     dataLocale = "en",
@@ -140,7 +141,9 @@ export function ExplorerComponent(props: {
     previewLimit = 50,
     withinMantineProvider = true,
     withinReduxProvider = false,
-    withMultiQuery = false
+    withMultiQuery = false,
+    setSource,
+    source
   } = props;
 
   const locale = useMemo(() => dataLocale.toString().split(","), [dataLocale]);
@@ -181,11 +184,12 @@ export function ExplorerComponent(props: {
     >
       <TranslationProvider defaultLocale={props.uiLocale} translations={props.translations}>
         <ExplorerContent
+          setSource={setSource}
           dataLocale={locale}
           defaultOpenParams={defaultOpenParams}
           height={height}
           panels={panels}
-          source={props.source}
+          source={source}
           splash={props.splash}
           uiLocale={props.uiLocale}
           defaultCube={props.defaultCube}

@@ -93,6 +93,7 @@ export function ExplorerResults(props: {
   // use set loading when seraching members.
 
   if (isServerOnline == null || !cube) {
+    console.log(cube, "ac");
     return (
       <Paper
         className={cx(classes.container, props.className)}
@@ -259,7 +260,7 @@ function SuccessResult(props: {
           </Suspense>
         </Box>
       </Paper>
-      <ReactQueryDevtools initialIsOpen />
+      {/* <ReactQueryDevtools initialIsOpen /> */}
     </Flex>
   );
 }
