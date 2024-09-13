@@ -86,6 +86,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
+    console.log(cube, "cube");
     if (selectedItem && cube && !cubeParam) {
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
@@ -158,29 +159,34 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
 }
 
 function useBuildGraph(items, locale, graph, setGraph) {
+  const [filteredItems, setFilteredItems] = useState<AnnotatedCube[]>([]);
   useEffect(() => {
     const graph = new Graph();
-    items.map(item => {
-      const {name} = item;
-      const topic = getAnnotation(item, "topic", locale);
-      const subtopic = getAnnotation(item, "subtopic", locale);
-      const table = getAnnotation(item, "table", locale);
-      const hide = getAnnotation(item, "hide_in_ui", locale);
-      if (!yn(hide)) {
-        graph.addNode(topic);
-        graph.addNode(subtopic);
-        graph.addNode(name);
-        graph.addEdge(topic, subtopic);
-        graph.addEdge(subtopic, name);
-      }
+    const filteredItems = items
+      .map(item => {
+        const {name} = item;
+        const topic = getAnnotation(item, "topic", locale);
+        const subtopic = getAnnotation(item, "subtopic", locale);
+        const table = getAnnotation(item, "table", locale);
+        const hide = getAnnotation(item, "hide_in_ui", locale);
+        if (!yn(hide)) {
+          graph.addNode(topic);
+          graph.addNode(subtopic);
+          graph.addNode(name);
+          graph.addEdge(topic, subtopic);
+          graph.addEdge(subtopic, name);
+          return item;
+        }
 
-      return item;
-    });
-
-    graph.items = items;
+        return null;
+      })
+      .filter(Boolean);
+    setFilteredItems(filteredItems);
+    graph.items = filteredItems;
     setGraph(graph);
   }, [items, locale, setGraph]);
-  return {graph};
+
+  return {graph, filteredItems};
 }
 
 function CubeTree({
@@ -194,7 +200,8 @@ function CubeTree({
 }) {
   const {graph, setGraph, map, input} = useSideBar();
   const {translate: t} = useTranslation();
-  useBuildGraph(items, locale, graph, setGraph);
+  const {filteredItems} = useBuildGraph(items, locale, graph, setGraph);
+  console.log(graph, "graph");
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
 
@@ -212,8 +219,13 @@ function CubeTree({
     }
   };
 
-  const topics = useMemo(() => getKeys(items as AnnotatedCube[], "topic", locale), [items, locale]);
+  let topics = useMemo(
+    () => getKeys(filteredItems as AnnotatedCube[], "topic", locale),
+    [filteredItems, locale]
+  );
 
+  console.log(topics, "TOPICs");
+  topics = [topics[0], topics[1]];
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
     return (
@@ -330,6 +342,7 @@ function CubeButton({
   const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
 
+  console.log(item, locale, "ACA");
   const table = graph.getName(item, locale);
   const subtopic = parent ?? "";
   return (
