@@ -4,7 +4,7 @@ import {
   type ServerConfig,
   TesseractDataSource,
 } from "@datawheel/olap-client";
-import type {TesseractFormat, TesseractMembersResponse} from "../api";
+import type {TesseractCube, TesseractFormat, TesseractMembersResponse} from "../api";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
 import {applyQueryParams, buildDataRequest, extractQueryParams} from "../utils/query";
@@ -251,16 +251,18 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
  * Performs a full replacement of the cubes stored in the state with fresh data
  * from the server.
  */
-export function willReloadCubes(): ExplorerThunk<Promise<{[k: string]: PlainCube}>> {
-  return (dispatch, getState, {olapClient}) =>
-    olapClient.getCubes().then(cubes => {
-      const plainCubes = filterMap(cubes, cube =>
-        cube.annotations.hide_in_ui === "true" ? null : cube.toJSON()
-      );
-      const cubeMap = keyBy(plainCubes, i => i.name);
+export function willReloadCubes(): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
+  return (dispatch, getState, {tesseract}) => {
+    const state = getState();
+    const locale = selectLocale(state);
+
+    return tesseract.fetchSchema({locale: locale.code}).then(schema => {
+      const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
+      const cubeMap = keyBy(cubes, i => i.name);
       dispatch(serverActions.updateServer({cubeMap}));
       return cubeMap;
     });
+  };
 }
 
 /**
