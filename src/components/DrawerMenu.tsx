@@ -236,14 +236,11 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     if (!cut) {
       createCutHandler({...level, key: stringifyName(level)});
     }
-    actions.willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
+    actions.willFetchMembers(level.name).then(levelMeta => {
       actions.updateDrilldown({
         ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
+        memberCount: levelMeta.members.length,
+        members: levelMeta.members,
       });
     });
 

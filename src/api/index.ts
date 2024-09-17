@@ -13,8 +13,9 @@ export {Format as TesseractFormat, TesseractModuleClient} from "./tesseract/clie
 export type {
   TesseractCube,
   TesseractDataRequest,
-  TesseractMembersRequest,
   TesseractDataResponse,
+  TesseractMember,
+  TesseractMembersRequest,
   TesseractMembersResponse,
   TesseractSchema,
 } from "./tesseract/schema";

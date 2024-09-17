@@ -1,12 +1,11 @@
 import React, {useCallback} from "react";
-import {Menu, ActionIcon, ActionIconProps, UnstyledButton, Group, Text} from "@mantine/core";
+import {Menu, ActionIcon, UnstyledButton, Group, Text} from "@mantine/core";
 import {IconChevronRight, IconStack2} from "@tabler/icons-react";
 import {DimensionMenu} from "./MenuDimension";
 import MeasuresMenu from "./MeasuresMenu";
 import {stringifyName} from "../utils/transform";
 import {useSelector} from "react-redux";
 import {selectDrilldownItems} from "../state/queries";
-import {selectOlapDimensionItems} from "../state/selectors";
 import {useActions} from "../hooks/settings";
 import {buildDrilldown, buildCut} from "../utils/structs";
 import type {LevelDescriptor} from "../utils/types";
@@ -16,8 +15,6 @@ import type {PlainLevel} from "@datawheel/olap-client";
 function OptionsMenu({children}: {children: ReactNode}) {
   const actions = useActions();
   const items = useSelector(selectDrilldownItems);
-  const dimensions = useSelector(selectOlapDimensionItems);
-  const {willRequestQuery} = useActions();
 
   const createCutHandler = React.useCallback((level: PlainLevel) => {
     const cutItem = buildCut({...level, key: level.fullName});
@@ -29,24 +26,22 @@ function OptionsMenu({children}: {children: ReactNode}) {
     (level: PlainLevel) => {
       // find or create drilldown
       const drilldownItem =
-        items.find(item => item.uniqueName === level.uniqueName) ?? buildDrilldown({...level});
+        items.find(item => item.uniqueName === level.uniqueName) ??
+        buildDrilldown({...level});
       createCutHandler(level);
       actions.updateDrilldown(drilldownItem);
       actions
-        .willFetchMembers({...level, level: level.name})
-        .then(members => {
-          const dimension = dimensions.find(dim => dim.name === level.dimension);
-          if (!dimension) return;
+        .willFetchMembers(level.name)
+        .then(levelMeta => {
           actions.updateDrilldown({
             ...drilldownItem,
-            dimType: dimension.dimensionType,
-            memberCount: members.length,
-            members
+            memberCount: levelMeta.members.length,
+            members: levelMeta.members,
           });
         })
-        .then(() => willRequestQuery());
+        .then(() => actions.willRequestQuery());
     },
-    [dimensions]
+    [items],
   );
 
   return (

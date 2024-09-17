@@ -1,14 +1,14 @@
-import React, {useCallback} from "react";
 import type {PlainLevel} from "@datawheel/olap-client";
-import {buildDrilldown, buildCut, MeasureItem, CutItem} from "../utils/structs";
-import {useActions} from "./settings";
+import {useCallback} from "react";
 import {deriveDrilldowns} from "../state/utils";
+import {type MeasureItem, buildCut, buildDrilldown} from "../utils/structs";
 import {stringifyName} from "../utils/transform";
+import {useActions} from "./settings";
 
 export function useSelectCube(onSelectCube: (table: string, subtopic: string) => void) {
   const {updateMeasure, updateCut, updateDrilldown, willFetchMembers} = useActions();
   const actions = useActions();
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
+  const createCutHandler = useCallback((level: PlainLevel) => {
     const cutItem = buildCut({...level});
     cutItem.active = false;
     updateCut(cutItem);
@@ -19,14 +19,11 @@ export function useSelectCube(onSelectCube: (table: string, subtopic: string) =>
     updateDrilldown(drilldown);
     createCutHandler({...level, key: stringifyName(level)});
 
-    await willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
+    await willFetchMembers(level.name).then(levelMeta => {
       updateDrilldown({
         ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
+        memberCount: levelMeta.members.length,
+        members: levelMeta.members,
       });
     });
 

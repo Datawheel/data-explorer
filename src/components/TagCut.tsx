@@ -76,14 +76,18 @@ export function TagCut(props: {item: CutItem}) {
   const reloadHandler = useCallback(() => {
     const activeMembers = item.members;
     actions
-      .willFetchMembers(item)
-      .then(members => {
+      .willFetchMembers(item.level)
+      .then(({members}) => {
         const memberRecords = {};
         let i = members.length;
         while (i--) {
           const member = members[i];
           const active = activeMembers.includes(`${member.key}`);
-          memberRecords[member.key] = buildMember({name: member.caption, key: member.key, active});
+          memberRecords[member.key] = buildMember({
+            name: member.caption,
+            key: member.key,
+            active,
+          });
         }
         !item.active && actions.updateCut({...item, active: true});
         setError("");
@@ -95,7 +99,7 @@ export function TagCut(props: {item: CutItem}) {
         setMembers({});
         setLoadingMembers(false);
       });
-  }, []);
+  }, [item]);
 
   useEffect(reloadHandler, [item.key, locale.code]);
 

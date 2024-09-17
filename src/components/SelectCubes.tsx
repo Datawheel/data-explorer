@@ -16,7 +16,7 @@ import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {selectCubeName} from "../state/queries";
 import {getAnnotation} from "../utils/string";
-import {buildDrilldown, buildCut, MeasureItem, CutItem} from "../utils/structs";
+import {buildDrilldown, buildCut, CutItem} from "../utils/structs";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
@@ -69,14 +69,11 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
         createCutHandler({...level, key: stringifyName(level)});
       }
 
-      willFetchMembers({...level, level: level.name}).then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
+      willFetchMembers(level.name).then(levelMeta => {
         updateDrilldown({
           ...drilldown,
-          dimType: dimension.dimensionType,
-          memberCount: members.length,
-          members
+          memberCount: levelMeta.members.length,
+          members: levelMeta.members,
         });
       });
       return drilldown;

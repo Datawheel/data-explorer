@@ -1,12 +1,10 @@
 import {
-  type LevelDescriptor,
   Client as OLAPClient,
   type PlainCube,
-  type PlainMember,
   type ServerConfig,
   TesseractDataSource,
 } from "@datawheel/olap-client";
-import type {TesseractFormat} from "../api";
+import type {TesseractFormat, TesseractMembersResponse} from "../api";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
 import {applyQueryParams, buildDataRequest, extractQueryParams} from "../utils/query";
@@ -153,25 +151,20 @@ export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): Ex
 /**
  * Requests the list of associated Members for a certain Level.
  *
- * @param levelRef
- *   The descriptor to the Level for whom we want to retrieve members.
+ * @param level - The name of the Level for whom we want to retrieve members.
+ * @returns The list of members for the requested level.
  */
-export function willFetchMembers(levelRef: LevelDescriptor): ExplorerThunk<Promise<PlainMember[]>> {
-  return (dispatch, getState, {olapClient}) => {
+export function willFetchMembers(
+  level: string,
+): ExplorerThunk<Promise<TesseractMembersResponse>> {
+  return (dispatch, getState, {tesseract}) => {
     const state = getState();
-    const cubeName = selectCubeName(state);
+    const cube = selectCubeName(state);
     const locale = selectLocale(state);
-    return olapClient
-      .getCube(cubeName)
-      .then(cube => {
-        const level = cube.getLevel(levelRef);
-        return cube.datasource.fetchMembers(level, {locale: locale.code});
-      })
-      .catch(() => {
-        const serialRef = JSON.stringify(levelRef);
-        console.error(`Couldn't find level from reference: ${serialRef}`);
-        return [];
-      });
+
+    return tesseract.fetchMembers({
+      request: {cube, level, locale: locale.code},
+    });
   };
 }
 

@@ -1,8 +1,13 @@
-
-import { Comparison, Measure, PlainLevel, PlainMeasure, PlainMember, PlainProperty } from "@datawheel/olap-client";
-import { asArray } from "./array";
-import { parseNumeric, randomKey } from "./string";
-import { joinName } from "./transform";
+import {
+  Comparison,
+  Measure,
+  type PlainLevel,
+  type PlainMeasure,
+  type PlainProperty,
+} from "@datawheel/olap-client";
+import {asArray} from "./array";
+import {parseNumeric, randomKey} from "./string";
+import {joinName} from "./transform";
 
 export interface QueryItem {
   created: string;
@@ -77,14 +82,13 @@ export interface CutItem extends QueryParamsItem {
 export interface DrilldownItem extends QueryParamsItem {
   captionProperty: string;
   dimension: string;
-  dimType: string;
   fullName: string;
   hierarchy: string;
   level: string;
   properties: PropertyItem[];
   uniqueName: string;
   memberCount: number;
-  members: PlainMember[]
+  members: {key: string | number; caption?: string}[];
 }
 
 export interface FilterItem extends QueryParamsItem {
@@ -188,9 +192,6 @@ export function buildCut(props): CutItem {
  * Creates a DrilldownItem object.
  */
 export function buildDrilldown(props): DrilldownItem {
-  const dimType = typeof props.dimension === "object"
-    ? props.dimension.dimensionType
-    : props.dimType;
   if (typeof props.toJSON === "function") {
     props = props.toJSON();
   }
@@ -201,7 +202,6 @@ export function buildDrilldown(props): DrilldownItem {
     active: typeof props.active === "boolean" ? props.active : true,
     captionProperty: props.captionProperty || "",
     dimension,
-    dimType,
     fullName: props.fullName || joinName([dimension, hierarchy, level]),
     hierarchy,
     key: props.key || randomKey(),

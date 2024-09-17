@@ -171,6 +171,9 @@ export interface TesseractMembersResponse {
   name: string;
   /** Public localized name of the relevant level */
   caption: string;
+  dimensionType: DimensionType;
+  dimension: string;
+  hierarchy: string;
   /** Depth of the level in its Hierarchy */
   depth: number;
   /** Metadata for the level */
@@ -178,9 +181,9 @@ export interface TesseractMembersResponse {
   /** Child Properties from this level */
   properties: TesseractProperty[];
   /** Data type of each column in the members array */
-  dtypes: {[K in keyof MemberRow]: string};
+  dtypes: {[K in keyof TesseractMember]: string};
   /** The actual list of members for the level */
-  members: MemberRow[];
+  members: TesseractMember[];
 }
 
 export interface TesseractStatus {
@@ -245,11 +248,11 @@ export interface TesseractProperty {
   type: string;
 }
 
-export interface MemberRow {
+export interface TesseractMember {
   /** The unique ID for this member */
   key: string | number;
   /** The localized label for this member */
   caption?: string;
   /** A list of direct ancestor members, one per level above this one */
-  ancestor?: MemberRow[];
+  ancestor?: TesseractMember[];
 }
