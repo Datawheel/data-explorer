@@ -5,6 +5,7 @@ import type {
   TesseractMembersRequest,
   TesseractMembersResponse,
   TesseractSchema,
+  TesseractStatus,
 } from "./schema";
 
 export enum Format {
@@ -17,45 +18,76 @@ export enum Format {
 }
 
 export class TesseractModuleClient {
-  auth: string;
   baseURL: string;
+  requestConfig: RequestInit;
 
-  static format = Format;
+  static formats = Format;
 
-  constructor(baseURL: string, auth: string) {
-    this.auth = auth;
+  constructor(baseURL: string) {
     this.baseURL = baseURL;
+    this.requestConfig = {headers: new Headers()};
   }
 
-  fetchSchema(params: {locale?: string}): Promise<TesseractSchema> {
-    const search = new URLSearchParams(toPlainObject(params));
-    return httpFetch({
-      auth: this.auth,
-      url: new URL(`cubes?${search}`, this.baseURL),
+  fetchStatus(params: {
+    signal?: AbortSignal;
+  }): Promise<TesseractStatus> {
+    return httpFetch(new URL("", this.baseURL), {
+      ...this.requestConfig,
+      signal: params.signal,
+    }).then(response => response.json() as Promise<TesseractStatus>);
+  }
+
+  fetchSchema(params: {
+    locale?: string;
+    signal?: AbortSignal;
+  }): Promise<TesseractSchema> {
+    const {signal, ...request} = params;
+    const search = new URLSearchParams(toPlainObject(request));
+
+    return httpFetch(new URL(`cubes?${search}`, this.baseURL), {
+      ...this.requestConfig,
+      signal,
+    }).then(response => response.json() as Promise<TesseractSchema>);
+  }
+
+  fetchCube(params: {
+    cube: string;
+    locale?: string;
+    signal?: AbortSignal;
+  }): Promise<TesseractCube> {
+    const {cube, signal, ...request} = params;
+    const search = new URLSearchParams(toPlainObject(request));
+
+    return httpFetch(new URL(`cubes/${cube}?${search}`, this.baseURL), {
+      ...this.requestConfig,
+      signal,
+    }).then(response => response.json() as Promise<TesseractCube>);
+  }
+
+  fetchData(params: {
+    request: TesseractDataRequest;
+    format: `${Format}`;
+    signal?: AbortSignal;
+  }): Promise<Response> {
+    const {format, request, signal} = params;
+    const search = new URLSearchParams(toPlainObject(request));
+
+    return httpFetch(new URL(`data.${format}?${search}`, this.baseURL), {
+      ...this.requestConfig,
+      signal,
     });
   }
 
-  fetchCube(cubeName: string, params: {locale?: string}): Promise<TesseractCube> {
-    const search = new URLSearchParams(toPlainObject(params));
-    return httpFetch({
-      auth: this.auth,
-      url: new URL(`cubes/${cubeName}?${search}`, this.baseURL),
-    });
-  }
+  fetchMembers(params: {
+    request: TesseractMembersRequest;
+    signal?: AbortSignal;
+  }): Promise<TesseractMembersResponse> {
+    const {request, signal} = params;
+    const search = new URLSearchParams(toPlainObject(request));
 
-  fetchData(params: TesseractDataRequest, format: Format) {
-    const search = new URLSearchParams(toPlainObject(params));
-    return httpFetch({
-      auth: this.auth,
-      url: new URL(`data.${format}?${search}`, this.baseURL),
-    });
-  }
-
-  fetchMembers(params: TesseractMembersRequest): Promise<TesseractMembersResponse> {
-    const search = new URLSearchParams(toPlainObject(params.search));
-    return httpFetch({
-      auth: this.auth,
-      url: new URL(`members?${search}`, this.baseURL),
-    });
+    return httpFetch(new URL(`members?${search}`, this.baseURL), {
+      ...this.requestConfig,
+      signal,
+    }).then(response => response.json() as Promise<TesseractMembersResponse>);
   }
 }

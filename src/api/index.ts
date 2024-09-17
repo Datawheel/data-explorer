@@ -1,4 +1,4 @@
-export {ComplexityModuleClient} from "./complexity/client";
+export {Format as ComplexityFormat, ComplexityModuleClient} from "./complexity/client";
 export type {
   CommonRequest,
   ComplexityRequest,
@@ -9,10 +9,12 @@ export type {
   RelatednessRequest,
 } from "./complexity/schema";
 
-export {TesseractModuleClient} from "./tesseract/client";
+export {Format as TesseractFormat, TesseractModuleClient} from "./tesseract/client";
 export type {
   TesseractCube,
   TesseractDataRequest,
   TesseractMembersRequest,
+  TesseractDataResponse,
+  TesseractMembersResponse,
   TesseractSchema,
 } from "./tesseract/schema";
