@@ -1,7 +1,70 @@
-import { Measure, Query } from "@datawheel/olap-client";
-import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, QueryParamsItem, buildCut, buildDrilldown, buildFilter, buildMeasure } from "./structs";
-import { keyBy } from "./transform";
-import { isActiveCut, isActiveItem } from "./validation";
+import {Measure, type Query} from "@datawheel/olap-client";
+import {
+  type CutItem,
+  type DrilldownItem,
+  type FilterItem,
+  type MeasureItem,
+  type QueryParams,
+  type QueryParamsItem,
+  buildCut,
+  buildDrilldown,
+  buildFilter,
+  buildMeasure,
+} from "./structs";
+import {keyBy} from "./transform";
+import {isActiveCut, isActiveItem} from "./validation";
+import type {TesseractDataRequest} from "../api";
+import {filterMap} from "./array";
+
+export function buildDataRequest(params: QueryParams): TesseractDataRequest {
+  return {
+    cube: params.cube,
+    locale: params.locale,
+    drilldowns: filterMap(Object.values(params.drilldowns), item =>
+      item.active ? item.level : null,
+    ).join(","),
+    measures: filterMap(Object.values(params.measures), item =>
+      item.active ? item.name : null,
+    ).join(","),
+    properties: filterMap(Object.values(params.drilldowns), item =>
+      item.active
+        ? filterMap(item.properties, item => (item.active ? item.name : null))
+        : null,
+    )
+      .flat()
+      .join(","),
+    include: filterMap(Object.values(params.cuts), item =>
+      item.active ? `${item.level}:${item.members.join(",")}` : null,
+    ).join(";"),
+    exclude: filterMap(Object.values(params.exclude), item =>
+      item.active ? `${item.level}:${item.members.join(",")}` : null,
+    ).join(";"),
+    filters: filterMap(Object.values(params.filters), item =>
+      item.active
+        ? `${item.measure}.${strFilterCondition(item.conditionOne)}` +
+          (item.conditionTwo
+            ? `.${item.joint}.${strFilterCondition(item.conditionTwo)}`
+            : "")
+        : null,
+    ).join(";"),
+    limit: `${params.pageLimit || 0},${params.pageOffset || 0}`,
+    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
+    sparse: params.sparse,
+    ranking:
+      typeof params.ranking === "boolean"
+        ? params.ranking
+        : Object.entries(params.ranking)
+            .map(item => (item[1] ? "-" : "") + item[0])
+            .sort()
+            .join(","),
+    parents:
+      typeof params.parents === "boolean" ? params.parents : params.parents.join(","),
+  };
+
+  function strFilterCondition(cond: [string, string, number]): string {
+    return `${cond[0]}.${cond[2]}`;
+  }
+}
 
 /**
  * Applies the properties set on a QueryParams object
@@ -12,9 +75,8 @@ export function applyQueryParams(
   params: QueryParams,
   settings: {
     previewLimit: number;
-  }
+  },
 ) {
-
   Object.entries(params.booleans).forEach(item => {
     item[1] != null && query.setOption(item[0], item[1]);
   });
@@ -23,20 +85,22 @@ export function applyQueryParams(
     isActiveCut(item) && query.addCut(item, item.members);
   });
 
-
   Object.values(params.filters).forEach(item => {
-    isActiveItem(item) && query.addFilter(item.measure, item.conditionOne,
-      item.joint && item.conditionTwo ? item.joint : "",
-      item.joint && item.conditionTwo ? item.conditionTwo : "")
+    isActiveItem(item) &&
+      query.addFilter(
+        item.measure,
+        item.conditionOne,
+        item.joint && item.conditionTwo ? item.joint : "",
+        item.joint && item.conditionTwo ? item.conditionTwo : "",
+      );
   });
 
   Object.values(params.drilldowns).forEach(item => {
     if (!isActiveItem(item)) return;
     query.addDrilldown(item);
-    item.captionProperty &&
-      query.addCaption({ ...item, property: item.captionProperty });
+    item.captionProperty && query.addCaption({...item, property: item.captionProperty});
     item.properties.forEach(prop => {
-      isActiveItem(prop) && query.addProperty({ ...item, property: prop.name });
+      isActiveItem(prop) && query.addProperty({...item, property: prop.name});
     });
   });
 
@@ -53,9 +117,8 @@ export function applyQueryParams(
 
   if (params.isPreview) {
     query.setPagination(settings.previewLimit, 0);
-  }
-  else {
-    query.setPagination(params.pagiLimit || 0, params.pagiOffset);
+  } else {
+    query.setPagination(params.pageLimit || 0, params.pageOffset);
   }
 
   return query;
@@ -81,7 +144,7 @@ export function extractQueryParams(query: Query): QueryParams {
       ...level.toJSON(),
       active: true,
       members: cutRecord[cutLevel],
-      membersLoaded: false
+      membersLoaded: false,
     });
   });
 
@@ -97,7 +160,7 @@ export function extractQueryParams(query: Query): QueryParams {
       exclude_default_members: Boolean(booleans.exclude_default_members),
       nonempty: Boolean(booleans.nonempty),
       parents: Boolean(booleans.parents),
-      sparse: Boolean(booleans.sparse)
+      sparse: Boolean(booleans.sparse),
     },
     cube: cube.name,
     cuts: keyBy<CutItem>(cuts, getKey),
@@ -105,12 +168,12 @@ export function extractQueryParams(query: Query): QueryParams {
     filters: keyBy<FilterItem>(filters, getKey),
     locale: query.getParam("locale"),
     measures: keyBy<MeasureItem>(measures, getKey),
-    pagiLimit: pagination.limit,
-    pagiOffset: pagination.offset,
+    pageLimit: pagination.limit,
+    pageOffset: pagination.offset,
     isPreview: true,
     sortDir: sorting.direction === "asc" ? "asc" : "desc",
     sortKey: Measure.isMeasure(sorting.property)
       ? sorting.property.name
-      : `${sorting.property || ""}`
+      : `${sorting.property || ""}`,
   };
 }

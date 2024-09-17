@@ -23,25 +23,93 @@ export enum DimensionType {
   time = "time",
 }
 
+export enum Order {
+  asc = "asc",
+  desc = "desc",
+}
+
 export interface TesseractDataRequest {
   cube: string;
+  /** 
+   * @example LevelName,LevelName,LevelName 
+   */
   drilldowns: string;
+  /** 
+   * @example Measure,Measure,Measure 
+   */
   measures: string;
+  /** 
+   * @example Level:key,key,key;Level:key,key,key 
+   */
   exclude?: string;
+  /**
+   * @example Measure.gt.10000.and.lt.60000,Measure.lt.100000
+   */
   filters?: string;
+  /** 
+   * @example Level:key,key,key;Level:key,key,key 
+   */
   include?: string;
+  /**
+   * A single number is limit; a pair of numbers are limit, offset.
+   * @example 2,5
+   */
   limit?: string;
+  /**
+   * @example es
+   */
   locale?: string;
+  /**
+   * A boolean enables parents for all levels in the request.
+   * You can also pick specific Levels from the drilldown list.
+   * @example true
+   * @example Level,Level
+   */
   parents?: boolean | string;
+  /**
+   * @example Property,Property
+   */
   properties?: string;
+  /**
+   * A boolean sets rankings for all measures in descending order.
+   * If setting measure names, orden can be set with or without a leading minus.
+   * @example true
+   * @example Measure,-Measure
+   */
   ranking?: boolean | string;
+  /**
+   * @example Measure.asc
+   * @example Property.desc
+   */
   sort?: string;
+  /**
+   * Determines if the request should return the full cardinality of available 
+   * options, even if their associated value is null.
+   * @default true
+   */
+  sparse?: boolean;
+  /**
+   * @example month.latest.6
+   * @example Level.oldest
+   */
   time?: string;
+  /**
+   * Slices the resulting items to only the highest/lowest N items by the value 
+   * of Measure, for all the subgroups signaled by the Level parameters.
+   * @example 10.Level.Measure.asc
+   * @example 3.Level,Level.Measure.desc
+   */
+  top?: string;
 }
 
 export interface TesseractDataResponse {
   columns: string[];
-  data: string[][];
+  data: Record<string, unknown>[];
+  page: {
+    limit: number;
+    offset: number;
+    total: number;
+  };
 }
 
 export interface TesseractMembersRequest {
@@ -65,7 +133,7 @@ export interface TesseractMembersResponse {
   /** Child Properties from this level */
   properties: TesseractProperty[];
   /** Data type of each column in the members array */
-  dtypes: {[K in keyof MemberRow]: string};
+  dtypes: { [K in keyof MemberRow]: string };
   /** The actual list of members for the level */
   members: MemberRow[];
 }

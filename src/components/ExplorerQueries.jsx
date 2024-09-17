@@ -2,7 +2,7 @@ import {Button, Divider, Group, Space, Stack} from "@mantine/core";
 import {IconForms, IconRowInsertBottom} from "@tabler/icons-react";
 import React, {useCallback} from "react";
 import {useSelector} from "react-redux";
-import {useActions} from "../hooks/settings";
+import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectQueryItems} from "../state/queries";
 import {buildQuery} from "../utils/structs";
@@ -10,7 +10,7 @@ import {CollapsiblePanel} from "./Layout/CollapsiblePanel";
 import {MemoStoredQuery as StoredQuery} from "./StoredQuery";
 
 export const ExplorerQueries = () => {
-  const actions = useActions();
+  const {actions} = useSettings();
 
   const currentQuery = useSelector(selectCurrentQueryItem);
   const items = useSelector(selectQueryItems);

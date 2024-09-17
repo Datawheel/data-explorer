@@ -6,41 +6,24 @@ import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
 import {buildQuery, buildQueryParams} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
-import {useActions} from "./settings";
+import {useSettings} from "./settings";
 
 /**
  * Keeps in sync the internal datasources with the setup parameters.
- *
- * @param {import("@datawheel/olap-client").ServerConfig} serverConfig
- * @param {string | string[]} locale
  */
-export function useSetup(serverConfig, locale, defaultCube) {
-  const actions = useActions();
+export function useSetup(params: {
+  serverConfig: RequestInit;
+  defaultLocale: string;
+  defaultCube: string;
+}) {
+  const {serverConfig, defaultCube, defaultLocale} = params;
 
-  const [done, setDone] = useState(false);
-
-  // ensure the locale variable is an array
-  const cleanLocale = useMemo(
-    () =>
-      typeof locale === "string"
-        ? locale.split(",").map(item => item.trim())
-        : asArray(locale).map(item => item.trim()),
-    [`${locale}`]
-  );
-
-  // Keep the locale list in sync with the server state
-  useEffect(() => {
-    actions.updateLocaleList(cleanLocale);
-  }, [cleanLocale]);
+  const {actions} = useSettings();
 
   // Initialize the internal state, from permalink, history API, or default.
   useEffect(() => {
-    actions.setLoadingState("FETCHING");
-    setDone(false);
-
     actions
-      .willSetupClient(serverConfig)
-      .then(() => actions.willReloadCubes())
+      .willSetupClient(params.serverConfig)
       .then(cubeMap => {
         let query;
         const searchString = window.location.search;
@@ -67,34 +50,34 @@ export function useSetup(serverConfig, locale, defaultCube) {
             isValidQuery(locationState) &&
             buildQuery({
               panel: searchObject.panel,
-              params: buildQueryParams({...locationState})
+              params: buildQueryParams({...locationState}),
             });
         } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState}});
         }
 
         if (!query || !hasOwnProperty(cubeMap, query.params.cube)) {
-          const cube = defaultCube && hasOwnProperty(cubeMap, defaultCube) ? defaultCube: Object.keys(cubeMap)[0];
+          const cube =
+            defaultCube && hasOwnProperty(cubeMap, defaultCube)
+              ? defaultCube
+              : Object.keys(cubeMap)[0];
           return actions.willHydrateParams(cube);
         }
 
         query.params.locale = query.params.locale || cleanLocale[0];
         actions.resetQueries({[query.key]: query});
         return actions.willHydrateParams();
-        // .then(() => actions.willExecuteQuery());
       })
       .then(
         () => {
           actions.setLoadingState("SUCCESS");
-          setDone(true);
         },
         error => {
           console.dir("There was an error during setup:", error);
           actions.setLoadingState("FAILURE", error.message);
-          setDone(true);
-        }
+        },
       );
-  }, [serverConfig]);
+  }, [actions, serverConfig]);
 
   return done;
 }

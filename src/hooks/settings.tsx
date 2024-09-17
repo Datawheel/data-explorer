@@ -1,8 +1,8 @@
-/* eslint-disable comma-dangle */
-import React, {createContext, useCallback, useContext, useMemo} from "react";
-import {type ExplorerActionMap} from "../state";
-import {Formatter, PanelDescriptor} from "../utils/types";
-import {usePermalink} from "./permalink";
+import React, { createContext, useCallback, useContext, useMemo } from "react";
+import type { TesseractCube, TesseractDataRequest } from "../api";
+import type { ExplorerActionMap } from "../state";
+import type { Formatter, PanelDescriptor } from "../utils/types";
+import { usePermalink } from "./permalink";
 
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
@@ -10,6 +10,93 @@ export type ExplorerBoundActionMap = {
     ExplorerActionMap[K] extends (...args: infer Params) => (...args) => infer R
       ? (...args: Params) => R
       : ExplorerActionMap[K];
+}
+
+export interface ExplorerSettings {
+  /**
+   * URL to the Tesseract server to use as backend.
+   */
+  serverUrl: string;
+
+  /**
+   * Extra parameters for all server requests. 
+   */
+  serverRequest: RequestInit;
+
+  /**
+   * Defines the default query parameters that will be used after the component first loads.
+   */
+  defaultQuery: TesseractDataRequest | ((cubes: TesseractCube[]) => TesseractDataRequest);
+
+  /**
+   * Specifies which property should be used to filter elements in the member
+   * selection control of the Cuts parameter area.
+   * @default "id"
+   */
+  defaultMembersFilter: "id" | "name" | "any";
+
+  /**
+   * Defines an index of formatter functions available to the measures shown
+   * in the app, besides a limited list of default ones. The key used comes
+   * from `measure.annotations.units_of_measurement`, if present.
+   */
+  formatters: Record<string, Formatter>;
+
+  /**
+   * The list of tabs to offer to the user to render the results.
+   * Must be an array of objects with the following properties:
+   * - `key`: a string to distinguish each panel, will be used in the URL params
+   * - `label`: a string used as the title for the panel in the tab bar.
+   * It will be passed through the internal translation function, so can be
+   * localized via the `translations` property or used directly as is.
+   * - `component`: a non-hydrated React Component.
+   * This will be passed the needed properties according to the specification.
+   * Rendering the panel supports the use of `React.lazy` to defer the load of
+   * heavy dependencies.
+   */
+  panels: PanelDescriptor[];
+
+  /**
+   * A component that is rendered to display the default "splash screen";
+   * the screen that is shown in the results panel when there is no query,
+   * or a query has been dirtied.
+   */
+  splash: React.ComponentType<{translation: TranslationContextProps}>;
+
+  /**
+   * The Translation labels to use in the UI.
+   */
+  translations: Record<string, TranslationDict>;
+
+  /**
+   * The default locale to use in the Explorer component UI.
+   * This value is passed to the Translation utility and controls the language
+   * for the labels throughout the user interface. Must be equal to one of the
+   * keys in the object provided to the `translations` property.
+   * @default "en"
+   */
+  locale: string;
+
+  /**
+   * Determines whether Explorer should be rendered within a MantineProvider
+   * @default true
+   */
+  withinMantineProvider: boolean;
+
+  /**
+   * Determines whether Explorer should be rendered within a Redux Provider,
+   * encapsulating its state, and making easier to install.
+   * @default false
+   */
+  withinReduxProvider: boolean;
+
+  /**
+   * Enables multiple queries mode.
+   * This adds a column where the user can quickly switch between queries,
+   * like tabs in a browser.
+   * @default false
+   */
+  withMultiQuery: boolean;
 }
 
 interface SettingsContextProps {

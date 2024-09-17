@@ -115,8 +115,8 @@ export function parseStateFromSearchParams(query: SerializedQuery): QueryParams 
     isPreview: query.preview === 1,
     locale: query.locale,
     measures: keyBy(asArray(query.measures).map(parseMeasure), getKey),
-    pagiLimit: 0,
-    pagiOffset: 0,
+    pageLimit: 0,
+    pageOffset: 0,
     sortDir: "desc",
     sortKey: undefined
   };

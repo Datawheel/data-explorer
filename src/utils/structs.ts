@@ -1,8 +1,14 @@
-
-import { Comparison, Measure, PlainLevel, PlainMeasure, PlainMember, PlainProperty } from "@datawheel/olap-client";
-import { asArray } from "./array";
-import { parseNumeric, randomKey } from "./string";
-import { joinName } from "./transform";
+import {
+  Comparison,
+  Measure,
+  PlainLevel,
+  PlainMeasure,
+  PlainMember,
+  PlainProperty,
+} from "@datawheel/olap-client";
+import {asArray} from "./array";
+import {parseNumeric, randomKey} from "./string";
+import {joinName} from "./transform";
 
 export interface QueryItem {
   created: string;
@@ -23,18 +29,19 @@ export interface QueryParams {
   locale: string | undefined;
   measures: Record<string, MeasureItem>;
   isPreview: boolean;
-  pagiLimit: number;
-  pagiOffset: number;
+  pageLimit: number;
+  pageOffset: number;
   sortDir: "asc" | "desc";
   sortKey: string | undefined;
+  ranking: boolean | Record<string, boolean>;
+  parents: boolean | string[];
 }
 
-export interface QueryResult<D = Record<string, string | number>> {
+export interface QueryResult<D = Record<string, unknown>> {
   data: D[];
   types: Record<string, AnyResultColumn>;
   error?: string;
   headers?: Record<string, string>;
-  sourceCall?: string | undefined;
   status: number;
   url: string;
 }
@@ -84,7 +91,7 @@ export interface DrilldownItem extends QueryParamsItem {
   properties: PropertyItem[];
   uniqueName: string;
   memberCount: number;
-  members: PlainMember[]
+  members: PlainMember[];
 }
 
 export interface FilterItem extends QueryParamsItem {
@@ -114,16 +121,14 @@ export interface PropertyItem extends QueryParamsItem {
 
 type RecursivePartial<T> = {
   [K in keyof T]?: T[K] extends string | boolean | number | bigint | symbol
-  ? T[K]
-  : RecursivePartial<T[K]>
-}
+    ? T[K]
+    : RecursivePartial<T[K]>;
+};
 
 /**
  * Creates a QueryItem object.
  */
-export function buildQuery(
-  props: RecursivePartial<QueryItem>
-): QueryItem {
+export function buildQuery(props: RecursivePartial<QueryItem>): QueryItem {
   return {
     created: props.created || new Date().toISOString(),
     key: props.key || randomKey(),
@@ -135,10 +140,9 @@ export function buildQuery(
       data: [],
       types: {},
       headers: {},
-      sourceCall: "",
       status: 0,
-      url: ""
-    }
+      url: "",
+    },
   };
 }
 
@@ -155,10 +159,11 @@ export function buildQueryParams(props): QueryParams {
     isPreview: props.isPreview || false,
     locale: props.locale || "",
     measures: props.measures || {},
-    pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
-    pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
-    sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
-    sortKey: props.sortKey || props.sortProperty || ""
+    pageLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
+    pageOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
+    sortDir:
+      props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
+    sortKey: props.sortKey || props.sortProperty || "",
   };
 }
 
@@ -180,7 +185,7 @@ export function buildCut(props): CutItem {
     key: props.key || randomKey(),
     level,
     members: Array.isArray(props.members) ? props.members : [],
-    uniqueName: props.uniqueName || level
+    uniqueName: props.uniqueName || level,
   };
 }
 
@@ -188,9 +193,8 @@ export function buildCut(props): CutItem {
  * Creates a DrilldownItem object.
  */
 export function buildDrilldown(props): DrilldownItem {
-  const dimType = typeof props.dimension === "object"
-    ? props.dimension.dimensionType
-    : props.dimType;
+  const dimType =
+    typeof props.dimension === "object" ? props.dimension.dimensionType : props.dimType;
   if (typeof props.toJSON === "function") {
     props = props.toJSON();
   }
@@ -209,10 +213,9 @@ export function buildDrilldown(props): DrilldownItem {
     members: props.members || [],
     memberCount: props.memberCount || props.members?.length || 0,
     properties: asArray(props.properties).map(buildProperty),
-    uniqueName: props.uniqueName || props.name || props.level
+    uniqueName: props.uniqueName || props.name || props.level,
   };
 }
-
 
 /**
  * Creates a FilterItem object.
@@ -240,14 +243,14 @@ export function buildFilter(props: {
     conditionOne: props.conditionOne || [
       props.const1 ? `${props.const1[0]}` : `${Comparison.GT}`,
       props.const1 ? props.const1[1].toString() : props.inputtedValue || "0",
-      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0)
+      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0),
     ],
     conditionTwo: props.conditionTwo || [
       props.const2 ? `${props.const2[0]}` : `${Comparison.GT}`,
       props.const2 ? props.const2[1].toString() : props.inputtedValue || "0",
-      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0)
+      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0),
     ],
-    joint: props.joint === "or" ? "or" : "and"
+    joint: props.joint === "or" ? "or" : "and",
   };
 }
 
@@ -264,7 +267,7 @@ export function buildMeasure(props: {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
     key: props.key || props.name || props.fullName || props.uri || `${props}`,
-    name: props.name || props.key || `${props}`
+    name: props.name || props.key || `${props}`,
   };
 }
 
@@ -275,7 +278,7 @@ export function buildMember(props): MemberItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
     key: props.uri || props.fullName || props.key,
-    name: props.name || props.key || `${props}`
+    name: props.name || props.key || `${props}`,
   };
 }
 
@@ -288,6 +291,6 @@ export function buildProperty(props): PropertyItem {
     key: props.uri || props.fullName || props.key || randomKey(),
     level: props.level,
     name: props.name || props.property,
-    uniqueName: props.uniqueName || props.name
+    uniqueName: props.uniqueName || props.name,
   };
 }

@@ -7,10 +7,26 @@
     "lineWidth": 90
   },
   "javascript": {
+    "jsxRuntime": "reactClassic",
     "formatter": {
       "arrowParentheses": "asNeeded",
       "bracketSpacing": false,
-      "trailingCommas": "all"
+      "trailingCommas": "es5"
+    }
+  },
+  "linter": {
+    "rules": {
+      "correctness": {
+        "useExhaustiveDependencies": {
+          "level": "error",
+          "options": {
+            "hooks": [
+              {"name": "useSettings", "stableResult": true},
+              {"name": "useActions", "stableResult": true}
+            ]
+          }
+        }
+      }
     }
   }
 }

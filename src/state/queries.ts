@@ -1,11 +1,25 @@
-import { PayloadAction as Action, createSelector, createSlice } from "@reduxjs/toolkit";
+import {
+  type PayloadAction as Action,
+  createSelector,
+  createSlice,
+} from "@reduxjs/toolkit";
 import ISO6391 from "iso-639-1";
-import { sortByDate } from "../utils/array";
-import { getKeys, getValues, hasOwnProperty } from "../utils/object";
-import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryItem, QueryParams, QueryResult, buildQuery, buildQueryParams } from "../utils/structs";
-import { isValidQueryVerbose } from "../utils/validation";
-import { selectServerState } from "./server";
-import type { ExplorerState } from "./store";
+import {sortByDate} from "../utils/array";
+import {getKeys, getValues, hasOwnProperty} from "../utils/object";
+import {
+  type CutItem,
+  type DrilldownItem,
+  type FilterItem,
+  type MeasureItem,
+  type QueryItem,
+  type QueryParams,
+  type QueryResult,
+  buildQuery,
+  buildQueryParams,
+} from "../utils/structs";
+import {isValidQueryVerbose} from "../utils/validation";
+import {selectServerState} from "./server";
+import type {ExplorerState} from "./store";
 
 export interface QueriesState {
   current: string;
@@ -17,8 +31,8 @@ const name = "explorerQueries";
 const initialState: QueriesState = {
   current: "default",
   itemMap: {
-    default: buildQuery({ key: "default" })
-  }
+    default: buildQuery({key: "default"}),
+  },
 };
 
 export const queriesSlice = createSlice({
@@ -33,7 +47,7 @@ export const queriesSlice = createSlice({
      * If passed a payload, replaces the query map from the application state
      * with its contents, and selects a new current query in the UI.
      */
-    resetQueries(state, { payload = {} }: Action<Record<string, any>>) {
+    resetQueries(state, {payload = {}}: Action<Record<string, any>>) {
       if (!hasOwnProperty(payload, state.current)) {
         state.current = Object.keys(payload)[0];
       }
@@ -67,7 +81,7 @@ export const queriesSlice = createSlice({
      * Updates the contents of a query.
      * The payload replaces the query in the state, instead of extending it.
      */
-    updateQuery(state, { payload }: Action<QueryItem>) {
+    updateQuery(state, {payload}: Action<QueryItem>) {
       state.itemMap[payload.key] = payload;
     },
 
@@ -93,11 +107,10 @@ export const queriesSlice = createSlice({
     removeDrilldown(state, action: Action<string>) {
       const query = taintCurrentQuery(state);
       delete query.params.drilldowns[action.payload];
-
     },
     /**
-      * Remove a single DrilldownItem from the current QueryItem.
-    */
+     * Remove a single DrilldownItem from the current QueryItem.
+     */
     removeMeasure(state, action: Action<string>) {
       const query = taintCurrentQuery(state);
       delete query.params.measures[action.payload];
@@ -153,7 +166,7 @@ export const queriesSlice = createSlice({
     /**
      * Sets the isPreview value for the current QueryItem.
      */
-    updateIsPreview(state, { payload }: Action<boolean | undefined>) {
+    updateIsPreview(state, {payload}: Action<boolean | undefined>) {
       const query = taintCurrentQuery(state);
       query.params.isPreview = payload || false;
     },
@@ -162,25 +175,29 @@ export const queriesSlice = createSlice({
      * Sets the value of a boolean in the current QueryItem.
      * If the action does not specify a new value, toggles the current value.
      */
-    updateBoolean(state, { payload }: Action<{ key: string, value?: boolean }>) {
+    updateBoolean(state, {payload}: Action<{key: string; value?: boolean}>) {
       const query = taintCurrentQuery(state);
-      query.params.booleans[payload.key] = typeof payload.value === "boolean"
-        ? payload.value
-        : !query.params.booleans[payload.key];
+      query.params.booleans[payload.key] =
+        typeof payload.value === "boolean"
+          ? payload.value
+          : !query.params.booleans[payload.key];
     },
 
     /**
      * Sets a new cube for the current QueryItem, and updates its available measures.
      */
-    updateCube(state, { payload }: Action<{ cube: string, measures: Record<string, MeasureItem> }>) {
+    updateCube(
+      state,
+      {payload}: Action<{cube: string; measures: Record<string, MeasureItem>}>
+    ) {
       const query = taintCurrentQuery(state);
       if (payload.cube !== query.params.cube) {
-        const { params, result } = buildQuery({
+        const {params, result} = buildQuery({
           params: {
             cube: payload.cube,
             measures: payload.measures,
-            locale: query.params.locale
-          }
+            locale: query.params.locale,
+          },
         });
         query.params = params;
         query.result = result;
@@ -194,7 +211,7 @@ export const queriesSlice = createSlice({
     /**
      * Replaces a single CutItem in the current QueryItem.
      */
-    updateCut(state, { payload }: Action<CutItem>) {
+    updateCut(state, {payload}: Action<CutItem>) {
       const query = taintCurrentQuery(state);
       query.params.cuts[payload.fullName] = payload;
     },
@@ -202,7 +219,7 @@ export const queriesSlice = createSlice({
     /**
      * Replaces a single DrilldownItem in the current QueryItem.
      */
-    updateDrilldown(state, { payload }: Action<DrilldownItem>) {
+    updateDrilldown(state, {payload}: Action<DrilldownItem>) {
       const query = taintCurrentQuery(state);
       query.params.drilldowns[payload.fullName] = payload;
     },
@@ -210,7 +227,7 @@ export const queriesSlice = createSlice({
     /**
      * Replaces a single FilterItem in the current QueryItem.
      */
-    updateFilter(state, { payload }: Action<FilterItem>) {
+    updateFilter(state, {payload}: Action<FilterItem>) {
       const query = taintCurrentQuery(state);
       query.params.filters[payload.key] = payload;
     },
@@ -218,7 +235,7 @@ export const queriesSlice = createSlice({
     /**
      * Replaces the locale setting in the current QueryItem.
      */
-    updateLocale(state, { payload }: Action<string>) {
+    updateLocale(state, {payload}: Action<string>) {
       const query = state.itemMap[state.current];
       if (payload !== query.params.locale) {
         // query.isDirty = true;
@@ -229,7 +246,7 @@ export const queriesSlice = createSlice({
     /**
      * Replaces a single MeasureItem in the current QueryItem.
      */
-    updateMeasure(state, { payload }: Action<MeasureItem>) {
+    updateMeasure(state, {payload}: Action<MeasureItem>) {
       const query = taintCurrentQuery(state);
       query.params.measures[payload.name] = payload;
     },
@@ -237,16 +254,16 @@ export const queriesSlice = createSlice({
     /**
      * Replaces the pagination settings in the current QueryItem.
      */
-    updatePagination(state, { payload }: Action<{ limit: number, offset: number }>) {
+    updatePagination(state, {payload}: Action<{limit: number; offset: number}>) {
       const query = taintCurrentQuery(state);
-      query.params.pagiLimit = payload.limit;
-      query.params.pagiOffset = payload.offset;
+      query.params.pageLimit = payload.limit;
+      query.params.pageOffset = payload.offset;
     },
 
     /**
      * Replaces the sorting settings in the current QueryItem.
      */
-    updateSorting(state, { payload }: Action<{ key: string, dir: "asc" | "desc" }>) {
+    updateSorting(state, {payload}: Action<{key: string; dir: "asc" | "desc"}>) {
       const query = taintCurrentQuery(state);
       query.params.sortDir = payload.dir;
       query.params.sortKey = payload.key;
@@ -255,16 +272,16 @@ export const queriesSlice = createSlice({
     /**
      * Registers the result of the current QueryItem in the store.
      */
-    updateResult(state, { payload }: Action<QueryResult>) {
+    updateResult(state, {payload}: Action<QueryResult>) {
       const query = state.itemMap[state.current];
       query.isDirty = payload.status < 200 || payload.status > 299;
       query.result = payload;
-    }
-  }
+    },
+  },
 });
 
 export const queriesActions = {
-  ...queriesSlice.actions
+  ...queriesSlice.actions,
 };
 
 /**
@@ -286,9 +303,8 @@ export function selectQueriesState(state: ExplorerState): QueriesState {
   return state[name];
 }
 
-export const selectQueryItems = createSelector(
-  selectQueriesState,
-  queries => sortByDate(Object.values(queries.itemMap), "created", false)
+export const selectQueryItems = createSelector(selectQueriesState, queries =>
+  sortByDate(Object.values(queries.itemMap), "created", false)
 );
 
 export const selectCurrentQueryItem = createSelector(
@@ -313,7 +329,7 @@ export const selectLocale = createSelector(
     return {
       code,
       name: ISO6391.getName(code),
-      nativeName: ISO6391.getNativeName(code)
+      nativeName: ISO6391.getNativeName(code),
     };
   }
 );
@@ -330,7 +346,10 @@ export const selectDrilldownMap = createSelector(
   params => params.drilldowns
 );
 export const selectDrilldownKeys = createSelector(selectDrilldownMap, getKeys);
-export const selectDrilldownItems = createSelector(selectDrilldownMap, getValues<DrilldownItem>);
+export const selectDrilldownItems = createSelector(
+  selectDrilldownMap,
+  getValues<DrilldownItem>
+);
 
 export const selectFilterMap = createSelector(
   selectCurrentQueryParams,
@@ -344,7 +363,10 @@ export const selectMeasureMap = createSelector(
   params => params.measures
 );
 export const selectMeasureKeys = createSelector(selectMeasureMap, getKeys);
-export const selectMeasureItems = createSelector(selectMeasureMap, getValues<MeasureItem>);
+export const selectMeasureItems = createSelector(
+  selectMeasureMap,
+  getValues<MeasureItem>
+);
 
 export const selectBooleans = createSelector(
   selectCurrentQueryParams,
@@ -357,15 +379,17 @@ export const selectIsPreviewMode = createSelector(
 
 export const selectPaginationParams = createSelector(
   selectCurrentQueryParams,
-  params => ({ limit: params.pagiLimit || 0, offset: params.pagiOffset || 0 })
+  params => ({
+    limit: params.pageLimit || 0,
+    offset: params.pageOffset || 0,
+  })
 );
 
-export const selectSortingParams = createSelector(
-  selectCurrentQueryParams,
-  params => ({ sortKey: params.sortKey || "", sortDir: params.sortDir })
-);
+export const selectSortingParams = createSelector(selectCurrentQueryParams, params => ({
+  sortKey: params.sortKey || "",
+  sortDir: params.sortDir,
+}));
 
-export const selectValidQueryStatus = createSelector(
-  selectCurrentQueryParams,
-  params => isValidQueryVerbose(params)
+export const selectValidQueryStatus = createSelector(selectCurrentQueryParams, params =>
+  isValidQueryVerbose(params)
 );

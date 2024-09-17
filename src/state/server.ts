@@ -1,24 +1,24 @@
-import type {PlainCube} from "@datawheel/olap-client";
 import {createSelector, createSlice, type PayloadAction} from "@reduxjs/toolkit";
+import type {TesseractCube} from "../api";
 import {getKeys, getValues} from "../utils/object";
 import type {ExplorerState} from "./store";
 
 export interface ServerState {
-  cubeMap: Record<string, PlainCube>;
+  cubeMap: Record<string, TesseractCube>;
+  defaultLocale: string;
   localeOptions: string[];
   online: boolean | undefined;
   url: string;
-  version: string;
 }
 
 const name = "explorerServer";
 
 const initialState: ServerState = {
   cubeMap: {},
-  localeOptions: ["en"],
+  defaultLocale: "",
+  localeOptions: [],
   online: undefined,
   url: "",
-  version: "",
 };
 
 export const serverSlice = createSlice({
@@ -35,7 +35,7 @@ export const serverSlice = createSlice({
     /**
      * Updates the list of locales supported by the current server.
      */
-    updateLocaleList(state, action: PayloadAction<string[]>) {
+    updateLocaleOptions(state, action: PayloadAction<string[]>) {
       state.localeOptions = action.payload;
     },
   },

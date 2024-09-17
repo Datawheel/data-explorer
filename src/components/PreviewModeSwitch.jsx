@@ -16,17 +16,15 @@ import {selectSerializedParams} from "../state/selectors";
 export const PreviewModeSwitch = props => {
   const withTooltip = !!props.withTooltip;
 
-  const actions = useActions();
-
   const {translate: t} = useTranslation();
 
   const isPreviewMode = useSelector(selectIsPreviewMode);
   const serialParams = useSelector(selectSerializedParams);
 
-  const {previewLimit} = useSettings();
+  const {actions, previewLimit} = useSettings();
 
   useEffect(() => {
-    isPreviewMode && actions.willRequestQuery();
+    isPreviewMode && actions.underLoadingScreen(actions.willExecuteQuery());
   }, [isPreviewMode, serialParams]);
 
   const onClickLoadAllResults = useCallback(() => {
