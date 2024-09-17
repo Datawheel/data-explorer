@@ -1,18 +1,23 @@
 import {
-  Format,
-  LevelDescriptor,
+  type LevelDescriptor,
   Client as OLAPClient,
-  PlainCube,
-  PlainMember,
-  ServerConfig,
-  TesseractDataSource
+  type PlainCube,
+  type PlainMember,
+  type ServerConfig,
+  TesseractDataSource,
 } from "@datawheel/olap-client";
+import type {TesseractFormat} from "../api";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
-import {applyQueryParams, extractQueryParams} from "../utils/query";
-import {AnyResultColumn, QueryItem, buildMeasure, buildQuery} from "../utils/structs";
+import {applyQueryParams, buildDataRequest, extractQueryParams} from "../utils/query";
+import {
+  type AnyResultColumn,
+  type QueryItem,
+  buildMeasure,
+  buildQuery,
+} from "../utils/structs";
 import {keyBy} from "../utils/transform";
-import {FileDescriptor} from "../utils/types";
+import type {FileDescriptor} from "../utils/types";
 import {isValidQuery} from "../utils/validation";
 import {loadingActions} from "./loading";
 import {
@@ -22,49 +27,39 @@ import {
   selectCurrentQueryParams,
   selectLocale,
   selectMeasureItems,
-  selectQueryItems
+  selectQueryItems,
 } from "./queries";
+import {selectOlapDimensionItems} from "./selectors";
 import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
-import {ExplorerThunk} from "./store";
+import type {ExplorerThunk} from "./store";
 import {calcMaxMemberCount, hydrateDrilldownProperties} from "./utils";
-import {selectOlapCube, selectOlapDimensionItems} from "./selectors";
 
 /**
  * Initiates a new download of the queried data by the current parameters.
  *
- * @param format
- *   The format the user wants the data to be. Must be a string equal to one
- *   in OlapClient.Format.
+ * @param format - The format the user wants the data to be.
+ * @returns A blob with the data contents, in the request format.
  */
-export function willDownloadQuery(format: Format): ExplorerThunk<Promise<FileDescriptor>> {
-  return (dispatch, getState, {olapClient, previewLimit}) => {
+export function willDownloadQuery(
+  format: `${TesseractFormat}`,
+): ExplorerThunk<Promise<FileDescriptor>> {
+  return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
+
     if (!isValidQuery(params)) {
       return Promise.reject(new Error("The current query is not valid."));
     }
 
-    const axios = olapClient.datasource.axiosInstance;
-    return olapClient.getCube(params.cube).then(cube => {
-      const filename = `${cube.name}_${new Date().toISOString()}`;
-      const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
-      console.log({format})
-      const query = applyQueryParams(cube.query, queryParams, {previewLimit}).setFormat(format);
-      const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
-
-      return Promise.all([
-        axios({url: dataURL, responseType: "blob"}).then(response => response.data),
-        calcMaxMemberCount(query, params, dispatch).then(maxRows => {
-          if (maxRows > 50000) {
-            dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
-          }
-        })
-      ]).then(result => ({
+    const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
+    return tesseract
+      .fetchData({request: buildDataRequest(queryParams), format})
+      .then(response => response.blob())
+      .then(result => ({
         content: result[0],
         extension: format.replace(/json\w+/, "json"),
-        name: filename
+        name: `${params.cube}_${new Date().toISOString()}`,
       }));
-    });
   };
 }
 

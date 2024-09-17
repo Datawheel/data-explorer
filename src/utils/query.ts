@@ -1,7 +1,71 @@
-import { Measure, Query } from "@datawheel/olap-client";
-import { CutItem, DrilldownItem, FilterItem, MeasureItem, QueryParams, QueryParamsItem, buildCut, buildDrilldown, buildFilter, buildMeasure } from "./structs";
-import { keyBy } from "./transform";
-import { isActiveCut, isActiveItem } from "./validation";
+import {Measure, type Query} from "@datawheel/olap-client";
+import type {TesseractDataRequest} from "../api";
+import {filterMap} from "./array";
+import {
+  type CutItem,
+  type DrilldownItem,
+  type FilterItem,
+  type MeasureItem,
+  type QueryParams,
+  type QueryParamsItem,
+  buildCut,
+  buildDrilldown,
+  buildFilter,
+  buildMeasure,
+} from "./structs";
+import {keyBy} from "./transform";
+import {isActiveCut, isActiveItem} from "./validation";
+
+export function buildDataRequest(params: QueryParams): TesseractDataRequest {
+  return {
+    cube: params.cube,
+    locale: params.locale,
+    drilldowns: filterMap(Object.values(params.drilldowns), item =>
+      item.active ? item.level : null,
+    ).join(","),
+    measures: filterMap(Object.values(params.measures), item =>
+      item.active ? item.name : null,
+    ).join(","),
+    properties: filterMap(Object.values(params.drilldowns), item =>
+      item.active
+        ? filterMap(item.properties, item => (item.active ? item.name : null))
+        : null,
+    )
+      .flat()
+      .join(","),
+    include: filterMap(Object.values(params.cuts), item =>
+      item.active ? `${item.level}:${item.members.join(",")}` : null,
+    ).join(";"),
+    // exclude: filterMap(Object.values(params.exclude), item =>
+    //   item.active ? `${item.level}:${item.members.join(",")}` : null,
+    // ).join(";"),
+    filters: filterMap(Object.values(params.filters), item =>
+      item.active
+        ? `${item.measure}.${strFilterCondition(item.conditionOne)}${
+            item.conditionTwo
+              ? `.${item.joint}.${strFilterCondition(item.conditionTwo)}`
+              : ""
+          }`
+        : null,
+    ).join(";"),
+    limit: `${params.pageLimit || 0},${params.pageOffset || 0}`,
+    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
+    sparse: params.sparse,
+    ranking:
+      typeof params.ranking === "boolean"
+        ? params.ranking
+        : Object.entries(params.ranking)
+            .map(item => (item[1] ? "-" : "") + item[0])
+            .sort()
+            .join(","),
+    parents:
+      typeof params.parents === "boolean" ? params.parents : params.parents.join(","),
+  };
+
+  function strFilterCondition(cond: [string, string, number]): string {
+    return `${cond[0]}.${cond[2]}`;
+  }
+}
 
 /**
  * Applies the properties set on a QueryParams object
