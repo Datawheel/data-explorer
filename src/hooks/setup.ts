@@ -1,49 +1,33 @@
 import formUrlDecode from "form-urldecoded";
-import {useEffect, useMemo, useState} from "react";
-import {asArray} from "../utils/array";
+import {useEffect} from "react";
 import {hasOwnProperty} from "../utils/object";
 import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
-import {buildQuery, buildQueryParams} from "../utils/structs";
+import {type QueryItem, buildQuery, buildQueryParams} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
-import {useActions} from "./settings";
+import {useSettings} from "./settings";
 
 /**
  * Keeps in sync the internal datasources with the setup parameters.
- *
- * @param {import("@datawheel/olap-client").ServerConfig} serverConfig
- * @param {string | string[]} locale
  */
-export function useSetup(serverConfig, locale, defaultCube) {
-  const actions = useActions();
-  const [done, setDone] = useState(false);
-
-  // ensure the locale variable is an array
-  const cleanLocale = useMemo(
-    () =>
-      typeof locale === "string"
-        ? locale.split(",").map(item => item.trim())
-        : asArray(locale).map(item => item.trim()),
-    [`${locale}`]
-  );
-
-  // Keep the locale list in sync with the server state
-  useEffect(() => {
-    actions.updateLocaleList(cleanLocale);
-  }, [cleanLocale]);
+export function useSetup(
+  serverURL: string,
+  serverConfig: RequestInit,
+  defaultLocale?: string,
+  defaultCube?: string,
+) {
+  const {actions} = useSettings();
 
   // Initialize the internal state, from permalink, history API, or default.
   useEffect(() => {
-    actions.resetServer({});
+    actions.resetServer();
     actions.resetAllParams({});
     actions.setLoadingState("FETCHING");
-    setDone(false);
 
     actions
-      .willSetupClient(serverConfig)
-      .then(() => actions.willReloadCubes())
+      .willSetupClient(serverURL, defaultLocale, serverConfig)
       .then(cubeMap => {
-        let query;
+        let query: QueryItem | undefined;
         const searchString = window.location.search;
         const historyState = window.history.state;
 
@@ -64,22 +48,25 @@ export function useSetup(serverConfig, locale, defaultCube) {
           }
           // else, search params are a Explorer state permalink
           const locationState = parseStateFromSearchParams(searchObject);
-          query =
-            isValidQuery(locationState) &&
-            buildQuery({
-              panel: searchObject.panel,
-              params: buildQueryParams({...locationState})
-            });
+          query = isValidQuery(locationState)
+            ? buildQuery({
+                panel: searchObject.panel,
+                params: buildQueryParams({...locationState}),
+              })
+            : undefined;
         } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState}});
         }
 
         if (!query || !hasOwnProperty(cubeMap, query.params.cube)) {
-          const cube = defaultCube && hasOwnProperty(cubeMap, defaultCube) ? defaultCube: Object.keys(cubeMap)[0];
+          const cube =
+            defaultCube && hasOwnProperty(cubeMap, defaultCube)
+              ? defaultCube
+              : Object.keys(cubeMap)[0];
           return actions.willHydrateParams(cube);
         }
 
-        query.params.locale = query.params.locale || cleanLocale[0];
+        query.params.locale = query.params.locale || defaultLocale;
         actions.resetQueries({[query.key]: query});
         return actions.willHydrateParams();
         // .then(() => actions.willExecuteQuery());
@@ -87,15 +74,11 @@ export function useSetup(serverConfig, locale, defaultCube) {
       .then(
         () => {
           actions.setLoadingState("SUCCESS");
-          setDone(true);
         },
         error => {
           console.dir("There was an error during setup:", error);
           actions.setLoadingState("FAILURE", error.message);
-          setDone(true);
-        }
+        },
       );
-  }, [serverConfig]);
-
-  return done;
+  }, [serverURL, serverConfig, defaultLocale, defaultCube]);
 }

@@ -1,8 +1,3 @@
-import {
-  Client as OLAPClient,
-  type ServerConfig,
-  TesseractDataSource,
-} from "@datawheel/olap-client";
 import type {TesseractCube, TesseractFormat, TesseractMembersResponse} from "../api";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
@@ -28,7 +23,7 @@ import {
   selectMeasureItems,
   selectQueryItems,
 } from "./queries";
-import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
+import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
 import {
   calcMaxMemberCount,
@@ -348,43 +343,37 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
 }
 
 /**
- * Setups data server configuration on the global client instance.
- * Sets a new DataSource to the client instance, gets the server info, and
- * initializes the general state accordingly.
+ * Sets the necessary info for the client instance to be able to connect to the
+ * server, then loads the base data from its schema.
  */
-export function willSetupClient(serverConfig: ServerConfig): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, {olapClient: client}) =>
-    OLAPClient.dataSourceFromURL(serverConfig)
-      .then(datasource => {
-        client.setDataSource(datasource);
+export function willSetupClient(
+  baseURL: string,
+  defaultLocale?: string,
+  requestConfig?: RequestInit,
+): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
+  return (dispatch, getState, {tesseract}) => {
+    tesseract.baseURL = baseURL;
+    Object.assign(tesseract.requestConfig, requestConfig || {headers: new Headers()});
 
-        return client.checkStatus();
-      })
-      .then(
-        serverInfo => {
-          dispatch(
-            serverActions.updateServer({
-              online: serverInfo.online,
-              software: serverInfo.software,
-              url: serverInfo.url,
-              version: serverInfo.version,
-              endpoint:
-                serverInfo.software === TesseractDataSource.softwareName
-                  ? "logiclayer"
-                  : "aggregate"
-            })
-          );
-        },
-        error => {
-          dispatch(
-            serverActions.updateServer({
-              online: false,
-              software: "",
-              url: error.config.url,
-              version: ""
-            })
-          );
-          throw error;
-        }
-      );
+    return tesseract.fetchSchema({locale: defaultLocale}).then(
+      schema => {
+        const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
+        const cubeMap = keyBy(cubes, "name");
+        dispatch(
+          serverActions.updateServer({
+            cubeMap,
+            locale: defaultLocale || schema.default_locale,
+            localeOptions: schema.locales,
+            online: true,
+            url: baseURL,
+          }),
+        );
+        return cubeMap;
+      },
+      error => {
+        dispatch(serverActions.updateServer({online: false, url: baseURL}));
+        throw error;
+      },
+    );
+  };
 }
