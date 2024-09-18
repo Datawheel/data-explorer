@@ -1,6 +1,5 @@
-import formUrlDecode from "form-urldecoded";
 import {useEffect} from "react";
-import {hasOwnProperty} from "../utils/object";
+import {hasProperty} from "../utils/object";
 import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
 import {type QueryItem, buildQuery, buildQueryParams} from "../utils/structs";
@@ -27,30 +26,25 @@ export function useSetup(
     actions
       .willSetupClient(serverURL, defaultLocale, serverConfig)
       .then(cubeMap => {
-        let query: QueryItem | undefined;
-        const searchString = window.location.search;
+        const search = new URLSearchParams(window.location.search);
         const historyState = window.history.state;
+        let query: QueryItem | undefined;
 
-        if (searchString) {
-          // The current URL contains search params, parse them
-          // We need to decode them using this function, as reconstructs arrays
-          /** @type {import("../utils/permalink").SerializedQuery | {query: string}} */
-          const searchObject = formUrlDecode(searchString);
+        const base64 = search.get("query");
+        if (base64) {
+          // Search params are a base64-encoded OLAP server URL
+          const decodedURL = decodeUrlFromBase64(base64);
+          actions.willParseQueryUrl(decodedURL);
+          return;
+        }
 
-          if ("query" in searchObject) {
-            // Search params are a base64-encoded OLAP server URL
-            const decodedURL = decodeUrlFromBase64(searchObject.query);
-            const url = new URL(decodedURL);
-            return actions
-              .willParseQueryUrl(url)
-              .then(() => actions.willHydrateParams())
-              .then(() => actions.willExecuteQuery());
-          }
-          // else, search params are a Explorer state permalink
-          const locationState = parseStateFromSearchParams(searchObject);
+        const cubeName = search.get("cube");
+        if (cubeName) {
+          // Search params are a QueryItem permalink
+          const locationState = parseStateFromSearchParams(cubeMap[cubeName], search);
           query = isValidQuery(locationState)
             ? buildQuery({
-                panel: searchObject.panel,
+                panel: search.get("panel") || "table",
                 params: buildQueryParams({...locationState}),
               })
             : undefined;
@@ -58,23 +52,21 @@ export function useSetup(
           query = buildQuery({params: {...historyState}});
         }
 
-        if (!query || !hasOwnProperty(cubeMap, query.params.cube)) {
-          const cube =
-            defaultCube && hasOwnProperty(cubeMap, defaultCube)
-              ? defaultCube
-              : Object.keys(cubeMap)[0];
-          return actions.willHydrateParams(cube);
+        if (!query || !hasProperty(cubeMap, query.params.cube)) {
+          return defaultCube && hasProperty(cubeMap, defaultCube)
+            ? defaultCube
+            : Object.keys(cubeMap)[0];
         }
 
-        query.params.locale = query.params.locale || defaultLocale;
-        actions.resetQueries({[query.key]: query});
-        return actions.willHydrateParams();
-        // .then(() => actions.willExecuteQuery());
+        if (query) {
+          query.params.locale = query.params.locale || defaultLocale;
+          actions.resetQueries({[query.key]: query});
+        }
       })
+      .then(actions.willHydrateParams)
+      // .then(() => actions.willExecuteQuery())
       .then(
-        () => {
-          actions.setLoadingState("SUCCESS");
-        },
+        () => actions.setLoadingState("SUCCESS"),
         error => {
           console.dir("There was an error during setup:", error);
           actions.setLoadingState("FAILURE", error.message);

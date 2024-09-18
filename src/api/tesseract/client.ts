@@ -1,3 +1,4 @@
+import type {Format} from "../enum";
 import {httpFetch, toPlainObject} from "../tools";
 import type {
   TesseractCube,
@@ -8,20 +9,11 @@ import type {
   TesseractStatus,
 } from "./schema";
 
-export enum Format {
-  csv = "csv",
-  jsonarrays = "jsonarrays",
-  jsonrecords = "jsonrecords",
-  parquet = "parquet",
-  tsv = "tsv",
-  xlsx = "xlsx",
-}
+export type TesseractFormat = Format;
 
 export class TesseractModuleClient {
   baseURL: string;
   requestConfig: RequestInit;
-
-  static formats = Format;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;

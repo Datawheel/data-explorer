@@ -21,9 +21,10 @@ export function getValues<T>(map: { [s: string]: T }): T[] {
 /**
  * Safe method to check if an object contains a property.
  */
-export function hasOwnProperty(obj: any, property: string): boolean {
+export function hasProperty(obj: any, property: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, property);
 }
+export const hasOwnProperty = hasProperty;
 
 /**
  * Parse and convert order value from an schema object

@@ -1,3 +1,4 @@
+import type {Format} from "../enum";
 import {httpFetch, toPlainObject} from "../tools";
 import type {
   CommonRequest,
@@ -12,20 +13,11 @@ import type {
   TesseractSchema,
 } from "./schema";
 
-export enum Format {
-  csv = "csv",
-  jsonarrays = "jsonarrays",
-  jsonrecords = "jsonrecords",
-  parquet = "parquet",
-  tsv = "tsv",
-  xlsx = "xlsx",
-}
+export type ComplexityFormat = Format;
 
 export class ComplexityModuleClient {
   baseURL: string;
   requestConfig: RequestInit;
-
-  static formats = Format;
 
   constructor(baseURL: string) {
     this.baseURL = baseURL;

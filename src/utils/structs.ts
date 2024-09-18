@@ -191,10 +191,21 @@ export function buildCut(props): CutItem {
 /**
  * Creates a DrilldownItem object.
  */
-export function buildDrilldown(props): DrilldownItem {
-  if (typeof props.toJSON === "function") {
-    props = props.toJSON();
-  }
+export function buildDrilldown(props: {
+  active?: boolean;
+  key?: string;
+  name?: string;
+  fullName?: string;
+  dimension?: string;
+  hierarchy?: string;
+  level?: string;
+  members?: {key: string | number; caption?: string}[];
+  memberCount?: number;
+  captionProperty?: string;
+  properties?: {name: string; active: boolean; level: string}[];
+  uniqueName?: string;
+  uri?: string;
+}): DrilldownItem {
   const dimension = `${props.dimension}`;
   const hierarchy = `${props.hierarchy}`;
   const level = `${props.level || props.name}`;
@@ -206,13 +217,12 @@ export function buildDrilldown(props): DrilldownItem {
     hierarchy,
     key: props.key || randomKey(),
     level,
-    members: props.members || [],
+    members: Array.isArray(props.members) ? props.members : [],
     memberCount: props.memberCount || props.members?.length || 0,
     properties: asArray(props.properties).map(buildProperty),
-    uniqueName: props.uniqueName || props.name || props.level
+    uniqueName: props.uniqueName || level,
   };
 }
-
 
 /**
  * Creates a FilterItem object.

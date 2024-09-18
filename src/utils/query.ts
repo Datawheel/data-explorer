@@ -1,17 +1,14 @@
-import {Measure, type Query} from "@datawheel/olap-client";
-import type {TesseractDataRequest} from "../api";
+import type {Query} from "@datawheel/olap-client";
+import {Comparison, type TesseractDataRequest} from "../api";
+import type {TesseractCube} from "../api/tesseract/schema";
 import {filterMap} from "./array";
 import {
-  type CutItem,
-  type DrilldownItem,
-  type FilterItem,
-  type MeasureItem,
   type QueryParams,
-  type QueryParamsItem,
   buildCut,
   buildDrilldown,
   buildFilter,
   buildMeasure,
+  buildProperty,
 } from "./structs";
 import {keyBy} from "./transform";
 import {isActiveCut, isActiveItem} from "./validation";
@@ -67,6 +64,102 @@ export function buildDataRequest(params: QueryParams): TesseractDataRequest {
   }
 }
 
+export function extractDataRequest(
+  cube: TesseractCube,
+  search: URLSearchParams,
+): QueryParams {
+  const dimensions: Record<string, string> = {};
+  const hierarchies: Record<string, string> = {};
+  const levels = Object.fromEntries(
+    cube.dimensions.flatMap(dim =>
+      dim.hierarchies.flatMap(hie =>
+        hie.levels.map(lvl => {
+          dimensions[lvl.name] = dim.name;
+          hierarchies[lvl.name] = hie.name;
+          return [lvl.name, lvl];
+        }),
+      ),
+    ),
+  );
+
+  const properties = getList(search, "properties", ",");
+  const drilldowns = getList(search, "drilldowns", ",").map(name => {
+    const lvl = levels[name];
+    return buildDrilldown({
+      active: true,
+      dimension: dimensions[name],
+      hierarchy: hierarchies[name],
+      level: name,
+      properties: filterMap(lvl.properties, prop =>
+        properties.includes(prop.name)
+          ? buildProperty({name: prop.name, level: name, active: true})
+          : null,
+      ),
+    });
+  });
+  const cuts = getList(search, "include", ";").map(cut => {
+    const [name, members] = cut.split(":");
+    const lvl = levels[name];
+    return buildCut({
+      active: true,
+      dimension: dimensions[name],
+      hierarchy: hierarchies[name],
+      level: name,
+      members: members.split(","),
+    });
+  });
+  const measures = getList(search, "measures", ",").map(name =>
+    buildMeasure({name, active: true}),
+  );
+  const filters = getList(search, "filters", ",").map(filter => {
+    const dotName = filter.indexOf(".");
+    const condition = filter.slice(dotName + 1);
+    const joint = condition.includes(".and.") ? "and" : "or";
+    const [cond1, cond2] = condition.split(joint);
+    return buildFilter({
+      active: true,
+      measure: filter.slice(0, dotName),
+      joint,
+      conditionOne: parseFilterCondition(cond1),
+      conditionTwo: cond2 ? parseFilterCondition(cond2) : undefined,
+    });
+  });
+
+  const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
+  const [sortKey, sortDir] = (search.get("sort") || "").split(".");
+
+  return {
+    cube: cube.name,
+    locale: search.get("locale") || undefined,
+    drilldowns: keyBy(drilldowns, "key"),
+    measures: keyBy(measures, "key"),
+    cuts: keyBy(cuts, "key"),
+    filters: keyBy(filters, "key"),
+    pagiLimit: Number(limit),
+    pagiOffset: Number(offset),
+    sortDir: sortDir === "asc" ? "asc" : "desc",
+    sortKey: sortKey || undefined,
+    isPreview: false,
+    booleans: {
+      // parents: search.get("parents") || undefined,
+    },
+  };
+
+  function getList(params: URLSearchParams, key: string, separator: string): string[] {
+    return params
+      .getAll(key)
+      .join(separator)
+      .split(separator)
+      .filter(token => token);
+  }
+
+  function parseFilterCondition(value: string): [Comparison, string, number] {
+    const index = value.indexOf(".");
+    const number = value.slice(index + 1);
+    return [Comparison[value.slice(0, index)], number, Number(number)];
+  }
+}
+
 /**
  * Applies the properties set on a QueryParams object
  * to an OlapClient Query object.
@@ -76,9 +169,8 @@ export function applyQueryParams(
   params: QueryParams,
   settings: {
     previewLimit: number;
-  }
+  },
 ) {
-
   Object.entries(params.booleans).forEach(item => {
     item[1] != null && query.setOption(item[0], item[1]);
   });
@@ -87,20 +179,22 @@ export function applyQueryParams(
     isActiveCut(item) && query.addCut(item, item.members);
   });
 
-
   Object.values(params.filters).forEach(item => {
-    isActiveItem(item) && query.addFilter(item.measure, item.conditionOne,
-      item.joint && item.conditionTwo ? item.joint : "",
-      item.joint && item.conditionTwo ? item.conditionTwo : "")
+    isActiveItem(item) &&
+      query.addFilter(
+        item.measure,
+        item.conditionOne,
+        item.joint && item.conditionTwo ? item.joint : "",
+        item.joint && item.conditionTwo ? item.conditionTwo : "",
+      );
   });
 
   Object.values(params.drilldowns).forEach(item => {
     if (!isActiveItem(item)) return;
     query.addDrilldown(item);
-    item.captionProperty &&
-      query.addCaption({ ...item, property: item.captionProperty });
+    item.captionProperty && query.addCaption({...item, property: item.captionProperty});
     item.properties.forEach(prop => {
-      isActiveItem(prop) && query.addProperty({ ...item, property: prop.name });
+      isActiveItem(prop) && query.addProperty({...item, property: prop.name});
     });
   });
 
@@ -117,64 +211,9 @@ export function applyQueryParams(
 
   if (params.isPreview) {
     query.setPagination(settings.previewLimit, 0);
-  }
-  else {
+  } else {
     query.setPagination(params.pagiLimit || 0, params.pagiOffset);
   }
 
   return query;
-}
-
-/**
- * Extracts the properties set in an OlapClient Query object
- * to a new QueryParams object.
- */
-export function extractQueryParams(query: Query): QueryParams {
-  const cube = query.cube;
-
-  const booleans = query.getParam("options");
-  // TODO: parse properties too
-  const drilldowns = query.getParam("drilldowns").map(buildDrilldown);
-  const filters = query.getParam("filters").map(buildFilter);
-  const measures = query.getParam("measures").map(buildMeasure);
-
-  const cutRecord = query.getParam("cuts");
-  const cuts = Object.keys(cutRecord).map(cutLevel => {
-    const level = cube.getLevel(cutLevel);
-    return buildCut({
-      ...level.toJSON(),
-      active: true,
-      members: cutRecord[cutLevel],
-      membersLoaded: false
-    });
-  });
-
-  const pagination = query.getParam("pagination");
-  const sorting = query.getParam("sorting");
-
-  const getKey = <T extends QueryParamsItem>(item: T) => item.key;
-
-  return {
-    booleans: {
-      debug: Boolean(booleans.debug),
-      distinct: Boolean(booleans.distinct),
-      exclude_default_members: Boolean(booleans.exclude_default_members),
-      nonempty: Boolean(booleans.nonempty),
-      parents: Boolean(booleans.parents),
-      sparse: Boolean(booleans.sparse)
-    },
-    cube: cube.name,
-    cuts: keyBy<CutItem>(cuts, getKey),
-    drilldowns: keyBy<DrilldownItem>(drilldowns, getKey),
-    filters: keyBy<FilterItem>(filters, getKey),
-    locale: query.getParam("locale"),
-    measures: keyBy<MeasureItem>(measures, getKey),
-    pagiLimit: pagination.limit,
-    pagiOffset: pagination.offset,
-    isPreview: true,
-    sortDir: sorting.direction === "asc" ? "asc" : "desc",
-    sortKey: Measure.isMeasure(sorting.property)
-      ? sorting.property.name
-      : `${sorting.property || ""}`
-  };
 }

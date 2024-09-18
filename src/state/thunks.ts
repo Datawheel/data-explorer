@@ -1,7 +1,7 @@
 import type {TesseractCube, TesseractFormat, TesseractMembersResponse} from "../api";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
-import {applyQueryParams, buildDataRequest, extractQueryParams} from "../utils/query";
+import {applyQueryParams, buildDataRequest, extractDataRequest} from "../utils/query";
 import {
   type AnyResultColumn,
   type QueryItem,
@@ -235,15 +235,23 @@ export function willHydrateParams(suggestedCube?: string): ExplorerThunk<Promise
  * object, and inyects it into a new QueryItem in the UI.
  */
 export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, {olapClient}) =>
-    olapClient.parseQueryURL(url.toString(), {anyServer: true}).then(query => {
-      extractQueryParams(query);
+  return (dispatch, getState) => {
+    const state = getState();
+    const cubeMap = selectOlapCubeMap(state);
+
+    const search = new URL(url).searchParams;
+    const cube = search.get("cube");
+    if (cube && cubeMap[cube]) {
       const queryItem = buildQuery({
-        params: extractQueryParams(query)
+        panel: search.get("panel") || "table",
+        params: extractDataRequest(cubeMap[cube], search),
       });
       dispatch(queriesActions.updateQuery(queryItem));
       dispatch(queriesActions.selectQuery(queryItem.key));
-    });
+    }
+
+    return Promise.resolve();
+  };
 }
 
 /**
@@ -272,7 +280,9 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
+
     if (!isValidQuery(params)) return Promise.resolve();
+
     dispatch(loadingActions.setLoadingState("FETCHING"));
     return dispatch(willExecuteQuery()).then(
       () => {
@@ -280,7 +290,7 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
       },
       error => {
         dispatch(loadingActions.setLoadingState("FAILURE", error.message));
-      }
+      },
     );
   };
 }
