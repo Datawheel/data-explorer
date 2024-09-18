@@ -219,8 +219,8 @@ function SuccessResult(props: {
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
             <Group sx={{display: "flex", flex: "0 1 auto"}} mr="sm" noWrap>
-              <AddColumnsDrawer />
               <Toolbar table={table} fullscreen={fullscreen} />
+              <AddColumnsDrawer />
             </Group>
           )}
         </Flex>
