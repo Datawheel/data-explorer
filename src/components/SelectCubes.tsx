@@ -22,8 +22,7 @@ import {useSideBar} from "./SideBar";
 import Graph from "../utils/graph";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import yn from "yn";
-import {deriveDrilldowns} from "../state/utils";
-import {useSelectCube} from "../hooks/useSelectCube";
+import {pickDefaultDrilldowns} from "../state/utils";
 import {stringifyName} from "../utils/transform";
 
 export function SelectCube() {
@@ -89,7 +88,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
       const [dimension] = dimensions;
       if (measure && dimension) {
         updateMeasure({...measure, active: true});
-        const drilldowns = deriveDrilldowns(dimensions);
+        const drilldowns = pickDefaultDrilldowns(dimensions);
         if (measure && drilldowns.length > 0) {
           updateMeasure({...measure, active: true});
           for (const level of drilldowns) {
@@ -211,8 +210,9 @@ function CubeTree({
       actions.setLoadingState("FETCHING");
       actions.resetAllParams(newQuery);
       actions.updateResult({data: [], types: {}, url: "", status: 200});
-
-      return actions.willSetCube(cube.name);
+      actions.willSetCube(cube.name).then(() => {
+        actions.setLoadingState("SUCCESS");
+      });
     }
   };
 
@@ -335,7 +335,6 @@ function CubeButton({
   locale: string;
   parent?: string;
 }) {
-  const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
 
   const table = graph.getName(item, locale);
@@ -361,7 +360,7 @@ function CubeButton({
           : t.colors.gray[3],
         overflow: "hidden"
       })}
-      onClick={callback(item, subtopic)}
+      onClick={() => onSelectCube(item, subtopic)}
     >
       {table}
     </Text>

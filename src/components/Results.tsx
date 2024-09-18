@@ -5,7 +5,6 @@ import {type PlainCube} from "@datawheel/olap-client";
 import Graph from "../utils/graph";
 import {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
-import {useSelectCube} from "../hooks/useSelectCube";
 import {getAnnotation} from "../utils/string";
 
 type Props = {
@@ -26,7 +25,6 @@ function Results(props: Props) {
   const {onSelectCube, graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
-  const callback = useSelectCube(onSelectCube);
   const result: React.ReactElement[] = [];
 
   if (map) {
@@ -51,7 +49,7 @@ function Results(props: Props) {
                     : classes.link
                 }
                 onClick={() => {
-                  callback(item, subtopic)();
+                  onSelectCube(item, subtopic);
                   setExpanded(false);
                   setInput("");
                 }}

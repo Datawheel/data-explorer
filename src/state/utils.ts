@@ -1,11 +1,18 @@
-import {Cube, Level, PlainDimension, PlainLevel, Property, Query} from "@datawheel/olap-client";
-import {filterMap} from "../utils/array";
-import {CutItem, DrilldownItem, QueryParams, buildDrilldown, buildProperty} from "../utils/structs";
-import {isActiveItem} from "../utils/validation";
+import {type Cube, Level, type PlainLevel, type Query} from "@datawheel/olap-client";
 import {actions} from ".";
-import {ExplorerDispatch} from "./store";
+import type {TesseractDimension, TesseractLevel} from "../api/tesseract/schema";
+import {filterMap} from "../utils/array";
+import {
+  type CutItem,
+  type DrilldownItem,
+  type QueryParams,
+  buildDrilldown,
+  buildProperty,
+} from "../utils/structs";
 import {buildCut} from "../utils/structs";
 import {stringifyName} from "../utils/transform";
+import {isActiveItem} from "../utils/validation";
+import type {ExplorerDispatch} from "./store";
 
 const createCutHandler = (
   cuts: Record<string, CutItem>,
@@ -100,30 +107,20 @@ export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownI
 /**
  * Derives drilldowns from dimensions
  */
+export function pickDefaultDrilldowns(dimensions: TesseractDimension[]) {
+  const levels: TesseractLevel[] = [];
 
-export function deriveDrilldowns(dimensions) {
-  const drilldowns: any[] = [];
-  const findDefaultHierarchy = d => d.hierarchies.find(h => h.name === d.defaultHierarchy);
-  const timeDim = dimensions.find(d => d.dimensionType === "time");
+  const findDefaultHierarchy = (dim: TesseractDimension) =>
+    dim.hierarchies.find(h => h.name === dim.default_hierarchy) || dim.hierarchies[0];
 
-  if (timeDim) {
-    const timeDrilldown = findDefaultHierarchy(timeDim).levels[0];
-    drilldowns.push(timeDrilldown);
-  }
-
-  for (const dim of dimensions) {
-    if (dim.type !== "time" && drilldowns.length < 4) {
-      if (dim.hierarchies.length === 1) {
-        const {levels} = dim.hierarchies[0];
-        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
-        drilldowns.push(levels[levelIndex]);
-      } else {
-        const {levels} = findDefaultHierarchy(dim);
-        // uses deeper level for geo dimensions
-        const levelIndex = dim.type === "geo" ? levels.length - 1 : 0;
-        drilldowns.push(levels[levelIndex]);
-      }
+  for (const dimension of dimensions) {
+    if (dimension.type === "time" || levels.length < 4) {
+      const {levels} = findDefaultHierarchy(dimension);
+      // uses deeper level for geo dimensions
+      const levelIndex = dimension.type === "geo" ? levels.length - 1 : 0;
+      levels.push(levels[levelIndex]);
     }
   }
-  return drilldowns;
+
+  return levels;
 }

@@ -1,6 +1,5 @@
 import {
   Client as OLAPClient,
-  type PlainCube,
   type ServerConfig,
   TesseractDataSource,
 } from "@datawheel/olap-client";
@@ -11,12 +10,14 @@ import {applyQueryParams, buildDataRequest, extractQueryParams} from "../utils/q
 import {
   type AnyResultColumn,
   type QueryItem,
+  buildCut,
+  buildDrilldown,
   buildMeasure,
   buildQuery,
 } from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import type {FileDescriptor} from "../utils/types";
-import {isValidQuery} from "../utils/validation";
+import {isValidQuery, noop} from "../utils/validation";
 import {loadingActions} from "./loading";
 import {
   queriesActions,
@@ -27,10 +28,13 @@ import {
   selectMeasureItems,
   selectQueryItems,
 } from "./queries";
-import {selectOlapDimensionItems} from "./selectors";
 import {selectOlapCubeMap, selectServerEndpoint, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
-import {calcMaxMemberCount, hydrateDrilldownProperties} from "./utils";
+import {
+  calcMaxMemberCount,
+  hydrateDrilldownProperties,
+  pickDefaultDrilldowns,
+} from "./utils";
 
 /**
  * Initiates a new download of the queried data by the current parameters.
@@ -295,31 +299,51 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
  *   The name of the cube we intend to switch to.
  */
 export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, {olapClient}) => {
+  return (dispatch, getState) => {
     const state = getState();
-    const currentMeasures = selectMeasureItems(state);
-    const currentActiveMeasures = filterMap(currentMeasures, item =>
-      item.active ? item.name : null
+
+    const cubeMap = selectOlapCubeMap(state);
+    const nextCube = cubeMap[cubeName];
+    if (!nextCube) return Promise.resolve();
+
+    const currMeasures = selectMeasureItems(state);
+    const measureStatus = Object.fromEntries(
+      currMeasures.map(item => [item.name, item.active]),
+    );
+    const nextMeasures = nextCube.measures.map((measure, index) =>
+      buildMeasure({
+        active: measureStatus[measure.name] || !index,
+        key: measure.name,
+        name: measure.name,
+      }),
     );
 
-    return olapClient.getCube(cubeName).then(cube => {
-      const measures = filterMap(cube.measures, measure =>
-        buildMeasure({
-          active: currentActiveMeasures.includes(measure.name),
-          key: measure.name,
-          name: measure.name
-        })
-      );
-      dispatch(
-        queriesActions.updateCube({
-          cube: cube.name,
-          measures: keyBy(measures, item => item.key)
-        })
-      );
+    const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
+      buildDrilldown({...level, active: true}),
+    );
 
-      const dimensions = selectOlapDimensionItems(getState());
-      return {cube, measures, dimensions};
+    dispatch(
+      queriesActions.updateCube({
+        cube: nextCube.name,
+        measures: keyBy(nextMeasures, item => item.key),
+        drilldowns: keyBy(nextDrilldowns, item => item.key),
+      }),
+    );
+
+    const promises = nextDrilldowns.map(dd => {
+      return dispatch(willFetchMembers(dd.level)).then(levelMeta => {
+        dispatch(
+          queriesActions.updateDrilldown({
+            ...dd,
+            memberCount: levelMeta.members.length,
+            members: levelMeta.members,
+          }),
+        );
+        dispatch(queriesActions.updateCut(buildCut({...dd, active: false})));
+      });
     });
+
+    return Promise.all(promises).then(noop);
   };
 }
 
