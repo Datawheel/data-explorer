@@ -251,7 +251,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
         const term = [permaKey, page];
         setDebouncedTerm(term);
       },
-      loadingState.loading ? 0 : 700
+      loadingState.loading ? 0 : 800
     );
     handler();
     return () => handler.cancel();

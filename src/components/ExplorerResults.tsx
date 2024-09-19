@@ -218,9 +218,9 @@ function SuccessResult(props: {
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Group sx={{display: "flex", flex: "0 1 auto"}} mr="sm" noWrap>
-              <AddColumnsDrawer />
+            <Group sx={{display: "flex", flex: "0 1 auto", gap: "0.5rem"}} mr="sm" noWrap>
               <Toolbar table={table} fullscreen={fullscreen} />
+              <AddColumnsDrawer />
             </Group>
           )}
         </Flex>
