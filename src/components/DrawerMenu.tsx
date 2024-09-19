@@ -46,7 +46,8 @@ import {
   IconMathLower,
   IconStack3,
   IconSettings,
-  IconArrowsLeftRight
+  IconArrowsLeftRight,
+  IconPlus
 } from "@tabler/icons-react";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {getCaption} from "../utils/string";
@@ -69,7 +70,7 @@ function AddColumnsDrawer() {
         onClose={close}
         title={
           <Group>
-            <IconStack3 size="1rem" />
+            <IconPlus size="1.2rem" />
             <Text fw={700}>{t("params.add_columns")}</Text>
           </Group>
         }
@@ -99,7 +100,7 @@ function AddColumnsDrawer() {
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
-          <Button leftIcon={<IconStack3 size="1rem" />} onClick={open} m="md" size="xs">
+          <Button leftIcon={<IconPlus size="1.2rem" />} onClick={open} m="md" size="sm">
             {t("params.add_columns")}
           </Button>
         )}
@@ -123,6 +124,7 @@ function DrillDownOptions() {
   const dimensions = useSelector(selectOlapDimensionItems) || [];
 
   const activeItems = selectedDimensions.filter(i => i.active);
+  const activeCount = activeItems.length;
 
   const options = useMemo(
     () =>
@@ -132,15 +134,16 @@ function DrillDownOptions() {
           locale={locale.code}
           key={dimension.uri}
           activeItems={activeItems}
+          activeCount={activeCount} // Pass the active count
         />
       )),
-    [dimensions, activeItems]
+    [dimensions, activeItems, activeCount]
   );
 
   return options;
 }
 
-function DimensionItem({dimension, locale, activeItems}) {
+function DimensionItem({dimension, locale, activeItems, activeCount}) {
   const isChildSubMenu = dimension.hierarchies.length !== 1;
 
   const options = dimension.hierarchies.map(hie => (
@@ -151,6 +154,7 @@ function DimensionItem({dimension, locale, activeItems}) {
       key={hie.uri}
       locale={locale}
       activeItems={activeItems}
+      activeCount={activeCount}
     />
   ));
 
@@ -161,7 +165,7 @@ function DimensionItem({dimension, locale, activeItems}) {
   return options;
 }
 
-function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
+function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, activeCount}) {
   const {translate: t} = useTranslation();
 
   const label = useMemo(() => {
@@ -187,6 +191,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
       level={lvl}
       locale={locale}
       activeItems={activeItems}
+      activeCount={activeCount}
     />
   ));
 
@@ -197,13 +202,14 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
   return options;
 }
 
-function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}) {
+function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems, activeCount}) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
   const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
+  const dimensions = useSelector(selectOlapDimensionItems);
 
   const label = useMemo(() => {
     const captions = [
@@ -275,6 +281,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   const checked = activeItems.map(stringifyName).includes(stringifyName(level));
+  const disableUncheck = activeCount === 1 && checked;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
   const isDisabled = isOtherHierarchySelected && !checked;
@@ -295,7 +302,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
             checked={checked}
             label={label}
             size="xs"
-            disabled={isDisabled} // Disable checkbox if another hierarchy is selected
+            disabled={isDisabled || disableUncheck}
           />
           <Group sx={{flexWrap: "nowrap"}}>
             <ActionIcon
@@ -566,17 +573,24 @@ function FilterItem({
   const isBetween = filterFn === "between";
   const checked = activeItems.map(active => active.measure.name).includes(measure.name);
   const actions = useActions();
+
+  const isLastSelected = activeItems.length === 1 && checked;
+
   return (
     <Box key={measure.name}>
       <Group mt="sm" position="apart">
         <Checkbox
           onChange={() => {
-            actions.updateMeasure({...measure, active: !measure.active});
-            actions.updateFilter({...filter, active: checked ? false : true});
+            // Only toggle the measure if it's not the last one selected
+            if (!isLastSelected) {
+              actions.updateMeasure({...measure, active: !measure.active});
+              actions.updateFilter({...filter, active: checked ? false : true});
+            }
           }}
           checked={checked}
           label={measure.name}
           size="xs"
+          disabled={isLastSelected} // Disable checkbox if it's the last one selected
         />
         <Group sx={{flexWrap: "nowrap"}}>
           {activeFilter && <FilterFnsMenu filter={filter} />}
@@ -600,4 +614,5 @@ function FilterItem({
     </Box>
   );
 }
+
 export default AddColumnsDrawer;
