@@ -292,6 +292,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems,
       <>
         <Group mt="sm" position="apart" key={level.uri} noWrap>
           <Checkbox
+            sx={{cursor: "pointer"}}
             onChange={() => {
               if (cut) {
                 const active = checked ? false : cut.members.length ? true : false;
@@ -580,6 +581,7 @@ function FilterItem({
     <Box key={measure.name}>
       <Group mt="sm" position="apart">
         <Checkbox
+          sx={{cursor: "pointer"}}
           onChange={() => {
             // Only toggle the measure if it's not the last one selected
             if (!isLastSelected) {
