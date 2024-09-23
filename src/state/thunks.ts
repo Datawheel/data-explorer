@@ -4,10 +4,10 @@ import {describeData} from "../utils/object";
 import {applyQueryParams, buildDataRequest, extractDataRequest} from "../utils/query";
 import {
   type AnyResultColumn,
-  type QueryItem,
   buildCut,
   buildDrilldown,
   buildMeasure,
+  buildProperty,
   buildQuery,
 } from "../utils/structs";
 import {keyBy} from "../utils/transform";
@@ -25,11 +25,7 @@ import {
 } from "./queries";
 import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
-import {
-  calcMaxMemberCount,
-  hydrateDrilldownProperties,
-  pickDefaultDrilldowns,
-} from "./utils";
+import {buildLevelMap, calcMaxMemberCount, pickDefaultDrilldowns} from "./utils";
 
 /**
  * Initiates a new download of the queried data by the current parameters.
@@ -173,54 +169,63 @@ export function willFetchMembers(
  * @param suggestedCube
  *   The cube to resolve the missing data from.
  */
-export function willHydrateParams(suggestedCube?: string): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState, {olapClient}) => {
+export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState) => {
     const state = getState();
     const cubeMap = selectOlapCubeMap(state);
     const queries = selectQueryItems(state);
 
+    const defaultCube = cubeMap[suggestedCube] || Object.values(cubeMap)[0];
+
     const queryPromises = queries.map(queryItem => {
       const {params} = queryItem;
-      const {cube: paramCube, measures: measureItems} = params;
+      const {measures: measureItems} = params;
 
-      // if params.cube is "" (default), use the suggested cube
-      // if was set from permalink/state, check if valid, else use suggested
-      /* eslint-disable indent, operator-linebreak */
-      const cubeName =
-        paramCube && cubeMap[paramCube]
-          ? paramCube
-          : suggestedCube && cubeMap[suggestedCube]
-          ? suggestedCube
-          : /* else                              */ Object.keys(cubeMap)[0];
-      /* eslint-enable */
+      const cube = cubeMap[params.cube] || defaultCube;
+      const levelMap = buildLevelMap(cube);
 
-      return olapClient.getCube(cubeName).then((cube): QueryItem => {
-        const resolvedMeasures = cube.measures.map(measure =>
-          buildMeasure(
-            measureItems[measure.name] || {
-              active: false,
-              key: measure.name,
-              name: measure.name
-            }
-          )
+      const resolvedMeasures = cube.measures.map(measure =>
+        buildMeasure(
+          measureItems[measure.name] || {
+            active: false,
+            key: measure.name,
+            name: measure.name,
+          },
+        ),
+      );
+
+      const resolvedDrilldowns = filterMap(Object.values(params.drilldowns), item => {
+        const [dimension, hierarchy, level] = levelMap[item.level] || [];
+        if (!level) return null;
+        const activeProperties = filterMap(item.properties, prop =>
+          prop.active ? prop.name : null,
         );
-
-        const resolvedDrilldowns = filterMap(
-          Object.values(params.drilldowns),
-          item => hydrateDrilldownProperties(cube, item) || null
-        );
-
-        return {
-          ...queryItem,
-          params: {
-            ...params,
-            locale: params.locale || state.explorerServer.localeOptions[0],
-            cube: cubeName,
-            drilldowns: keyBy(resolvedDrilldowns, item => item.key),
-            measures: keyBy(resolvedMeasures, item => item.key)
-          }
-        };
+        return level
+          ? buildDrilldown({
+              ...item,
+              dimension: dimension.name,
+              hierarchy: hierarchy.name,
+              properties: level.properties.map(property =>
+                buildProperty({
+                  active: activeProperties.includes(property.name),
+                  level: level.name,
+                  name: property.name,
+                }),
+              ),
+            })
+          : null;
       });
+
+      return {
+        ...queryItem,
+        params: {
+          ...params,
+          locale: params.locale || state.explorerServer.locale,
+          cube: cube.name,
+          drilldowns: keyBy(resolvedDrilldowns, item => item.key),
+          measures: keyBy(resolvedMeasures, item => item.key),
+        },
+      };
     });
 
     return Promise.all(queryPromises).then(resolvedQueries => {
@@ -324,7 +329,13 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     );
 
     const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
-      buildDrilldown({...level, active: true}),
+      buildDrilldown({
+        ...level,
+        active: true,
+        properties: level.properties.map(prop =>
+          buildProperty({level: level.name, name: prop.name}),
+        ),
+      }),
     );
 
     dispatch(

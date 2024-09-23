@@ -1,17 +1,12 @@
-import {type Cube, Level, type PlainLevel, type Query} from "@datawheel/olap-client";
+import {Level, type PlainLevel, type Query} from "@datawheel/olap-client";
 import {actions} from ".";
-import type {TesseractDimension, TesseractLevel} from "../api/tesseract/schema";
-import {filterMap} from "../utils/array";
-import {
-  type CutItem,
-  type DrilldownItem,
-  type QueryParams,
-  buildDrilldown,
-  buildProperty,
-} from "../utils/structs";
-import {buildCut} from "../utils/structs";
+import type {
+  TesseractCube,
+  TesseractDimension,
+  TesseractLevel,
+} from "../api/tesseract/schema";
+import {type CutItem, type QueryParams, buildCut, buildDrilldown} from "../utils/structs";
 import {stringifyName} from "../utils/transform";
-import {isActiveItem} from "../utils/validation";
 import type {ExplorerDispatch} from "./store";
 
 const createCutHandler = (
@@ -75,33 +70,19 @@ export function calcMaxMemberCount(query: Query, params: QueryParams, dispatch: 
 }
 
 /**
- * Updates the list of properties of a DrilldownItem.
+ * Creates a map object to reference a level name with its parent entities.
  */
-export function hydrateDrilldownProperties(cube: Cube, drilldownItem: DrilldownItem) {
-  const activeProperties = filterMap(drilldownItem.properties, prop =>
-    isActiveItem(prop) ? prop.name : null
+export function buildLevelMap(cube: TesseractCube) {
+  return Object.fromEntries(
+    cube.dimensions.flatMap(dimension =>
+      dimension.hierarchies.flatMap(hierarchy =>
+        hierarchy.levels.map(level => [
+          level.name,
+          [dimension, hierarchy, level] as const,
+        ]),
+      ),
+    ),
   );
-  for (const level of cube.levelIterator) {
-    if (level.matches(drilldownItem)) {
-      return buildDrilldown({
-        ...drilldownItem,
-        // key: stringifyName(drilldownItem),
-        fullName: level.fullName,
-        uniqueName: level.uniqueName,
-        dimType: level.dimension.dimensionType,
-        properties: level.properties.map(property =>
-          buildProperty({
-            active: activeProperties.includes(property.name),
-            level: level.uniqueName,
-            name: property.name,
-            uniqueName: property.uniqueName
-          })
-        )
-      });
-    }
-  }
-
-  return drilldownItem;
 }
 
 /**
