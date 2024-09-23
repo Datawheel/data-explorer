@@ -1,8 +1,10 @@
-import type { PlainCube } from "@datawheel/olap-client";
-import { filterMap } from "./array";
-import { getCaption, parseNumeric } from "./string";
-import type { AnyResultColumn, QueryParams } from "./structs";
-import type { Annotated } from "./types";
+import type {TesseractCube} from "../api";
+import {mapCubeEntities} from "../api/traverse";
+import {filterMap} from "./array";
+import {getCaption, parseNumeric} from "./string";
+import type {AnyResultColumn, QueryParams} from "./structs";
+import type {Annotated} from "./types";
+import {hasProperty} from "./validation";
 
 /**
  * Wraps `Object.keys` for reusability.
@@ -20,10 +22,8 @@ export function getValues<T>(map: { [s: string]: T }): T[] {
 
 /**
  * Safe method to check if an object contains a property.
+ * @deprecated
  */
-export function hasProperty(obj: any, property: string): boolean {
-  return Object.prototype.hasOwnProperty.call(obj, property);
-}
 export const hasOwnProperty = hasProperty;
 
 /**
@@ -41,71 +41,52 @@ export function getOrderValue<T extends Annotated>(schemaObject: T) {
  * the types, ranges and values in it.
  */
 export function describeData(
-  cube: PlainCube,
+  cube: TesseractCube,
   params: QueryParams,
-  data: Record<string, any>[]
+  data: Record<string, unknown>[],
 ): Record<string, AnyResultColumn> {
-  const { locale } = params;
-  const measureMap = new Map(cube.measures.map(msr => [msr.name, msr]));
-  const measures = filterMap(Object.values(params.measures), item =>
-    measureMap.get(item.name) || null
-  );
+  const {locale} = params;
 
-  const dimensionMap = new Map(
-    cube.dimensions.map(dim => [dim.name, new Map(
-      dim.hierarchies.map(hie => [hie.name, new Map(
-        hie.levels.map(lvl => [lvl.name, lvl])
-      )])
-    )])
-  );
-  const drilldowns = filterMap(Object.values(params.drilldowns), item => {
-    const hierarchyMap = dimensionMap.get(item.dimension);
-    const levelMap = hierarchyMap?.get(item.hierarchy);
-    const level = levelMap?.get(item.level);
-    if (!level) return null;
-    const properties = filterMap(item.properties, prop => prop.active
-      ? level.properties.find(item => item.name === prop.name) || null
-      : null
-    );
-    return [level, ...properties];
-  }).flat(1);
-
+  const entityMap = mapCubeEntities(cube);
   const entityFinder = (name: string) => {
     const nameWoId = name.replace(/^ID\s|\sID$/, "");
-    return (
-      drilldowns.find(item => item.uniqueName === name) ||
-      measures.find(item => item.name === name) ||
-      drilldowns.find(item => item.name === name) ||
-      drilldowns.find(item => item.uniqueName === nameWoId) ||
-      measures.find(item => item.name === nameWoId) ||
-      drilldowns.find(item => item.name === nameWoId)
-    );
+    return entityMap[name] || entityMap[nameWoId];
   };
 
   return Object.fromEntries(
-    filterMap<string, [string, AnyResultColumn]>(Object.keys(data[0] || {}), key => {
-      const entity = entityFinder(key);
+    filterMap(Object.keys(data[0] || {}), column => {
+      const entity = entityFinder(column);
       if (!entity) return null;
-      const typeSet = new Set(data.map(item => typeof item[key]));
-      /* eslint-disable indent, operator-linebreak */
+      const typeSet = new Set(data.map(item => typeof item[column]));
       const valueType =
-        typeSet.size === 1 ?
-          typeSet.has("number") ? "number" :
-            typeSet.has("boolean") ? "boolean" :
-          /* else */ "string" :
-          typeSet.has("number") ? "number" : "string";
-      /* eslint-enable indent, operator-linebreak */
-      const isId = key !== entity.name;
-      return [key, {
-        label: key,
-        localeLabel: getCaption(entity, locale) + (isId ? " ID" : "") || key,
-        entity,
-        entityType: entity._type,
-        isId,
-        range: valueType === "number" ? getDomain(data, key) : undefined,
-        valueType
-      } as AnyResultColumn];
-    })
+        typeSet.size === 1
+          ? typeSet.has("number")
+            ? "number"
+            : typeSet.has("boolean")
+              ? "boolean"
+              : /* else */ "string"
+          : typeSet.has("number")
+            ? "number"
+            : "string";
+      const isId = column !== entity.name;
+      const entityType = hasProperty(entity, "aggregator")
+        ? "measure"
+        : hasProperty(entity, "depth")
+          ? "level"
+          : "property";
+      return [
+        column,
+        {
+          label: column,
+          localeLabel: getCaption(entity, locale) + (isId ? " ID" : "") || column,
+          entity,
+          entityType,
+          isId,
+          range: valueType === "number" ? getDomain(data, column) : undefined,
+          valueType,
+        } as AnyResultColumn,
+      ];
+    }),
   );
 }
 
@@ -114,14 +95,17 @@ export function describeData(
  * The array needs to be sliced because the amount of acceptable arguments
  * to the Math.max/Math.min functions is limited, and varies across browsers.
  */
-function getDomain(data: Record<string, number>[], key: string): [number, number] {
-  const iterations = Math.ceil(data.length / 30000);
-  let max = -Infinity, min = Infinity;
+function getDomain(data: Record<string, unknown>[], column: string): [number, number] {
+  const batch = 20000;
+  const iterations = Math.ceil(data.length / batch);
+  let [min, max] = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+
   for (let index = 0; index < iterations; index++) {
-    const slice = data.slice(index * 30000, (index + 1) * 30000);
-    const values = slice.map(item => item[key]);
+    const slice = data.slice(index * batch, (index + 1) * batch);
+    const values = slice.map(item => item[column] as number);
     min = Math.min(min, ...values);
     max = Math.max(max, ...values);
   }
+
   return [min, max];
 }

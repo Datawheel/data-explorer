@@ -1,10 +1,9 @@
-import {
-  Comparison,
-  Measure,
-  type PlainLevel,
-  type PlainMeasure,
-  type PlainProperty,
-} from "@datawheel/olap-client";
+import {Comparison} from "../api/enum";
+import type {
+  TesseractLevel,
+  TesseractMeasure,
+  TesseractProperty,
+} from "../api/tesseract/schema";
 import {asArray} from "./array";
 import {parseNumeric, randomKey} from "./string";
 import {joinName} from "./transform";
@@ -34,20 +33,19 @@ export interface QueryParams {
   sortKey: string | undefined;
 }
 
-export interface QueryResult<D = Record<string, string | number>> {
+export interface QueryResult<D = Record<string, unknown>> {
   data: D[];
   types: Record<string, AnyResultColumn>;
   error?: string;
   headers?: Record<string, string>;
-  sourceCall?: string | undefined;
   status: number;
   url: string;
 }
 
 interface ResultEntityType {
-  level: PlainLevel;
-  property: PlainProperty;
-  measure: PlainMeasure;
+  level: TesseractLevel;
+  property: TesseractProperty;
+  measure: TesseractMeasure;
 }
 
 export interface ResultColumn<T extends keyof ResultEntityType> {
@@ -230,7 +228,7 @@ export function buildDrilldown(props: {
 export function buildFilter(props: {
   active?: boolean;
   key?: string;
-  measure?: Measure | string;
+  measure?: string;
   name?: string;
   const1?: [Comparison, number];
   const2?: [Comparison, number];
@@ -244,9 +242,7 @@ export function buildFilter(props: {
   return {
     key: props.key || randomKey(),
     active: typeof props.active === "boolean" ? props.active : true,
-    measure: Measure.isMeasure(props.measure)
-      ? props.measure.name
-      : props.measure || `${props.name}`,
+    measure: props.measure || `${props.name}`,
     conditionOne: props.conditionOne || [
       props.const1 ? `${props.const1[0]}` : `${Comparison.GT}`,
       props.const1 ? props.const1[1].toString() : props.inputtedValue || "0",

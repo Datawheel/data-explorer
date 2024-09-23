@@ -1,9 +1,15 @@
-import type {TesseractCube, TesseractFormat, TesseractMembersResponse} from "../api";
+import type {
+  TesseractCube,
+  TesseractDataResponse,
+  TesseractFormat,
+  TesseractMembersResponse,
+} from "../api";
+import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
-import {applyQueryParams, buildDataRequest, extractDataRequest} from "../utils/query";
+import {buildDataRequest, extractDataRequest} from "../utils/query";
 import {
-  type AnyResultColumn,
+  type QueryResult,
   buildCut,
   buildDrilldown,
   buildMeasure,
@@ -17,15 +23,15 @@ import {loadingActions} from "./loading";
 import {
   queriesActions,
   selectCubeName,
-  selectCurrentQueryItem,
   selectCurrentQueryParams,
   selectLocale,
   selectMeasureItems,
   selectQueryItems,
 } from "./queries";
+import {selectOlapCube} from "./selectors";
 import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
-import {buildLevelMap, calcMaxMemberCount, pickDefaultDrilldowns} from "./utils";
+import {pickDefaultDrilldowns} from "./utils";
 
 /**
  * Initiates a new download of the queried data by the current parameters.
@@ -62,84 +68,61 @@ export function willDownloadQuery(
  * This operation does not activate the Loading overlay in the UI; you must use
  * `willRequestQuery()` for that.
  */
-type willExecuteQueryType = {
+export function willExecuteQuery(params?: {
   limit?: number;
   offset?: number;
-};
+}): ExplorerThunk<Promise<QueryResult>> {
+  const {limit, offset} = params || {};
 
-type APIResponse = Partial<{
-  data: any;
-  types: Record<string, AnyResultColumn>;
-}>;
-
-export function willExecuteQuery({limit, offset}: willExecuteQueryType = {}): ExplorerThunk<
-  Promise<APIResponse>
-> {
-  return (dispatch, getState, {olapClient, previewLimit}) => {
+  return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-    const endpoint = selectServerEndpoint(state);
-    const isPrefetch = limit && offset;
+    const cube = selectOlapCube(state);
 
-    const allParams = isPrefetch ? {...params, pagiLimit: limit, pagiOffset: offset} : params;
-    const {result: currentResult} = selectCurrentQueryItem(state);
+    if (!isValidQuery(params) || !cube) return Promise.resolve();
 
-    if (!isValidQuery(params)) return Promise.resolve();
-    return olapClient.getCube(params.cube).then(async cube => {
-      const query = applyQueryParams(cube.query, allParams, {previewLimit});
+    const request = buildDataRequest(params);
+    if (limit && offset) {
+      request.limit = `${limit},${offset}`;
+    }
 
-      const axios = olapClient.datasource.axiosInstance;
-      const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
-      return Promise.all([
-        axios({url: dataURL}).then(response => {
-          return {
-            data: response.data,
-            headers: {...response.headers} as Record<string, string>,
-            query,
-            status: response.status
-          };
-        }),
-        calcMaxMemberCount(query, allParams, dispatch).then(maxRows => {
-          if (maxRows > 50000) {
-            dispatch(loadingActions.setLoadingMessage({type: "HEAVY_QUERY", rows: maxRows}));
-          }
-        })
-      ]).then(
-        result => {
-          const [aggregation] = result;
-          const {data, headers, status} = aggregation;
-          // !isPrefetch &&
-          dispatch(
-            queriesActions.updateResult({
-              data: data?.data,
-              types: data?.data.length
-                ? describeData(cube.toJSON(), params, data?.data)
-                : currentResult.types,
-              headers: {...headers},
-              sourceCall: query.toSource(),
-              status: status || 500,
-              url: query.toString(endpoint)
-            })
-          );
-
-          return {
-            data,
-            types: data?.data.length ? describeData(cube.toJSON(), params, data?.data) : {}
-          };
-        },
-        error => {
-          dispatch(
-            queriesActions.updateResult({
-              data: [],
-              types: {},
-              error: error.message,
-              status: error?.response?.status ?? 500,
-              url: query.toString(endpoint)
-            })
-          );
-        }
-      );
-    });
+    return tesseract.fetchData({request, format: "jsonrecords"}).then(
+      response =>
+        response.json().then(
+          (content: TesseractDataResponse) => {
+            if (!response.ok) {
+              // TODO: error detection
+            } else {
+              const {payload} = dispatch(
+                queriesActions.updateResult({
+                  data: content.data,
+                  types: describeData(cube, params, content.data),
+                  headers: Object.fromEntries(response.headers),
+                  status: response.status || 200,
+                  url: response.url,
+                }),
+              );
+              return payload;
+            }
+          },
+          error => {
+            // Syntax error: failed attempt to parse JSON
+          },
+        ),
+      error => {
+        // Network error
+        // CORS error
+        const {payload} = dispatch(
+          queriesActions.updateResult({
+            data: [],
+            types: {},
+            error: error.message,
+            status: 0,
+            url: "",
+          }),
+        );
+      },
+    );
   };
 }
 
@@ -182,7 +165,7 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
       const {measures: measureItems} = params;
 
       const cube = cubeMap[params.cube] || defaultCube;
-      const levelMap = buildLevelMap(cube);
+      const levelMap = mapDimensionHierarchyLevels(cube);
 
       const resolvedMeasures = cube.measures.map(measure =>
         buildMeasure(
