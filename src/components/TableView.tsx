@@ -165,7 +165,7 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
 }
 
 type TableProps = {
-  cube: PlainCube;
+  cube: TesseractCube;
   result: QueryResult<Record<string, string | number>>;
   /**
    * Defines which columns will be rendered and which will be hidden.

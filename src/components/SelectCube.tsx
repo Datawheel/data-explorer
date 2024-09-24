@@ -1,7 +1,7 @@
-import {type PlainCube} from "@datawheel/olap-client";
-import {Anchor, Stack, Text, TextProps} from "@mantine/core";
+import {Anchor, Stack, Text, type TextProps} from "@mantine/core";
 import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
+import type {TesseractCube} from "../api";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectLocale} from "../state/queries";
@@ -9,11 +9,11 @@ import {selectOlapCube} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
 import {getAnnotation, getCaption} from "../utils/string";
 import {groupBy} from "../utils/transform";
-import {Annotated} from "../utils/types";
+import type {Annotated} from "../utils/types";
 import {SelectWithButtons} from "./Select";
 
 const SelectLevel = SelectWithButtons<string>;
-const SelectPlainCube = SelectWithButtons<PlainCube>;
+const SelectPlainCube = SelectWithButtons<TesseractCube>;
 
 /** */
 export function SelectCube() {
@@ -29,14 +29,14 @@ export function SelectCube() {
 
 /** */
 function SelectCubeInternal(props: {
-  items: PlainCube[];
-  selectedItem: PlainCube | undefined;
+  items: TesseractCube[];
+  selectedItem: TesseractCube | undefined;
 }) {
   const {items, selectedItem} = props;
 
   const actions = useActions();
 
-  const onItemSelect = useCallback((cube: PlainCube) => {
+  const onItemSelect = useCallback((cube: TesseractCube) => {
     actions.willSetCube(cube.name);
   }, []);
 
