@@ -1,9 +1,8 @@
 import {useEffect} from "react";
-import {hasProperty} from "../utils/object";
 import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
 import {type QueryItem, buildQuery, buildQueryParams} from "../utils/structs";
-import {isValidQuery} from "../utils/validation";
+import {hasProperty, isValidQuery} from "../utils/validation";
 import {useSettings} from "./settings";
 
 /**

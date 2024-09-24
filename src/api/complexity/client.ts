@@ -1,4 +1,4 @@
-import type {Format} from "../enum";
+import {Format} from "../enum";
 import {httpFetch, toPlainObject} from "../tools";
 import type {
   CommonRequest,
@@ -13,7 +13,7 @@ import type {
   TesseractSchema,
 } from "./schema";
 
-export type ComplexityFormat = Format;
+export const ComplexityFormat = Format;
 
 export class ComplexityModuleClient {
   baseURL: string;

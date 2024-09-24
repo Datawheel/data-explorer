@@ -1,24 +1,22 @@
-import React, {useState, useEffect, useMemo} from "react";
-import {ServerConfig} from "@datawheel/olap-client";
-import {TranslationContextProps} from "@datawheel/use-translation";
-import {CSSObject, Center, createStyles, Header, useMantineTheme} from "@mantine/core";
+import type {TranslationContextProps} from "@datawheel/use-translation";
+import {type CSSObject, Center, createStyles} from "@mantine/core";
+import React, {useEffect, useMemo} from "react";
+import {AppProviders} from "../context";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
-import {PanelDescriptor} from "../utils/types";
+import type {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
 import {ExplorerResults} from "./ExplorerResults";
-import SideBar, {SideBarProvider, SideBarItem} from "./SideBar";
 import ParamsExplorer from "./ParamsExplorer";
-import {HomeSVG} from "./icons";
-import {AppProviders} from "../context";
-import {useActions} from "../hooks/settings";
+import SideBar, {SideBarItem, SideBarProvider} from "./SideBar";
+
 const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
     height: "100%",
     [theme.fn.largerThan("md")]: {
       height: params.height,
-      width: "100%"
-    }
+      width: "100%",
+    },
   },
   root: {
     display: "flex",
@@ -26,50 +24,49 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     position: "relative",
     height: "calc(100% - 70px)",
     [theme.fn.largerThan("md")]: {
-      flexDirection: "row"
+      flexDirection: "row",
       // height: params.height,
       // width: "100%"
-    }
+    },
   },
   flexCol: {
     flex: "1 1 auto",
     height: "calc(100vh - 70px)",
     [theme.fn.largerThan("md")]: {
       width: 0,
-      paddingLeft: 0
-    }
-  }
+      paddingLeft: 0,
+    },
+  },
 }));
 
 /** */
 export function ExplorerContent(props: {
-  dataLocale: string[];
+  defaultCube?: string;
+  defaultDataLocale?: string;
   defaultOpenParams: string;
   height: CSSObject["height"];
+  locale?: string;
   panels: PanelDescriptor[];
-  source: ServerConfig;
-  setSource?: React.Dispatch<any>;
+  serverConfig?: RequestInit;
+  serverURL: string;
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
-  uiLocale: string | undefined;
   withMultiQuery: boolean;
-  defaultCube?: string;
 }) {
-  const {setSource} = props;
   const translation = useTranslation();
-  const done = useSetup(props.source, props.dataLocale, props.defaultCube);
 
-  useEffect(() => {
-    if (setSource) {
-      setSource({loading: !done});
-    }
-  }, [setSource, done]);
+  useSetup(
+    props.serverURL,
+    props.serverConfig || {},
+    props.defaultDataLocale,
+    props.defaultCube,
+  );
 
   const {classes} = useStyles({height: props.height});
 
   // Monitor the uiLocale param to update the UI on change
   useEffect(() => {
-    if (props.uiLocale) translation.setLocale(props.uiLocale);
-  }, [props.uiLocale]);
+    if (props.locale) translation.setLocale(props.locale);
+  }, [props.locale, translation]);
 
   const splash = useMemo(() => {
     const SplashComponent = props.splash;
@@ -80,7 +77,7 @@ export function ExplorerContent(props: {
         <AnimatedCube />
       </Center>
     );
-  }, [props.splash]);
+  }, [props.splash, translation]);
 
   return (
     <div className={classes.container}>
@@ -93,7 +90,11 @@ export function ExplorerContent(props: {
               </SideBarItem>
             </SideBar>
           </SideBarProvider>
-          <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+          <ExplorerResults
+            className={classes.flexCol}
+            panels={props.panels}
+            splash={splash}
+          />
         </AppProviders>
       </div>
     </div>
