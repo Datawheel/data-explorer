@@ -86,32 +86,35 @@ export function willExecuteQuery(params?: {
       request.limit = `${limit},${offset}`;
     }
 
-    return tesseract.fetchData({request, format: "jsonrecords"}).then(
-      response =>
-        response.json().then(
-          (content: TesseractDataResponse) => {
-            if (!response.ok) {
-              // TODO: error detection
-            } else {
-              const {payload} = dispatch(
-                queriesActions.updateResult({
-                  data: content.data,
-                  types: describeData(cube, params, content.data),
-                  headers: Object.fromEntries(response.headers),
-                  status: response.status || 200,
-                  url: response.url,
-                }),
-              );
-              return payload;
-            }
-          },
-          error => {
-            // Syntax error: failed attempt to parse JSON
-          },
-        ),
-      error => {
-        // Network error
-        // CORS error
+    return tesseract
+      .fetchData({request, format: "jsonrecords"})
+      .then(response =>
+        response.json().then((content: TesseractDataResponse) => {
+          if (!response.ok) {
+            throw new Error(`Backend Error: ${content.detail}`);
+          }
+          const {payload} = dispatch(
+            queriesActions.updateResult({
+              data: content.data,
+              types: describeData(cube, params, content.data),
+              headers: Object.fromEntries(response.headers),
+              status: response.status || 200,
+              url: response.url,
+            }),
+          );
+          return payload;
+        }),
+      )
+      .catch(error => {
+        if (error.name === "TypeError" && error.message.includes("NetworkError")) {
+          console.error("Network error or CORS error occurred:", error);
+        } else if (error.message.includes("Unexpected token")) {
+          console.error("Syntax error while parsing JSON:", error);
+        } else if (error.message.includes("Backend Error")) {
+          console.error("Server returned an error response:", error);
+        } else {
+          console.error("An unknown error occurred:", error);
+        }
         const {payload} = dispatch(
           queriesActions.updateResult({
             data: [],
@@ -121,8 +124,7 @@ export function willExecuteQuery(params?: {
             url: "",
           }),
         );
-      },
-    );
+      });
   };
 }
 

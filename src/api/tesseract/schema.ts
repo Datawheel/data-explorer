@@ -2,6 +2,11 @@ import type {Aggregator, DimensionType} from "../enum";
 
 type Annotations = Record<string, string | undefined>;
 
+export interface TesseractErrorResponse {
+  error: true;
+  detail: string;
+}
+
 export interface TesseractDataRequest {
   cube: string;
 

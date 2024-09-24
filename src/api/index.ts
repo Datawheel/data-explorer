@@ -14,6 +14,7 @@ export type {
   TesseractCube,
   TesseractDataRequest,
   TesseractDataResponse,
+  TesseractErrorResponse,
   TesseractMember,
   TesseractMembersRequest,
   TesseractMembersResponse,
