@@ -6,9 +6,8 @@ import {useSelector} from "react-redux";
 import type {TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {selectDrilldownItems} from "../state/queries";
+import {filterMap} from "../utils/array";
 import {buildCut, buildDrilldown} from "../utils/structs";
-import {stringifyName} from "../utils/transform";
-import type {LevelDescriptor} from "../utils/types";
 import MeasuresMenu from "./MeasuresMenu";
 import {DimensionMenu} from "./MenuDimension";
 
@@ -51,7 +50,10 @@ function OptionsMenu({children}: {children: ReactNode}) {
       <Menu.Dropdown>
         <MeasuresMenu>Metrics</MeasuresMenu>
 
-        <NestedMenu selectedItems={items.filter(i => i.active)} onItemSelect={createHandler}>
+        <NestedMenu 
+          selectedItems={filterMap(items, i => i.active ? i.level : null)} 
+          onItemSelect={createHandler}
+        >
           Dimensions
         </NestedMenu>
         
@@ -62,7 +64,7 @@ function OptionsMenu({children}: {children: ReactNode}) {
 }
 
 type NestedMenuProps = {
-  selectedItems: LevelDescriptor[];
+  selectedItems: string[];
   children: ReactNode;
   onItemSelect: ComponentProps<typeof DimensionMenu>["onItemSelect"];
 };
@@ -96,7 +98,7 @@ function NestedMenu({selectedItems, children, onItemSelect}: NestedMenuProps) {
       </Menu.Target>
       <Menu.Dropdown>
         <DimensionMenu
-          selectedItems={selectedItems.map(stringifyName)}
+          selectedItems={selectedItems}
           onItemSelect={onItemSelect}
         />
       </Menu.Dropdown>

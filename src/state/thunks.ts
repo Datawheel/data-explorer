@@ -221,8 +221,8 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
 }
 
 /**
- * Parses a query URL into a olap-client Query object, then into a QueryParam
- * object, and inyects it into a new QueryItem in the UI.
+ * Parses the search parameters in an URL to create a QueryParam object,
+ * then creates a new QueryItem in the UI containing it.
  */
 export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {

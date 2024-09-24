@@ -1,4 +1,3 @@
-import type {Query} from "@datawheel/olap-client";
 import {Comparison, type TesseractDataRequest} from "../api";
 import type {TesseractCube} from "../api/tesseract/schema";
 import {filterMap} from "./array";
@@ -11,7 +10,6 @@ import {
   buildProperty,
 } from "./structs";
 import {keyBy} from "./transform";
-import {isActiveCut, isActiveItem} from "./validation";
 
 export function buildDataRequest(params: QueryParams): TesseractDataRequest {
   return {
@@ -158,62 +156,4 @@ export function extractDataRequest(
     const number = value.slice(index + 1);
     return [Comparison[value.slice(0, index)], number, Number(number)];
   }
-}
-
-/**
- * Applies the properties set on a QueryParams object
- * to an OlapClient Query object.
- */
-export function applyQueryParams(
-  query: Query,
-  params: QueryParams,
-  settings: {
-    previewLimit: number;
-  },
-) {
-  Object.entries(params.booleans).forEach(item => {
-    item[1] != null && query.setOption(item[0], item[1]);
-  });
-
-  Object.values(params.cuts).forEach(item => {
-    isActiveCut(item) && query.addCut(item, item.members);
-  });
-
-  Object.values(params.filters).forEach(item => {
-    isActiveItem(item) &&
-      query.addFilter(
-        item.measure,
-        item.conditionOne,
-        item.joint && item.conditionTwo ? item.joint : "",
-        item.joint && item.conditionTwo ? item.conditionTwo : "",
-      );
-  });
-
-  Object.values(params.drilldowns).forEach(item => {
-    if (!isActiveItem(item)) return;
-    query.addDrilldown(item);
-    item.captionProperty && query.addCaption({...item, property: item.captionProperty});
-    item.properties.forEach(prop => {
-      isActiveItem(prop) && query.addProperty({...item, property: prop.name});
-    });
-  });
-
-  Object.values(params.measures).forEach(item => {
-    if (!isActiveItem(item)) return;
-    query.addMeasure(item.name);
-  });
-
-  params.locale && query.setLocale(params.locale);
-
-  if (params.sortKey && params.sortDir) {
-    query.setSorting(params.sortKey, params.sortDir === "desc");
-  }
-
-  if (params.isPreview) {
-    query.setPagination(settings.previewLimit, 0);
-  } else {
-    query.setPagination(params.pagiLimit || 0, params.pagiOffset);
-  }
-
-  return query;
 }

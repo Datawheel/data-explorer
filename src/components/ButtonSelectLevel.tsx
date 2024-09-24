@@ -1,16 +1,14 @@
-import {ActionIcon, ActionIconProps, Menu, useMantineTheme} from "@mantine/core";
+import {ActionIcon, type ActionIconProps, Menu, useMantineTheme} from "@mantine/core";
 import {useMediaQuery} from "@mantine/hooks";
 import React from "react";
-import {stringifyName} from "../utils/transform";
-import type {LevelDescriptor} from "../utils/types";
 import {DimensionMenu} from "./MenuDimension";
 
 export const ButtonSelectLevel = (
   props: ActionIconProps & {
     children: React.ReactNode;
     onItemSelect: React.ComponentProps<typeof DimensionMenu>["onItemSelect"];
-    selectedItems: LevelDescriptor[];
-  }
+    selectedItems: string[];
+  },
 ) => {
   const {selectedItems, onItemSelect, children, ...buttonProps} = props;
   const theme = useMantineTheme();
@@ -31,7 +29,7 @@ export const ButtonSelectLevel = (
       <Menu.Dropdown>
         <DimensionMenu
           isMediumScreen={isMediumScreen}
-          selectedItems={selectedItems.map(stringifyName)}
+          selectedItems={selectedItems}
           onItemSelect={onItemSelect}
         />
       </Menu.Dropdown>

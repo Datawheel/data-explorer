@@ -26,7 +26,6 @@ import {pickDefaultDrilldowns} from "../state/utils";
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
-import {stringifyName} from "../utils/transform";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
@@ -61,10 +60,10 @@ function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: Tesser
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
     if (
-      !drilldowns[stringifyName(level)] &&
+      !drilldowns[level.name] &&
       !ditems.find(d => d.level === level.name)
     ) {
-      const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
+      const drilldown = buildDrilldown({...level, active: true});
       updateDrilldown(drilldown);
       const cut = cuts.find(cut => cut.level === drilldown.level);
       if (!cut) {

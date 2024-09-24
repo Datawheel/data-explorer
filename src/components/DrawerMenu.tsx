@@ -26,7 +26,7 @@ import {
 import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
-import type {TesseractLevel} from "../api/tesseract/schema";
+import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
@@ -50,8 +50,8 @@ import {
   buildDrilldown,
   buildFilter,
   buildMeasure,
+  type DrilldownItem,
 } from "../utils/structs";
-import {stringifyName} from "../utils/transform";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
@@ -130,17 +130,21 @@ function DrillDownOptions() {
         <DimensionItem
           dimension={dimension}
           locale={locale.code}
-          key={dimension.uri}
+          key={dimension.name}
           activeItems={activeItems}
         />
       )),
-    [dimensions, activeItems]
+    [dimensions, activeItems, locale.code]
   );
 
   return options;
 }
 
-function DimensionItem({dimension, locale, activeItems}) {
+function DimensionItem({dimension, locale, activeItems}: {
+  dimension: TesseractDimension;
+  locale: string;
+  activeItems: DrilldownItem[];
+}) {
   const isChildSubMenu = dimension.hierarchies.length !== 1;
 
   const options = dimension.hierarchies.map(hie => (
@@ -148,7 +152,7 @@ function DimensionItem({dimension, locale, activeItems}) {
       dimension={dimension}
       hierarchy={hie}
       isSubMenu={isChildSubMenu}
-      key={hie.uri}
+      key={hie.name}
       locale={locale}
       activeItems={activeItems}
     />
@@ -161,7 +165,13 @@ function DimensionItem({dimension, locale, activeItems}) {
   return options;
 }
 
-function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
+function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}: {
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  isSubMenu: boolean;
+  locale: string;
+  activeItems: DrilldownItem[];
+}) {
   const {translate: t} = useTranslation();
 
   const label = useMemo(() => {
@@ -183,7 +193,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
       dimension={dimension}
       hierarchy={hierarchy}
       isSubMenu={isChildSubMenu}
-      key={lvl.uri}
+      key={lvl.name}
       level={lvl}
       locale={locale}
       activeItems={activeItems}
@@ -197,7 +207,14 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}) {
   return options;
 }
 
-function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}) {
+function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}: {
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  level: TesseractLevel;
+  isSubMenu: boolean;
+  locale: string;
+  activeItems: DrilldownItem[];
+}) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
   const actions = useActions();
@@ -228,7 +245,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
+    const drilldown = buildDrilldown({...level, active: false});
     actions.updateDrilldown(drilldown);
 
     const cut = cuts.find(cut => cut.level === drilldown.level);
@@ -245,7 +262,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     return drilldown;
   }
 
-  const currentDrilldown = drilldowns[stringifyName(level)];
+  const currentDrilldown = drilldowns[level.name];
 
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
@@ -254,7 +271,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   useLayoutEffect(() => {
     if (
-      !drilldowns[stringifyName(level)] &&
+      !drilldowns[level.name] &&
       !ditems.find(d => d.level === level.name)
     ) {
       createDrilldown(level, cutItems);
@@ -269,7 +286,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     actions.updateCut({...item, members});
   }, []);
 
-  const checked = activeItems.map(stringifyName).includes(stringifyName(level));
+  const checked = activeItems.map(i => i.level).includes(level.name);
 
   // If another hierarchy in the same dimension is selected, this level is disabled
   const isDisabled = isOtherHierarchySelected && !checked;
@@ -278,7 +295,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   return (
     currentDrilldown && (
       <>
-        <Group mt="sm" position="apart" key={level.uri} noWrap>
+        <Group mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
             onChange={() => {
               if (cut) {
