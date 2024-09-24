@@ -7,24 +7,24 @@ import {
   Input,
   Popover,
   Switch,
-  useMantineTheme
+  useMantineTheme,
 } from "@mantine/core";
 import {useMediaQuery} from "@mantine/hooks";
 import {IconWindowMaximize, IconWindowMinimize} from "@tabler/icons-react";
 import React, {useCallback, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
+import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectLocale} from "../state/queries";
 import {selectLevelTriadMap} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
+import {type DrilldownItem, type PropertyItem, buildProperty} from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import {isActiveItem} from "../utils/validation";
 import {SelectObject} from "./Select";
 import {TransferInput} from "./TransferInput";
-import {DrilldownItem, PropertyItem, buildProperty} from "../utils/structs";
-import {useActions} from "../hooks/settings";
 
 type CaptionItem = {name: string, level?: string};
 
@@ -83,7 +83,7 @@ export function TagDrilldown(props: {
   );
 
   const label = useMemo(() => {
-    const triad = levelTriadMap[`${item.dimension}.${item.hierarchy}.${item.level}`];
+    const triad = levelTriadMap[item.level];
     const triadCaptions = triad.map(item => getCaption(item, locale.code));
     return t("params.tag_drilldowns", {
       abbr: abbreviateFullName(triadCaptions, t("params.tag_drilldowns_abbrjoint")),

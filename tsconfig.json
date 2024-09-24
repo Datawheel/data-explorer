@@ -6,7 +6,7 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "jsx": "react",
-    "lib": ["DOM", "ES2022.Array", "ES2022.Object", "WebWorker"],
+    "lib": ["DOM", "ES2022.Array", "ES2022.Object", "WebWorker", "DOM.Iterable"],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "outDir": "dist",

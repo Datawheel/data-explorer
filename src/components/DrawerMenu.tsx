@@ -1,21 +1,34 @@
-import React, {useLayoutEffect, useMemo, useState} from "react";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Checkbox,
+  Drawer,
+  Flex,
+  Group,
+  Menu,
+  MultiSelect,
+  NumberInput,
+  Text,
+  ThemeIcon,
+  useMantineTheme,
+} from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
-  Drawer,
-  Button,
-  Group,
-  NumberInput,
-  MultiSelect,
-  ActionIcon,
-  Menu,
-  Text,
-  Box,
-  Flex,
-  Checkbox,
-  ThemeIcon,
-  useMantineTheme
-} from "@mantine/core";
+  IconArrowsLeftRight,
+  IconFilter,
+  IconFilterOff,
+  IconMathGreater,
+  IconMathLower,
+  IconSettings,
+  IconStack3,
+} from "@tabler/icons-react";
+import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
+import {Comparison} from "../api";
+import type {TesseractLevel} from "../api/tesseract/schema";
+import {useActions} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -23,36 +36,23 @@ import {
   selectFilterItems,
   selectFilterMap,
   selectLocale,
-  selectMeasureMap
+  selectMeasureMap,
 } from "../state/queries";
-import {useTranslation} from "../hooks/translation";
-import {selectOlapMeasureItems, selectOlapDimensionItems} from "../state/selectors";
-import {useActions} from "../hooks/settings";
+import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
+import {abbreviateFullName} from "../utils/format";
+import {getCaption} from "../utils/string";
 import {
-  buildMeasure,
-  CutItem,
+  type CutItem,
+  FilterItem,
+  type MeasureItem,
   buildCut,
   buildDrilldown,
   buildFilter,
-  MeasureItem,
-  FilterItem
+  buildMeasure,
 } from "../utils/structs";
-import {isActiveItem} from "../utils/validation";
-import {
-  IconFilter,
-  IconFilterOff,
-  IconMathGreater,
-  IconMathLower,
-  IconStack3,
-  IconSettings,
-  IconArrowsLeftRight
-} from "@tabler/icons-react";
-import type {PlainLevel} from "@datawheel/olap-client";
-import {getCaption} from "../utils/string";
-import {abbreviateFullName} from "../utils/format";
 import {stringifyName} from "../utils/transform";
-import {Comparison} from "@datawheel/olap-client";
+import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
 
@@ -222,24 +222,22 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
     });
   }, [locale, dimension, hierarchy, level, isSubMenu]);
 
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, members: [], key: level.fullName});
-    cutItem.active = false;
+  const createCutHandler = useCallback((level: TesseractLevel) => {
+    const cutItem = buildCut({...level, members: [], active: false});
     actions.updateCut(cutItem);
   }, []);
 
-  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
+  function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
     const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
     actions.updateDrilldown(drilldown);
 
-    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+    const cut = cuts.find(cut => cut.level === drilldown.level);
     if (!cut) {
-      createCutHandler({...level, key: stringifyName(level)});
+      createCutHandler(level);
     }
     actions.willFetchMembers(level.name).then(levelMeta => {
       actions.updateDrilldown({
         ...drilldown,
-        memberCount: levelMeta.members.length,
         members: levelMeta.members,
       });
     });
@@ -257,14 +255,14 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   useLayoutEffect(() => {
     if (
       !drilldowns[stringifyName(level)] &&
-      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+      !ditems.find(d => d.level === level.name)
     ) {
       createDrilldown(level, cutItems);
     }
   }, [level, ditems]);
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === currentDrilldown?.uniqueName;
+    return cut.level === currentDrilldown?.level;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {

@@ -2,33 +2,52 @@ import {
   ActionIcon,
   Alert,
   Box,
-  Flex,
-  Text,
-  rem,
-  Table,
   Center,
+  Flex,
+  LoadingOverlay,
   MultiSelect,
   ScrollArea,
-  LoadingOverlay
+  Table,
+  Text,
+  rem,
 } from "@mantine/core";
-import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
-  MRT_ColumnDef as ColumnDef,
-  MRT_TableOptions as TableOptions,
-  useMantineReactTable,
-  flexRender,
+  IconAlertCircle,
+  IconArrowsSort,
+  IconTrash,
+  IconSortAscendingLetters as SortAsc,
+  IconSortDescendingLetters as SortDesc,
+  IconSortAscendingNumbers as SortNAsc,
+  IconSortDescendingNumbers as SortNDesc,
+} from "@tabler/icons-react";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import {
   MRT_TableBodyCell,
-  MRT_TableInstance,
-  MRT_PaginationState,
   MRT_ToolbarAlertBanner,
   MRT_ProgressBar as ProgressBar,
-  MRT_Header
+  flexRender,
+  useMantineReactTable,
+  type MRT_ColumnDef as ColumnDef,
+  type MRT_Header,
+  type MRT_PaginationState,
+  type MRT_TableInstance,
+  type MRT_TableOptions as TableOptions,
 } from "mantine-react-table";
 import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
+import {useSelector} from "react-redux";
+import {Comparison} from "../api";
+import type {
+  TesseractCube,
+  TesseractLevel,
+  TesseractMeasure,
+  TesseractProperty,
+} from "../api/tesseract/schema";
 import {useFormatter} from "../hooks/formatter";
+import {useKey, useUpdatePermaLink} from "../hooks/permalink";
+import {useActions, type ExplorerBoundActionMap} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
-import {BarsSVG, StackSVG} from "./icons";
+import {selectLoadingState} from "../state/loading";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -37,60 +56,45 @@ import {
   selectLocale,
   selectMeasureItems,
   selectMeasureMap,
-  selectPaginationParams
+  selectPaginationParams,
 } from "../state/queries";
-import {useSelector} from "react-redux";
-import {
-  PlainCube,
-  PlainLevel,
-  PlainMeasure,
-  PlainProperty,
-  Comparison
-} from "@datawheel/olap-client";
-import {ViewProps} from "../utils/types";
-import {
-  IconSortAscendingLetters as SortAsc,
-  IconSortDescendingLetters as SortDesc,
-  IconArrowsSort,
-  IconSortAscendingNumbers as SortNAsc,
-  IconSortDescendingNumbers as SortNDesc
-} from "@tabler/icons-react";
-import type {MeasureItem, QueryResult, DrilldownItem, CutItem, FilterItem} from "../utils/structs";
-import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
-import TableFooter from "./TableFooter";
-import CustomActionIcon from "./CustomActionIcon";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {isActiveCut, isActiveItem} from "../utils/validation";
-import {
-  FilterFnsMenu,
-  getFilterFn,
-  getFilterfnKey,
-  MinMax,
-  NumberInputComponent
-} from "./DrawerMenu";
-import debounce from "lodash.debounce";
 import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
-import {useUpdatePermaLink, useKey} from "../hooks/permalink";
-import {selectLoadingState} from "../state/loading";
+import type {
+  CutItem,
+  DrilldownItem,
+  FilterItem,
+  MeasureItem,
+  QueryResult,
+} from "../utils/structs";
+import {buildFilter, buildMeasure, type AnyResultColumn} from "../utils/structs";
+import type {ViewProps} from "../utils/types";
+import CustomActionIcon from "./CustomActionIcon";
+import {
+  FilterFnsMenu,
+  MinMax,
+  NumberInputComponent,
+  getFilterFn,
+  getFilterfnKey,
+} from "./DrawerMenu";
+import TableFooter from "./TableFooter";
+import {BarsSVG, StackSVG} from "./icons";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
 
 const removeColumn = (
   actions: ExplorerBoundActionMap,
-  entity: PlainMeasure | PlainProperty | PlainLevel,
+  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
   measures: MeasureItem[],
   drilldowns: DrilldownItem[]
 ) => {
-  if (entity._type === "measure") {
-    if (entity.name) {
-      const measure = measures.find(d => d.name === entity.name);
-      measure && actions.updateMeasure({...measure, active: false});
-    }
+  if ("aggregator" in entity) {
+    const measure = measures.find(d => d.name === entity.name);
+    measure && actions.updateMeasure({...measure, active: false});
   }
-  if (entity._type === "level") {
-    const drilldown = drilldowns.find(d => d.uniqueName === entity?.uniqueName);
+  if ("depth" in entity) {
+    const drilldown = drilldowns.find(d => d.level === entity.name);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
   }
   // maybe need to handle case for property columns.
@@ -356,7 +360,7 @@ export function useTable({
     () =>
       [
         ...measures.map(m => (m.active ? m.name : null)),
-        ...drilldowns.map(d => (d.active ? d.uniqueName : null))
+        ...drilldowns.map(d => (d.active ? d.level : null))
       ].filter(a => a !== null),
     [measures, drilldowns]
   );
@@ -398,7 +402,7 @@ export function useTable({
   // check no data
   const tableData = data?.data || [];
   // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
-  const tableTypes = data?.types || {};
+  const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
   const totalRowCount = data?.page.total;
 
   /**
@@ -511,7 +515,7 @@ export function useTable({
         },
         formatter,
         formatterKey,
-        id: entity.uniqueName ?? entity.name,
+        id: entity.name,
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
@@ -816,11 +820,11 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
-  const drilldown = drilldownItems.find(c => c.uniqueName === header.column.id);
+  const drilldown = drilldownItems.find(c => c.level === header.column.id);
   const actions = useActions();
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === drilldown?.uniqueName;
+    return cut.level === drilldown?.level;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {

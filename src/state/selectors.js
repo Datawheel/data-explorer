@@ -1,10 +1,9 @@
 import {createSelector} from "@reduxjs/toolkit";
-import {triad, tuple} from "../utils/array";
+import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {getOrderValue} from "../utils/object";
+import {serializePermalink} from "../utils/permalink";
 import {selectCubeName, selectCurrentQueryParams} from "./queries";
 import {selectOlapCubeMap} from "./server";
-import {serializePermalink} from "../utils/permalink";
-
 
 export const selectOlapCube = createSelector(
   [selectOlapCubeMap, selectCubeName],
@@ -21,7 +20,6 @@ export const selectOlapMeasureMap = createSelector(
   measures => Object.fromEntries(measures.map(item => [item.name, item]))
 );
 
-/** @type {(state: import("./store").ExplorerState) => import("@datawheel/olap-client").PlainDimension[]} */
 export const selectOlapDimensionItems = createSelector(
   selectOlapCube,
   cube => !cube
@@ -60,20 +58,8 @@ export const selectOlapDimensionMap = createSelector(
   dimensions => Object.fromEntries(dimensions.map(item => [item.name, item]))
 );
 
-export const selectLevelTriadMap = createSelector(
-  selectOlapCube,
-  cube => !cube
-    ? {}
-    : Object.fromEntries(
-      cube.dimensions.flatMap(dim =>
-        dim.hierarchies.flatMap(hie =>
-          hie.levels.map(lvl => {
-            const fullName = [dim.name, hie.name, lvl.name].join(".");
-            return tuple(fullName, triad(dim, hie, lvl));
-          })
-        )
-      )
-    )
+export const selectLevelTriadMap = createSelector(selectOlapCube, cube =>
+  cube ? mapDimensionHierarchyLevels(cube) : {},
 );
 
 export const selectOlapTimeDimension = createSelector(

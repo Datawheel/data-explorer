@@ -1,45 +1,35 @@
-import React, {useCallback} from "react";
-import {Menu, ActionIcon, UnstyledButton, Group, Text} from "@mantine/core";
+import {ActionIcon, Group, Menu, Text, UnstyledButton} from "@mantine/core";
 import {IconChevronRight, IconStack2} from "@tabler/icons-react";
-import {DimensionMenu} from "./MenuDimension";
-import MeasuresMenu from "./MeasuresMenu";
-import {stringifyName} from "../utils/transform";
-import {useSelector} from "react-redux";
-import {selectDrilldownItems} from "../state/queries";
-import {useActions} from "../hooks/settings";
-import {buildDrilldown, buildCut} from "../utils/structs";
-import type {LevelDescriptor} from "../utils/types";
+import React, {useCallback} from "react";
 import type {ComponentProps, ReactNode} from "react";
-import type {PlainLevel} from "@datawheel/olap-client";
+import {useSelector} from "react-redux";
+import type {TesseractLevel} from "../api/tesseract/schema";
+import {useActions} from "../hooks/settings";
+import {selectDrilldownItems} from "../state/queries";
+import {buildCut, buildDrilldown} from "../utils/structs";
+import {stringifyName} from "../utils/transform";
+import type {LevelDescriptor} from "../utils/types";
+import MeasuresMenu from "./MeasuresMenu";
+import {DimensionMenu} from "./MenuDimension";
 
 function OptionsMenu({children}: {children: ReactNode}) {
   const actions = useActions();
   const items = useSelector(selectDrilldownItems);
 
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, key: level.fullName});
-    cutItem.active = false;
-    actions.updateCut(cutItem);
-  }, []);
-
   const createHandler = useCallback(
-    (level: PlainLevel) => {
+    (level: TesseractLevel) => {
       // find or create drilldown
       const drilldownItem =
-        items.find(item => item.uniqueName === level.uniqueName) ??
-        buildDrilldown({...level});
-      createCutHandler(level);
+        items.find(item => item.level === level.name) || buildDrilldown(level);
       actions.updateDrilldown(drilldownItem);
-      actions
-        .willFetchMembers(level.name)
-        .then(levelMeta => {
-          actions.updateDrilldown({
-            ...drilldownItem,
-            memberCount: levelMeta.members.length,
-            members: levelMeta.members,
-          });
-        })
-        .then(() => actions.willRequestQuery());
+      actions.updateCut(buildCut({...level, active: false}));
+      actions.willFetchMembers(level.name).then(levelMeta => {
+        actions.updateDrilldown({
+          ...drilldownItem,
+          members: levelMeta.members,
+        });
+        return actions.willRequestQuery();
+      });
     },
     [items],
   );

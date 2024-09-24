@@ -70,22 +70,17 @@ export interface QueryParamsItem {
 
 export interface CutItem extends QueryParamsItem {
   dimension: string;
-  fullName: string;
   hierarchy: string;
   level: string;
   members: string[];
-  uniqueName: string;
 }
 
 export interface DrilldownItem extends QueryParamsItem {
   captionProperty: string;
   dimension: string;
-  fullName: string;
   hierarchy: string;
   level: string;
   properties: PropertyItem[];
-  uniqueName: string;
-  memberCount: number;
   members: {key: string | number; caption?: string}[];
 }
 
@@ -111,21 +106,18 @@ export interface NamedSetItem extends QueryParamsItem {
 export interface PropertyItem extends QueryParamsItem {
   level: string;
   name: string;
-  uniqueName: string;
 }
 
 type RecursivePartial<T> = {
   [K in keyof T]?: T[K] extends string | boolean | number | bigint | symbol
-  ? T[K]
-  : RecursivePartial<T[K]>
-}
+    ? T[K]
+    : RecursivePartial<T[K]>;
+};
 
 /**
  * Creates a QueryItem object.
  */
-export function buildQuery(
-  props: RecursivePartial<QueryItem>
-): QueryItem {
+export function buildQuery(props: RecursivePartial<QueryItem>): QueryItem {
   return {
     created: props.created || new Date().toISOString(),
     key: props.key || randomKey(),
@@ -137,10 +129,9 @@ export function buildQuery(
       data: [],
       types: {},
       headers: {},
-      sourceCall: "",
       status: 0,
-      url: ""
-    }
+      url: "",
+    },
   };
 }
 
@@ -159,8 +150,9 @@ export function buildQueryParams(props): QueryParams {
     measures: props.measures || {},
     pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
-    sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
-    sortKey: props.sortKey || props.sortProperty || ""
+    sortDir:
+      props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
+    sortKey: props.sortKey || props.sortProperty || "",
   };
 }
 
@@ -168,21 +160,16 @@ export function buildQueryParams(props): QueryParams {
  * Creates a CutItem object.
  */
 export function buildCut(props): CutItem {
-  if (typeof props.toJSON === "function") {
-    props = props.toJSON();
-  }
   const dimension = `${props.dimension}`;
   const hierarchy = `${props.hierarchy}`;
   const level = `${props.level || props.name}`;
   return {
     active: typeof props.active === "boolean" ? props.active : false,
-    dimension,
-    fullName: props.fullName || joinName([dimension, hierarchy, level]),
-    hierarchy,
     key: props.key || randomKey(),
+    dimension,
+    hierarchy,
     level,
     members: Array.isArray(props.members) ? props.members : [],
-    uniqueName: props.uniqueName || level
   };
 }
 
@@ -193,32 +180,22 @@ export function buildDrilldown(props: {
   active?: boolean;
   key?: string;
   name?: string;
-  fullName?: string;
   dimension?: string;
   hierarchy?: string;
   level?: string;
   members?: {key: string | number; caption?: string}[];
-  memberCount?: number;
   captionProperty?: string;
-  properties?: {name: string; active: boolean; level: string}[];
-  uniqueName?: string;
-  uri?: string;
+  properties?: (TesseractProperty | Partial<Omit<PropertyItem, "key">>)[];
 }): DrilldownItem {
-  const dimension = `${props.dimension}`;
-  const hierarchy = `${props.hierarchy}`;
-  const level = `${props.level || props.name}`;
   return {
     active: typeof props.active === "boolean" ? props.active : true,
-    captionProperty: props.captionProperty || "",
-    dimension,
-    fullName: props.fullName || joinName([dimension, hierarchy, level]),
-    hierarchy,
     key: props.key || randomKey(),
-    level,
-    members: Array.isArray(props.members) ? props.members : [],
-    memberCount: props.memberCount || props.members?.length || 0,
+    captionProperty: props.captionProperty || "",
+    dimension: `${props.dimension || ""}`,
+    hierarchy: `${props.hierarchy || ""}`,
+    level: `${props.level || props.name}`,
     properties: asArray(props.properties).map(buildProperty),
-    uniqueName: props.uniqueName || level,
+    members: Array.isArray(props.members) ? props.members : [],
   };
 }
 
@@ -240,20 +217,20 @@ export function buildFilter(props: {
   joint?: string;
 }): FilterItem {
   return {
-    key: props.key || randomKey(),
     active: typeof props.active === "boolean" ? props.active : true,
+    key: props.key || randomKey(),
     measure: props.measure || `${props.name}`,
     conditionOne: props.conditionOne || [
       props.const1 ? `${props.const1[0]}` : `${Comparison.GT}`,
       props.const1 ? props.const1[1].toString() : props.inputtedValue || "0",
-      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0)
+      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0),
     ],
     conditionTwo: props.conditionTwo || [
       props.const2 ? `${props.const2[0]}` : `${Comparison.GT}`,
       props.const2 ? props.const2[1].toString() : props.inputtedValue || "0",
-      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0)
+      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0),
     ],
-    joint: props.joint === "or" ? "or" : "and"
+    joint: props.joint === "or" ? "or" : "and",
   };
 }
 
@@ -264,13 +241,11 @@ export function buildMeasure(props: {
   active?: boolean;
   key?: string;
   name?: string;
-  fullName?: string;
-  uri?: string;
 }): MeasureItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
-    key: props.key || props.name || props.fullName || props.uri || `${props}`,
-    name: props.name || props.key || `${props}`
+    key: props.key || props.name || randomKey(),
+    name: props.name || props.key || `${props}`,
   };
 }
 
@@ -280,20 +255,29 @@ export function buildMeasure(props: {
 export function buildMember(props): MemberItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
-    key: props.uri || props.fullName || props.key,
-    name: props.name || props.key || `${props}`
+    key: props.key || props.name || `${props}`,
+    name: props.name || props.key || `${props}`,
   };
 }
 
 /**
  * Creates a PropertyItem object.
  */
-export function buildProperty(props): PropertyItem {
+export function buildProperty(
+  props:
+    | TesseractProperty
+    | {
+        active?: boolean;
+        key?: string;
+        level?: string;
+        name?: string;
+        property?: string;
+      },
+): PropertyItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
-    key: props.uri || props.fullName || props.key || randomKey(),
+    key: props.key || randomKey(),
     level: props.level,
     name: props.name || props.property,
-    uniqueName: props.uniqueName || props.name
   };
 }
