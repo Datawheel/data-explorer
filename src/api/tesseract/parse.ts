@@ -1,17 +1,17 @@
-import {Comparison, type TesseractDataRequest} from "../api";
-import type {TesseractCube} from "../api/tesseract/schema";
-import {filterMap} from "./array";
+import {filterMap} from "../../utils/array";
 import {
+  type FilterItem,
   type QueryParams,
   buildCut,
   buildDrilldown,
-  buildFilter,
   buildMeasure,
   buildProperty,
-} from "./structs";
-import {keyBy} from "./transform";
+} from "../../utils/structs";
+import {keyBy} from "../../utils/transform";
+import {Comparison} from "../enum";
+import type {TesseractCube, TesseractDataRequest} from "./schema";
 
-export function buildDataRequest(params: QueryParams): TesseractDataRequest {
+export function queryParamsToRequest(params: QueryParams): TesseractDataRequest {
   return {
     cube: params.cube,
     locale: params.locale,
@@ -35,13 +35,7 @@ export function buildDataRequest(params: QueryParams): TesseractDataRequest {
     //   item.active ? `${item.level}:${item.members.join(",")}` : null,
     // ).join(";"),
     filters: filterMap(Object.values(params.filters), item =>
-      item.active
-        ? `${item.measure}.${strFilterCondition(item.conditionOne)}${
-            item.conditionTwo
-              ? `.${item.joint}.${strFilterCondition(item.conditionTwo)}`
-              : ""
-          }`
-        : null,
+      item.active ? filterSerialize(item) : null,
     ).join(";"),
     limit: `${params.pagiLimit || 0},${params.pagiOffset || 0}`,
     sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
@@ -62,7 +56,7 @@ export function buildDataRequest(params: QueryParams): TesseractDataRequest {
   }
 }
 
-export function extractDataRequest(
+export function requestToQueryParams(
   cube: TesseractCube,
   search: URLSearchParams,
 ): QueryParams {
@@ -95,33 +89,22 @@ export function extractDataRequest(
       ),
     });
   });
-  const cuts = getList(search, "include", ";").map(cut => {
+  const cuts = filterMap(getList(search, "include", ";"), cut => {
     const [name, members] = cut.split(":");
-    const lvl = levels[name];
-    return buildCut({
-      active: true,
-      dimension: dimensions[name],
-      hierarchy: hierarchies[name],
-      level: name,
-      members: members.split(","),
-    });
+    return levels[name]
+      ? buildCut({
+          active: true,
+          dimension: dimensions[name],
+          hierarchy: hierarchies[name],
+          level: name,
+          members: members.split(","),
+        })
+      : null;
   });
   const measures = getList(search, "measures", ",").map(name =>
     buildMeasure({name, active: true}),
   );
-  const filters = getList(search, "filters", ",").map(filter => {
-    const dotName = filter.indexOf(".");
-    const condition = filter.slice(dotName + 1);
-    const joint = condition.includes(".and.") ? "and" : "or";
-    const [cond1, cond2] = condition.split(joint);
-    return buildFilter({
-      active: true,
-      measure: filter.slice(0, dotName),
-      joint,
-      conditionOne: parseFilterCondition(cond1),
-      conditionTwo: cond2 ? parseFilterCondition(cond2) : undefined,
-    });
-  });
+  const filters = getList(search, "filters", ",").map(filterParse);
 
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
   const [sortKey, sortDir] = (search.get("sort") || "").split(".");
@@ -150,10 +133,32 @@ export function extractDataRequest(
       .split(separator)
       .filter(token => token);
   }
+}
 
-  function parseFilterCondition(value: string): [Comparison, string, number] {
-    const index = value.indexOf(".");
-    const number = value.slice(index + 1);
-    return [Comparison[value.slice(0, index)], number, Number(number)];
-  }
+export function filterSerialize(item: FilterItem): string {
+  const conditions = filterMap([item.conditionOne, item.conditionTwo], cond =>
+    cond ? `${cond[0]}.${cond[2]}` : null,
+  );
+  return `${item.measure}.${conditions.join(`.${item.joint}.`)}`;
+}
+
+export function filterParse(item: string): FilterItem {
+  const indexName = item.indexOf(".");
+  const condition = item.slice(indexName + 1);
+  const joint = condition.includes(".and.") ? "and" : "or";
+  const [cond1, cond2] = condition.split(joint);
+  return {
+    key: Math.random().toString(16).slice(2),
+    active: true,
+    measure: item.slice(0, indexName),
+    joint,
+    conditionOne: filterParseCondition(cond1),
+    conditionTwo: cond2 ? filterParseCondition(cond2) : undefined,
+  };
+}
+
+function filterParseCondition(value: string): [Comparison, string, number] {
+  const index = value.indexOf(".");
+  const number = value.slice(index + 1);
+  return [Comparison[value.slice(0, index)], number, Number(number)];
 }

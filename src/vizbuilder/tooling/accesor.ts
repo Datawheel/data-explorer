@@ -1,5 +1,5 @@
-import type {Measure} from "@datawheel/olap-client";
 import type {D3plusConfig} from "@datawheel/vizbuilder";
+import type {TesseractMeasure} from "../../api/tesseract/schema";
 
 /**
  * Normalizes the Vizbuilder Component Property "measureConfig", which can
@@ -7,8 +7,8 @@ import type {D3plusConfig} from "@datawheel/vizbuilder";
  * `Record<string, D3plusConfig>, into the function form for internal use.
  */
 export function measureConfigAccessor(
-  config: Record<string, D3plusConfig> | ((item: Measure) => D3plusConfig)
-): (item: Measure) => D3plusConfig {
+  config: Record<string, D3plusConfig> | ((item: TesseractMeasure) => D3plusConfig),
+): (item: TesseractMeasure) => D3plusConfig {
   if (typeof config === "function") {
     return config;
   }

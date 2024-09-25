@@ -4,10 +4,10 @@ import type {
   TesseractFormat,
   TesseractMembersResponse,
 } from "../api";
+import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
 import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {filterMap} from "../utils/array";
 import {describeData} from "../utils/object";
-import {buildDataRequest, extractDataRequest} from "../utils/query";
 import {
   type QueryResult,
   buildCut,
@@ -52,7 +52,7 @@ export function willDownloadQuery(
 
     const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
     return tesseract
-      .fetchData({request: buildDataRequest(queryParams), format})
+      .fetchData({request: queryParamsToRequest(queryParams), format})
       .then(response => response.blob())
       .then(result => ({
         content: result[0],
@@ -116,7 +116,7 @@ export function willFetchQuery(params?: {
       return Promise.reject(new Error("Invalid query"));
     }
 
-    const request = buildDataRequest(params);
+    const request = queryParamsToRequest(params);
     if (limit || offset) {
       request.limit = `${limit},${offset}`;
     }
@@ -245,7 +245,7 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
     if (cube && cubeMap[cube]) {
       const queryItem = buildQuery({
         panel: search.get("panel") || "table",
-        params: extractDataRequest(cubeMap[cube], search),
+        params: requestToQueryParams(cubeMap[cube], search),
       });
       dispatch(queriesActions.updateQuery(queryItem));
       dispatch(queriesActions.selectQuery(queryItem.key));

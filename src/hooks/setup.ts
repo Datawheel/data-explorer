@@ -1,8 +1,8 @@
 import {useEffect} from "react";
-import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
-import {type QueryItem, buildQuery, buildQueryParams} from "../utils/structs";
+import {type QueryItem, buildQuery} from "../utils/structs";
 import {hasProperty, isValidQuery} from "../utils/validation";
+import {parsePermalink} from "./permalink";
 import {useSettings} from "./settings";
 
 /**
@@ -40,13 +40,8 @@ export function useSetup(
         const cubeName = search.get("cube");
         if (cubeName) {
           // Search params are a QueryItem permalink
-          const locationState = parseStateFromSearchParams(cubeMap[cubeName], search);
-          query = isValidQuery(locationState)
-            ? buildQuery({
-                panel: search.get("panel") || "table",
-                params: buildQueryParams({...locationState}),
-              })
-            : undefined;
+          query = parsePermalink(cubeMap[cubeName], search);
+          query = isValidQuery(query.params) ? query : undefined;
         } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState}});
         }
