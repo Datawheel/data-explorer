@@ -105,6 +105,8 @@ export interface TesseractDataRequest {
 }
 
 export interface TesseractDataResponse {
+  error?: true;
+  detail?: string;
   columns: string[];
   data: Record<string, unknown>[];
   page: {

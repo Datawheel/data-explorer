@@ -263,13 +263,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
-    queryFn: () => {
-      return actions.willExecuteQuery().then(res => {
-        const {data, types} = res;
-        const {data: tableData, page} = data;
-        return {data: tableData ?? [], types, page};
-      });
-    },
+    queryFn: () => actions.willFetchQuery(),
     staleTime: 300000,
     enabled: enabled && !!filterKeydebouced
   });
@@ -304,17 +298,11 @@ function usePrefetch({
   const off = page * pagination.pageSize;
   const key = [paramKey, page];
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
-        queryFn: () => {
-          return actions.willExecuteQuery({offset: off, limit}).then(res => {
-            const {data, types} = res;
-            const {data: tableData, page} = data;
-            return {data: tableData ?? [], types, page};
-          });
-        },
+        queryFn: () => actions.willFetchQuery({offset: off, limit}),
         staleTime: 300000
       });
     }
@@ -844,8 +832,8 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => ({
-            value: String(m.key),
-            label: m.caption ? `${m.caption} (${m.key})` : m.name
+            value: `${m.key}`,
+            label: m.caption ? `${m.caption} (${m.key})` : `${m.key}`,
           }))}
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable

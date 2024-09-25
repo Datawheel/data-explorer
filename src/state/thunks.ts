@@ -71,41 +71,14 @@ export function willDownloadQuery(
 export function willExecuteQuery(params?: {
   limit?: number;
   offset?: number;
-}): ExplorerThunk<Promise<QueryResult>> {
-  const {limit, offset} = params || {};
-
-  return (dispatch, getState, {tesseract}) => {
-    const state = getState();
-    const params = selectCurrentQueryParams(state);
-    const cube = selectOlapCube(state);
-
-    if (!isValidQuery(params) || !cube) return Promise.resolve();
-
-    const request = buildDataRequest(params);
-    if (limit && offset) {
-      request.limit = `${limit},${offset}`;
-    }
-
-    return tesseract
-      .fetchData({request, format: "jsonrecords"})
-      .then(response =>
-        response.json().then((content: TesseractDataResponse) => {
-          if (!response.ok) {
-            throw new Error(`Backend Error: ${content.detail}`);
-          }
-          const {payload} = dispatch(
-            queriesActions.updateResult({
-              data: content.data,
-              types: describeData(cube, params, content.data),
-              headers: Object.fromEntries(response.headers),
-              status: response.status || 200,
-              url: response.url,
-            }),
-          );
-          return payload;
-        }),
-      )
-      .catch(error => {
+}): ExplorerThunk<Promise<void>> {
+  const {limit = 0, offset = 0} = params || {};
+  return dispatch => {
+    return dispatch(willFetchQuery(params)).then(
+      result => {
+        dispatch(queriesActions.updateResult(result));
+      },
+      error => {
         if (error.name === "TypeError" && error.message.includes("NetworkError")) {
           console.error("Network error or CORS error occurred:", error);
         } else if (error.message.includes("Unexpected token")) {
@@ -115,16 +88,54 @@ export function willExecuteQuery(params?: {
         } else {
           console.error("An unknown error occurred:", error);
         }
-        const {payload} = dispatch(
+        dispatch(
           queriesActions.updateResult({
             data: [],
             types: {},
-            error: error.message,
+            page: {limit, offset, total: 0},
             status: 0,
             url: "",
           }),
         );
-      });
+      },
+    );
+  };
+}
+
+export function willFetchQuery(params?: {
+  limit?: number;
+  offset?: number;
+}): ExplorerThunk<Promise<QueryResult>> {
+  const {limit = 0, offset = 0} = params || {};
+  return (dispatch, getState, {tesseract}) => {
+    const state = getState();
+    const params = selectCurrentQueryParams(state);
+    const cube = selectOlapCube(state);
+
+    if (!isValidQuery(params) || !cube) {
+      return Promise.reject(new Error("Invalid query"));
+    }
+
+    const request = buildDataRequest(params);
+    if (limit || offset) {
+      request.limit = `${limit},${offset}`;
+    }
+
+    return tesseract.fetchData({request, format: "jsonrecords"}).then(response =>
+      response.json().then((content: TesseractDataResponse) => {
+        if (!response.ok) {
+          throw new Error(`Backend Error: ${content.detail}`);
+        }
+        return {
+          data: content.data,
+          page: content.page,
+          types: describeData(cube, params, content.data),
+          headers: Object.fromEntries(response.headers),
+          status: response.status || 200,
+          url: response.url,
+        };
+      }),
+    );
   };
 }
 
@@ -336,7 +347,6 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
         dispatch(
           queriesActions.updateDrilldown({
             ...dd,
-            memberCount: levelMeta.members.length,
             members: levelMeta.members,
           }),
         );

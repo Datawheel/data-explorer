@@ -43,18 +43,18 @@ export function buildDataRequest(params: QueryParams): TesseractDataRequest {
           }`
         : null,
     ).join(";"),
-    limit: `${params.pageLimit || 0},${params.pageOffset || 0}`,
+    limit: `${params.pagiLimit || 0},${params.pagiOffset || 0}`,
     sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
-    sparse: params.sparse,
-    ranking:
-      typeof params.ranking === "boolean"
-        ? params.ranking
-        : Object.entries(params.ranking)
-            .map(item => (item[1] ? "-" : "") + item[0])
-            .sort()
-            .join(","),
-    parents:
-      typeof params.parents === "boolean" ? params.parents : params.parents.join(","),
+    // sparse: params.sparse,
+    // ranking:
+    //   typeof params.ranking === "boolean"
+    //     ? params.ranking
+    //     : Object.entries(params.ranking)
+    //         .map(item => (item[1] ? "-" : "") + item[0])
+    //         .sort()
+    //         .join(","),
+    // parents:
+    //   typeof params.parents === "boolean" ? params.parents : params.parents.join(","),
   };
 
   function strFilterCondition(cond: [string, string, number]): string {

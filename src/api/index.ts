@@ -21,4 +21,4 @@ export type {
   TesseractSchema,
 } from "./tesseract/schema";
 
-export {Aggregator, ColumnType, Comparison, DimensionType, Order} from "./enum";
+export {Aggregator, ColumnType, Comparison, DimensionType, Format, Order} from "./enum";

@@ -6,7 +6,6 @@ import type {
 } from "../api/tesseract/schema";
 import {asArray} from "./array";
 import {parseNumeric, randomKey} from "./string";
-import {joinName} from "./transform";
 
 export interface QueryItem {
   created: string;
@@ -35,8 +34,12 @@ export interface QueryParams {
 
 export interface QueryResult<D = Record<string, unknown>> {
   data: D[];
+  page: {
+    limit: number;
+    offset: number;
+    total: number;
+  };
   types: Record<string, AnyResultColumn>;
-  error?: string;
   headers?: Record<string, string>;
   status: number;
   url: string;

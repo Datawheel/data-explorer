@@ -1,4 +1,4 @@
-import {Format} from "../enum";
+import type {Format} from "../enum";
 import {httpFetch, toPlainObject} from "../tools";
 import type {
   TesseractCube,
@@ -9,7 +9,7 @@ import type {
   TesseractStatus,
 } from "./schema";
 
-export const TesseractFormat = Format;
+export {Format as TesseractFormat} from "../enum";
 
 export class TesseractModuleClient {
   baseURL: string;
