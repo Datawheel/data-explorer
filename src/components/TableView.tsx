@@ -263,7 +263,10 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
-    queryFn: () => actions.willFetchQuery(),
+    queryFn: () => actions.willFetchQuery().then(result => {
+      actions.updateResult(result);
+      return result;
+    }),
     staleTime: 300000,
     enabled: enabled && !!filterKeydebouced
   });
@@ -302,7 +305,10 @@ function usePrefetch({
     if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
-        queryFn: () => actions.willFetchQuery({offset: off, limit}),
+        queryFn: () => actions.willFetchQuery({offset: off, limit}).then(result => {
+          actions.updateResult(result);
+          return result;
+        }),
         staleTime: 300000
       });
     }

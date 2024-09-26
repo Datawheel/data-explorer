@@ -30,7 +30,7 @@ export const AreaDrilldowns = () => {
     actions.willFetchMembers(level.name).then(res => {
       actions.updateDrilldown({
         ...drilldownItem,
-        memberCount: res.members.length,
+        members: res.members,
       });
     });
   }, []);

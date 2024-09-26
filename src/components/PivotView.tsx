@@ -1,21 +1,27 @@
 import {Alert, Box, Button, Input, Loader, SimpleGrid, createStyles} from "@mantine/core";
 import {IconAlertCircle, IconAlertTriangle} from "@tabler/icons-react";
-import {MantineReactTable, MRT_TableOptions as TableOptions, useMantineReactTable} from "mantine-react-table";
+import {
+  MantineReactTable,
+  useMantineReactTable,
+  type MRT_TableOptions as TableOptions,
+} from "mantine-react-table";
 import React, {useMemo, useState} from "react";
 import {useSelector} from "react-redux";
+import {Aggregator} from "../api";
+import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {useFormatParams, usePivottedData} from "../hooks/pivot";
 import {useTranslation} from "../hooks/translation";
 import {selectOlapMeasureMap} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import {getCaption} from "../utils/string";
 import {keyBy} from "../utils/transform";
-import {Formatter, JSONArrays, ViewProps} from "../utils/types";
+import type {Formatter, JSONArrays, ViewProps} from "../utils/types";
 import {isActiveItem} from "../utils/validation";
 import {ButtonDownload} from "./ButtonDownload";
 import {NonIdealState} from "./NonIdealState";
 import {SelectObject} from "./Select";
 
-type DrilldownType = "geo" | "std" | "time" | "prop";
+type DrilldownType = "geo" | "standard" | "time" | "prop";
 type VoidFunction = (...args) => void;
 
 const SelectOption = SelectObject<{label: string; value: string; type: string}>;
@@ -44,9 +50,9 @@ const useStyles = createStyles(theme => ({
 }));
 
 /** */
-export function PivotView<TData extends Record<string, any>>(props: {
-
-} & ViewProps<TData> & TableOptions<TData>) {
+export function PivotView<TData extends Record<string, unknown>>(
+  props: {} & ViewProps<TData> & TableOptions<TData>,
+) {
   const {cube, params, result, ...mantineReactTableProps} = props;
   const locale = params.locale;
 
@@ -56,50 +62,49 @@ export function PivotView<TData extends Record<string, any>>(props: {
 
   const {classes, cx} = useStyles();
 
-  const measureOptions = useMemo(() =>
-    filterMap(Object.values(params.measures), item => {
-      const entity = measureMap[item.name];
-      return !isActiveItem(item) ? null : {
-        value: item.name,
-        label: getCaption(entity, locale),
-        type: entity.aggregatorType
-      };
-    }), [cube, params.measures, locale]);
+  const measureOptions = useMemo(
+    () =>
+      filterMap(Object.values(params.measures), item => {
+        const entity = measureMap[item.name];
+        return !isActiveItem(item)
+          ? null
+          : {
+              value: item.name,
+              label: getCaption(entity, locale),
+              type: entity.aggregator,
+            };
+      }),
+    [measureMap, params.measures, locale],
+  );
 
   const drilldownOptions = useMemo(() => {
-    const dimensionMap = Object.fromEntries(
-      cube.dimensions.map(dim => [dim.name, dim])
-    );
-    const levelMap = Object.fromEntries(
-      cube.dimensions.map(dim => [dim.name, Object.fromEntries(
-        dim.hierarchies.map(hie => [hie.name, Object.fromEntries(
-          hie.levels.map(lvl => [lvl.name, lvl])
-        )])
-      )])
-    );
+    const levelMap = mapDimensionHierarchyLevels(cube);
 
-    return Object.values(params.drilldowns).filter(isActiveItem).flatMap(item => {
-      const entity = levelMap[item.dimension][item.hierarchy][item.level];
-      const caption = getCaption(entity, locale);
+    return Object.values(params.drilldowns)
+      .filter(isActiveItem)
+      .flatMap(item => {
+        const [dimension, hierarchy, level] = levelMap[item.level];
+        const caption = getCaption(level, locale);
+        const type = dimension.type as DrilldownType;
+        const propertyMap = keyBy(level.properties, "name");
 
-      const type = `${dimensionMap[item.dimension].dimensionType}` as DrilldownType;
-      const propertyMap = keyBy(entity.properties, "name");
-
-      const levelOptions = [{value: item.level, label: caption, type}];
-      if (`${item.level} ID` in result.data[0]) {
-        levelOptions.push({value: `${item.level} ID`, label: `${caption} ID`, type});
-      }
-      return levelOptions.concat(
-        filterMap(item.properties, item => {
-          const entity = propertyMap[item.name];
-          return !isActiveItem(item) ? null : {
-            value: item.name,
-            label: `${caption} › ${getCaption(entity, locale)}`,
-            type: "prop"
-          };
-        })
-      );
-    });
+        const levelOptions = [{value: item.level, label: caption, type}];
+        if (result.data.length && `${item.level} ID` in result.data[0]) {
+          levelOptions.push({value: `${item.level} ID`, label: `${caption} ID`, type});
+        }
+        return levelOptions.concat(
+          filterMap(item.properties, item => {
+            const entity = propertyMap[item.name];
+            return !isActiveItem(item)
+              ? null
+              : {
+                  value: item.name,
+                  label: `${caption} › ${getCaption(entity, locale)}`,
+                  type: "prop",
+                };
+          }),
+        );
+      });
   }, [cube, params.drilldowns, locale]);
 
   const [colProp, setColumnProp] = useState(() =>
@@ -136,7 +141,7 @@ export function PivotView<TData extends Record<string, any>>(props: {
     const drilldownCount = Object.values(params.drilldowns).filter(isActiveItem).length;
     if (drilldownCount > 2) {
       warnings.push(
-        valProp.type !== "SUM"
+        valProp.type !== Aggregator.sum 
           ? <Alert
             color="yellow"
             m="sm"
