@@ -13,7 +13,8 @@ import {
   Flex,
   Checkbox,
   ThemeIcon,
-  useMantineTheme
+  useMantineTheme,
+  Divider
 } from "@mantine/core";
 import {useSelector} from "react-redux";
 import {
@@ -47,7 +48,11 @@ import {
   IconStack3,
   IconSettings,
   IconArrowsLeftRight,
-  IconPlus
+  IconPlus,
+  IconWorld,
+  IconClock,
+  IconTag,
+  IconBox
 } from "@tabler/icons-react";
 import type {PlainLevel} from "@datawheel/olap-client";
 import {getCaption} from "../utils/string";
@@ -157,12 +162,23 @@ function DimensionItem({dimension, locale, activeItems, activeCount}) {
       activeCount={activeCount}
     />
   ));
-
-  if (!isChildSubMenu) {
-    return options[0];
-  }
-
-  return options;
+  // if (!isChildSubMenu) {
+  //   return options[0];
+  // }
+  return (
+    <div key={dimension.id}>
+      <Divider
+        my="xs"
+        label={
+          <Group>
+            {getIconForDimensionType(dimension.dimensionType)}
+            <Text italic>{getCaption(dimension, locale)}</Text>
+          </Group>
+        }
+      />
+      {options}
+    </div>
+  );
 }
 
 function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, activeCount}) {
@@ -182,7 +198,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, ac
 
   const isChildSubMenu = hierarchy.levels.length !== 1;
 
-  const options = hierarchy.levels.map(lvl => (
+  const options = hierarchy.levels.map((lvl, index) => (
     <LevelItem
       dimension={dimension}
       hierarchy={hierarchy}
@@ -192,6 +208,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, ac
       locale={locale}
       activeItems={activeItems}
       activeCount={activeCount}
+      depth={index}
     />
   ));
 
@@ -202,7 +219,16 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, ac
   return options;
 }
 
-function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems, activeCount}) {
+function LevelItem({
+  dimension,
+  hierarchy,
+  isSubMenu,
+  level,
+  locale,
+  activeItems,
+  activeCount,
+  depth = 0
+}) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
   const actions = useActions();
@@ -287,12 +313,16 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems,
   const isDisabled = isOtherHierarchySelected && !checked;
 
   if (!currentDrilldown) return;
+
+  const paddingLeft = `${20 * depth + 10}px`;
+
   return (
     currentDrilldown && (
       <>
         <Group mt="sm" position="apart" key={level.uri} noWrap>
           <Checkbox
-            sx={{cursor: "pointer"}}
+            // pl="sm"
+            sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               if (cut) {
                 const active = checked ? false : cut.members.length ? true : false;
@@ -616,5 +646,19 @@ function FilterItem({
     </Box>
   );
 }
+
+// Function to get the appropriate icon for each dimension type
+const getIconForDimensionType = dimensionType => {
+  console.log(dimensionType, "dt");
+  switch (dimensionType) {
+    case "geo":
+      return <IconWorld size={20} />;
+    case "time":
+      return <IconClock size={20} />;
+    // Add more cases for other dimension types
+    default:
+      return <IconBox size={20} />; // Default icon
+  }
+};
 
 export default AddColumnsDrawer;
