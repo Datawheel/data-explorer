@@ -48,7 +48,6 @@ export function willDownloadQuery(format: Format): ExplorerThunk<Promise<FileDes
     return olapClient.getCube(params.cube).then(cube => {
       const filename = `${cube.name}_${new Date().toISOString()}`;
       const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
-      console.log({format})
       const query = applyQueryParams(cube.query, queryParams, {previewLimit}).setFormat(format);
       const dataURL = query.toString("logiclayer").replace(olapClient.datasource.serverUrl, "");
 
