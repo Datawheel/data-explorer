@@ -168,7 +168,7 @@ function DimensionItem({dimension, locale, activeItems, activeCount}) {
   return (
     <div key={dimension.id}>
       <Divider
-        my="xs"
+        my="md"
         label={
           <Group>
             {getIconForDimensionType(dimension.dimensionType)}
@@ -649,7 +649,6 @@ function FilterItem({
 
 // Function to get the appropriate icon for each dimension type
 const getIconForDimensionType = dimensionType => {
-  console.log(dimensionType, "dt");
   switch (dimensionType) {
     case "geo":
       return <IconWorld size={20} />;
