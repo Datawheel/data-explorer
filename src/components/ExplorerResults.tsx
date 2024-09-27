@@ -48,10 +48,8 @@ export function ExplorerResults(props: {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
   const {params, result} = useSelector(selectCurrentQueryItem);
-
   const {online: isServerOnline, url: serverUrl} = serverStatus;
-  const {data, error} = result;
-
+  const {error} = result;
   const {translate: t} = useTranslation();
 
   const {classes, cx} = useStyles();

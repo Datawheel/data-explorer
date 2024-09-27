@@ -1,5 +1,5 @@
-import { translationFactory } from "@datawheel/use-translation";
-import { translationDict as vizbuilderTranslationDict } from "@datawheel/vizbuilder";
+import {translationFactory} from "@datawheel/use-translation";
+import {translationDict as vizbuilderTranslationDict} from "@datawheel/vizbuilder";
 
 export const defaultTranslation = {
   action_copy: "Copy",
@@ -17,7 +17,7 @@ export const defaultTranslation = {
     GTE: "Equal or greater than",
     LT: "Lower than",
     LTE: "Equal or lower than",
-    NEQ: "Not equal to",
+    NEQ: "Not equal to"
   },
   debug_view: {
     tab_label: "Debugger",
@@ -25,30 +25,30 @@ export const defaultTranslation = {
     jssource_prefix: "Javascript source for ",
     jssource_suffix: "",
     url_aggregate: "Aggregate API URL",
-    url_logiclayer: "LogicLayer API URL",
+    url_logiclayer: "LogicLayer API URL"
   },
   direction: {
     ASC: "Ascending",
-    DESC: "Descending",
+    DESC: "Descending"
   },
   formats: {
     csv: "CSV",
     json: "JSON",
     jsonarrays: "JSON Arrays",
     jsonrecords: "JSON Records",
-    xlsx: "XLSX",
+    xlsx: "XLSX"
   },
   loading: {
     title: "Loading...",
     message_heavyquery:
       "The current query might contain a maximum of {{rows}} rows.\nPlease wait...",
-    message_default: "Please wait...",
+    message_default: "Please wait..."
   },
   params: {
     action_clear: "Clear query",
     action_clear_description: "Clear all parameters from your current query",
     action_execute: "Execute query",
-    add_columns: "Add columns",
+    add_columns: "Add Column",
     column_title: "Parameters",
     current_endpoint: "Current endpoint: {{label}}",
     dimmenu_abbrjoint: ": ",
@@ -57,8 +57,7 @@ export const defaultTranslation = {
     dimmenu_level: "{{abbr}}",
     filter_mode: "Filter Mode",
     filter_by: "Filter by {{name}}",
-    error_no_cut_selected_detail:
-      "You can add data filters based on selected drilldowns.",
+    error_no_cut_selected_detail: "You can add data filters based on selected drilldowns.",
     error_no_cut_selected_title: "No cuts added",
     error_no_dimension_selected_detail: "You must add at least one drilldown.",
     error_no_dimension_selected_title: "No drilldowns selected",
@@ -113,14 +112,13 @@ export const defaultTranslation = {
     tooltip_area_drilldowns: "",
     tooltip_area_filters: "",
     tooltip_area_measures: "",
-    tooltip_area_options: "",
+    tooltip_area_options: ""
   },
   pivot_view: {
     tab_label: "Pivot Data",
     error_missingparams:
       "The current query doesn't have enough parameters. Two different drilldowns and a measure are needed.",
-    error_onedimension:
-      "The rows and columns in a pivotted table need 2 different drilldowns.",
+    error_onedimension: "The rows and columns in a pivotted table need 2 different drilldowns.",
     error_internal:
       "An internal error ocurred in the pivotting tool. We will fix it as soon as possible.",
     error_internal_detail:
@@ -141,12 +139,12 @@ export const defaultTranslation = {
     warning_propertypivot:
       "Unlike Drilldown Members, Drilldown Properties are not guaranteed to be unique. In this view, data points are aggregated based on the property labels, so please ensure you're not missing information.",
     warning_sumdimensions:
-      "There's more than 2 drilldowns in this query. Remaining values will be summed.",
+      "There's more than 2 drilldowns in this query. Remaining values will be summed."
   },
   placeholders: {
     incomplete: "[Incomplete parameters]",
     unselected: "[Unselected]",
-    none: "[None]",
+    none: "[None]"
   },
   previewMode: {
     btn_get_all: "Show all rows",
@@ -156,7 +154,7 @@ export const defaultTranslation = {
     description_preview:
       "You are currently viewing a preview response of the first {{limit}} rows.",
     title_full: "All records",
-    title_preview: "Preview records",
+    title_preview: "Preview records"
   },
   queries: {
     action_create: "New query",
@@ -164,12 +162,10 @@ export const defaultTranslation = {
     error_not_query: "Please construct a valid query",
     error_no_drilldowns: "You must add at least one drilldown.",
     error_no_measures: "You must add at least one measure.",
-    error_one_hierarchy_per_dimension:
-      "You must only select drilldowns of a single hierarchy.",
-    error_one_cut_per_dimension:
-      "You must only apply cuts over levels of a single hierarchy.",
+    error_one_hierarchy_per_dimension: "You must only select drilldowns of a single hierarchy.",
+    error_one_cut_per_dimension: "You must only apply cuts over levels of a single hierarchy.",
     column_title: "Queries",
-    unset_parameters: "No parameters set",
+    unset_parameters: "No parameters set"
   },
   results: {
     error_execquery_detail: "There was a problem with the last query:",
@@ -180,7 +176,7 @@ export const defaultTranslation = {
     error_emptyresult_detail:
       "The query didn't return elements. Try again with different parameters.",
     count_rows: "{{n}} row",
-    count_rows_plural: "{{n}} rows",
+    count_rows_plural: "{{n}} rows"
   },
   selectlevel_placeholder: "Level...",
   selectmeasure_placeholder: "Measure...",
@@ -189,7 +185,7 @@ export const defaultTranslation = {
     tab_label: "Data Table",
     numeral_format: "Numeral format",
     sort_asc: "Sort Asc",
-    sort_desc: "Sort Desc",
+    sort_desc: "Sort Desc"
   },
   transfer_input: {
     count_hidden: "{{n}} item hidden",
@@ -200,12 +196,14 @@ export const defaultTranslation = {
     select_filtered: "Select filtered",
     unselect_filtered: "Unselect filtered",
     selected_items: "Selected items",
-    unselected_items: "Unselected items",
+    unselected_items: "Unselected items"
   },
-  vizbuilder: vizbuilderTranslationDict,
+  vizbuilder: vizbuilderTranslationDict
 };
 
 export type TranslationDict = typeof defaultTranslation;
 
-export const { useTranslation, TranslationConsumer, TranslationProvider } =
-  translationFactory({ defaultLocale: "en", defaultTranslation });
+export const {useTranslation, TranslationConsumer, TranslationProvider} = translationFactory({
+  defaultLocale: "en",
+  defaultTranslation
+});
