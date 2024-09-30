@@ -33,9 +33,10 @@ const useStyles = createStyles(() => ({
   container: {
     minHeight: "40vh",
     display: "flex",
-    flexFlow: "column nowrap"
-  }
+    flexFlow: "column nowrap",
+  },
 }));
+
 /**
  * Renders the result area in the UI.
  */
@@ -47,10 +48,8 @@ export function ExplorerResults(props: {
   const cube = useSelector(selectOlapCube);
   const serverStatus = useSelector(selectServerState);
   const {params, result} = useSelector(selectCurrentQueryItem);
-
   const {online: isServerOnline, url: serverUrl} = serverStatus;
-  const {data, error} = result;
-
+  const {error} = result;
   const {translate: t} = useTranslation();
 
   const {classes, cx} = useStyles();
@@ -210,27 +209,34 @@ function SuccessResult(props: {
           sx={t => ({
             alignItems: "center",
             background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
-            justifyContent: "space-between"
+            justifyContent: "space-between",
           })}
           w="100%"
         >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Group sx={{display: "flex", flex: "0 1 auto"}} mr="sm" noWrap>
-              <AddColumnsDrawer />
+            <Group sx={{display: "flex", flex: "0 1 auto", gap: "0.5rem"}} mr="sm" noWrap>
               <Toolbar table={table} fullscreen={fullscreen} />
+              <AddColumnsDrawer />
             </Group>
           )}
         </Flex>
         {isPreviewMode && (
-          <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
+          <Alert
+            id="alert-load-all-results"
+            color="yellow"
+            radius={0}
+            sx={{flex: "0 0 auto"}}
+          >
             <Group position="apart">
               <Text>
                 <Text fw={700} span>
                   {t("previewMode.title_preview")}:{" "}
                 </Text>
-                <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
+                <Text span>
+                  {t("previewMode.description_preview", {limit: previewLimit})}
+                </Text>
               </Text>
               <PreviewModeSwitch />
             </Group>

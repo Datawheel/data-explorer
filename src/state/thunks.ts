@@ -162,8 +162,7 @@ export function willFetchMembers(
 /**
  * Checks the state of the current QueryParams and fills missing information.
  *
- * @param suggestedCube
- *   The cube to resolve the missing data from.
+ * @param suggestedCube The cube to resolve the missing data from.
  */
 export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
@@ -301,8 +300,7 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
  * If the new cube contains a measure with the same name as a measure in the
  * previous cube, keep its state.
  *
- * @param cubeName
- *   The name of the cube we intend to switch to.
+ * @param cubeName The name of the cube we intend to switch to.
  */
 export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
