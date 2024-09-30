@@ -28,8 +28,8 @@ export const reducer = combineReducers(reducerMap);
  */
 export function thunkExtraArg() {
   return {
-    tesseract: new TesseractModuleClient(""),
-    complexity: new ComplexityModuleClient(""),
+    tesseract: new TesseractModuleClient(),
+    complexity: new ComplexityModuleClient(),
     previewLimit: 50,
   };
 }

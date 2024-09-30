@@ -21,4 +21,5 @@ export type {
   TesseractSchema,
 } from "./tesseract/schema";
 
+export {LogicLayerProvider, useLogicLayer} from "./context";
 export {Aggregator, ColumnType, Comparison, DimensionType, Format, Order} from "./enum";
