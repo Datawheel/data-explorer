@@ -408,7 +408,7 @@ export function useTable({
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
-
+    
   usePrefetch({
     isPlaceholderData,
     limit,
