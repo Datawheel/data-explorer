@@ -1,4 +1,4 @@
-import React, {PropsWithChildren, useState, useEffect} from "react";
+import React, {PropsWithChildren, useState, useEffect, useMemo} from "react";
 import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group} from "@mantine/core";
 import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
@@ -9,49 +9,41 @@ import Graph from "../utils/graph";
 import {useSelector} from "react-redux";
 import {LocaleSelector} from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
-import {useDebouncedValue} from "@mantine/hooks";
+import {useDebouncedState, useDebouncedValue} from "@mantine/hooks";
+import useBuildGraph from "../hooks/buildGraph";
+import useCubeSearch from "../hooks/cubeSearch";
 
 type SidebarProviderProps = {
   expanded: boolean;
   setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
   graph: Graph;
-  setGraph: React.Dispatch<React.SetStateAction<Graph>>;
-  setResults: React.Dispatch<React.SetStateAction<string[]>>;
   results: string[];
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
   map: Map<string, string[]> | undefined;
-  setMap: React.Dispatch<React.SetStateAction<Map<string, string[]> | undefined>>;
-  resetGraph: () => void;
 };
 
 export const [useSideBar, Provider] =
   createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
 
 export function SideBarProvider(props: PropsWithChildren<{}>) {
-  const [input, setInput] = useState<string>("");
+  const [input, setInput] = useDebouncedState<string>("", 200);
   const [expanded, setExpanded] = useState<boolean>(true);
-  const [results, setResults] = useState<string[]>([]);
-  const [map, setMap] = useState<Map<string, string[]>>();
-  const [graph, setGraph] = useState(new Graph());
 
-  const resetGraph = () => setGraph(new Graph());
+  const graph = useBuildGraph();
+  const {results, map} = useCubeSearch(input, graph);
 
   return (
     <Provider
       {...props}
       value={{
         expanded,
-        setExpanded,
         graph,
-        setGraph,
+        setExpanded,
         results,
-        setResults,
         input,
         map,
-        setMap,
         setInput,
-        resetGraph
       }}
     />
   );
@@ -128,7 +120,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                 width: expanded ? "100%" : 0
               }}
             >
-              <Auto />
+              <Auto  />
             </Box>
             <Box sx={{flexGrow: 1}}></Box>
           </Flex>
@@ -186,17 +178,8 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
 }
 
 function Auto() {
-  const {code: locale} = useSelector(selectLocale);
   const {translate: t} = useTranslation();
-  const {expanded, graph, setResults, input, setInput, setMap} = useSideBar();
-  const [debouncedInput] = useDebouncedValue(input, 200);
-  useEffect(() => {
-    if (graph.items.length > 0) {
-      const {matches, map} = graph.filter(locale, debouncedInput);
-      setResults(matches);
-      setMap(map);
-    }
-  }, [debouncedInput, graph]);
+  const {expanded, input, setInput} = useSideBar();
 
   return (
     <Input
@@ -204,7 +187,7 @@ function Auto() {
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}
-      value={input}
+      defaultValue={input}
       onInput={e => setInput(e.currentTarget.value)}
       styles={{
         wrapper: {

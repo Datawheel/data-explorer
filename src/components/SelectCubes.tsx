@@ -29,6 +29,8 @@ import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
+const EMPTY_RESPONSE = {data: [], types: {}, url: "", status: 200, page: {offset: 0, limit: 0, total: 0}};
+
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
   const selectedItem = useSelector(selectOlapCube);
@@ -155,9 +157,8 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
   return cube;
 }
 
-function useBuildGraph(items, locale, graph, setGraph) {
-  const [filteredItems, setFilteredItems] = useState<AnnotatedCube[]>([]);
-  useEffect(() => {
+function useBuildGraph(items, locale) {
+  const graph = useMemo(() => {
     const graph = new Graph();
     const filteredItems = items
       .map(item => {
@@ -178,12 +179,11 @@ function useBuildGraph(items, locale, graph, setGraph) {
         return null;
       })
       .filter(Boolean);
-    setFilteredItems(filteredItems);
     graph.items = filteredItems;
-    setGraph(graph);
-  }, [items, locale, setGraph]);
+    return graph
+  }, [items, locale]);
 
-  return {graph, filteredItems};
+  return {graph};
 }
 
 function CubeTree({
@@ -195,9 +195,8 @@ function CubeTree({
   locale: string;
   selectedItem?: TesseractCube;
 }) {
-  const {graph, setGraph, map, input} = useSideBar();
+  const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
-  const {filteredItems} = useBuildGraph(items, locale, graph, setGraph);
 
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
@@ -210,7 +209,7 @@ function CubeTree({
       const {drilldowns, cuts, filters, measures, ...newQuery} = query;
       actions.setLoadingState("FETCHING");
       actions.resetAllParams(newQuery);
-      actions.updateResult({data: [], types: {}, url: "", status: 200});
+      actions.updateResult(EMPTY_RESPONSE);
       actions.willSetCube(cube.name).then(() => {
         actions.setLoadingState("SUCCESS");
       });
@@ -218,8 +217,8 @@ function CubeTree({
   };
 
   let topics = useMemo(
-    () => getKeys(filteredItems as AnnotatedCube[], "topic", locale),
-    [filteredItems, locale]
+    () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
+    [graph.items, locale]
   );
 
   topics = [topics[0], topics[1]];
