@@ -12,7 +12,8 @@ import {
   MantineThemeOverride,
   Divider,
   Flex,
-  createEmotionCache
+  createEmotionCache,
+  Pagination
 } from "@mantine/core";
 import {
   IconSettings,
@@ -270,6 +271,8 @@ function App() {
   });
   // would be a good idea to add formatters and default cube,
   //  specific config for clients in this object.
+  // defaultCube="gastat_gdp"
+  // move to env variables
   const items = [
     {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
     {value: "https://pytesseract-dev.oec.world/tesseract/", label: "OEC"},
@@ -286,8 +289,8 @@ function App() {
       items={items}
     >
       <Explorer
+        // pagination={{defaultLimit: 100, rowsLimits: [100, 300, 500, 1000]}}
         source={source.value}
-        // defaultCube="gastat_gdp"
         setSource={setSource}
         formatters={formatters}
         dataLocale={"en,ar,es"}

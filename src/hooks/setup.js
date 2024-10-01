@@ -6,7 +6,7 @@ import {parseStateFromSearchParams} from "../utils/permalink";
 import {decodeUrlFromBase64} from "../utils/string";
 import {buildQuery, buildQueryParams} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
-import {useActions} from "./settings";
+import {useActions, useSettings} from "./settings";
 
 /**
  * Keeps in sync the internal datasources with the setup parameters.
@@ -16,6 +16,7 @@ import {useActions} from "./settings";
  */
 export function useSetup(serverConfig, locale, defaultCube) {
   const actions = useActions();
+  const {paginationConfig}= useSettings()
   const [done, setDone] = useState(false);
 
   // ensure the locale variable is an array
@@ -68,7 +69,7 @@ export function useSetup(serverConfig, locale, defaultCube) {
             isValidQuery(locationState) &&
             buildQuery({
               panel: searchObject.panel,
-              params: buildQueryParams({...locationState})
+              params: buildQueryParams({...locationState, pagiLimit: paginationConfig.defaultLimit})
             });
         } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState}});
@@ -82,7 +83,6 @@ export function useSetup(serverConfig, locale, defaultCube) {
         query.params.locale = query.params.locale || cleanLocale[0];
         actions.resetQueries({[query.key]: query});
         return actions.willHydrateParams();
-        // .then(() => actions.willExecuteQuery());
       })
       .then(
         () => {

@@ -1,29 +1,42 @@
 import React, {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useSelector} from "react-redux";
-import {useActions} from "../hooks/settings";
-import {ActionIcon, Menu, Box, Flex, Text, Loader, Button, Group} from "@mantine/core";
+import {useActions, useSettings} from "../hooks/settings";
+import {ActionIcon, Menu, Box, Flex, Text, Loader, Button, Group, Select} from "@mantine/core";
 import {useTranslation} from "../hooks/translation";
 import {IconCopy, IconDotsVertical, IconDownload} from "@tabler/icons-react";
 import type {ViewProps} from "../main";
-import type {MRT_TableInstance} from "mantine-react-table";
+import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
 import {useClickOutside, useClipboard} from "@mantine/hooks";
-import {selectCurrentQueryItem} from "../state/queries";
 import {selectServerFormatsEnabled} from "../state/server";
 import {FileDescriptor} from "../utils/types";
 import {useAsync} from "../hooks/useAsync";
 import CubeSource from "./CubeSource";
 import {selectLoadingState} from "../state/loading";
+import {SelectObject} from "./Select";
+
+const formatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0
+});
 
 type TData = Record<string, any> & Record<string, string | number>;
+
 type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
     data?: Record<string, string | number>[];
     isLoading: boolean;
+    pagination?: MRT_PaginationState;
+    setPagination?: React.Dispatch<React.SetStateAction<MRT_PaginationState>>;
   };
+
+type Item = {
+  value: number;
+  label: string;
+};
 
 function TableFooter(props: Props) {
   const loading = useSelector(selectLoadingState);
-  const {result, table, data = [], isLoading} = props;
+  const {paginationConfig} = useSettings();
+  const {result, table, data = [], isLoading, pagination, setPagination} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
 
@@ -47,7 +60,22 @@ function TableFooter(props: Props) {
         <CubeSource />
         {!loading.loading && !isLoading && (
           <Group position="right" spacing="sm">
-            {totalRowCount && <Text c="dimmed">{t("results.count_rows", {n: totalRowCount})}</Text>}
+            <Box maw="7rem" miw={"fit"}>
+              <SelectObject
+                getValue={(item: Item) => item.value}
+                getLabel={(item: Item) => item.label}
+                items={paginationConfig.rowsLimits.map(value => ({value, label: String(value)}))}
+                selectedItem={{value: pagination?.pageSize}}
+                onItemSelect={(item: Item) =>
+                  setPagination && setPagination({pageIndex: 0, pageSize: item.value})
+                }
+              />
+            </Box>
+            {totalRowCount && (
+              <Text c="dimmed">
+                {t("results.count_rows_plural", {n: formatter.format(totalRowCount)})}
+              </Text>
+            )}
             {showPagination && <MRT_TablePagination table={table} />}
             <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} data={data} />
           </Group>

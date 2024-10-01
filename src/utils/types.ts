@@ -1,7 +1,7 @@
 import {PlainCube} from "@datawheel/olap-client";
 import React from "react";
 import {QueryParams, QueryResult} from "./structs";
-import type {MRT_TableInstance} from "mantine-react-table";
+import type {MRT_ColumnDef, MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 
 export interface Annotated {
   annotations: Record<string, string | undefined>;
@@ -32,7 +32,7 @@ export interface PanelDescriptor {
   component: React.ComponentType<ViewProps>;
 }
 
-export interface ViewProps<TData = Record<string, string | number>> {
+export interface ViewProps<TData extends Record<string, any> = Record<string, string | number>> {
   className?: string;
   cube: PlainCube;
   panelKey: string | null;
@@ -42,4 +42,7 @@ export interface ViewProps<TData = Record<string, string | number>> {
   isError?: boolean;
   isLoading?: boolean;
   data?: Record<string, string | number>[];
+  columns?: MRT_ColumnDef<TData>[];
+  pagination?: MRT_PaginationState;
+  setPagination?: React.Dispatch<React.SetStateAction<MRT_PaginationState>>;
 }

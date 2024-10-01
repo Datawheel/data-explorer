@@ -2,23 +2,35 @@ import {Button, Group, Input, Select, SelectProps} from "@mantine/core";
 import React, {useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
 
-type PropertyAccesor<T> = (T extends string | number ? never : keyof T) | ((item: T) => string);
+type PropertyAccesor<T> =
+  | (T extends string | number ? never : keyof T)
+  | ((item: T) => string | number);
 
 /** */
-export const SelectObject = forwardRef(function<T>(props: {
-  disabled?: boolean;
-  getLabel?: PropertyAccesor<T>;
-  getValue?: PropertyAccesor<T>;
-  hidden?: boolean;
-  items: T[];
-  label?: string;
-  loading?: boolean;
-  onItemSelect?: (item: T) => void;
-  searchable?: boolean;
-  selectedItem?: T | string | null;
-  selectProps?: Partial<SelectProps>;
-}, ref) {
-  const {getLabel, getValue = identity, items, onItemSelect, selectedItem, selectProps = {}} = props;
+export const SelectObject = forwardRef(function <T>(
+  props: {
+    disabled?: boolean;
+    getLabel?: PropertyAccesor<T>;
+    getValue?: PropertyAccesor<T>;
+    hidden?: boolean;
+    items: T[];
+    label?: string;
+    loading?: boolean;
+    onItemSelect?: (item: T) => void;
+    searchable?: boolean;
+    selectedItem?: T | string | null;
+    selectProps?: Partial<SelectProps>;
+  },
+  ref
+) {
+  const {
+    getLabel,
+    getValue = identity,
+    items,
+    onItemSelect,
+    selectedItem,
+    selectProps = {}
+  } = props;
 
   const [itemList, itemMap] = useMemo(() => {
     const valueAccessor = accesorFactory(getValue);
@@ -63,7 +75,7 @@ export const SelectObject = forwardRef(function<T>(props: {
       {...selectProps}
     />
   );
-})
+});
 
 /** */
 export function SelectWithButtons<T>(props: {
