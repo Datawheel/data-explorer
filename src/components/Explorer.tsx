@@ -2,7 +2,7 @@ import {ServerConfig} from "@datawheel/olap-client";
 import {TranslationContextProps, TranslationProviderProps} from "@datawheel/use-translation";
 import {CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
-import React, {useEffect, useMemo} from "react";
+import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import {TranslationDict, TranslationProvider} from "../hooks/translation";
@@ -13,12 +13,18 @@ import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
 
+export type Pagination = {
+  rowsLimits: number[];
+  defaultLimit: Pagination["rowsLimits"][number]; // Ensures defaultLimit is one of the values in rowsLimits
+};
+
 /**
  * Main DataExplorer component
  * This components wraps the interface components in the needed Providers,
  * and pass the other properties to them.
  */
 export function ExplorerComponent(props: {
+  pagination?: Pagination;
   /**
    * A reference to the server with the data.
    * Can be setup as a string with the URL of the server, or a
@@ -143,7 +149,8 @@ export function ExplorerComponent(props: {
     withinReduxProvider = false,
     withMultiQuery = false,
     setSource,
-    source
+    source,
+    pagination
   } = props;
 
   const locale = useMemo(() => dataLocale.toString().split(","), [dataLocale]);
@@ -181,6 +188,7 @@ export function ExplorerComponent(props: {
       previewLimit={previewLimit}
       withPermalink={props.withPermalink}
       panels={panels}
+      pagination={pagination}
     >
       <TranslationProvider defaultLocale={props.uiLocale} translations={props.translations}>
         <ExplorerContent

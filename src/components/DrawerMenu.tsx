@@ -314,14 +314,13 @@ function LevelItem({
 
   if (!currentDrilldown) return;
 
-  const paddingLeft = `${20 * depth + 10}px`;
+  const paddingLeft = `${5 * depth + 5}px`;
 
   return (
     currentDrilldown && (
       <>
         <Group mt="sm" position="apart" key={level.uri} noWrap>
           <Checkbox
-            // pl="sm"
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               if (cut) {
