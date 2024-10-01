@@ -3,14 +3,16 @@ import React, {createContext, useCallback, useContext, useMemo} from "react";
 import {type ExplorerActionMap} from "../state";
 import {Formatter, PanelDescriptor} from "../utils/types";
 import {usePermalink} from "./permalink";
+import type {Pagination} from "../components/Explorer";
 
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
-  [K in keyof ExplorerActionMap]:
-    ExplorerActionMap[K] extends (...args: infer Params) => (...args) => infer R
-      ? (...args: Params) => R
-      : ExplorerActionMap[K];
-}
+  [K in keyof ExplorerActionMap]: ExplorerActionMap[K] extends (
+    ...args: infer Params
+  ) => (...args) => infer R
+    ? (...args: Params) => R
+    : ExplorerActionMap[K];
+};
 
 interface SettingsContextProps {
   actions: ExplorerBoundActionMap;
@@ -18,6 +20,7 @@ interface SettingsContextProps {
   formatters: Record<string, Formatter>;
   previewLimit: number;
   panels: PanelDescriptor[];
+  paginationConfig: Pagination;
 }
 
 /**
@@ -38,16 +41,21 @@ export function SettingsProvider(props: {
   panels: PanelDescriptor[];
   previewLimit?: number;
   withPermalink: boolean | undefined;
+  pagination?: Pagination;
 }) {
   usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
 
-  const value: SettingsContextProps = useMemo(() => ({
-    actions: props.actions,
-    defaultMembersFilter: props.defaultMembersFilter || "id",
-    formatters: props.formatters || {},
-    panels: props.panels,
-    previewLimit: props.previewLimit || 50,
-  }), [props.formatters, props.previewLimit]);
+  const value: SettingsContextProps = useMemo(
+    () => ({
+      actions: props.actions,
+      defaultMembersFilter: props.defaultMembersFilter || "id",
+      formatters: props.formatters || {},
+      panels: props.panels,
+      previewLimit: props.previewLimit || 50,
+      paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 100], defaultLimit: 100}
+    }),
+    [props.formatters, props.previewLimit]
+  );
 
   return <ContextProvider value={value}>{props.children}</ContextProvider>;
 }
@@ -58,12 +66,15 @@ export function SettingsProvider(props: {
 export function SettingsConsumer(props: React.ConsumerProps<SettingsContextProps>) {
   return (
     <ContextConsumer>
-      {useCallback(context => {
-        if (context === undefined) {
-          throw new Error("SettingsConsumer must be used within a SettingsProvider.");
-        }
-        return props.children(context);
-      }, [props.children])}
+      {useCallback(
+        context => {
+          if (context === undefined) {
+            throw new Error("SettingsConsumer must be used within a SettingsProvider.");
+          }
+          return props.children(context);
+        },
+        [props.children]
+      )}
     </ContextConsumer>
   );
 }
