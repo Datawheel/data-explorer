@@ -237,9 +237,10 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   const loadingState = useSelector(selectLoadingState);
   const actions = useActions();
   const page = pagination.pageIndex;
+  const pageSize = pagination.pageSize;
   const enabled = Boolean(columns.length);
 
-  const initialKey = permaKey ? [permaKey, page] : permaKey;
+  const initialKey = permaKey ? [permaKey, page, pageSize] : permaKey;
   const [filterKeydebouced, setDebouncedTerm] = useState<
     string | boolean | (string | boolean | number)[]
   >(initialKey);
@@ -248,14 +249,14 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
     if (!enabled && permaKey) return;
     const handler = debounce(
       () => {
-        const term = [permaKey, page];
+        const term = [permaKey, page, pageSize];
         setDebouncedTerm(term);
       },
       loadingState.loading ? 0 : 800
     );
     handler();
     return () => handler.cancel();
-  }, [page, enabled, cube, locale, permaKey]);
+  }, [page, pageSize, enabled, cube, locale, permaKey]);
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
@@ -296,9 +297,10 @@ function usePrefetch({
   const actions = useActions();
   const paramKey = useKey();
   const page = pagination.pageIndex + 1;
-  const hasMore = page * pagination.pageSize <= totalRowCount;
-  const off = page * pagination.pageSize;
-  const key = [paramKey, page];
+  const pageSize = pagination.pageSize;
+  const hasMore = page * pageSize <= totalRowCount;
+  const off = page * pageSize;
+  const key = [paramKey, page, pageSize];
 
   React.useEffect(() => {
     if (!isPlaceholderData && hasMore && !isFetching) {
@@ -335,18 +337,17 @@ export function useTable({
   columnSorting = () => 0,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
-  // const {types} = result;
   const filterItems = useSelector(selectFilterItems);
   const filtersMap = useSelector(selectFilterMap);
   const measuresOlap = useSelector(selectOlapMeasureItems);
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const measures = useSelector(selectMeasureItems);
-  const itemsCuts = useSelector(selectCutItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-
-  const loadingState = useSelector(selectLoadingState);
+  // const {types} = result;
+  // const itemsCuts = useSelector(selectCutItems);
+  // const loadingState = useSelector(selectLoadingState);
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -641,16 +642,23 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading: isLoad, data: tableData, columns};
+  return {table, isError, isLoading: isLoad, data: tableData, columns, pagination, setPagination};
 }
 
 type TableView = {
   table: MRT_TableInstance<TData>;
   getColumn(id: String): AnyResultColumn | undefined;
-  columns: AnyResultColumn[];
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading = false, data}: TableView) {
+export function TableView({
+  table,
+  result,
+  isError,
+  isLoading = false,
+  data,
+  pagination,
+  setPagination
+}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
@@ -757,7 +765,14 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
           {!isData && !isError && !isLoading && <NoRecords />}
         </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} data={data} result={result} isLoading={isLoading} />
+        <TableFooter
+          pagination={pagination}
+          setPagination={setPagination}
+          table={table}
+          data={data}
+          result={result}
+          isLoading={isLoading}
+        />
       </Flex>
     </Box>
   );
