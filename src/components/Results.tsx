@@ -81,17 +81,17 @@ export const useStyles = createStyles(theme => ({
     "&:hover": {
       backgroundColor:
         theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors.blue[9], 0.45)
-          : theme.fn.rgba(theme.colors.blue[4], 0.45)
+          ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.45)
+          : theme.fn.rgba(theme.colors[theme.primaryColor][4], 0.45)
     }
   },
 
   linkActive: {
     backgroundColor:
       theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors.blue[9], 0.45)
-        : theme.colors.blue[4],
-    color: theme.colorScheme === "dark" ? theme.colors.blue[1] : theme.white,
+        ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.45)
+        : theme.colors[theme.primaryColor][4],
+    color: theme.colorScheme === "dark" ? theme.colors[theme.primaryColor][1] : theme.white,
     fontWeight: 500
   }
 }));

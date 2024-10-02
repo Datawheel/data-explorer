@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Checkbox,
+  Divider,
   Drawer,
   Flex,
   Group,
@@ -17,17 +18,25 @@ import {
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   IconArrowsLeftRight,
+  IconBox,
+  IconClock,
   IconFilter,
   IconFilterOff,
   IconMathGreater,
   IconMathLower,
+  IconPlus,
   IconSettings,
   IconStack3,
+  IconWorld,
 } from "@tabler/icons-react";
 import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
-import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
@@ -45,13 +54,13 @@ import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
 import {
   type CutItem,
+  type DrilldownItem,
   FilterItem,
   type MeasureItem,
   buildCut,
   buildDrilldown,
   buildFilter,
   buildMeasure,
-  type DrilldownItem,
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
@@ -79,13 +88,13 @@ function AddColumnsDrawer() {
         onClose={close}
         title={
           <Group>
-            <IconStack3 size="1rem" />
+            <IconPlus size="1.2rem" />
             <Text fw={700}>{t("params.add_columns")}</Text>
           </Group>
         }
         styles={styles}
         overlayProps={{
-          opacity: 0.1
+          opacity: 0.1,
         }}
       >
         <MeasuresOptions />
@@ -93,11 +102,16 @@ function AddColumnsDrawer() {
       </Drawer>
       <Group position="center" sx={{flexWrap: "nowrap"}}>
         {smallerThanMd ? (
-          <ActionIcon onClick={open} size="md" variant="filled" color={theme.primaryColor}>
+          <ActionIcon
+            onClick={open}
+            size="md"
+            variant="filled"
+            color={theme.primaryColor}
+          >
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
-          <Button leftIcon={<IconStack3 size="1rem" />} onClick={open} m="md" size="xs">
+          <Button leftIcon={<IconPlus size="1.2rem" />} onClick={open} m="md" size="sm">
             {t("params.add_columns")}
           </Button>
         )}
@@ -132,13 +146,17 @@ function DrillDownOptions() {
           activeItems={activeItems}
         />
       )),
-    [dimensions, activeItems, locale.code]
+    [dimensions, activeItems, locale.code],
   );
 
   return options;
 }
 
-function DimensionItem({dimension, locale, activeItems}: {
+function DimensionItem({
+  dimension,
+  locale,
+  activeItems,
+}: {
   dimension: TesseractDimension;
   locale: string;
   activeItems: DrilldownItem[];
@@ -155,15 +173,32 @@ function DimensionItem({dimension, locale, activeItems}: {
       activeItems={activeItems}
     />
   ));
-
-  if (!isChildSubMenu) {
-    return options[0];
-  }
-
-  return options;
+  // if (!isChildSubMenu) {
+  //   return options[0];
+  // }
+  return (
+    <div key={dimension.name}>
+      <Divider
+        my="md"
+        label={
+          <Group>
+            {getIconForDimensionType(dimension.type)}
+            <Text italic>{getCaption(dimension, locale)}</Text>
+          </Group>
+        }
+      />
+      {options}
+    </div>
+  );
 }
 
-function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}: {
+function HierarchyItem({
+  dimension,
+  hierarchy,
+  isSubMenu,
+  locale,
+  activeItems,
+}: {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
   isSubMenu: boolean;
@@ -180,13 +215,13 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}: {
     return t("params.dimmenu_hierarchy", {
       abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
       dimension: captions[0],
-      hierarchy: captions[1]
+      hierarchy: captions[1],
     });
-  }, [locale, dimension, hierarchy, isSubMenu]);
+  }, [locale, dimension, hierarchy, isSubMenu, t]);
 
   const isChildSubMenu = hierarchy.levels.length !== 1;
 
-  const options = hierarchy.levels.map(lvl => (
+  const options = hierarchy.levels.map((lvl, index) => (
     <LevelItem
       dimension={dimension}
       hierarchy={hierarchy}
@@ -195,6 +230,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}: {
       level={lvl}
       locale={locale}
       activeItems={activeItems}
+      depth={index}
     />
   ));
 
@@ -205,13 +241,22 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems}: {
   return options;
 }
 
-function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}: {
+function LevelItem({
+  dimension,
+  hierarchy,
+  isSubMenu,
+  level,
+  locale,
+  activeItems,
+  depth = 0,
+}: {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
   level: TesseractLevel;
   isSubMenu: boolean;
   locale: string;
   activeItems: DrilldownItem[];
+  depth?: number;
 }) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
@@ -219,12 +264,13 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   const cutItems = useSelector(selectCutItems);
   const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
+  const dimensions = useSelector(selectOlapDimensionItems);
 
   const label = useMemo(() => {
     const captions = [
       getCaption(dimension, locale),
       getCaption(hierarchy, locale),
-      getCaption(level, locale)
+      getCaption(level, locale),
     ];
     if (isSubMenu) {
       return captions[2];
@@ -233,9 +279,9 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
       abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
       dimension: captions[0],
       hierarchy: captions[1],
-      level: captions[2]
+      level: captions[2],
     });
-  }, [locale, dimension, hierarchy, level, isSubMenu]);
+  }, [locale, dimension, hierarchy, level, isSubMenu, t]);
 
   const createCutHandler = useCallback((level: TesseractLevel) => {
     const cutItem = buildCut({...level, members: [], active: false});
@@ -264,14 +310,12 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
 
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
-    activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
+    activeItem =>
+      activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name,
   );
 
   useLayoutEffect(() => {
-    if (
-      !drilldowns[level.name] &&
-      !ditems.find(d => d.level === level.name)
-    ) {
+    if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
       createDrilldown(level, cutItems);
     }
   }, [level, ditems]);
@@ -285,27 +329,36 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
   }, []);
 
   const checked = activeItems.map(i => i.level).includes(level.name);
+  const disableUncheck = activeItems.length === 1 && checked;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
   const isDisabled = isOtherHierarchySelected && !checked;
 
   if (!currentDrilldown) return;
+
+  const paddingLeft = `${20 * depth + 10}px`;
+
   return (
     currentDrilldown && (
       <>
         <Group mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
+            // pl="sm"
+            sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               if (cut) {
-                const active = checked ? false : cut.members.length ? true : false;
+                const active = checked ? false : !!cut.members.length;
                 actions.updateCut({...cut, active});
               }
-              actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
+              actions.updateDrilldown({
+                ...currentDrilldown,
+                active: !currentDrilldown.active,
+              });
             }}
             checked={checked}
             label={label}
             size="xs"
-            disabled={isDisabled} // Disable checkbox if another hierarchy is selected
+            disabled={isDisabled || disableUncheck}
           />
           <Group sx={{flexWrap: "nowrap"}}>
             <ActionIcon
@@ -339,7 +392,7 @@ function LevelItem({dimension, hierarchy, isSubMenu, level, locale, activeItems}
               value={cut?.members || []}
               data={currentDrilldown.members.map(m => ({
                 value: String(m.key),
-                label: m.caption ? `${m.caption} ${m.key}` : m.name
+                label: m.caption ? `${m.caption} ${m.key}` : `${m.key}`,
               }))}
               clearable
               nothingFound="Nothing found"
@@ -367,11 +420,17 @@ export function getFilterfnKey(type) {
 
 export function getFilterFn(filter: FilterItem) {
   if (filter.conditionOne && filter.conditionTwo) {
-    if (filter.conditionOne[0] === Comparison.GTE && filter.conditionTwo[0] === Comparison.LTE) {
+    if (
+      filter.conditionOne[0] === Comparison.GTE &&
+      filter.conditionTwo[0] === Comparison.LTE
+    ) {
       return "between";
     }
   }
-  if (filter.conditionOne[0] === Comparison.GTE || filter.conditionOne[0] === Comparison.GT) {
+  if (
+    filter.conditionOne[0] === Comparison.GTE ||
+    filter.conditionOne[0] === Comparison.GT
+  ) {
     return "greaterThan";
   }
   if (filter.conditionOne[0] === Comparison.LTE) {
@@ -405,7 +464,7 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
     const isEmpty = value === "";
     const conditions =
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
-    const active = isEmpty ? false : true;
+    const active = !isEmpty;
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
   }
 
@@ -424,10 +483,17 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
 export function MinMax({filter, ...rest}: {filter: FilterItem}) {
   const actions = useActions();
 
-  function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
+  function onInputChangeMinMax(props: {
+    filter: FilterItem;
+    min: number | "";
+    max: number | "";
+  }) {
     const {filter, min, max} = props;
     const conditions =
-      getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(min), Number(max)]) || {};
+      getFiltersConditions(getFilterFn(filter) || "greaterThan", [
+        Number(min),
+        Number(max),
+      ]) || {};
     const active = Boolean(min) && Boolean(max);
 
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
@@ -480,7 +546,9 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconMathGreater size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("greaterThan", [0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              actions.updateFilter(
+                buildFilter({...filter, ...conditions, active: false}),
+              );
             }}
           >
             {t("comparison.GT")}
@@ -489,7 +557,9 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconMathLower size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("lessThan", [0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              actions.updateFilter(
+                buildFilter({...filter, ...conditions, active: false}),
+              );
             }}
           >
             {t("comparison.LT")}
@@ -498,7 +568,9 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconArrowsLeftRight size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("between", [0, 0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              actions.updateFilter(
+                buildFilter({...filter, ...conditions, active: false}),
+              );
             }}
           >
             {t("comparison.BT")}
@@ -521,37 +593,51 @@ function MeasuresOptions() {
   //actions
   const actions = useActions();
 
-  function handlerCreateMeasure(data: MeasureItem) {
+  const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
     return measure;
-  }
-  function handlerCreateFilter(data: FilterItem) {
+  }, []);
+
+  const handlerCreateFilter = useCallback((data: FilterItem) => {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
-  }
+  }, []);
 
   const filteredItems = useMemo(() => {
-    return filterMap(measures, (m: MeasureItem) => {
+    return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
-      const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
+      const foundFilter =
+        filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
         handlerCreateFilter({
           measure: measure.name,
           active: false,
-          key: measure.name
+          key: measure.name,
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems]);
+  }, [
+    itemMap,
+    measures,
+    filtersMap,
+    filtersItems,
+    handlerCreateFilter,
+    handlerCreateMeasure,
+  ]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
   const options = filteredItems.map(({measure, filter}) => {
     return (
-      <FilterItem key={measure.key} measure={measure} filter={filter} activeItems={activeItems} />
+      <FilterItem
+        key={measure.key}
+        measure={measure}
+        filter={filter}
+        activeItems={activeItems}
+      />
     );
   });
 
@@ -561,7 +647,7 @@ function MeasuresOptions() {
 function FilterItem({
   measure,
   filter,
-  activeItems
+  activeItems,
 }: {
   measure: MeasureItem;
   filter: FilterItem;
@@ -577,17 +663,25 @@ function FilterItem({
   const isBetween = filterFn === "between";
   const checked = activeItems.map(active => active.measure.name).includes(measure.name);
   const actions = useActions();
+
+  const isLastSelected = activeItems.length === 1 && checked;
+
   return (
     <Box key={measure.name}>
       <Group mt="sm" position="apart">
         <Checkbox
+          sx={{cursor: "pointer"}}
           onChange={() => {
-            actions.updateMeasure({...measure, active: !measure.active});
-            actions.updateFilter({...filter, active: checked ? false : true});
+            // Only toggle the measure if it's not the last one selected
+            if (!isLastSelected) {
+              actions.updateMeasure({...measure, active: !measure.active});
+              actions.updateFilter({...filter, active: !checked});
+            }
           }}
           checked={checked}
           label={measure.name}
           size="xs"
+          disabled={isLastSelected} // Disable checkbox if it's the last one selected
         />
         <Group sx={{flexWrap: "nowrap"}}>
           {activeFilter && <FilterFnsMenu filter={filter} />}
@@ -611,4 +705,18 @@ function FilterItem({
     </Box>
   );
 }
+
+// Function to get the appropriate icon for each dimension type
+const getIconForDimensionType = dimensionType => {
+  switch (dimensionType) {
+    case "geo":
+      return <IconWorld size={20} />;
+    case "time":
+      return <IconClock size={20} />;
+    // Add more cases for other dimension types
+    default:
+      return <IconBox size={20} />; // Default icon
+  }
+};
+
 export default AddColumnsDrawer;

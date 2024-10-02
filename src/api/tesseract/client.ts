@@ -15,9 +15,9 @@ export class TesseractModuleClient {
   baseURL: string;
   requestConfig: RequestInit;
 
-  constructor(baseURL: string) {
-    this.baseURL = baseURL;
-    this.requestConfig = {headers: new Headers()};
+  constructor(baseURL?: string, config?: RequestInit) {
+    this.baseURL = baseURL || "";
+    this.requestConfig = config || {headers: new Headers()};
   }
 
   fetchStatus(params: {

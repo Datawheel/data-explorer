@@ -23,29 +23,28 @@ import {
 import {useQuery, useQueryClient} from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import {
-  MRT_TableBodyCell,
-  MRT_ToolbarAlertBanner,
-  MRT_ProgressBar as ProgressBar,
-  flexRender,
-  useMantineReactTable,
   type MRT_ColumnDef as ColumnDef,
   type MRT_Header,
   type MRT_PaginationState,
+  MRT_TableBodyCell,
   type MRT_TableInstance,
+  MRT_ToolbarAlertBanner,
+  MRT_ProgressBar as ProgressBar,
   type MRT_TableOptions as TableOptions,
+  flexRender,
+  useMantineReactTable,
 } from "mantine-react-table";
-import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {
-  TesseractCube,
   TesseractLevel,
   TesseractMeasure,
   TesseractProperty,
 } from "../api/tesseract/schema";
 import {useFormatter} from "../hooks/formatter";
 import {useKey, useUpdatePermaLink} from "../hooks/permalink";
-import {useActions, type ExplorerBoundActionMap} from "../hooks/settings";
+import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectLoadingState} from "../state/loading";
 import {
@@ -67,7 +66,7 @@ import type {
   MeasureItem,
   QueryResult,
 } from "../utils/structs";
-import {buildFilter, buildMeasure, type AnyResultColumn} from "../utils/structs";
+import {type AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
 import type {ViewProps} from "../utils/types";
 import CustomActionIcon from "./CustomActionIcon";
 import {
@@ -87,7 +86,7 @@ const removeColumn = (
   actions: ExplorerBoundActionMap,
   entity: TesseractMeasure | TesseractProperty | TesseractLevel,
   measures: MeasureItem[],
-  drilldowns: DrilldownItem[]
+  drilldowns: DrilldownItem[],
 ) => {
   if ("aggregator" in entity) {
     const measure = measures.find(d => d.name === entity.name);
@@ -135,11 +134,10 @@ const getEntityText = (entityType: EntityTypes) => {
 function getMemberFilterFnTypes(member) {
   return {
     value: String(member.key),
-    label: member.caption ? `${member.caption} ${member.key}` : member.name
+    label: member.caption ? `${member.caption} ${member.key}` : `${member.key}`,
   };
 }
-
-function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range) {
+function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
     mantineFilterMultiSelectProps?: {data: unknown};
@@ -202,15 +200,15 @@ export function getFiltersConditions(fn: string, value: number[]) {
       "greaterThan",
       (value: number[]): Condition => ({
         conditionOne: [Comparison.GTE, String(value[0]), Number(value[0])],
-        conditionTwo: [Comparison.GT, "0", 0]
-      })
+        conditionTwo: [Comparison.GT, "0", 0],
+      }),
     ],
     [
       "lessThan",
       (value: number[]): Condition => ({
         conditionOne: [Comparison.LTE, String(value[0]), Number(value[0])],
-        conditionTwo: [Comparison.GT, "0", 0]
-      })
+        conditionTwo: [Comparison.GT, "0", 0],
+      }),
     ],
     [
       "between",
@@ -219,10 +217,10 @@ export function getFiltersConditions(fn: string, value: number[]) {
         return {
           conditionOne: [Comparison.GTE, String(min), Number(min)],
           conditionTwo: [Comparison.LTE, String(max), Number(max)],
-          joint: "and"
+          joint: "and",
         };
-      }
-    ]
+      },
+    ],
   ]);
 
   return comparisonMap.get(fn)?.(value);
@@ -256,24 +254,30 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
         const term = [permaKey, page, locale];
         setDebouncedTerm(term);
       },
-      loadingState.loading ? 0 : 700
+      loadingState.loading ? 0 : 800,
     );
     handler();
     return () => handler.cancel();
-  }, [page, enabled, cube, locale, permaKey]);
+  }, [page, enabled, loadingState.loading, permaKey]);
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
-    queryFn: () => actions.willFetchQuery().then(result => {
-      actions.updateResult(result);
-      return result;
-    }),
+    queryFn: () =>
+      actions.willFetchQuery().then(result => {
+        actions.updateResult(result);
+        return result;
+      }),
     staleTime: 300000,
-    enabled: enabled && !!filterKeydebouced
+    enabled: enabled && !!filterKeydebouced,
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
-  useUpdatePermaLink({isFetched: Boolean(cachedData), cube, enabled, isLoading: query.isLoading});
+  useUpdatePermaLink({
+    isFetched: Boolean(cachedData),
+    cube,
+    enabled,
+    isLoading: query.isLoading,
+  });
   return query;
 }
 
@@ -291,7 +295,7 @@ function usePrefetch({
   limit,
   totalRowCount,
   pagination,
-  isFetching
+  isFetching,
 }: usePrefetchType) {
   const {code: locale} = useSelector(selectLocale);
   const queryClient = useQueryClient();
@@ -300,31 +304,21 @@ function usePrefetch({
   const page = pagination.pageIndex + 1;
   const hasMore = page * pagination.pageSize <= totalRowCount;
   const off = page * pagination.pageSize;
-  const key = [paramKey, page];
 
   useEffect(() => {
+    const key = [paramKey, page];
     if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
-        queryFn: () => actions.willFetchQuery({offset: off, limit}).then(result => {
-          actions.updateResult(result);
-          return result;
-        }),
-        staleTime: 300000
+        queryFn: () =>
+          actions.willFetchQuery({offset: off, limit}).then(result => {
+            actions.updateResult(result);
+            return result;
+          }),
+        staleTime: 300000,
       });
     }
-  }, [
-    limit,
-    page,
-    isPlaceholderData,
-    key,
-    queryClient,
-    hasMore,
-    off,
-    isFetching,
-    locale,
-    paramKey
-  ]);
+  }, [limit, page, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
 }
 
 export function useTable({
@@ -350,51 +344,67 @@ export function useTable({
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
-    pageSize: limit
+    pageSize: limit,
   });
   
   const finalUniqueKeys = useMemo(
     () =>
       [
         ...measures.map(m => (m.active ? m.name : null)),
-        ...drilldowns.map(d => (d.active ? d.level : null))
+        ...drilldowns.map(d => (d.active ? d.level : null)),
       ].filter(a => a !== null),
-    [measures, drilldowns]
+    [measures, drilldowns],
   );
 
-  function handlerCreateMeasure(data: MeasureItem) {
+  const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
     return measure;
-  }
+  }, []);
 
-  function handlerCreateFilter(data: FilterItem) {
+  const handlerCreateFilter = useCallback((data: Partial<FilterItem>) => {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
-  }
+  }, []);
 
   useLayoutEffect(() => {
-    filterMap(measuresOlap, (m: MeasureItem) => {
+    filterMap(measuresOlap, m => {
       const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
-      const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
+      const foundFilter =
+        filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
         handlerCreateFilter({
           measure: measure.name,
           active: false,
-          key: measure.name
+          key: measure.name,
         } as FilterItem);
       return {measure, filter};
     });
-  }, [measuresMap, measuresOlap, filtersMap, filterItems]);
+  }, [
+    measuresMap,
+    measuresOlap,
+    filtersMap,
+    filterItems,
+    handlerCreateFilter,
+    handlerCreateMeasure,
+  ]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData, status} =
-    useTableData({
-      columns: finalUniqueKeys,
-      pagination,
-      cube: cube.name
-    });
+  const {
+    isLoading,
+    isFetching,
+    isFetched,
+    isError,
+    data,
+    isPlaceholderData,
+    status,
+    fetchStatus,
+  } = useTableData({
+    columns: finalUniqueKeys,
+    pagination,
+    cube: cube.name,
+  });
 
   // check no data
   const tableData = data?.data || [];
@@ -417,21 +427,20 @@ export function useTable({
     limit,
     totalRowCount,
     pagination,
-    isFetching: isFetching || isLoading
+    isFetching: isFetching || isLoading,
   });
 
   useEffect(() => {
     actions.updatePagination({
       limit: pagination.pageSize,
-      offset: pagination.pageIndex * pagination.pageSize
+      offset: pagination.pageIndex * pagination.pageSize,
     });
-  }, [pagination, actions]);
+  }, [pagination]);
 
   const {translate: t} = useTranslation();
 
-  const {currentFormats, getFormatter, getFormatterKey} = useFormatter(
-    cube.measures
-  );
+  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} =
+    useFormatter(cube.measures);
 
   const columns = useMemo<ColumnDef<TData>[]>(
     () => {
@@ -443,7 +452,7 @@ export function useTable({
       maxWidth: 50,
       width: 50,
       maxSize: 50,
-      size: 50
+      size: 50,
     };
 
     const columnsDef = finalKeys.map(column => {
@@ -455,13 +464,18 @@ export function useTable({
         localeLabel: header,
         valueType,
         range,
-        isId
+        isId,
       } = column;
 
       const isNumeric = valueType === "number" && columnKey !== "Year";
-      const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
+      const formatterKey =
+        getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
-      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(
+        isId,
+        isNumeric,
+        range,
+      );
       return {
         ...mantineFilterVariantObject,
         entityType,
@@ -522,13 +536,17 @@ export function useTable({
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
               return (
-                <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
+                <Flex
+                  justify="space-between"
+                  sx={{width: "100%", maxWidth: 400}}
+                  gap="sm"
+                >
                   <Text
                     size="sm"
                     sx={{
                       whiteSpace: "nowrap",
                       overflow: "hidden",
-                      textOverflow: "ellipsis"
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {renderedCellValue}
@@ -536,11 +554,11 @@ export function useTable({
                   <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
                 </Flex>
               );
-            }
+            },
       };
     });
     return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  }, [currentFormats, tableData, tableTypes, drilldowns, measures, locale]);
+  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey, locale]);
 
   const constTableProps = useMemo(
     () =>
@@ -548,7 +566,7 @@ export function useTable({
         mantineToolbarAlertBannerProps: isError
           ? {
               color: "red",
-              children: "Error loading data."
+              children: "Error loading data.",
             }
           : undefined,
         enableColumnFilterModes: true,
@@ -557,26 +575,26 @@ export function useTable({
         enableFilterMatchHighlighting: true,
         enableGlobalFilter: true,
         mantinePaginationProps: {
-          showRowsPerPage: false
+          showRowsPerPage: false,
         },
         paginationDisplayMode: "pages",
         enableRowVirtualization: false,
         globalFilterFn: "contains",
         initialState: {
-          density: "xs"
+          density: "xs",
         },
         mantineBottomToolbarProps: {
-          id: "query-results-table-view-footer"
+          id: "query-results-table-view-footer",
         },
 
         mantineTableProps: {
           sx: {
             "& td": {
-              padding: "7px 10px !important"
+              padding: "7px 10px !important",
             },
-            tableLayout: "fixed"
+            tableLayout: "fixed",
           },
-          withColumnBorders: true
+          withColumnBorders: true,
         },
         mantinePaperProps: {
           id: "query-results-table-view",
@@ -587,22 +605,22 @@ export function useTable({
             flexFlow: "column nowrap",
             padding: `0 ${theme.spacing.sm}`,
             [theme.fn.largerThan("md")]: {
-              padding: 0
-            }
-          })
+              padding: 0,
+            },
+          }),
         },
         mantineTableContainerProps: {
           id: "query-results-table-view-table",
           h: {base: "auto", md: 0},
           sx: {
-            flex: "1 1 auto"
-          }
+            flex: "1 1 auto",
+          },
         },
         mantineTopToolbarProps: {
           id: "query-results-table-view-toolbar",
           sx: {
-            flex: "1 0 auto"
-          }
+            flex: "1 0 auto",
+          },
         },
         renderBottomToolbar() {
           const [isOpen, setIsOpen] = useState(false);
@@ -617,9 +635,9 @@ export function useTable({
               {t("table_view.slicedresult")}
             </Alert>
           );
-        }
-      } as const),
-    [isError]
+        },
+      }) as const,
+    [isError, t],
   );
 
   const isTransitionState = status !== "success" && !isError;
@@ -638,10 +656,10 @@ export function useTable({
       isLoading: isLoading || data === undefined || isTransitionState,
       pagination,
       showAlertBanner: isError,
-      showProgressBars: isFetching || isLoading
+      showProgressBars: isFetching || isLoading,
     },
     ...constTableProps,
-    ...mantineTableProps
+    ...mantineTableProps,
   });
 
   return {table, isError, isLoading: isLoad, data: tableData, columns};
@@ -649,7 +667,7 @@ export function useTable({
 
 type TableView = {
   table: MRT_TableInstance<TData>;
-  getColumn(id: String): AnyResultColumn | undefined;
+  getColumn(id: string): AnyResultColumn | undefined;
   columns: AnyResultColumn[];
 } & ViewProps;
 
@@ -660,14 +678,18 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
 
   return (
     <Box sx={{height: "100%"}}>
-      <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
+      <Flex
+        direction="column"
+        justify="space-between"
+        sx={{height: "100%", flex: "1 1 auto"}}
+      >
         <ProgressBar isTopToolbar={false} table={table} />
         <ScrollArea
           h={isData ? "100%" : "auto"}
           sx={{
             flex: "1 1 auto",
             position: "relative",
-            overflow: "scroll"
+            overflow: "scroll",
           }}
         >
           <LoadingOverlay visible={isLoading || loadingState.loading} />
@@ -686,7 +708,7 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
               sx={{
                 position: "relative",
                 top: 0,
-                zIndex: 10
+                zIndex: 10,
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (
@@ -697,7 +719,9 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
                     const isRowIndex = column.id === "#";
                     const base = theme => ({
                       backgroundColor:
-                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                        theme.colorScheme === "dark"
+                          ? theme.colors.dark[7]
+                          : theme.colors.gray[0],
                       align: isNumeric ? "right" : "left",
                       height: 60,
                       paddingBottom: 10,
@@ -707,7 +731,7 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
                       position: "sticky",
                       fontSize: theme.fontSizes.sm,
                       top: 0,
-                      display: "table-cell"
+                      display: "table-cell",
                     });
 
                     const index = theme => ({
@@ -715,7 +739,7 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
                       minWidth: 10,
                       width: 10,
                       maxWidth: 10,
-                      size: 10
+                      size: 10,
                     });
 
                     return (
@@ -727,12 +751,17 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
                         {header.isPlaceholder
                           ? null
                           : flexRender(
-                              header.column.columnDef.Header ?? header.column.columnDef.header,
-                              header.getContext()
+                              header.column.columnDef.Header ??
+                                header.column.columnDef.header,
+                              header.getContext(),
                             )}
 
                         {!isRowIndex && (
-                          <ColumnFilterCell isNumeric={isNumeric} header={header} table={table} />
+                          <ColumnFilterCell
+                            isNumeric={isNumeric}
+                            header={header}
+                            table={table}
+                          />
                         )}
                       </Box>
                     );
@@ -768,7 +797,7 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
 
 const ColumnFilterCell = ({
   header,
-  isNumeric
+  isNumeric,
 }: {
   header: MRT_Header<TData>;
   table?: MRT_TableInstance<TData>;
