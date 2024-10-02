@@ -332,18 +332,14 @@ export function useTable({
   columnSorting = () => 0,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
-  // const {types} = result;
   const filterItems = useSelector(selectFilterItems);
   const filtersMap = useSelector(selectFilterMap);
   const measuresOlap = useSelector(selectOlapMeasureItems);
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const measures = useSelector(selectMeasureItems);
-  const itemsCuts = useSelector(selectCutItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-
-  const loadingState = useSelector(selectLoadingState);
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -644,7 +640,7 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading: isLoad, data: tableData, columns};
+  return {table, isError, isLoading: isLoad, data: tableData, columns, pagination, setPagination};
 }
 
 type TableView = {
@@ -653,7 +649,15 @@ type TableView = {
   columns: AnyResultColumn[];
 } & ViewProps;
 
-export function TableView({table, result, isError, isLoading = false, data}: TableView) {
+export function TableView({
+  table,
+  result,
+  isError,
+  isLoading = false,
+  data,
+  pagination,
+  setPagination
+}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
@@ -760,7 +764,14 @@ export function TableView({table, result, isError, isLoading = false, data}: Tab
           {!isData && !isError && !isLoading && <NoRecords />}
         </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter table={table} data={data} result={result} isLoading={isLoading} />
+        <TableFooter
+          table={table}
+          data={data}
+          result={result}
+          isLoading={isLoading}
+          pagination={pagination}
+          setPagination={setPagination}
+        />
       </Flex>
     </Box>
   );
