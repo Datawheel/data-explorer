@@ -52,7 +52,7 @@ export function SettingsProvider(props: {
       formatters: props.formatters || {},
       panels: props.panels,
       previewLimit: props.previewLimit || 50,
-      paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 100], defaultLimit: 100}
+      paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100}
     }),
     [props.formatters, props.previewLimit]
   );

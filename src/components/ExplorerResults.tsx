@@ -28,6 +28,7 @@ import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -260,7 +261,7 @@ function SuccessResult(props: {
           </Suspense>
         </Box>
       </Paper>
-      {/* <ReactQueryDevtools initialIsOpen /> */}
+      <ReactQueryDevtools initialIsOpen />
     </Flex>
   );
 }

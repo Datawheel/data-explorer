@@ -292,11 +292,11 @@ function usePrefetch({
   const {code: locale} = useSelector(selectLocale);
   const queryClient = useQueryClient();
   const actions = useActions();
-  const paramKey = useKey();
   const page = pagination.pageIndex + 1;
   const pageSize = pagination.pageSize;
-  const hasMore = page * pagination.pageSize <= totalRowCount;
-  const off = page * pagination.pageSize;
+  const hasMore = page * pageSize <= totalRowCount;
+  const off = page * pageSize;
+  const paramKey = useKey({pagiLimit: pageSize, pagiOffset: off});
 
   useEffect(() => {
     const key = [paramKey, page, pageSize, locale];
