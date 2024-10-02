@@ -1,13 +1,12 @@
-import {ServerConfig} from "@datawheel/olap-client";
-import {TranslationContextProps, TranslationProviderProps} from "@datawheel/use-translation";
-import {CSSObject, MantineProvider} from "@mantine/core";
+import type {TranslationContextProps} from "@datawheel/use-translation";
+import {type CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
 import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
-import {ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
-import {TranslationDict, TranslationProvider} from "../hooks/translation";
-import {ExplorerActionMap, ExplorerStore, actions, storeFactory} from "../state";
-import {Formatter, PanelDescriptor} from "../utils/types";
+import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
+import {type TranslationDict, TranslationProvider} from "../hooks/translation";
+import {type ExplorerActionMap, type ExplorerStore, actions, storeFactory} from "../state";
+import type {Formatter, PanelDescriptor} from "../utils/types";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
@@ -23,27 +22,38 @@ export type Pagination = {
  * This components wraps the interface components in the needed Providers,
  * and pass the other properties to them.
  */
-export function ExplorerComponent(props: {
+export function ExplorerComponent<Locale extends string>(props: {
   pagination?: Pagination;
   /**
-   * A reference to the server with the data.
-   * Can be setup as a string with the URL of the server, or a
-   * [AxiosRequestConfig](https://github.com/axios/axios#request-config)
-   * for more complex handling of authorization/authentication.
+   * The main server endpoint.
    */
-  source: ServerConfig;
+  serverURL: string;
 
   /**
-   * A list of the available locale options.
-   * If passed a string, will be splitted by commas (`,`) to try to interpret a list.
+   * Additional request parameters for all requests against the server.
+   * Uses the same format used by the second parameter of the fetch API.
    */
-  dataLocale?: string | string[];
+  serverConfig?: RequestInit;
+
+  /**
+   * The locale to use when retrieving the schema from the server the first time.
+   * If not set, the server will use the default locale set in its configuration.
+   */
+  defaultDataLocale?: string;
 
   /**
    * Defines the default cube that will be opened when the component first loads.
    * @default undefined
    */
   defaultCube?: string | undefined;
+
+  /**
+   * Specifies which property should be used to filter elements in the member
+   * selection control of the Cuts parameter area.
+   * @default "id"
+   */
+  defaultMembersFilter?: "id" | "name" | "any";
+
   /**
    * Defines the parameter panel which will be opened when the component first loads.
    * Available options are `measures`, `drilldowns`, `cuts`, and `options`.
@@ -52,11 +62,13 @@ export function ExplorerComponent(props: {
   defaultOpenParams?: "measures" | "drilldowns" | "cuts" | "options";
 
   /**
-   * Specifies which property should be used to filter elements in the member
-   * selection control of the Cuts parameter area.
-   * @default "id"
+   * The locale to use in the Explorer component UI.
+   * This value is passed to the Translation utility and controls the language
+   * for the labels throughout the user interface. Must be equal to one of the
+   * keys in the object provided to the `translations` property.
+   * @default "en"
    */
-  defaultMembersFilter?: "id" | "name" | "any";
+  locale?: Locale;
 
   /**
    * Defines an index of formatter functions available to the measures shown
@@ -86,12 +98,6 @@ export function ExplorerComponent(props: {
   panels?: PanelDescriptor[];
 
   /**
-   * The default limit for preview queries.
-   * @default 50
-   */
-  previewLimit?: number;
-
-  /**
    * A component that is rendered to display the default "splash screen";
    * the screen that is shown in the results panel when there is no query,
    * or a query has been dirtied.
@@ -101,16 +107,7 @@ export function ExplorerComponent(props: {
   /**
    * The Translation labels to use in the UI.
    */
-  translations?: Record<string, TranslationDict>;
-
-  /**
-   * The default locale to use in the Explorer component UI.
-   * This value is passed to the Translation utility and controls the language
-   * for the labels throughout the user interface. Must be equal to one of the
-   * keys in the object provided to the `translations` property.
-   * @default "en"
-   */
-  uiLocale?: TranslationProviderProps["defaultLocale"];
+  translations?: Record<Locale, TranslationDict>;
 
   /**
    * Determines whether Explorer should be rendered within a MantineProvider
@@ -138,22 +135,16 @@ export function ExplorerComponent(props: {
    * @default false
    */
   withPermalink?: boolean;
-  setSource?: React.Dispatch<any>;
 }) {
   const {
-    dataLocale = "en",
+    locale = "en",
     defaultOpenParams = "measures",
     height = "100vh",
-    previewLimit = 50,
     withinMantineProvider = true,
     withinReduxProvider = false,
     withMultiQuery = false,
-    setSource,
-    source,
     pagination
   } = props;
-
-  const locale = useMemo(() => dataLocale.toString().split(","), [dataLocale]);
 
   const panels = useMemo(
     () =>
@@ -172,35 +163,26 @@ export function ExplorerComponent(props: {
     []
   );
 
-  useMemo(() => {
-    // Keep the previewLimit value in sync with the value stored in Settings
-    // TODO: There's probably a better way, but we need previewLimit in the extraArg
-    store.dispatch((_, __, extra) => {
-      extra.previewLimit = previewLimit;
-    });
-  }, [previewLimit]);
-
   let content = (
     <SettingsProvider
       actions={boundActions}
       defaultMembersFilter={props.defaultMembersFilter}
       formatters={props.formatters}
-      previewLimit={previewLimit}
       withPermalink={props.withPermalink}
       panels={panels}
       pagination={pagination}
     >
-      <TranslationProvider defaultLocale={props.uiLocale} translations={props.translations}>
+      <TranslationProvider defaultLocale={locale} translations={props.translations}>
         <ExplorerContent
-          setSource={setSource}
-          dataLocale={locale}
+          defaultCube={props.defaultCube}
+          defaultDataLocale={props.defaultDataLocale}
           defaultOpenParams={defaultOpenParams}
           height={height}
+          locale={locale}
           panels={panels}
-          source={source}
+          serverConfig={props.serverConfig}
+          serverURL={props.serverURL}
           splash={props.splash}
-          uiLocale={props.uiLocale}
-          defaultCube={props.defaultCube}
           withMultiQuery={withMultiQuery}
         />
       </TranslationProvider>
@@ -250,7 +232,4 @@ export function ExplorerComponent(props: {
   return content;
 }
 
-// ExplorerComponent.defaultProps = {
-//   version: process.env.BUILD_VERSION || "dev"
-// };
 ExplorerComponent.displayName = "TesseractExplorer";

@@ -1,30 +1,33 @@
-import {type PlainCube} from "@datawheel/olap-client";
-import {Stack, Text, Box, Accordion, AccordionControlProps} from "@mantine/core";
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
+import {Accordion, type AccordionControlProps, Box, Stack, Text} from "@mantine/core";
+import React, {
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {useSelector} from "react-redux";
+import yn from "yn";
+import type {TesseractCube, TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
+  selectCubeName,
   selectCurrentQueryParams,
   selectCutItems,
   selectDrilldownItems,
   selectDrilldownMap,
   selectLocale,
-  selectMeasureMap
+  selectMeasureMap,
 } from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
-import {selectCubeName} from "../state/queries";
-import {getAnnotation} from "../utils/string";
-import {buildDrilldown, buildCut, MeasureItem, CutItem} from "../utils/structs";
-import type {PlainLevel} from "@datawheel/olap-client";
-import {useSideBar} from "./SideBar";
+import {pickDefaultDrilldowns} from "../state/utils";
 import Graph from "../utils/graph";
+import {getAnnotation} from "../utils/string";
+import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
-import yn from "yn";
-import {deriveDrilldowns} from "../state/utils";
-import {useSelectCube} from "../hooks/useSelectCube";
-import {stringifyName} from "../utils/transform";
+import {useSideBar} from "./SideBar";
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -37,7 +40,7 @@ export function SelectCube() {
   return <SelectCubeInternal items={items} selectedItem={selectedItem} />;
 }
 
-function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube | undefined}) {
+function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: TesseractCube | undefined}) {
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
@@ -51,32 +54,26 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
   const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
 
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level});
-    cutItem.active = false;
-    updateCut(cutItem);
+  const createCutHandler = useCallback((level: TesseractLevel) => {
+    updateCut(buildCut({...level, active: false}));
   }, []);
 
-  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
+  function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
     if (
-      !drilldowns[stringifyName(level)] &&
-      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
+      !drilldowns[level.name] &&
+      !ditems.find(d => d.level === level.name)
     ) {
-      const drilldown = buildDrilldown({...level, key: stringifyName(level), active: true});
+      const drilldown = buildDrilldown({...level, active: true});
       updateDrilldown(drilldown);
-      const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+      const cut = cuts.find(cut => cut.level === drilldown.level);
       if (!cut) {
-        createCutHandler({...level, key: stringifyName(level)});
+        createCutHandler(level);
       }
 
-      willFetchMembers({...level, level: level.name}).then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
+      willFetchMembers(level.name).then(levelMeta => {
         updateDrilldown({
           ...drilldown,
-          dimType: dimension.dimensionType,
-          memberCount: members.length,
-          members
+          members: levelMeta.members,
         });
       });
       return drilldown;
@@ -92,7 +89,7 @@ function SelectCubeInternal(props: {items: PlainCube[]; selectedItem: PlainCube 
       const [dimension] = dimensions;
       if (measure && dimension) {
         updateMeasure({...measure, active: true});
-        const drilldowns = deriveDrilldowns(dimensions);
+        const drilldowns = pickDefaultDrilldowns(dimensions);
         if (measure && drilldowns.length > 0) {
           updateMeasure({...measure, active: true});
           for (const level of drilldowns) {
@@ -119,7 +116,7 @@ function AccordionControl(props: AccordionControlProps) {
 }
 
 type Keys = "subtopic" | "topic" | "table";
-export type AnnotatedCube = PlainCube &
+export type AnnotatedCube = TesseractCube &
   {annotations: {subtopic: string; topic: string; table: string}}[];
 
 export function getKeys(
@@ -196,7 +193,7 @@ function CubeTree({
 }: {
   items: AnnotatedCube[];
   locale: string;
-  selectedItem?: PlainCube;
+  selectedItem?: TesseractCube;
 }) {
   const {graph, setGraph, map, input} = useSideBar();
   const {translate: t} = useTranslation();
@@ -214,8 +211,9 @@ function CubeTree({
       actions.setLoadingState("FETCHING");
       actions.resetAllParams(newQuery);
       actions.updateResult({data: [], types: {}, url: "", status: 200});
-
-      return actions.willSetCube(cube.name);
+      actions.willSetCube(cube.name).then(() => {
+        actions.setLoadingState("SUCCESS");
+      });
     }
   };
 
@@ -332,13 +330,12 @@ function CubeButton({
   parent
 }: {
   item: string;
-  selectedItem?: PlainCube;
+  selectedItem?: TesseractCube;
   onSelectCube: (table: string, subtopic: string) => void;
   graph: Graph;
   locale: string;
   parent?: string;
 }) {
-  const callback = useSelectCube(onSelectCube);
   const {classes} = useLinkStyles();
 
   const table = graph.getName(item, locale);
@@ -364,7 +361,7 @@ function CubeButton({
           : t.colors.gray[3],
         overflow: "hidden"
       })}
-      onClick={callback(item, subtopic)}
+      onClick={() => onSelectCube(item, subtopic)}
     >
       {table}
     </Text>
@@ -375,7 +372,7 @@ type NestedAccordionType = {
   items: string[];
   graph: any;
   parent?: string;
-  selectedItem?: PlainCube;
+  selectedItem?: TesseractCube;
   onSelectCube: (name: string) => void;
   locale: string;
 };

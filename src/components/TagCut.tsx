@@ -14,14 +14,14 @@ import {
   Switch,
   Text,
   ThemeIcon,
-  useMantineTheme
+  useMantineTheme,
 } from "@mantine/core";
 import {useMediaQuery} from "@mantine/hooks";
 import {
   IconAlertTriangle,
   IconRefresh,
   IconWindowMaximize,
-  IconWindowMinimize
+  IconWindowMinimize,
 } from "@tabler/icons-react";
 import React, {memo, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
@@ -31,8 +31,8 @@ import {selectLocale} from "../state/queries";
 import {selectLevelTriadMap} from "../state/selectors";
 import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
-import {CutItem, MemberItem, buildMember} from "../utils/structs";
-import {ItemPredicateMethod, TransferInput} from "./TransferInput";
+import {buildMember, type CutItem, type MemberItem} from "../utils/structs";
+import {TransferInput, type ItemPredicateMethod} from "./TransferInput";
 
 const MembersTransferInput = TransferInput<MemberItem>;
 
@@ -52,7 +52,7 @@ export function TagCut(props: {item: CutItem}) {
   const [members, setMembers] = useState(Object.create(null));
   const [isLoadingMembers, setLoadingMembers] = useState(true);
 
-  const triad = levelTriadMap[`${item.dimension}.${item.hierarchy}.${item.level}`];
+  const triad = levelTriadMap[item.level];
 
   const toggleHandler = useCallback(() => {
     actions.updateCut({...item, active: !item.active});
@@ -76,14 +76,18 @@ export function TagCut(props: {item: CutItem}) {
   const reloadHandler = useCallback(() => {
     const activeMembers = item.members;
     actions
-      .willFetchMembers(item)
-      .then(members => {
+      .willFetchMembers(item.level)
+      .then(({members}) => {
         const memberRecords = {};
         let i = members.length;
         while (i--) {
           const member = members[i];
           const active = activeMembers.includes(`${member.key}`);
-          memberRecords[member.key] = buildMember({name: member.caption, key: member.key, active});
+          memberRecords[member.key] = buildMember({
+            name: member.caption,
+            key: member.key,
+            active,
+          });
         }
         !item.active && actions.updateCut({...item, active: true});
         setError("");
@@ -95,7 +99,7 @@ export function TagCut(props: {item: CutItem}) {
         setMembers({});
         setLoadingMembers(false);
       });
-  }, []);
+  }, [item]);
 
   useEffect(reloadHandler, [item.key, locale.code]);
 

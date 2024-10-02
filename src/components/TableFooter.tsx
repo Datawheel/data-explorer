@@ -1,19 +1,20 @@
-import React, {ReactNode, useCallback, useEffect, useMemo, useRef, useState} from "react";
+import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {useActions, useSettings} from "../hooks/settings";
-import {ActionIcon, Menu, Box, Flex, Text, Loader, Button, Group, Select} from "@mantine/core";
 import {useTranslation} from "../hooks/translation";
 import {IconCopy, IconDotsVertical, IconDownload} from "@tabler/icons-react";
 import type {ViewProps} from "../main";
 import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
 import {useClickOutside, useClipboard} from "@mantine/hooks";
-import {selectServerFormatsEnabled} from "../state/server";
-import {FileDescriptor} from "../utils/types";
+// import {selectServerFormatsEnabled} from "../state/server";
+import {ActionIcon, Box, Button, Flex, Group, Loader, Menu, Text} from "@mantine/core";
+import {TesseractFormat} from "../api";
 import {useAsync} from "../hooks/useAsync";
-import CubeSource from "./CubeSource";
 import {selectLoadingState} from "../state/loading";
 import {SelectObject} from "./Select";
+import type {FileDescriptor} from "../utils/types";
+import CubeSource from "./CubeSource";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -117,27 +118,22 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 const DownloadQuery = ({data}) => {
   const actions = useActions();
   const {translate: t} = useTranslation();
+  const formats = Object.values(TesseractFormat);
   // const {isDirty, result} = useSelector(selectCurrentQueryItem);
-  const formats: string[] = useSelector(selectServerFormatsEnabled);
-
-  const csv = formats.find(format => format === "csv");
-
   const components: ReactNode[] = [];
 
-  if (csv) {
-    components.push(
-      <ButtonDownload
-        variant="filled"
-        color="dark"
-        leftIcon={<IconDownload size={20} />}
-        sx={{height: 30, backgroundColor: "#5A5A5A"}}
-        key={csv}
-        provider={() => actions.willDownloadQuery(csv)}
-      >
-        {t(`formats.${csv}`)}
-      </ButtonDownload>
-    );
-  }
+  components.push(
+    <ButtonDownload
+      variant="filled"
+      color="dark"
+      leftIcon={<IconDownload size={20} />}
+      sx={{height: 30, backgroundColor: "#5A5A5A"}}
+      key="download_csv"
+      provider={() => actions.willDownloadQuery("csv")}
+    >
+      {t("formats.csv")}
+    </ButtonDownload>
+  );
 
   if (components.length === 0 || data.length === 0) {
     return null;
@@ -232,7 +228,7 @@ const ItemDownload = props => {
 };
 
 type MenuOptsProps = {
-  formats: string[];
+  formats: TesseractFormat[];
 };
 function MenuOpts({formats}: MenuOptsProps) {
   const actions = useActions();
@@ -253,7 +249,7 @@ function MenuOpts({formats}: MenuOptsProps) {
           <Text size={"xs"}>{t(`formats.${format}`)}</Text>
         </ItemDownload>
       )),
-    [formats]
+    [formats, t]
   );
   return (
     <Menu shadow="md" width={200} opened={opened}>

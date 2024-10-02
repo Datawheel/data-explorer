@@ -1,12 +1,15 @@
+import {filterMap} from "../utils/array";
+
 export function toPlainObject(obj): Record<string, string> {
   return Object.fromEntries(
-    Object.entries(obj).map(entry => {
-      return [entry[0], stringify(entry[1])];
+    filterMap(Object.entries(obj), entry => {
+      const value = stringify(entry[1]);
+      return !value ? null : [entry[0], value];
     }),
   );
 
   function stringify(obj: unknown): string {
-    if (obj == null) {
+    if (obj == null || typeof obj === "function") {
       return "";
     }
     if (Array.isArray(obj)) {
@@ -19,30 +22,19 @@ export function toPlainObject(obj): Record<string, string> {
   }
 }
 
-export function httpFetch<R>(params: {
-  auth: string;
-  method?: "GET" | "POST" | "HEAD" | "PUT";
-  url: string | URL;
-  signal?: AbortSignal;
-}): Promise<R> {
-  return fetch(params.url, {
-    headers: {
-      Authorization: params.auth,
-    },
-    method: params.method || "GET",
-    signal: params.signal,
-  }).then(response => {
-    return response.ok
-      ? response.json()
-      : response.json().then(content => httpThrow(response, content));
+export function httpFetch(url: string | URL, params: RequestInit): Promise<Response> {
+  return fetch(url, params).then(response => {
+    if (!response.ok) {
+      return response.json().then(content => {
+        console.debug("CONTENT", content);
+        if (response.status === 500) {
+          throw new Error("");
+        }
+        throw new Error(`Request failed with error code ${response.status}`);
+      });
+    }
+    return response;
   });
-}
-
-export function httpThrow(response: Response, content: unknown) {
-  if (response.status === 500) {
-    throw new Error("");
-  }
-  throw new Error(`Request failed with error code ${response.status}`);
 }
 
 export interface ValidationError {

@@ -180,15 +180,25 @@ export const queriesSlice = createSlice({
     /**
      * Sets a new cube for the current QueryItem, and updates its available measures.
      */
-    updateCube(state, {payload}: Action<{cube: string; measures: Record<string, MeasureItem>}>) {
+    updateCube(
+      state,
+      {
+        payload,
+      }: Action<{
+        cube: string;
+        measures: Record<string, MeasureItem>;
+        drilldowns: Record<string, DrilldownItem>;
+      }>,
+    ) {
       const query = taintCurrentQuery(state);
       if (payload.cube !== query.params.cube) {
         const {params, result} = buildQuery({
           params: {
             cube: payload.cube,
+            drilldowns: payload.drilldowns,
             measures: payload.measures,
-            locale: query.params.locale
-          }
+            locale: query.params.locale,
+          },
         });
         query.params = params;
         query.result = result;

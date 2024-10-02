@@ -1,4 +1,4 @@
-export {ComplexityModuleClient} from "./complexity/client";
+export {ComplexityFormat, ComplexityModuleClient} from "./complexity/client";
 export type {
   CommonRequest,
   ComplexityRequest,
@@ -9,10 +9,17 @@ export type {
   RelatednessRequest,
 } from "./complexity/schema";
 
-export {TesseractModuleClient} from "./tesseract/client";
+export {TesseractFormat, TesseractModuleClient} from "./tesseract/client";
 export type {
   TesseractCube,
   TesseractDataRequest,
+  TesseractDataResponse,
+  TesseractErrorResponse,
+  TesseractMember,
   TesseractMembersRequest,
+  TesseractMembersResponse,
   TesseractSchema,
 } from "./tesseract/schema";
+
+export {LogicLayerProvider, useLogicLayer} from "./context";
+export {Aggregator, ColumnType, Comparison, DimensionType, Format, Order} from "./enum";

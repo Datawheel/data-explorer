@@ -2,33 +2,47 @@ import {
   ActionIcon,
   Alert,
   Box,
-  Flex,
-  Text,
-  rem,
-  Table,
   Center,
+  Flex,
+  LoadingOverlay,
   MultiSelect,
   ScrollArea,
-  LoadingOverlay
+  Table,
+  Text,
+  rem
 } from "@mantine/core";
-import {IconAlertCircle, IconTrash} from "@tabler/icons-react";
 import {
-  MRT_ColumnDef as ColumnDef,
-  MRT_TableOptions as TableOptions,
-  useMantineReactTable,
-  flexRender,
+  IconAlertCircle,
+  IconArrowsSort,
+  IconTrash,
+  IconSortAscendingLetters as SortAsc,
+  IconSortDescendingLetters as SortDesc,
+  IconSortAscendingNumbers as SortNAsc,
+  IconSortDescendingNumbers as SortNDesc
+} from "@tabler/icons-react";
+import {useQuery, useQueryClient} from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import {
+  type MRT_ColumnDef as ColumnDef,
+  type MRT_Header,
+  type MRT_PaginationState,
   MRT_TableBodyCell,
-  MRT_TableInstance,
-  MRT_PaginationState,
+  type MRT_TableInstance,
   MRT_ToolbarAlertBanner,
   MRT_ProgressBar as ProgressBar,
-  MRT_Header
+  type MRT_TableOptions as TableOptions,
+  flexRender,
+  useMantineReactTable
 } from "mantine-react-table";
-import React, {useEffect, useLayoutEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from "react";
+import {useSelector} from "react-redux";
+import {Comparison} from "../api";
+import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
 import {useFormatter} from "../hooks/formatter";
+import {useKey, useUpdatePermaLink} from "../hooks/permalink";
+import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
-import {BarsSVG, StackSVG} from "./icons";
+import {selectLoadingState} from "../state/loading";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -39,58 +53,38 @@ import {
   selectMeasureMap,
   selectPaginationParams
 } from "../state/queries";
-import {useSelector} from "react-redux";
-import {
-  PlainCube,
-  PlainLevel,
-  PlainMeasure,
-  PlainProperty,
-  Comparison
-} from "@datawheel/olap-client";
-import {ViewProps} from "../utils/types";
-import {
-  IconSortAscendingLetters as SortAsc,
-  IconSortDescendingLetters as SortDesc,
-  IconArrowsSort,
-  IconSortAscendingNumbers as SortNAsc,
-  IconSortDescendingNumbers as SortNDesc
-} from "@tabler/icons-react";
-import type {MeasureItem, QueryResult, DrilldownItem, CutItem, FilterItem} from "../utils/structs";
-import {useActions, ExplorerBoundActionMap} from "../hooks/settings";
-import TableFooter from "./TableFooter";
-import CustomActionIcon from "./CustomActionIcon";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
-import {isActiveCut, isActiveItem} from "../utils/validation";
-import {
-  FilterFnsMenu,
-  getFilterFn,
-  getFilterfnKey,
-  MinMax,
-  NumberInputComponent
-} from "./DrawerMenu";
-import debounce from "lodash.debounce";
 import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
-import {useUpdatePermaLink, useKey} from "../hooks/permalink";
-import {selectLoadingState} from "../state/loading";
+import type {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryResult} from "../utils/structs";
+import {type AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
+import type {ViewProps} from "../utils/types";
+import CustomActionIcon from "./CustomActionIcon";
+import {
+  FilterFnsMenu,
+  MinMax,
+  NumberInputComponent,
+  getFilterFn,
+  getFilterfnKey
+} from "./DrawerMenu";
+import TableFooter from "./TableFooter";
+import {BarsSVG, StackSVG} from "./icons";
+import type {TesseractCube} from "../api/tesseract/schema";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
 
 const removeColumn = (
   actions: ExplorerBoundActionMap,
-  entity: PlainMeasure | PlainProperty | PlainLevel,
+  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
   measures: MeasureItem[],
   drilldowns: DrilldownItem[]
 ) => {
-  if (entity._type === "measure") {
-    if (entity.name) {
-      const measure = measures.find(d => d.name === entity.name);
-      measure && actions.updateMeasure({...measure, active: false});
-    }
+  if ("aggregator" in entity) {
+    const measure = measures.find(d => d.name === entity.name);
+    measure && actions.updateMeasure({...measure, active: false});
   }
-  if (entity._type === "level") {
-    const drilldown = drilldowns.find(d => d.uniqueName === entity?.uniqueName);
+  if ("depth" in entity) {
+    const drilldown = drilldowns.find(d => d.level === entity.name);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
   }
   // maybe need to handle case for property columns.
@@ -131,10 +125,10 @@ const getEntityText = (entityType: EntityTypes) => {
 function getMemberFilterFnTypes(member) {
   return {
     value: String(member.key),
-    label: member.caption ? `${member.caption} ${member.key}` : member.name
+    label: member.caption ? `${member.caption} ${member.key}` : `${member.key}`
   };
 }
-function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range) {
+function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
     mantineFilterMultiSelectProps?: {data: unknown};
@@ -161,7 +155,7 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
 }
 
 type TableProps = {
-  cube: PlainCube;
+  cube: TesseractCube;
   result: QueryResult<Record<string, string | number>>;
   /**
    * Defines which columns will be rendered and which will be hidden.
@@ -181,6 +175,7 @@ function getLastWord(str) {
   const words = str.trim().split(" ");
   return words[words.length - 1];
 }
+
 type UserApiResponse = any;
 
 interface Condition {
@@ -236,11 +231,11 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   const permaKey = useKey();
   const loadingState = useSelector(selectLoadingState);
   const actions = useActions();
-  const page = pagination.pageIndex;
   const pageSize = pagination.pageSize;
+  const page = pagination.pageIndex;
   const enabled = Boolean(columns.length);
 
-  const initialKey = permaKey ? [permaKey, page, pageSize] : permaKey;
+  const initialKey = permaKey ? [permaKey, page, pageSize, locale] : permaKey;
   const [filterKeydebouced, setDebouncedTerm] = useState<
     string | boolean | (string | boolean | number)[]
   >(initialKey);
@@ -249,30 +244,33 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
     if (!enabled && permaKey) return;
     const handler = debounce(
       () => {
-        const term = [permaKey, page, pageSize];
+        const term = [permaKey, page, pageSize, locale];
         setDebouncedTerm(term);
       },
       loadingState.loading ? 0 : 800
     );
     handler();
     return () => handler.cancel();
-  }, [page, pageSize, enabled, cube, locale, permaKey]);
+  }, [page, enabled, locale, pageSize, loadingState.loading, permaKey]);
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", filterKeydebouced],
-    queryFn: () => {
-      return actions.willExecuteQuery().then(res => {
-        const {data, types} = res;
-        const {data: tableData, page} = data;
-        return {data: tableData ?? [], types, page};
-      });
-    },
+    queryFn: () =>
+      actions.willFetchQuery().then(result => {
+        actions.updateResult(result);
+        return result;
+      }),
     staleTime: 300000,
     enabled: enabled && !!filterKeydebouced
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
-  useUpdatePermaLink({isFetched: Boolean(cachedData), cube, enabled, isLoading: query.isLoading});
+  useUpdatePermaLink({
+    isFetched: Boolean(cachedData),
+    cube,
+    enabled,
+    isLoading: query.isLoading
+  });
   return query;
 }
 
@@ -284,7 +282,6 @@ type usePrefetchType = {
   isFetching: boolean;
 };
 
-// update when pagination api is set.
 function usePrefetch({
   isPlaceholderData,
   limit,
@@ -298,34 +295,32 @@ function usePrefetch({
   const paramKey = useKey();
   const page = pagination.pageIndex + 1;
   const pageSize = pagination.pageSize;
-  const hasMore = page * pageSize <= totalRowCount;
-  const off = page * pageSize;
-  const key = [paramKey, page, pageSize];
+  const hasMore = page * pagination.pageSize <= totalRowCount;
+  const off = page * pagination.pageSize;
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const key = [paramKey, page, pageSize, locale];
     if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
-        queryFn: () => {
-          return actions.willExecuteQuery({offset: off, limit}).then(res => {
-            const {data, types} = res;
-            const {data: tableData, page} = data;
-            return {data: tableData ?? [], types, page};
-          });
-        },
+        queryFn: () =>
+          actions.willFetchQuery({offset: off, limit}).then(result => {
+            actions.updateResult(result);
+            return result;
+          }),
         staleTime: 300000
       });
     }
   }, [
     limit,
     page,
+    pageSize,
+    locale,
     isPlaceholderData,
-    key,
     queryClient,
     hasMore,
     off,
     isFetching,
-    locale,
     paramKey
   ]);
 }
@@ -337,17 +332,18 @@ export function useTable({
   columnSorting = () => 0,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
+  // const {types} = result;
   const filterItems = useSelector(selectFilterItems);
   const filtersMap = useSelector(selectFilterMap);
   const measuresOlap = useSelector(selectOlapMeasureItems);
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const measures = useSelector(selectMeasureItems);
+  const itemsCuts = useSelector(selectCutItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-  // const {types} = result;
-  // const itemsCuts = useSelector(selectCutItems);
-  // const loadingState = useSelector(selectLoadingState);
+
+  const loadingState = useSelector(selectLoadingState);
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -357,25 +353,25 @@ export function useTable({
     () =>
       [
         ...measures.map(m => (m.active ? m.name : null)),
-        ...drilldowns.map(d => (d.active ? d.uniqueName : null))
+        ...drilldowns.map(d => (d.active ? d.level : null))
       ].filter(a => a !== null),
     [measures, drilldowns]
   );
 
-  function handlerCreateMeasure(data: MeasureItem) {
+  const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
     return measure;
-  }
+  }, []);
 
-  function handlerCreateFilter(data: FilterItem) {
+  const handlerCreateFilter = useCallback((data: Partial<FilterItem>) => {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
-  }
+  }, []);
 
   useLayoutEffect(() => {
-    filterMap(measuresOlap, (m: MeasureItem) => {
+    filterMap(measuresOlap, m => {
       const measure = measuresMap[m.name] || handlerCreateMeasure({...m, active: false});
       const foundFilter = filtersMap[m.name] || filterItems.find(f => f.measure === measure.name);
       const filter =
@@ -387,7 +383,14 @@ export function useTable({
         } as FilterItem);
       return {measure, filter};
     });
-  }, [measuresMap, measuresOlap, filtersMap, filterItems]);
+  }, [
+    measuresMap,
+    measuresOlap,
+    filtersMap,
+    filterItems,
+    handlerCreateFilter,
+    handlerCreateMeasure
+  ]);
 
   const {isLoading, isFetching, isFetched, isError, data, isPlaceholderData, status, fetchStatus} =
     useTableData({
@@ -399,7 +402,7 @@ export function useTable({
   // check no data
   const tableData = data?.data || [];
   // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
-  const tableTypes = data?.types || {};
+  const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
   const totalRowCount = data?.page.total;
 
   /**
@@ -425,10 +428,9 @@ export function useTable({
       limit: pagination.pageSize,
       offset: pagination.pageIndex * pagination.pageSize
     });
-  }, [pagination, actions]);
+  }, [pagination]);
 
   const {translate: t} = useTranslation();
-
   const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
     cube.measures
   );
@@ -512,7 +514,7 @@ export function useTable({
         },
         formatter,
         formatterKey,
-        id: entity.uniqueName ?? entity.name,
+        id: entity.name,
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
@@ -538,7 +540,7 @@ export function useTable({
       };
     });
     return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  }, [currentFormats, tableData, tableTypes, drilldowns, measures]);
+  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey]);
 
   const constTableProps = useMemo(
     () =>
@@ -617,7 +619,7 @@ export function useTable({
           );
         }
       } as const),
-    [isError]
+    [isError, t]
   );
 
   const isTransitionState = status !== "success" && !isError;
@@ -642,23 +644,16 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading: isLoad, data: tableData, columns, pagination, setPagination};
+  return {table, isError, isLoading: isLoad, data: tableData, columns};
 }
 
 type TableView = {
   table: MRT_TableInstance<TData>;
-  getColumn(id: String): AnyResultColumn | undefined;
+  getColumn(id: string): AnyResultColumn | undefined;
+  columns: AnyResultColumn[];
 } & ViewProps;
 
-export function TableView({
-  table,
-  result,
-  isError,
-  isLoading = false,
-  data,
-  pagination,
-  setPagination
-}: TableView) {
+export function TableView({table, result, isError, isLoading = false, data}: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
@@ -765,14 +760,7 @@ export function TableView({
           {!isData && !isError && !isLoading && <NoRecords />}
         </ScrollArea>
         <MRT_ToolbarAlertBanner stackAlertBanner table={table} />
-        <TableFooter
-          pagination={pagination}
-          setPagination={setPagination}
-          table={table}
-          data={data}
-          result={result}
-          isLoading={isLoading}
-        />
+        <TableFooter table={table} data={data} result={result} isLoading={isLoading} />
       </Flex>
     </Box>
   );
@@ -831,11 +819,11 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
-  const drilldown = drilldownItems.find(c => c.uniqueName === header.column.id);
+  const drilldown = drilldownItems.find(c => c.level === header.column.id);
   const actions = useActions();
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === drilldown?.uniqueName;
+    return cut.level === drilldown?.level;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
@@ -855,8 +843,8 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => ({
-            value: String(m.key),
-            label: m.caption ? `${m.caption} (${m.key})` : m.name
+            value: `${m.key}`,
+            label: m.caption ? `${m.caption} (${m.key})` : `${m.key}`
           }))}
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable
