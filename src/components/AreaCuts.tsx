@@ -1,6 +1,7 @@
 import {ActionIcon, Alert, Stack} from "@mantine/core";
 import {IconAlertCircle, IconCirclePlus, IconTrashX} from "@tabler/icons-react";
 import React, {useCallback, useMemo} from "react";
+import type {TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCutItems} from "../state/queries";
@@ -22,14 +23,16 @@ export const AreaCuts = () => {
     actions.resetCuts({});
   }, []);
 
-  /** @type {(level: import("@datawheel/olap-client").PlainLevel) => void} */
-  const createHandler = useCallback(level => {
+  const createHandler = useCallback((level: TesseractLevel) => {
     const cutItem = buildCut(level);
     cutItem.active = false;
     actions.updateCut(cutItem);
   }, []);
 
-  const cutTags = useMemo(() => items.map(item => <TagCut key={item.key} item={item} />), [items]);
+  const cutTags = useMemo(
+    () => items.map(item => <TagCut key={item.key} item={item} />),
+    [items],
+  );
 
   const toolbar = (
     <>
@@ -38,7 +41,11 @@ export const AreaCuts = () => {
           <IconTrashX />
         </ActionIcon>
       )}
-      <ButtonSelectLevel onItemSelect={createHandler} selectedItems={items} variant="subtle">
+      <ButtonSelectLevel
+        onItemSelect={createHandler}
+        selectedItems={items.map(item => item.level)}
+        variant="subtle"
+      >
         <IconCirclePlus />
       </ButtonSelectLevel>
     </>
@@ -67,5 +74,3 @@ export const AreaCuts = () => {
     </LayoutParamsArea>
   );
 };
-
-export {createHandler};

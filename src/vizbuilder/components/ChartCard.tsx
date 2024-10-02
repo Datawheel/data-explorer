@@ -1,5 +1,9 @@
-import type {Measure} from "@datawheel/olap-client";
-import {type Chart, type ChartType, type D3plusConfig, createChartConfig} from "@datawheel/vizbuilder";
+import {
+  type Chart,
+  type ChartType,
+  type D3plusConfig,
+  createChartConfig,
+} from "@datawheel/vizbuilder";
 import {Box, Button, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
@@ -10,12 +14,16 @@ import {
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
-import React,{useMemo, useRef} from "react";
+import React, {useMemo, useRef} from "react";
+import type {TesseractMeasure} from "../../api/tesseract/schema";
+import {useTranslation} from "../../main";
 import {asArray} from "../tooling/collection";
 import {ErrorBoundary} from "./ErrorBoundary";
-import {useTranslation} from "../../main";
 
-export const chartComponents: Record<ChartType, React.ComponentType<{config: any}>> = {
+export const chartComponents: Record<
+  ChartType,
+  React.ComponentType<{config: D3plusConfig}>
+> = {
   barchart: BarChart,
   barchartyear: BarChart,
   donut: Donut,
@@ -39,12 +47,19 @@ export function ChartCard(props: {
   currentChart: string;
   downloadFormats?: string[] | undefined;
   isSingleChart: boolean;
-  measureConfig: (item: Measure) => D3plusConfig;
+  measureConfig: (item: TesseractMeasure) => D3plusConfig;
   onToggle: () => void;
   showConfidenceInt: boolean;
   userConfig: D3plusConfig;
 }) {
-  const {chart, currentChart, isSingleChart} = props;
+  const {
+    chart,
+    currentChart,
+    isSingleChart,
+    measureConfig,
+    showConfidenceInt,
+    userConfig,
+  } = props;
   const isFocused = currentChart === chart.key;
 
   const {translate, locale} = useTranslation();
@@ -59,12 +74,20 @@ export function ChartCard(props: {
         currentChart,
         isSingleChart,
         isUniqueChart: isSingleChart,
-        measureConfig: props.measureConfig,
-        showConfidenceInt: Boolean(props.showConfidenceInt),
+        measureConfig,
+        showConfidenceInt: !!showConfidenceInt,
         translate: (template, data) => translate(`vizbuilder.${template}`, data),
-        userConfig: props.userConfig || {},
+        userConfig: userConfig || {},
       }),
-    [chart, currentChart, isSingleChart, locale],
+    [
+      chart,
+      currentChart,
+      isSingleChart,
+      translate,
+      measureConfig,
+      userConfig,
+      showConfidenceInt,
+    ],
   );
 
   const downloadButtons = useMemo(() => {
@@ -85,7 +108,7 @@ export function ChartCard(props: {
           leftIcon={<Icon size={16} />}
           onClick={() => {
             const {current: boxElement} = nodeRef;
-            const svgElement = boxElement && boxElement.querySelector("svg");
+            const svgElement = boxElement?.querySelector("svg");
             svgElement &&
               saveElement(
                 svgElement,
@@ -102,7 +125,7 @@ export function ChartCard(props: {
         </Button>
       );
     });
-  }, [isFocused, isSingleChart, props.downloadFormats]);
+  }, [isFocused, isSingleChart, props.downloadFormats, config.title]);
 
   const focusButton = useMemo(() => {
     if (!isFocused && isSingleChart) return null;
@@ -121,7 +144,7 @@ export function ChartCard(props: {
           : translate("vizbuilder.action_enlarge")}
       </Button>
     );
-  }, [isFocused, isSingleChart, locale, props.onToggle]);
+  }, [isFocused, isSingleChart, translate, props.onToggle]);
 
   const height = isFocused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
 

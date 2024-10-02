@@ -1,7 +1,7 @@
-import {PlainCube} from "@datawheel/olap-client";
-import React from "react";
-import {QueryParams, QueryResult} from "./structs";
 import type {MRT_TableInstance} from "mantine-react-table";
+import React from "react";
+import type {TesseractCube} from "../api";
+import type {QueryParams, QueryResult} from "./structs";
 
 export interface Annotated {
   annotations: Record<string, string | undefined>;
@@ -34,7 +34,7 @@ export interface PanelDescriptor {
 
 export interface ViewProps<TData = Record<string, string | number>> {
   className?: string;
-  cube: PlainCube;
+  cube: TesseractCube;
   panelKey: string | null;
   params: QueryParams;
   result: QueryResult<TData>;

@@ -1,6 +1,5 @@
 import {filterMap} from "./array";
 import type {CutItem, FilterItem, QueryParams} from "./structs";
-import {stringifyName} from "./transform";
 
 /**
  * Void function
@@ -117,7 +116,7 @@ const validQueryConditions = [
     error: "queries.error_one_cut_per_dimension",
     condition: (query: QueryParams) => {
       const levels = filterMap(Object.values(query.cuts), item =>
-        isActiveItem(item) ? stringifyName(item) : null,
+        isActiveItem(item) ? item.level : null,
       );
       const uniqueLevels = new Set(levels);
       return levels.length === uniqueLevels.size;

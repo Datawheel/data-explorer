@@ -5,7 +5,6 @@ import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectDrilldownItems} from "../state/queries";
-import {selectOlapDimensionItems} from "../state/selectors";
 import {buildDrilldown} from "../utils/structs";
 import {activeItemCounter} from "../utils/validation";
 import {ButtonSelectLevel} from "./ButtonSelectLevel";
@@ -19,27 +18,22 @@ export const AreaDrilldowns = () => {
   const {translate: t} = useTranslation();
 
   const items = useSelector(selectDrilldownItems);
-  const dimensions = useSelector(selectOlapDimensionItems);
 
   const clearHandler = useCallback(() => {
     actions.resetDrilldowns({});
   }, []);
 
-  /** @type {(level: import("@datawheel/olap-client").PlainLevel) => void} */
+  /** @type {(level: import("../api/tesseract/schema").TesseractLevel) => void} */
   const createHandler = useCallback(level => {
     const drilldownItem = buildDrilldown(level);
     actions.updateDrilldown(drilldownItem);
-    actions.willFetchMembers({...level, level: level.name})
-      .then(members => {
-        const dimension = dimensions.find(dim => dim.name === level.dimension);
-        if (!dimension) return;
-        actions.updateDrilldown({
-          ...drilldownItem,
-          dimType: dimension.dimensionType,
-          memberCount: members.length
-        });
+    actions.willFetchMembers(level.name).then(res => {
+      actions.updateDrilldown({
+        ...drilldownItem,
+        members: res.members,
       });
-  }, [dimensions]);
+    });
+  }, []);
 
   const drilldownTags = useMemo(() => items.map(item =>
     <TagDrilldown key={item.key} item={item} />

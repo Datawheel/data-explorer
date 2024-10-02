@@ -1,4 +1,3 @@
-import {PlainCube} from "@datawheel/olap-client";
 import {
   Alert,
   Anchor,
@@ -7,36 +6,37 @@ import {
   Group,
   Paper,
   Stack,
-  TabsValue,
+  type TabsValue,
   Text,
   Title,
-  createStyles
+  createStyles,
 } from "@mantine/core";
+import {useFullscreen} from "@mantine/hooks";
 import {IconAlertTriangle, IconWorld} from "@tabler/icons-react";
 import React, {Suspense, useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
+import type {TesseractCube} from "../api";
 import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
 import {selectOlapCube} from "../state/selectors";
 import {selectServerState} from "../state/server";
-import {QueryParams, QueryResult} from "../utils/structs";
-import {PanelDescriptor} from "../utils/types";
+import type {QueryParams, QueryResult} from "../utils/structs";
+import type {PanelDescriptor} from "../utils/types";
+import AddColumnsDrawer from "./DrawerMenu";
+import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
-import {ExplorerTabs} from "./ExplorerTabs";
-import {useFullscreen} from "@mantine/hooks";
-import AddColumnsDrawer from "./DrawerMenu";
-import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const useStyles = createStyles(() => ({
   container: {
     minHeight: "40vh",
     display: "flex",
-    flexFlow: "column nowrap"
-  }
+    flexFlow: "column nowrap",
+  },
 }));
+
 /**
  * Renders the result area in the UI.
  */
@@ -176,7 +176,7 @@ function FailureResult(props: {
 function SuccessResult(props: {
   children?: React.ReactNode;
   className?: string;
-  cube: PlainCube;
+  cube: TesseractCube;
   panels: PanelDescriptor[];
   params: QueryParams;
   result: QueryResult;
@@ -209,7 +209,7 @@ function SuccessResult(props: {
           sx={t => ({
             alignItems: "center",
             background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
-            justifyContent: "space-between"
+            justifyContent: "space-between",
           })}
           w="100%"
         >
@@ -223,13 +223,20 @@ function SuccessResult(props: {
           )}
         </Flex>
         {isPreviewMode && (
-          <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
+          <Alert
+            id="alert-load-all-results"
+            color="yellow"
+            radius={0}
+            sx={{flex: "0 0 auto"}}
+          >
             <Group position="apart">
               <Text>
                 <Text fw={700} span>
                   {t("previewMode.title_preview")}:{" "}
                 </Text>
-                <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
+                <Text span>
+                  {t("previewMode.description_preview", {limit: previewLimit})}
+                </Text>
               </Text>
               <PreviewModeSwitch />
             </Group>

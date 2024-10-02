@@ -1,47 +1,119 @@
+import type {Aggregator, DimensionType} from "../enum";
+
 type Annotations = Record<string, string | undefined>;
 
-export enum Aggregator {
-  avg = "avg",
-  basic_grouped_median = "basic_grouped_median",
-  count = "count",
-  max = "max",
-  median = "median",
-  min = "min",
-  mode = "mode",
-  moe = "moe",
-  quantile = "quantile",
-  replicate_weight_moe = "replicate_weight_moe",
-  sum = "sum",
-  weighted_average_moe = "weighted_average_moe",
-  weighted_avg = "weighted_avg",
-  weighted_sum = "weighted_sum",
-}
-
-export enum DimensionType {
-  geo = "geo",
-  standard = "standard",
-  time = "time",
+export interface TesseractErrorResponse {
+  error: true;
+  detail: string;
 }
 
 export interface TesseractDataRequest {
   cube: string;
+
+  /**
+   * @example LevelName,LevelName,LevelName
+   */
   drilldowns: string;
+
+  /**
+   * @example Measure,Measure,Measure
+   */
   measures: string;
+
+  /**
+   * @example Level:key,key,key;Level:key,key,key
+   */
   exclude?: string;
+
+  /**
+   * @example Measure.gt.10000.and.lt.60000,Measure.lt.100000
+   */
   filters?: string;
+
+  /**
+   * @example Level:key,key,key;Level:key,key,key
+   */
   include?: string;
+
+  /**
+   * A single number is limit; a pair of numbers are limit, offset.
+   * @example 2,5
+   */
   limit?: string;
+
+  /**
+   * @example es
+   */
   locale?: string;
+
+  /**
+   * A boolean enables parents for all levels in the request.
+   * You can also pick specific Levels from the drilldown list.
+   * @example true
+   * @example Level,Level
+   */
   parents?: boolean | string;
+
+  /**
+   * @example Property,Property
+   */
   properties?: string;
+
+  /**
+   * A boolean sets rankings for all measures in descending order.
+   * If setting measure names, orden can be set with or without a leading minus.
+   * @example true
+   * @example Measure,-Measure
+   */
   ranking?: boolean | string;
+
+  /**
+   * @example Measure.asc
+   * @example Property.desc
+   */
   sort?: string;
+
+  /**
+   * Determines if the request should return the full cardinality of available
+   * options, even if their associated value is null.
+   * @default true
+   */
+  sparse?: boolean;
+
+  /**
+   * @example month.latest.6
+   * @example Level.oldest
+   */
   time?: string;
+
+  /**
+   * Slices the resulting items to only the highest/lowest N items by the value
+   * of Measure, for all the subgroups signaled by the Level parameters.
+   * @example 10.Level.Measure.asc
+   * @example 3.Level,Level.Measure.desc
+   */
+  top?: string;
+
+  /**
+   * Calculates the growth in Measure for each Level using one of these methods:
+   * - fixed: Calculates growth against a fixed member key from Level
+   * - period: Calculates growth comparing a time point with its previous N point
+   * @example Level.Measure.fixed.201804
+   * @example Level.Measure.period.3
+   */
+  growth?: string;
 }
 
 export interface TesseractDataResponse {
+  error?: true;
+  detail?: string;
   columns: string[];
-  data: string[][];
+  data: Record<string, unknown>[];
+  page: {
+    limit: number;
+    offset: number;
+    total: number;
+  };
 }
 
 export interface TesseractMembersRequest {
@@ -58,6 +130,9 @@ export interface TesseractMembersResponse {
   name: string;
   /** Public localized name of the relevant level */
   caption: string;
+  dimensionType: DimensionType;
+  dimension: string;
+  hierarchy: string;
   /** Depth of the level in its Hierarchy */
   depth: number;
   /** Metadata for the level */
@@ -65,9 +140,9 @@ export interface TesseractMembersResponse {
   /** Child Properties from this level */
   properties: TesseractProperty[];
   /** Data type of each column in the members array */
-  dtypes: {[K in keyof MemberRow]: string};
+  dtypes: {[K in keyof TesseractMember]: string};
   /** The actual list of members for the level */
-  members: MemberRow[];
+  members: TesseractMember[];
 }
 
 export interface TesseractStatus {
@@ -132,11 +207,11 @@ export interface TesseractProperty {
   type: string;
 }
 
-export interface MemberRow {
+export interface TesseractMember {
   /** The unique ID for this member */
   key: string | number;
   /** The localized label for this member */
   caption?: string;
   /** A list of direct ancestor members, one per level above this one */
-  ancestor?: MemberRow[];
+  ancestor?: TesseractMember[];
 }

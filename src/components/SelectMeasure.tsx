@@ -1,6 +1,7 @@
 import {Select} from "@mantine/core";
 import React, {memo, useMemo} from "react";
 import {useSelector} from "react-redux";
+import type {TesseractMeasure} from "../api/tesseract/schema";
 import {useTranslation} from "../hooks/translation";
 import {selectMeasureMap} from "../state/queries";
 import {selectOlapMeasureItems} from "../state/selectors";
@@ -8,16 +9,12 @@ import {filterMap} from "../utils/array";
 import {keyBy} from "../utils/transform";
 import {isActiveItem, shallowEqualExceptFns} from "../utils/validation";
 
-/**
- * @typedef OwnProps
- * @property {boolean} [activeOnly]
- * @property {(item: import("@datawheel/olap-client").PlainMeasure) => void} onItemSelect
- * @property {string} [placeholder]
- * @property {string | undefined} selectedItem
- */
-
-/** @type {React.FC<OwnProps>} */
-export const SelectMeasure = props => {
+export function SelectMeasure(props: {
+  activeOnly?: boolean;
+  onItemSelect: (item: TesseractMeasure) => void;
+  placeholder?: string;
+  selectedItem?: string;
+}) {
   const {activeOnly, onItemSelect} = props;
 
   const {translate: t} = useTranslation();
@@ -38,7 +35,7 @@ export const SelectMeasure = props => {
     };
 
     return [list, callback];
-  }, [measureMap, onItemSelect]);
+  }, [measures, measureMap, activeOnly, onItemSelect]);
 
   return (
     <Select
@@ -48,6 +45,6 @@ export const SelectMeasure = props => {
       searchable={itemList.length > 6}
     />
   );
-};
+}
 
 export const MemoSelectMeasure = memo(SelectMeasure, shallowEqualExceptFns);

@@ -1,14 +1,13 @@
-import type {Level, Measure} from "@datawheel/olap-client";
 import {
   type ChartLimits,
   type ChartType,
   type D3plusConfig,
-  generateCharts
+  generateCharts,
 } from "@datawheel/vizbuilder";
 import {Box, Modal, SimpleGrid, Title} from "@mantine/core";
 import cls from "clsx";
-import {useCallback, useMemo} from "react";
-import React from "react";
+import React, {useCallback, useMemo} from "react";
+import type {TesseractLevel, TesseractMeasure} from "../../api/tesseract/schema";
 import {type ViewProps, useSettings, useTranslation} from "../../main";
 import {measureConfigAccessor} from "../tooling/accesor";
 import {mapActives} from "../tooling/collection";
@@ -24,10 +23,14 @@ export function createVizbuilderView(settings: {
   readonly datacap?: number;
   readonly defaultLocale?: string;
   readonly downloadFormats?: Array<"jpg" | "png" | "svg">;
-  readonly measureConfig?: Record<string, D3plusConfig> | ((measure: Measure) => D3plusConfig);
+  readonly measureConfig?:
+    | Record<string, D3plusConfig>
+    | ((measure: TesseractMeasure) => D3plusConfig);
   readonly nonIdealState?: React.ComponentType;
   readonly showConfidenceInt?: boolean;
-  readonly topojsonConfig?: Record<string, D3plusConfig> | ((level: Level) => D3plusConfig);
+  readonly topojsonConfig?:
+    | Record<string, D3plusConfig>
+    | ((level: TesseractLevel) => D3plusConfig);
 
   /**
    * A global d3plus config that gets applied on all charts.
@@ -44,7 +47,7 @@ export function createVizbuilderView(settings: {
     nonIdealState: Notice = NonIdealState,
     showConfidenceInt = false,
     topojsonConfig,
-    userConfig = {}
+    userConfig = {},
   } = settings;
 
   const getMeasureConfig = measureConfigAccessor(settings.measureConfig || {});
@@ -58,7 +61,10 @@ export function createVizbuilderView(settings: {
     const {cube, panelKey, params, result} = props;
     const {actions, formatters} = useSettings();
 
-    const [panelName, currentChart] = useMemo(() => `${panelKey || ""}-`.split("-"), [panelKey]);
+    const [panelName, currentChart] = useMemo(
+      () => `${panelKey || ""}-`.split("-"),
+      [panelKey],
+    );
 
     const resetCurrentPanel = useCallback(() => {
       actions.switchPanel(panelName);
@@ -78,14 +84,14 @@ export function createVizbuilderView(settings: {
                   dimension: item.dimension,
                   hierarchy: item.hierarchy,
                   level: item.level,
-                  members: item.members
+                  members: item.members,
                 })),
                 drilldowns: mapActives(params.drilldowns, item => ({
                   caption: item.captionProperty,
                   dimension: item.dimension,
                   hierarchy: item.hierarchy,
                   level: item.level,
-                  properties: item.properties.map(item => item.name)
+                  properties: item.properties.map(item => item.name),
                 })),
                 filters: mapActives(params.filters, item => ({
                   constraint1: [item.conditionOne[0], item.conditionOne[2]],
@@ -94,18 +100,18 @@ export function createVizbuilderView(settings: {
                     : undefined,
                   formatter: formatters[item.measure],
                   joint: item.joint,
-                  measure: item.measure
+                  measure: item.measure,
                 })),
                 measures: mapActives(params.measures, item => ({
                   formatter: formatters[item.name],
-                  measure: item.name
-                }))
-              }
-            }
+                  measure: item.name,
+                })),
+              },
+            },
           ],
-          chartGenOptions
+          chartGenOptions,
         ),
-      [cube, result.data, params]
+      [cube, result.data, params],
     );
 
     const content = useMemo(() => {
@@ -121,7 +127,7 @@ export function createVizbuilderView(settings: {
             {minWidth: "xs", cols: Math.min(1, filteredCharts.length)},
             {minWidth: "md", cols: Math.min(2, filteredCharts.length)},
             {minWidth: "lg", cols: Math.min(3, filteredCharts.length)},
-            {minWidth: "xl", cols: Math.min(4, filteredCharts.length)}
+            {minWidth: "xl", cols: Math.min(4, filteredCharts.length)},
           ]}
           className={cls({unique: filteredCharts.length === 1})}
         >
@@ -142,7 +148,7 @@ export function createVizbuilderView(settings: {
           ))}
         </SimpleGrid>
       );
-    }, [currentChart, charts]);
+    }, [panelName, charts]);
 
     const focusContent = useMemo(() => {
       const chart = charts.find(chart => currentChart && chart.key === currentChart);
@@ -161,7 +167,7 @@ export function createVizbuilderView(settings: {
           userConfig={userConfig}
         />
       );
-    }, [currentChart, charts]);
+    }, [currentChart, charts, resetCurrentPanel]);
 
     return (
       <Box className={props.className} p="sm">
@@ -174,7 +180,7 @@ export function createVizbuilderView(settings: {
           size="calc(100vw - 3rem)"
           styles={{
             content: {maxHeight: "none !important"},
-            inner: {padding: "0 !important"}
+            inner: {padding: "0 !important"},
           }}
           withCloseButton={false}
         >
