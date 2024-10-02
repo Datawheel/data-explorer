@@ -28,7 +28,6 @@ import {
   selectMeasureItems,
   selectQueryItems,
 } from "./queries";
-import {selectOlapCube} from "./selectors";
 import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
 import {pickDefaultDrilldowns} from "./utils";
@@ -110,7 +109,8 @@ export function willFetchQuery(params?: {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-    const cube = selectOlapCube(state);
+    const cube = selectOlapCubeMap(state)[params.cube];
+    console.log({cube})
     
     if (!isValidQuery(params) || !cube) {
       return Promise.reject(new Error("Invalid query"));

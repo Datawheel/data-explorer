@@ -138,6 +138,7 @@ function getMemberFilterFnTypes(member) {
     label: member.caption ? `${member.caption} ${member.key}` : member.name
   };
 }
+
 function getMantineFilterMultiSelectProps(isId: Boolean, isNumeric: Boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
@@ -243,7 +244,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   const page = pagination.pageIndex;
   const enabled = Boolean(columns.length);
 
-  const initialKey = permaKey ? [permaKey, page] : permaKey;
+  const initialKey = permaKey ? [permaKey, page, locale] : permaKey;
   const [filterKeydebouced, setDebouncedTerm] = useState<
     string | boolean | (string | boolean | number)[]
   >(initialKey);
@@ -252,7 +253,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
     if (!enabled && permaKey) return;
     const handler = debounce(
       () => {
-        const term = [permaKey, page];
+        const term = [permaKey, page, locale];
         setDebouncedTerm(term);
       },
       loadingState.loading ? 0 : 700
@@ -339,6 +340,7 @@ export function useTable({
   const measuresOlap = useSelector(selectOlapMeasureItems);
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
+  const {code: locale} = useSelector(selectLocale);
   const measures = useSelector(selectMeasureItems);
   const itemsCuts = useSelector(selectCutItems);
   const actions = useActions();
@@ -350,6 +352,7 @@ export function useTable({
     pageIndex: offset,
     pageSize: limit
   });
+  
   const finalUniqueKeys = useMemo(
     () =>
       [
@@ -386,7 +389,7 @@ export function useTable({
     });
   }, [measuresMap, measuresOlap, filtersMap, filterItems]);
 
-  const {isLoading, isFetching, isFetched, isError, data, isPlaceholderData, status, fetchStatus} =
+  const {isLoading, isFetching, isError, data, isPlaceholderData, status} =
     useTableData({
       columns: finalUniqueKeys,
       pagination,
@@ -426,11 +429,12 @@ export function useTable({
 
   const {translate: t} = useTranslation();
 
-  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
+  const {currentFormats, getFormatter, getFormatterKey} = useFormatter(
     cube.measures
   );
 
-  const columns = useMemo<ColumnDef<TData>[]>(() => {
+  const columns = useMemo<ColumnDef<TData>[]>(
+    () => {
     const indexColumn = {
       id: "#",
       Header: "#",
@@ -443,6 +447,7 @@ export function useTable({
     };
 
     const columnsDef = finalKeys.map(column => {
+
       const {
         entity,
         entityType,
@@ -535,7 +540,7 @@ export function useTable({
       };
     });
     return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  }, [currentFormats, tableData, tableTypes, drilldowns, measures]);
+  }, [currentFormats, tableData, tableTypes, drilldowns, measures, locale]);
 
   const constTableProps = useMemo(
     () =>

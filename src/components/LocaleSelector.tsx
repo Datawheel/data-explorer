@@ -67,7 +67,6 @@ export function LocaleSelector() {
     if (currentCode !== l.value) {
       actions.updateLocale(l.value);
       actions.willReloadCubes();
-      actions.willFetchQuery();
     }
   };
 
