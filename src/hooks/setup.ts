@@ -12,23 +12,20 @@ export function useSetup(
   serverURL: string,
   serverConfig: RequestInit,
   defaultLocale?: string,
-  defaultCube?: string,
+  defaultCube?: string
 ) {
-  const {actions} = useSettings();
-
+  const {actions, paginationConfig} = useSettings();
   // Initialize the internal state, from permalink, history API, or default.
   useEffect(() => {
     actions.resetServer();
     actions.resetAllParams({});
     actions.setLoadingState("FETCHING");
-
     actions
       .willSetupClient(serverURL, defaultLocale, serverConfig)
       .then(cubeMap => {
         const search = new URLSearchParams(window.location.search);
         const historyState = window.history.state;
         let query: QueryItem | undefined;
-
         const base64 = search.get("query");
         if (base64) {
           // Search params are a base64-encoded OLAP server URL
@@ -43,7 +40,7 @@ export function useSetup(
           query = parsePermalink(cubeMap[cubeName], search);
           query = isValidQuery(query.params) ? query : undefined;
         } else if (isValidQuery(historyState)) {
-          query = buildQuery({params: {...historyState}});
+          query = buildQuery({params: {...historyState, pagiLimit: paginationConfig.defaultLimit}});
         }
 
         if (!query || !hasProperty(cubeMap, query.params.cube)) {
@@ -58,13 +55,12 @@ export function useSetup(
         }
       })
       .then(actions.willHydrateParams)
-      // .then(() => actions.willExecuteQuery())
       .then(
         () => actions.setLoadingState("SUCCESS"),
         error => {
           console.dir("There was an error during setup:", error);
           actions.setLoadingState("FAILURE", error.message);
-        },
+        }
       );
   }, [serverURL, serverConfig, defaultLocale, defaultCube]);
 }

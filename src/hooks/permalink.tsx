@@ -11,21 +11,18 @@ import {isValidQuery} from "../utils/validation";
 export function serializePermalink(item: QueryItem): string {
   const request = queryParamsToRequest(item.params);
   const search = new URLSearchParams(
-    Object.entries(request).filter(entry => entry[1] != null && entry[1] !== ""),
+    Object.entries(request).filter(entry => entry[1] != null && entry[1] !== "")
   );
   search.set("panel", item.panel || "table");
   return search.toString();
 }
 
 /** */
-export function parsePermalink(
-  cube: TesseractCube,
-  value: string | URLSearchParams,
-): QueryItem {
+export function parsePermalink(cube: TesseractCube, value: string | URLSearchParams): QueryItem {
   const search = new URLSearchParams(value);
   return buildQuery({
     panel: search.get("panel") || "table",
-    params: requestToQueryParams(cube, search),
+    params: requestToQueryParams(cube, search)
   });
 }
 
@@ -34,7 +31,7 @@ export function usePermalink(
   isEnabled: boolean | undefined,
   options: {
     onChange(state: Partial<QueryParams>): void;
-  },
+  }
 ) {
   const cubeMap = useSelector(selectOlapCubeMap);
   const queryItem = useSelector(selectCurrentQueryItem);
@@ -43,7 +40,7 @@ export function usePermalink(
     (evt: PopStateEvent) => {
       evt.state && options.onChange(evt.state);
     },
-    [options.onChange],
+    [options.onChange]
   );
 
   // eslint-disable-next-line consistent-return
@@ -81,7 +78,7 @@ export function useUpdatePermaLink({
   isFetched,
   cube,
   enabled,
-  isLoading,
+  isLoading
 }: {
   isFetched: boolean;
   cube: string;
@@ -101,10 +98,10 @@ export function useUpdatePermaLink({
   }, [isFetched, cube, queryItem, enabled, isLoading]);
 }
 
-export function useKey() {
+export function useKey(params: Partial<QueryParams> = {}) {
   const queryItem = useSelector(selectCurrentQueryItem);
   if (isValidQuery(queryItem.params)) {
-    return serializePermalink(queryItem);
+    return serializePermalink({...queryItem, params: {...queryItem.params, ...params}});
   }
   return false;
 }

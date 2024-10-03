@@ -9,7 +9,7 @@ import {
   type TabsValue,
   Text,
   Title,
-  createStyles,
+  createStyles
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
 import {IconAlertTriangle, IconWorld} from "@tabler/icons-react";
@@ -28,13 +28,14 @@ import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const useStyles = createStyles(() => ({
   container: {
     minHeight: "40vh",
     display: "flex",
-    flexFlow: "column nowrap",
-  },
+    flexFlow: "column nowrap"
+  }
 }));
 
 /**
@@ -51,7 +52,6 @@ export function ExplorerResults(props: {
   const {online: isServerOnline, url: serverUrl} = serverStatus;
   const {error} = result;
   const {translate: t} = useTranslation();
-
   const {classes, cx} = useStyles();
 
   // Check if client is browser not connected to internet
@@ -187,7 +187,10 @@ function SuccessResult(props: {
 
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
-  const {table, isError, isLoading, data, columns} = useTable({cube, result});
+  const {table, isError, isLoading, data, columns, pagination, setPagination} = useTable({
+    cube,
+    result
+  });
 
   const fullscreen = useFullscreen();
 
@@ -209,7 +212,7 @@ function SuccessResult(props: {
           sx={t => ({
             alignItems: "center",
             background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
-            justifyContent: "space-between",
+            justifyContent: "space-between"
           })}
           w="100%"
         >
@@ -223,20 +226,13 @@ function SuccessResult(props: {
           )}
         </Flex>
         {isPreviewMode && (
-          <Alert
-            id="alert-load-all-results"
-            color="yellow"
-            radius={0}
-            sx={{flex: "0 0 auto"}}
-          >
+          <Alert id="alert-load-all-results" color="yellow" radius={0} sx={{flex: "0 0 auto"}}>
             <Group position="apart">
               <Text>
                 <Text fw={700} span>
                   {t("previewMode.title_preview")}:{" "}
                 </Text>
-                <Text span>
-                  {t("previewMode.description_preview", {limit: previewLimit})}
-                </Text>
+                <Text span>{t("previewMode.description_preview", {limit: previewLimit})}</Text>
               </Text>
               <PreviewModeSwitch />
             </Group>
@@ -257,13 +253,15 @@ function SuccessResult(props: {
                   isLoading={isLoading}
                   data={data}
                   columns={columns}
+                  pagination={pagination}
+                  setPagination={setPagination}
                 />
               </Box>
             </Flex>
           </Suspense>
         </Box>
       </Paper>
-      {/* <ReactQueryDevtools initialIsOpen /> */}
+      <ReactQueryDevtools initialIsOpen />
     </Flex>
   );
 }
