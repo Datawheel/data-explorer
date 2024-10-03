@@ -396,9 +396,7 @@ export function useTable({
 
   // check no data
   const tableData = data?.data || [];
-  // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
   const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
-  console.log(tableTypes, "TT");
   const totalRowCount = data?.page.total;
 
   /**
@@ -431,111 +429,110 @@ export function useTable({
     cube.measures
   );
 
-  // const columns = useMemo<ColumnDef<TData>[]>(() => {
-  const indexColumn = {
-    id: "#",
-    Header: "#",
-    Cell: ({row}) => row.index + 1 + offset,
-    minWidth: 50,
-    maxWidth: 50,
-    width: 50,
-    maxSize: 50,
-    size: 50
-  };
-
-  const columnsDef = finalKeys.map(column => {
-    const {
-      entity,
-      entityType,
-      label: columnKey,
-      localeLabel: header,
-      valueType,
-      range,
-      isId
-    } = column;
-
-    const isNumeric = valueType === "number" && columnKey !== "Year";
-    const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
-    const formatter = getFormatter(formatterKey);
-    const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
-    return {
-      ...mantineFilterVariantObject,
-      entityType,
-      header,
-      enableHiding: true,
-      sortingFn: (rowA, rowB, columnId) => {
-        if (rowA.original[columnId] < rowB.original[columnId]) {
-          return -1;
-        }
-        if (rowA.original[columnId] > rowB.original[columnId]) {
-          return 1;
-        }
-        return 0;
-      },
-      Header: ({column}) => {
-        console.log(column, "C");
-        return (
-          <Box mb={rem(5)} key="header">
-            <Flex justify="center" align="center">
-              <Box sx={{flexGrow: 1}}>
-                <Flex gap="xs" align="center">
-                  {getActionIcon(entityType)}
-                  <Text size="sm">{header}</Text>
-                  <ActionIcon
-                    key={`sort-${header}`}
-                    size={22}
-                    ml={rem(5)}
-                    onClick={column.getToggleSortingHandler()}
-                  >
-                    {getSortIcon(column.getIsSorted(), entityType)}
-                  </ActionIcon>
-                </Flex>
-              </Box>
-              <CustomActionIcon
-                label={`At least one ${getEntityText(entityType)} is required.`}
-                key={`remove-${column.columnDef.header}`}
-                disabled={!showTrashIcon(finalKeys, entityType)}
-                onClick={() => removeColumn(actions, entity, measures, drilldowns)}
-                showTooltip={!showTrashIcon(finalKeys, entityType)}
-                size={25}
-                ml={rem(5)}
-              >
-                <IconTrash />
-              </CustomActionIcon>
-            </Flex>
-          </Box>
-        );
-      },
-      formatter,
-      formatterKey,
-      id: entity.name,
-      dataType: valueType,
-      accessorFn: item => item[columnKey],
-      Cell: isNumeric
-        ? ({cell}) => formatter(cell.getValue<number>())
-        : ({cell, renderedCellValue, row}) => {
-            const cellId = row.original[`${cell.column.id} ID`];
-            return (
-              <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
-                <Text
-                  size="sm"
-                  sx={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis"
-                  }}
-                >
-                  {renderedCellValue}
-                </Text>
-                <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
-              </Flex>
-            );
-          }
+  const columns = useMemo<ColumnDef<TData>[]>(() => {
+    const indexColumn = {
+      id: "#",
+      Header: "#",
+      Cell: ({row}) => row.index + 1 + offset,
+      minWidth: 50,
+      maxWidth: 50,
+      width: 50,
+      maxSize: 50,
+      size: 50
     };
-  });
-  // return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  const columns = columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  // }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey, locale]);
+
+    const columnsDef = finalKeys.map(column => {
+      const {
+        entity,
+        entityType,
+        label: columnKey,
+        localeLabel: header,
+        valueType,
+        range,
+        isId
+      } = column;
+
+      const isNumeric = valueType === "number" && columnKey !== "Year";
+      const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
+      const formatter = getFormatter(formatterKey);
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
+      return {
+        ...mantineFilterVariantObject,
+        entityType,
+        header,
+        enableHiding: true,
+        sortingFn: (rowA, rowB, columnId) => {
+          if (rowA.original[columnId] < rowB.original[columnId]) {
+            return -1;
+          }
+          if (rowA.original[columnId] > rowB.original[columnId]) {
+            return 1;
+          }
+          return 0;
+        },
+        Header: ({column}) => {
+          console.log(column, "C");
+          return (
+            <Box mb={rem(5)} key="header">
+              <Flex justify="center" align="center">
+                <Box sx={{flexGrow: 1}}>
+                  <Flex gap="xs" align="center">
+                    {getActionIcon(entityType)}
+                    <Text size="sm">{header}</Text>
+                    <ActionIcon
+                      key={`sort-${header}`}
+                      size={22}
+                      ml={rem(5)}
+                      onClick={column.getToggleSortingHandler()}
+                    >
+                      {getSortIcon(column.getIsSorted(), entityType)}
+                    </ActionIcon>
+                  </Flex>
+                </Box>
+                <CustomActionIcon
+                  label={`At least one ${getEntityText(entityType)} is required.`}
+                  key={`remove-${column.columnDef.header}`}
+                  disabled={!showTrashIcon(finalKeys, entityType)}
+                  onClick={() => removeColumn(actions, entity, measures, drilldowns)}
+                  showTooltip={!showTrashIcon(finalKeys, entityType)}
+                  size={25}
+                  ml={rem(5)}
+                >
+                  <IconTrash />
+                </CustomActionIcon>
+              </Flex>
+            </Box>
+          );
+        },
+        formatter,
+        formatterKey,
+        id: entity.name,
+        dataType: valueType,
+        accessorFn: item => item[columnKey],
+        Cell: isNumeric
+          ? ({cell}) => formatter(cell.getValue<number>())
+          : ({cell, renderedCellValue, row}) => {
+              const cellId = row.original[`${cell.column.id} ID`];
+              return (
+                <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
+                  <Text
+                    size="sm"
+                    sx={{
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis"
+                    }}
+                  >
+                    {renderedCellValue}
+                  </Text>
+                  <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
+                </Flex>
+              );
+            }
+      };
+    });
+    return columnsDef.length ? [indexColumn, ...columnsDef] : [];
+  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey, locale]);
 
   const constTableProps = useMemo(
     () =>
