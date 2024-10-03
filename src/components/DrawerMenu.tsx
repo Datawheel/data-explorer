@@ -13,6 +13,7 @@ import {
   Text,
   ThemeIcon,
   useMantineTheme,
+  MantineTheme,
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
@@ -65,6 +66,15 @@ import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
 
+const styles = (t: MantineTheme) => ({
+  header: {
+    background: "transparent"
+  },
+  content: {
+    backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
+  }
+})
+
 function AddColumnsDrawer() {
   const [opened, {open, close}] = useDisclosure(false);
   const {translate: t} = useTranslation();
@@ -82,23 +92,10 @@ function AddColumnsDrawer() {
             <Text fw={700}>{t("params.add_columns")}</Text>
           </Group>
         }
-        styles={t => ({
-          inner: {
-            position: "absolute",
-            inset: 0,
-          },
-          header: {
-            background: "transparent",
-          },
-          content: {
-            backgroundColor:
-              t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1],
-          },
-        })}
+        styles={styles}
         overlayProps={{
           opacity: 0.1,
         }}
-        withinPortal={false}
       >
         <MeasuresOptions />
         <DrillDownOptions />
@@ -510,6 +507,7 @@ export function MinMax({filter, ...rest}: {filter: FilterItem}) {
 
   const min = getFilterValue(filter.conditionOne);
   const max = getFilterValue(filter.conditionTwo);
+  
   return (
     <Flex gap="xs">
       <NumberInput

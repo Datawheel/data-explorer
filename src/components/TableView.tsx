@@ -234,8 +234,8 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   const pageSize = pagination.pageSize;
   const page = pagination.pageIndex;
   const enabled = Boolean(columns.length);
-
   const initialKey = permaKey ? [permaKey, page, pageSize, locale] : permaKey;
+
   const [filterKeydebouced, setDebouncedTerm] = useState<
     string | boolean | (string | boolean | number)[]
   >(initialKey);
@@ -337,6 +337,7 @@ export function useTable({
   const measuresOlap = useSelector(selectOlapMeasureItems);
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
+  const {code: locale} = useSelector(selectLocale);
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
@@ -345,6 +346,7 @@ export function useTable({
     pageIndex: offset,
     pageSize: limit
   });
+
   const finalUniqueKeys = useMemo(
     () =>
       [
@@ -536,7 +538,7 @@ export function useTable({
       };
     });
     return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey]);
+  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey, locale]);
 
   const constTableProps = useMemo(
     () =>

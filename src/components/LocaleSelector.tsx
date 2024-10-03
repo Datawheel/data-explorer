@@ -42,7 +42,6 @@ type LocaleOptions = {label: string; value: LanguageCode};
 /** */
 export function LocaleSelector() {
   const actions = useActions();
-  const {resetGraph} = useSideBar();
   const {translate: t, locale} = useTranslation();
 
   const {code: currentCode} = useSelector(selectLocale);
@@ -66,9 +65,8 @@ export function LocaleSelector() {
 
   const localeChangeHandler = (l: LocaleOptions) => {
     if (currentCode !== l.value) {
-      resetGraph();
       actions.updateLocale(l.value);
-      actions.willRequestQuery();
+      actions.willReloadCubes();
     }
   };
 

@@ -28,7 +28,6 @@ import {
   selectMeasureItems,
   selectQueryItems,
 } from "./queries";
-import {selectOlapCube} from "./selectors";
 import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
 import {pickDefaultDrilldowns} from "./utils";
@@ -110,8 +109,9 @@ export function willFetchQuery(params?: {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const params = selectCurrentQueryParams(state);
-    const cube = selectOlapCube(state);
-
+    const cube = selectOlapCubeMap(state)[params.cube];
+    console.log({cube})
+    
     if (!isValidQuery(params) || !cube) {
       return Promise.reject(new Error("Invalid query"));
     }
@@ -367,9 +367,12 @@ export function willSetupClient(
 ): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
   return (dispatch, getState, {tesseract}) => {
     tesseract.baseURL = baseURL;
+    const state = getState();
+    const search = new URLSearchParams(location.search);
+    const locale = search.get("locale")
     Object.assign(tesseract.requestConfig, requestConfig || {headers: new Headers()});
 
-    return tesseract.fetchSchema({locale: defaultLocale}).then(
+    return tesseract.fetchSchema({locale: locale || defaultLocale}).then(
       schema => {
         const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
         const cubeMap = keyBy(cubes, "name");

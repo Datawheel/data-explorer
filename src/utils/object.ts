@@ -46,7 +46,6 @@ export function describeData(
   data: Record<string, unknown>[],
 ): Record<string, AnyResultColumn> {
   const {locale} = params;
-
   const entityMap = mapCubeEntities(cube);
   const entityFinder = (name: string) => {
     const nameWoId = name.replace(/^ID\s|\sID$/, "");
