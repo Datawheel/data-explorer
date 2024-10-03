@@ -66,33 +66,3 @@ function mount(container) {
   const root = createRoot(container);
   root.render(<App />);
 }
-
-// return (
-//   <SettingsProvider
-//     locales={locales}
-//     locale={locale}
-//     setLocale={setLocale}
-//     source={source}
-//     setSource={setSource}
-//     items={items}
-//   >
-//     <Explorer
-//       source={source.value}
-//       setSource={setSource}
-//       formatters={formatters}
-//       dataLocale={"en,ar,es"}
-//       previewLimit={75}
-//       height={"calc(100vh - 50px)"}
-//       panels={[
-//         {key: "table", label: "Data Table", component: TableView},
-//         {key: "matrix", label: "Pivot Table", component: PivotView},
-//         {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
-//       ]}
-//       translations={translations}
-//       uiLocale={locale}
-//       defaultOpenParams="drilldowns"
-//       withinMantineProvider={false}
-//       withinReduxProvider
-//       withMultiQuery
-//       withPermalink
-//     />
