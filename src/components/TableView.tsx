@@ -176,8 +176,6 @@ function getLastWord(str) {
   return words[words.length - 1];
 }
 
-type UserApiResponse = any;
-
 interface Condition {
   conditionOne: [string, string, number];
   conditionTwo?: [string, string, number];
@@ -265,12 +263,12 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
-  useUpdatePermaLink({
-    isFetched: Boolean(cachedData),
-    cube,
-    enabled,
-    isLoading: query.isLoading
-  });
+  // useUpdatePermaLink({
+  //   isFetched: Boolean(cachedData),
+  //   cube,
+  //   enabled,
+  //   isLoading: query.isLoading
+  // });
   return query;
 }
 
@@ -390,16 +388,14 @@ export function useTable({
     handlerCreateMeasure
   ]);
 
-  const {isLoading, isFetching, isFetched, isError, data, isPlaceholderData, status, fetchStatus} =
-    useTableData({
-      columns: finalUniqueKeys,
-      pagination,
-      cube: cube.name
-    });
+  const {isLoading, isFetching, isError, data, isPlaceholderData, status} = useTableData({
+    columns: finalUniqueKeys,
+    pagination,
+    cube: cube.name
+  });
 
   // check no data
   const tableData = data?.data || [];
-  // const tableTypes = (data?.types as Record<string, AnyResultColumn>) || types;
   const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
   const totalRowCount = data?.page.total;
 
@@ -475,15 +471,16 @@ export function useTable({
           return 0;
         },
         Header: ({column}) => {
+          console.log(column, "C");
           return (
-            <Box mb={rem(5)}>
+            <Box mb={rem(5)} key="header">
               <Flex justify="center" align="center">
                 <Box sx={{flexGrow: 1}}>
                   <Flex gap="xs" align="center">
                     {getActionIcon(entityType)}
-                    <Text size="sm">{column.columnDef.header}</Text>
+                    <Text size="sm">{header}</Text>
                     <ActionIcon
-                      key={`sort-${column.columnDef.header}`}
+                      key={`sort-${header}`}
                       size={22}
                       ml={rem(5)}
                       onClick={column.getToggleSortingHandler()}
@@ -491,9 +488,6 @@ export function useTable({
                       {getSortIcon(column.getIsSorted(), entityType)}
                     </ActionIcon>
                   </Flex>
-                  {/* <Text ml={rem(30)} size="sm" color="dimmed" fw="normal">
-                    {getEntityText(entityType)}
-                  </Text> */}
                 </Box>
                 <CustomActionIcon
                   label={`At least one ${getEntityText(entityType)} is required.`}
