@@ -5,17 +5,17 @@ import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import {type TranslationDict, TranslationProvider} from "../hooks/translation";
-import {
-  type ExplorerActionMap,
-  type ExplorerStore,
-  actions,
-  storeFactory,
-} from "../state";
+import {type ExplorerActionMap, type ExplorerStore, actions, storeFactory} from "../state";
 import type {Formatter, PanelDescriptor} from "../utils/types";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
+
+export type Pagination = {
+  rowsLimits: number[];
+  defaultLimit: Pagination["rowsLimits"][number]; // Ensures defaultLimit is one of the values in rowsLimits
+};
 
 /**
  * Main DataExplorer component
@@ -23,6 +23,7 @@ import {TableView} from "./TableView";
  * and pass the other properties to them.
  */
 export function ExplorerComponent<Locale extends string>(props: {
+  pagination?: Pagination;
   /**
    * The main server endpoint.
    */
@@ -142,6 +143,7 @@ export function ExplorerComponent<Locale extends string>(props: {
     withinMantineProvider = true,
     withinReduxProvider = false,
     withMultiQuery = false,
+    pagination
   } = props;
 
   const panels = useMemo(
@@ -149,22 +151,16 @@ export function ExplorerComponent<Locale extends string>(props: {
       props.panels || [
         {key: "table", label: "table_view.tab_label", component: TableView},
         {key: "pivot", label: "pivot_view.tab_label", component: PivotView},
-        {key: "debug", label: "debug_view.tab_label", component: DebugView},
+        {key: "debug", label: "debug_view.tab_label", component: DebugView}
       ],
-    [props.panels],
+    [props.panels]
   );
 
-  const store: ExplorerStore = withinReduxProvider
-    ? useMemo(storeFactory, [])
-    : useStore();
+  const store: ExplorerStore = withinReduxProvider ? useMemo(storeFactory, []) : useStore();
 
   const boundActions = useMemo(
-    () =>
-      bindActionCreators<ExplorerActionMap, ExplorerBoundActionMap>(
-        actions,
-        store.dispatch,
-      ),
-    [],
+    () => bindActionCreators<ExplorerActionMap, ExplorerBoundActionMap>(actions, store.dispatch),
+    []
   );
 
   let content = (
@@ -174,6 +170,7 @@ export function ExplorerComponent<Locale extends string>(props: {
       formatters={props.formatters}
       withPermalink={props.withPermalink}
       panels={panels}
+      pagination={pagination}
     >
       <TranslationProvider defaultLocale={locale} translations={props.translations}>
         <ExplorerContent
@@ -199,20 +196,20 @@ export function ExplorerComponent<Locale extends string>(props: {
         theme={{
           globalStyles: theme => ({
             "*, *::before, *::after": {
-              boxSizing: "border-box",
+              boxSizing: "border-box"
             },
             "[data-state='expanded']": {
-              width: 350,
-            },
+              width: 350
+            }
           }),
           components: {
             Text: {
               styles: theme => ({
                 root: {
-                  fontSize: theme.fontSizes.sm, // Apply small font size to Text component
-                },
-              }),
-            },
+                  fontSize: theme.fontSizes.sm // Apply small font size to Text component
+                }
+              })
+            }
             // Add other component customizations here
           },
           fontSizes: {
@@ -220,8 +217,8 @@ export function ExplorerComponent<Locale extends string>(props: {
             sm: "0.875rem",
             md: "1rem",
             lg: "1.125rem",
-            xl: "1.25rem",
-          },
+            xl: "1.25rem"
+          }
         }}
       >
         {content}
