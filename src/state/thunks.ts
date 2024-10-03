@@ -2,7 +2,7 @@ import type {
   TesseractCube,
   TesseractDataResponse,
   TesseractFormat,
-  TesseractMembersResponse,
+  TesseractMembersResponse
 } from "../api";
 import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
 import {mapDimensionHierarchyLevels} from "../api/traverse";
@@ -14,7 +14,7 @@ import {
   buildDrilldown,
   buildMeasure,
   buildProperty,
-  buildQuery,
+  buildQuery
 } from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import type {FileDescriptor} from "../utils/types";
@@ -26,7 +26,7 @@ import {
   selectCurrentQueryParams,
   selectLocale,
   selectMeasureItems,
-  selectQueryItems,
+  selectQueryItems
 } from "./queries";
 import {selectOlapCubeMap, serverActions} from "./server";
 import type {ExplorerThunk} from "./store";
@@ -39,7 +39,7 @@ import {pickDefaultDrilldowns} from "./utils";
  * @returns A blob with the data contents, in the request format.
  */
 export function willDownloadQuery(
-  format: `${TesseractFormat}`,
+  format: `${TesseractFormat}`
 ): ExplorerThunk<Promise<FileDescriptor>> {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
@@ -56,7 +56,7 @@ export function willDownloadQuery(
       .then(result => ({
         content: result[0],
         extension: format.replace(/json\w+/, "json"),
-        name: `${params.cube}_${new Date().toISOString()}`,
+        name: `${params.cube}_${new Date().toISOString()}`
       }));
   };
 }
@@ -93,10 +93,10 @@ export function willExecuteQuery(params?: {
             types: {},
             page: {limit, offset, total: 0},
             status: 0,
-            url: "",
-          }),
+            url: ""
+          })
         );
-      },
+      }
     );
   };
 }
@@ -110,8 +110,7 @@ export function willFetchQuery(params?: {
     const state = getState();
     const params = selectCurrentQueryParams(state);
     const cube = selectOlapCubeMap(state)[params.cube];
-    console.log({cube})
-    
+
     if (!isValidQuery(params) || !cube) {
       return Promise.reject(new Error("Invalid query"));
     }
@@ -132,9 +131,9 @@ export function willFetchQuery(params?: {
           types: describeData(cube, params, content.data),
           headers: Object.fromEntries(response.headers),
           status: response.status || 200,
-          url: response.url,
+          url: response.url
         };
-      }),
+      })
     );
   };
 }
@@ -145,16 +144,14 @@ export function willFetchQuery(params?: {
  * @param level - The name of the Level for whom we want to retrieve members.
  * @returns The list of members for the requested level.
  */
-export function willFetchMembers(
-  level: string,
-): ExplorerThunk<Promise<TesseractMembersResponse>> {
+export function willFetchMembers(level: string): ExplorerThunk<Promise<TesseractMembersResponse>> {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const cube = selectCubeName(state);
     const locale = selectLocale(state);
 
     return tesseract.fetchMembers({
-      request: {cube, level, locale: locale.code},
+      request: {cube, level, locale: locale.code}
     });
   };
 }
@@ -184,16 +181,16 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
           measureItems[measure.name] || {
             active: false,
             key: measure.name,
-            name: measure.name,
-          },
-        ),
+            name: measure.name
+          }
+        )
       );
 
       const resolvedDrilldowns = filterMap(Object.values(params.drilldowns), item => {
         const [dimension, hierarchy, level] = levelMap[item.level] || [];
         if (!level) return null;
         const activeProperties = filterMap(item.properties, prop =>
-          prop.active ? prop.name : null,
+          prop.active ? prop.name : null
         );
         return level
           ? buildDrilldown({
@@ -204,9 +201,9 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
                 buildProperty({
                   active: activeProperties.includes(property.name),
                   level: level.name,
-                  name: property.name,
-                }),
-              ),
+                  name: property.name
+                })
+              )
             })
           : null;
       });
@@ -218,8 +215,8 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
           locale: params.locale || state.explorerServer.locale,
           cube: cube.name,
           drilldowns: keyBy(resolvedDrilldowns, item => item.key),
-          measures: keyBy(resolvedMeasures, item => item.key),
-        },
+          measures: keyBy(resolvedMeasures, item => item.key)
+        }
       };
     });
 
@@ -244,7 +241,7 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
     if (cube && cubeMap[cube]) {
       const queryItem = buildQuery({
         panel: search.get("panel") || "table",
-        params: requestToQueryParams(cubeMap[cube], search),
+        params: requestToQueryParams(cubeMap[cube], search)
       });
       dispatch(queriesActions.updateQuery(queryItem));
       dispatch(queriesActions.selectQuery(queryItem.key));
@@ -258,12 +255,12 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
  * Performs a full replacement of the cubes stored in the state with fresh data
  * from the server.
  */
-export function willReloadCubes(): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
+export function willReloadCubes({locale}): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
-    const locale = selectLocale(state);
+    const newLocale = locale || selectLocale(state);
 
-    return tesseract.fetchSchema({locale: locale.code}).then(schema => {
+    return tesseract.fetchSchema({locale: newLocale.code}).then(schema => {
       const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
       const cubeMap = keyBy(cubes, i => i.name);
       dispatch(serverActions.updateServer({cubeMap}));
@@ -290,7 +287,7 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
       },
       error => {
         dispatch(loadingActions.setLoadingState("FAILURE", error.message));
-      },
+      }
     );
   };
 }
@@ -311,15 +308,13 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     if (!nextCube) return Promise.resolve();
 
     const currMeasures = selectMeasureItems(state);
-    const measureStatus = Object.fromEntries(
-      currMeasures.map(item => [item.name, item.active]),
-    );
+    const measureStatus = Object.fromEntries(currMeasures.map(item => [item.name, item.active]));
     const nextMeasures = nextCube.measures.map((measure, index) =>
       buildMeasure({
         active: measureStatus[measure.name] || !index,
         key: measure.name,
-        name: measure.name,
-      }),
+        name: measure.name
+      })
     );
 
     const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
@@ -327,17 +322,17 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
         ...level,
         active: true,
         properties: level.properties.map(prop =>
-          buildProperty({level: level.name, name: prop.name}),
-        ),
-      }),
+          buildProperty({level: level.name, name: prop.name})
+        )
+      })
     );
 
     dispatch(
       queriesActions.updateCube({
         cube: nextCube.name,
         measures: keyBy(nextMeasures, item => item.key),
-        drilldowns: keyBy(nextDrilldowns, item => item.key),
-      }),
+        drilldowns: keyBy(nextDrilldowns, item => item.key)
+      })
     );
 
     const promises = nextDrilldowns.map(dd => {
@@ -345,8 +340,8 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
         dispatch(
           queriesActions.updateDrilldown({
             ...dd,
-            members: levelMeta.members,
-          }),
+            members: levelMeta.members
+          })
         );
         dispatch(queriesActions.updateCut(buildCut({...dd, active: false})));
       });
@@ -363,13 +358,13 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
 export function willSetupClient(
   baseURL: string,
   defaultLocale?: string,
-  requestConfig?: RequestInit,
+  requestConfig?: RequestInit
 ): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
   return (dispatch, getState, {tesseract}) => {
     tesseract.baseURL = baseURL;
     const state = getState();
     const search = new URLSearchParams(location.search);
-    const locale = search.get("locale")
+    const locale = search.get("locale");
     Object.assign(tesseract.requestConfig, requestConfig || {headers: new Headers()});
 
     return tesseract.fetchSchema({locale: locale || defaultLocale}).then(
@@ -382,15 +377,15 @@ export function willSetupClient(
             locale: defaultLocale || schema.default_locale,
             localeOptions: schema.locales,
             online: true,
-            url: baseURL,
-          }),
+            url: baseURL
+          })
         );
         return cubeMap;
       },
       error => {
         dispatch(serverActions.updateServer({online: false, url: baseURL}));
         throw error;
-      },
+      }
     );
   };
 }
