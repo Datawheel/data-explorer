@@ -1,11 +1,5 @@
 import {Accordion, type AccordionControlProps, Box, Stack, Text} from "@mantine/core";
-import React, {
-  type PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import yn from "yn";
 import type {TesseractCube, TesseractLevel} from "../api/tesseract/schema";
@@ -18,7 +12,7 @@ import {
   selectDrilldownItems,
   selectDrilldownMap,
   selectLocale,
-  selectMeasureMap,
+  selectMeasureMap
 } from "../state/queries";
 import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
 import {selectOlapCubeItems} from "../state/server";
@@ -29,7 +23,13 @@ import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
-const EMPTY_RESPONSE = {data: [], types: {}, url: "", status: 200, page: {offset: 0, limit: 0, total: 0}};
+const EMPTY_RESPONSE = {
+  data: [],
+  types: {},
+  url: "",
+  status: 200,
+  page: {offset: 0, limit: 0, total: 0}
+};
 
 export function SelectCube() {
   const items = useSelector(selectOlapCubeItems);
@@ -42,7 +42,10 @@ export function SelectCube() {
   return <SelectCubeInternal items={items} selectedItem={selectedItem} />;
 }
 
-function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: TesseractCube | undefined}) {
+function SelectCubeInternal(props: {
+  items: TesseractCube[];
+  selectedItem: TesseractCube | undefined;
+}) {
   const {items, selectedItem} = props;
   const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
@@ -61,10 +64,7 @@ function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: Tesser
   }, []);
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    if (
-      !drilldowns[level.name] &&
-      !ditems.find(d => d.level === level.name)
-    ) {
+    if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
       const drilldown = buildDrilldown({...level, active: true});
       updateDrilldown(drilldown);
       const cut = cuts.find(cut => cut.level === drilldown.level);
@@ -75,7 +75,7 @@ function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: Tesser
       willFetchMembers(level.name).then(levelMeta => {
         updateDrilldown({
           ...drilldown,
-          members: levelMeta.members,
+          members: levelMeta.members
         });
       });
       return drilldown;
@@ -85,7 +85,6 @@ function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: Tesser
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const cubeParam = params.get("cube");
-
     if (selectedItem && cube && !cubeParam) {
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
@@ -180,7 +179,7 @@ function useBuildGraph(items, locale) {
       })
       .filter(Boolean);
     graph.items = filteredItems;
-    return graph
+    return graph;
   }, [items, locale]);
 
   return {graph};

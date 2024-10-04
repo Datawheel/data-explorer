@@ -13,7 +13,7 @@ import {
   Text,
   ThemeIcon,
   useMantineTheme,
-  MantineTheme,
+  MantineTheme
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
@@ -27,16 +27,12 @@ import {
   IconPlus,
   IconSettings,
   IconStack3,
-  IconWorld,
+  IconWorld
 } from "@tabler/icons-react";
 import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
-import type {
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-} from "../api/tesseract/schema";
+import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
@@ -46,7 +42,7 @@ import {
   selectFilterItems,
   selectFilterMap,
   selectLocale,
-  selectMeasureMap,
+  selectMeasureMap
 } from "../state/queries";
 import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
@@ -60,7 +56,7 @@ import {
   buildCut,
   buildDrilldown,
   buildFilter,
-  buildMeasure,
+  buildMeasure
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
@@ -73,7 +69,7 @@ const styles = (t: MantineTheme) => ({
   content: {
     backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
   }
-})
+});
 
 function AddColumnsDrawer() {
   const [opened, {open, close}] = useDisclosure(false);
@@ -94,7 +90,7 @@ function AddColumnsDrawer() {
         }
         styles={styles}
         overlayProps={{
-          opacity: 0.1,
+          opacity: 0.1
         }}
       >
         <MeasuresOptions />
@@ -102,12 +98,7 @@ function AddColumnsDrawer() {
       </Drawer>
       <Group position="center" sx={{flexWrap: "nowrap"}}>
         {smallerThanMd ? (
-          <ActionIcon
-            onClick={open}
-            size="md"
-            variant="filled"
-            color={theme.primaryColor}
-          >
+          <ActionIcon onClick={open} size="md" variant="filled" color={theme.primaryColor}>
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
@@ -146,7 +137,7 @@ function DrillDownOptions() {
           activeItems={activeItems}
         />
       )),
-    [dimensions, activeItems, locale.code],
+    [dimensions, activeItems, locale.code]
   );
 
   return options;
@@ -155,7 +146,7 @@ function DrillDownOptions() {
 function DimensionItem({
   dimension,
   locale,
-  activeItems,
+  activeItems
 }: {
   dimension: TesseractDimension;
   locale: string;
@@ -197,7 +188,7 @@ function HierarchyItem({
   hierarchy,
   isSubMenu,
   locale,
-  activeItems,
+  activeItems
 }: {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
@@ -215,7 +206,7 @@ function HierarchyItem({
     return t("params.dimmenu_hierarchy", {
       abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
       dimension: captions[0],
-      hierarchy: captions[1],
+      hierarchy: captions[1]
     });
   }, [locale, dimension, hierarchy, isSubMenu, t]);
 
@@ -248,7 +239,7 @@ function LevelItem({
   level,
   locale,
   activeItems,
-  depth = 0,
+  depth = 0
 }: {
   dimension: TesseractDimension;
   hierarchy: TesseractHierarchy;
@@ -262,7 +253,7 @@ function LevelItem({
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
-  const drilldowns = useSelector(selectDrilldownMap);
+  let drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
 
@@ -270,7 +261,7 @@ function LevelItem({
     const captions = [
       getCaption(dimension, locale),
       getCaption(hierarchy, locale),
-      getCaption(level, locale),
+      getCaption(level, locale)
     ];
     if (isSubMenu) {
       return captions[2];
@@ -279,7 +270,7 @@ function LevelItem({
       abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
       dimension: captions[0],
       hierarchy: captions[1],
-      level: captions[2],
+      level: captions[2]
     });
   }, [locale, dimension, hierarchy, level, isSubMenu, t]);
 
@@ -299,19 +290,26 @@ function LevelItem({
     actions.willFetchMembers(level.name).then(levelMeta => {
       actions.updateDrilldown({
         ...drilldown,
-        members: levelMeta.members,
+        members: levelMeta.members
       });
     });
 
     return drilldown;
   }
 
+  drilldowns = Object.keys(drilldowns).reduce((acc, key) => {
+    const drilldown = drilldowns[key];
+    acc[drilldown.level] = drilldown;
+    return acc;
+  }, {});
+
+  console.log(drilldowns, "DD");
+
   const currentDrilldown = drilldowns[level.name];
 
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
-    activeItem =>
-      activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name,
+    activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
 
   useLayoutEffect(() => {
@@ -351,7 +349,7 @@ function LevelItem({
               }
               actions.updateDrilldown({
                 ...currentDrilldown,
-                active: !currentDrilldown.active,
+                active: !currentDrilldown.active
               });
             }}
             checked={checked}
@@ -391,7 +389,7 @@ function LevelItem({
               value={cut?.members || []}
               data={currentDrilldown.members.map(m => ({
                 value: String(m.key),
-                label: m.caption ? `${m.caption} ${m.key}` : `${m.key}`,
+                label: m.caption ? `${m.caption} ${m.key}` : `${m.key}`
               }))}
               clearable
               nothingFound="Nothing found"
@@ -419,17 +417,11 @@ export function getFilterfnKey(type) {
 
 export function getFilterFn(filter: FilterItem) {
   if (filter.conditionOne && filter.conditionTwo) {
-    if (
-      filter.conditionOne[0] === Comparison.GTE &&
-      filter.conditionTwo[0] === Comparison.LTE
-    ) {
+    if (filter.conditionOne[0] === Comparison.GTE && filter.conditionTwo[0] === Comparison.LTE) {
       return "between";
     }
   }
-  if (
-    filter.conditionOne[0] === Comparison.GTE ||
-    filter.conditionOne[0] === Comparison.GT
-  ) {
+  if (filter.conditionOne[0] === Comparison.GTE || filter.conditionOne[0] === Comparison.GT) {
     return "greaterThan";
   }
   if (filter.conditionOne[0] === Comparison.LTE) {
@@ -482,17 +474,10 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
 export function MinMax({filter, ...rest}: {filter: FilterItem}) {
   const actions = useActions();
 
-  function onInputChangeMinMax(props: {
-    filter: FilterItem;
-    min: number | "";
-    max: number | "";
-  }) {
+  function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
     const conditions =
-      getFiltersConditions(getFilterFn(filter) || "greaterThan", [
-        Number(min),
-        Number(max),
-      ]) || {};
+      getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(min), Number(max)]) || {};
     const active = Boolean(min) && Boolean(max);
 
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
@@ -507,7 +492,7 @@ export function MinMax({filter, ...rest}: {filter: FilterItem}) {
 
   const min = getFilterValue(filter.conditionOne);
   const max = getFilterValue(filter.conditionTwo);
-  
+
   return (
     <Flex gap="xs">
       <NumberInput
@@ -545,9 +530,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconMathGreater size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("greaterThan", [0]) || {};
-              actions.updateFilter(
-                buildFilter({...filter, ...conditions, active: false}),
-              );
+              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
             }}
           >
             {t("comparison.GT")}
@@ -556,9 +539,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconMathLower size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("lessThan", [0]) || {};
-              actions.updateFilter(
-                buildFilter({...filter, ...conditions, active: false}),
-              );
+              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
             }}
           >
             {t("comparison.LT")}
@@ -567,9 +548,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             icon={<IconArrowsLeftRight size={14} />}
             onClick={() => {
               const conditions = getFiltersConditions("between", [0, 0]) || {};
-              actions.updateFilter(
-                buildFilter({...filter, ...conditions, active: false}),
-              );
+              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
             }}
           >
             {t("comparison.BT")}
@@ -607,36 +586,23 @@ function MeasuresOptions() {
   const filteredItems = useMemo(() => {
     return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
-      const foundFilter =
-        filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
+      const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
         handlerCreateFilter({
           measure: measure.name,
           active: false,
-          key: measure.name,
+          key: measure.name
         } as FilterItem);
       return {measure, filter};
     });
-  }, [
-    itemMap,
-    measures,
-    filtersMap,
-    filtersItems,
-    handlerCreateFilter,
-    handlerCreateMeasure,
-  ]);
+  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
   const options = filteredItems.map(({measure, filter}) => {
     return (
-      <FilterItem
-        key={measure.key}
-        measure={measure}
-        filter={filter}
-        activeItems={activeItems}
-      />
+      <FilterItem key={measure.key} measure={measure} filter={filter} activeItems={activeItems} />
     );
   });
 
@@ -646,7 +612,7 @@ function MeasuresOptions() {
 function FilterItem({
   measure,
   filter,
-  activeItems,
+  activeItems
 }: {
   measure: MeasureItem;
   filter: FilterItem;
