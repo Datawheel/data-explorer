@@ -182,6 +182,7 @@ function Auto() {
   return (
     <Input
       icon={<IconSearch />}
+      id="dex-search"
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}

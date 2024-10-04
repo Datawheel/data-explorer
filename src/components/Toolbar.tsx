@@ -116,7 +116,6 @@ export default function Toolbar({
       wrap="nowrap"
       gap="xs"
     >
-      {/* <ToolbarSearch table={table} /> */}
       <ToolbarButton
         icon={<FullScreenSVG />}
         label={t("params.label_fullscreen")}

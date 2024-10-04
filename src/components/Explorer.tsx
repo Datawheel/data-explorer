@@ -11,6 +11,7 @@ import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
+import ExplorerTour from "./ExplorerTour";
 
 export type Pagination = {
   rowsLimits: number[];
@@ -173,18 +174,20 @@ export function ExplorerComponent<Locale extends string>(props: {
       pagination={pagination}
     >
       <TranslationProvider defaultLocale={locale} translations={props.translations}>
-        <ExplorerContent
-          defaultCube={props.defaultCube}
-          defaultDataLocale={props.defaultDataLocale}
-          defaultOpenParams={defaultOpenParams}
-          height={height}
-          locale={locale}
-          panels={panels}
-          serverConfig={props.serverConfig}
-          serverURL={props.serverURL}
-          splash={props.splash}
-          withMultiQuery={withMultiQuery}
-        />
+        <ExplorerTour>
+          <ExplorerContent
+            defaultCube={props.defaultCube}
+            defaultDataLocale={props.defaultDataLocale}
+            defaultOpenParams={defaultOpenParams}
+            height={height}
+            locale={locale}
+            panels={panels}
+            serverConfig={props.serverConfig}
+            serverURL={props.serverURL}
+            splash={props.splash}
+            withMultiQuery={withMultiQuery}
+          />
+        </ExplorerTour>
       </TranslationProvider>
     </SettingsProvider>
   );

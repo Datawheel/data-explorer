@@ -187,6 +187,23 @@ export const defaultTranslation = {
     sort_asc: "Sort Asc",
     sort_desc: "Sort Desc"
   },
+  tour: {
+    controls: {
+      prev: "Previous",
+      next: "Next",
+    },
+    steps: {
+      welcome: {
+        title: "Welcome to the Data Explorer",
+        text1: "This tutorial will guide you through the steps on how to use the Data Explorer",
+        text2: "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
+      },
+      locale: {
+        title: "Locale",
+        text1: "dsñkfj"
+      }
+    }
+  },
   transfer_input: {
     count_hidden: "{{n}} item hidden",
     count_hidden_plural: "{{n}} items hidden",
