@@ -11,7 +11,7 @@ import {
   Select,
   Text,
   createEmotionCache,
-  useMantineTheme,
+  useMantineTheme
 } from "@mantine/core";
 import {
   IconLanguage,
@@ -19,16 +19,9 @@ import {
   IconSettings,
   IconSun,
   IconTextDirectionLtr,
-  IconTextDirectionRtl,
+  IconTextDirectionRtl
 } from "@tabler/icons-react";
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useReducer,
-  useState,
-} from "react";
+import React, {forwardRef, useCallback, useEffect, useMemo, useReducer, useState} from "react";
 import rtlPlugin from "stylis-plugin-rtl";
 import {HomeSVG} from "../src/components/icons";
 
@@ -53,13 +46,13 @@ interface SettingsParams {
 
 const rtlCache = createEmotionCache({
   key: "mantine-rtl",
-  stylisPlugins: [rtlPlugin],
+  stylisPlugins: [rtlPlugin]
 });
 
 export function SettingsProvider({
   children,
   locales,
-  servers,
+  servers
 }: {
   children: (settings: SettingsParams) => JSX.Element;
   locales: string[];
@@ -72,17 +65,19 @@ export function SettingsProvider({
       direction: "ltr",
       colorScheme: "light",
       locale: "en",
-      server: servers[0],
-    },
+      server: servers[0]
+    }
   );
   const {primaryColor, colorScheme, direction, server} = settings;
 
   const selectServer = useCallback(
     (value: string | null) => {
+      const nextLocation = `${window.location.pathname}`;
+      window.history.pushState({}, "", nextLocation);
       const server = servers.find(item => item.value === value);
       server && setSettings({server});
     },
-    [servers],
+    [servers]
   );
 
   const theme: MantineThemeOverride = useMemo(
@@ -90,9 +85,9 @@ export function SettingsProvider({
       primaryColor,
       colorScheme,
       dir: direction,
-      emotionCache: direction === "rtl" ? rtlCache : undefined,
+      emotionCache: direction === "rtl" ? rtlCache : undefined
     }),
-    [primaryColor, colorScheme, direction],
+    [primaryColor, colorScheme, direction]
   );
 
   useEffect(() => {
@@ -111,17 +106,13 @@ export function SettingsProvider({
             alignItems: "center",
             height: "100%",
             padding: 5,
-            justifyContent: "space-between",
+            justifyContent: "space-between"
           }}
         >
           <HomeSVG />
           <Group>
             <Select data={servers} value={server.value} onChange={selectServer} />
-            <SiteSettings
-              locales={locales}
-              settings={settings}
-              setSettings={setSettings}
-            />
+            <SiteSettings locales={locales} settings={settings} setSettings={setSettings} />
           </Group>
         </Flex>
       </Header>
@@ -134,7 +125,7 @@ export function SettingsProvider({
 function SiteSettings({
   locales,
   settings,
-  setSettings,
+  setSettings
 }: {
   locales: string[];
   settings: SettingsParams;
@@ -148,32 +139,30 @@ function SiteSettings({
   const data = Object.keys(theme.colors).map(c => ({
     label: c,
     value: c,
-    hex: theme.colors[c][theme.fn.primaryShade()],
+    hex: theme.colors[c][theme.fn.primaryShade()]
   }));
 
   const position =
-    direction === "ltr"
-      ? {top: "0.65rem", right: "0.5rem"}
-      : {top: "0.65rem", left: "0.5rem"};
+    direction === "ltr" ? {top: "0.65rem", right: "0.5rem"} : {top: "0.65rem", left: "0.5rem"};
 
   const setDirection = useCallback(
     evt => setSettings({direction: direction === "rtl" ? "ltr" : "rtl"}),
-    [setSettings, direction],
+    [setSettings, direction]
   );
 
   const setLocale = useCallback(
     (value: string | null) => value && setSettings({locale: value}),
-    [setSettings],
+    [setSettings]
   );
 
   const setPrimaryColor = useCallback(
     (value: string | null) => value && setSettings({primaryColor: value}),
-    [setSettings],
+    [setSettings]
   );
 
   const toggleColorScheme = useCallback(
     evt => setSettings({colorScheme: colorScheme === "dark" ? "light" : "dark"}),
-    [setSettings, colorScheme],
+    [setSettings, colorScheme]
   );
 
   return (
@@ -221,7 +210,7 @@ function SiteSettings({
                   background: theme.colors[theme.primaryColor][theme.fn.primaryShade()],
                   height: 15,
                   width: 15,
-                  borderRadius: 15,
+                  borderRadius: 15
                 }}
               />
             }
@@ -249,17 +238,15 @@ function SiteSettings({
   );
 }
 
-const ColorElement = forwardRef<HTMLDivElement, ItemProps>(
-  ({hex, label, ...others}, ref) => {
-    return (
-      <div ref={ref} {...others}>
-        <Group noWrap>
-          <Box sx={{background: hex, height: 15, width: 15, borderRadius: 15}} />
-          <div>
-            <Text size="sm">{label}</Text>
-          </div>
-        </Group>
-      </div>
-    );
-  },
-);
+const ColorElement = forwardRef<HTMLDivElement, ItemProps>(({hex, label, ...others}, ref) => {
+  return (
+    <div ref={ref} {...others}>
+      <Group noWrap>
+        <Box sx={{background: hex, height: 15, width: 15, borderRadius: 15}} />
+        <div>
+          <Text size="sm">{label}</Text>
+        </div>
+      </Group>
+    </div>
+  );
+});
