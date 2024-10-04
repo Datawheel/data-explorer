@@ -303,8 +303,6 @@ function LevelItem({
     return acc;
   }, {});
 
-  console.log(drilldowns, "DD");
-
   const currentDrilldown = drilldowns[level.name];
 
   // Check if another hierarchy from the same dimension is already selected
