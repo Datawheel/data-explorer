@@ -1,9 +1,30 @@
 import {useCallback, useEffect} from "react";
+import type {TesseractCube} from "../api";
+import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
 import {selectCurrentQueryItem} from "../state/queries";
 import {selectOlapCubeMap} from "../state/server";
 import {useSelector} from "../state/store";
-import {serializePermalink} from "../utils/permalink";
-import {QueryParams} from "../utils/structs";
+import {type QueryItem, type QueryParams, buildQuery} from "../utils/structs";
+import {isValidQuery} from "../utils/validation";
+
+/** */
+export function serializePermalink(item: QueryItem): string {
+  const request = queryParamsToRequest(item.params);
+  const search = new URLSearchParams(
+    Object.entries(request).filter(entry => entry[1] != null && entry[1] !== "")
+  );
+  search.set("panel", item.panel || "table");
+  return search.toString();
+}
+
+/** */
+export function parsePermalink(cube: TesseractCube, value: string | URLSearchParams): QueryItem {
+  const search = new URLSearchParams(value);
+  return buildQuery({
+    panel: search.get("panel") || "table",
+    params: requestToQueryParams(cube, search)
+  });
+}
 
 /** */
 export function usePermalink(
@@ -13,7 +34,7 @@ export function usePermalink(
   }
 ) {
   const cubeMap = useSelector(selectOlapCubeMap);
-  const {isDirty, panel, params} = useSelector(selectCurrentQueryItem);
+  const queryItem = useSelector(selectCurrentQueryItem);
 
   const listener = useCallback(
     (evt: PopStateEvent) => {
@@ -28,26 +49,27 @@ export function usePermalink(
       window.addEventListener("popstate", listener);
       return () => window.removeEventListener("popstate", listener);
     }
-  }, [isEnabled]);
+  }, [isEnabled, listener]);
 
   useEffect(() => {
+    const {isDirty, panel, params} = queryItem;
     // We want to update the Permalink only when we are sure the current Query
     // is successful: this is when `isDirty` changes from `false` to `true`
-    if (!isEnabled || isDirty || cubeMap[params.cube] == null) return;
+    if (!isEnabled || isDirty || !cubeMap[params.cube]) return;
     const currPermalink = window.location.search.slice(1);
-    const nextPermalink = serializePermalink(params, panel);
+    const nextPermalink = serializePermalink(queryItem);
 
     if (currPermalink !== nextPermalink) {
       const nextLocation = `${window.location.pathname}?${nextPermalink}`;
       const oldPanel = new URLSearchParams(window.location.search).get("panel");
       // If only the panel changed, use replaceState
       if (oldPanel && oldPanel[1] !== panel) {
-        window.history.replaceState(params, "", nextLocation);
+        window.history.replaceState(queryItem, "", nextLocation);
       } else {
-        window.history.pushState(params, "", nextLocation);
+        window.history.pushState(queryItem, "", nextLocation);
       }
     }
-  }, [cubeMap, isDirty, panel]);
+  }, [cubeMap, queryItem, isEnabled]);
 
   return null;
 }
@@ -63,23 +85,23 @@ export function useUpdatePermaLink({
   enabled: boolean;
   isLoading: boolean;
 }) {
-  const {panel, params} = useSelector(selectCurrentQueryItem);
+  const queryItem = useSelector(selectCurrentQueryItem);
   useEffect(() => {
     if (isFetched && cube && enabled && !isLoading) {
       const currPermalink = window.location.search.slice(1);
-      const nextPermalink = serializePermalink(params, panel);
+      const nextPermalink = serializePermalink(queryItem);
       if (currPermalink !== nextPermalink) {
         const nextLocation = `${window.location.pathname}?${nextPermalink}`;
-        window.history.pushState(params, "", nextLocation);
+        window.history.pushState(queryItem, "", nextLocation);
       }
     }
-  }, [isFetched, cube, params, panel, enabled, isLoading]);
+  }, [isFetched, cube, queryItem, enabled, isLoading]);
 }
 
-export function useKey() {
-  const {panel, params} = useSelector(selectCurrentQueryItem);
-  if (Object.keys(params.drilldowns).length > 0 && Object.keys(params.measures).length > 0) {
-    return serializePermalink(params, panel);
+export function useKey(params: Partial<QueryParams> = {}) {
+  const queryItem = useSelector(selectCurrentQueryItem);
+  if (isValidQuery(queryItem.params)) {
+    return serializePermalink({...queryItem, params: {...queryItem.params, ...params}});
   }
   return false;
 }

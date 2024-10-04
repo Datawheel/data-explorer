@@ -56,7 +56,7 @@ class Graph {
 
   getName(node, locale) {
     const item = this.items.find(item => item.name === node);
-    const name = getAnnotation(item, "table", locale);
+    const name = item ? getAnnotation(item, "table", locale): node;
     return name;
   }
 

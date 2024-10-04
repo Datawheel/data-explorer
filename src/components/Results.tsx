@@ -1,16 +1,14 @@
+import {Box, Divider, Text, createStyles, rem} from "@mantine/core";
 import React from "react";
-import {Text, Divider, Box} from "@mantine/core";
-import {createStyles, rem} from "@mantine/core";
-import {type PlainCube} from "@datawheel/olap-client";
-import Graph from "../utils/graph";
-import {AnnotatedCube} from "./SelectCubes";
-import {useSideBar} from "./SideBar";
-import {useSelectCube} from "../hooks/useSelectCube";
+import type {TesseractCube} from "../api";
+import type Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
+import type {AnnotatedCube} from "./SelectCubes";
+import {useSideBar} from "./SideBar";
 
 type Props = {
   onSelectCube: (name: string, subtopic: string) => void;
-  selectedItem?: PlainCube;
+  selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
   getCube: (
@@ -19,14 +17,13 @@ type Props = {
     subtopic: string,
     locale: string
   ) => AnnotatedCube | undefined;
-  isSelected: (selectedItem?: PlainCube, currentItem?: AnnotatedCube) => boolean | undefined;
+  isSelected: (selectedItem?: TesseractCube, currentItem?: AnnotatedCube) => boolean | undefined;
 };
 
 function Results(props: Props) {
   const {onSelectCube, graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
-  const callback = useSelectCube(onSelectCube);
   const result: React.ReactElement[] = [];
 
   if (map) {
@@ -51,7 +48,7 @@ function Results(props: Props) {
                     : classes.link
                 }
                 onClick={() => {
-                  callback(item, subtopic)();
+                  onSelectCube(item, subtopic);
                   setExpanded(false);
                   setInput("");
                 }}

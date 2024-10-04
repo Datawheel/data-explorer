@@ -7,7 +7,6 @@ import {useTranslation} from "../hooks/translation";
 import {selectLocale} from "../state/queries";
 import {selectServerState} from "../state/server";
 import {SelectObject} from "./Select";
-import {useSideBar} from "./SideBar";
 import {IconLanguage} from "@tabler/icons-react";
 
 const localeSelectorStyle = (theme: MantineTheme) => ({
@@ -42,7 +41,6 @@ type LocaleOptions = {label: string; value: LanguageCode};
 /** */
 export function LocaleSelector() {
   const actions = useActions();
-  const {resetGraph} = useSideBar();
   const {translate: t, locale} = useTranslation();
 
   const {code: currentCode} = useSelector(selectLocale);
@@ -64,11 +62,10 @@ export function LocaleSelector() {
     }));
   }, [locale, localeOptions]);
 
-  const localeChangeHandler = (l: LocaleOptions) => {
+  const localeChangeHandler = async (l: LocaleOptions) => {
     if (currentCode !== l.value) {
-      resetGraph();
+      await actions.willReloadCubes({locale: {code: l.value}});
       actions.updateLocale(l.value);
-      actions.willRequestQuery();
     }
   };
 

@@ -2,6 +2,13 @@ import type {TesseractCube, TesseractSchema} from "../tesseract/schema";
 
 export type {TesseractCube, TesseractSchema};
 
+export interface ComplexityStatus {
+  module: string;
+  version: string;
+  debug: false | Record<string, string>;
+  extras: Record<string, string>;
+}
+
 export interface CommonRequest {
   alias?: Record<string, string>;
   filter?: Record<string, string>;

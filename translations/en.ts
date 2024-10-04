@@ -1,3 +1,1 @@
-export {
-    translationDict as default
-} from "../src/main"
+export {translationDict as default} from "../src/main";

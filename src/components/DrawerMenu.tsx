@@ -1,22 +1,40 @@
-import React, {useLayoutEffect, useMemo, useState} from "react";
-import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
-  Drawer,
-  Button,
-  Group,
-  NumberInput,
-  MultiSelect,
   ActionIcon,
-  Menu,
-  Text,
   Box,
-  Flex,
+  Button,
   Checkbox,
+  Divider,
+  Drawer,
+  Flex,
+  Group,
+  Menu,
+  MultiSelect,
+  NumberInput,
+  Text,
   ThemeIcon,
   useMantineTheme,
-  Divider
+  MantineTheme
 } from "@mantine/core";
+import {useDisclosure, useMediaQuery} from "@mantine/hooks";
+import {
+  IconArrowsLeftRight,
+  IconBox,
+  IconClock,
+  IconFilter,
+  IconFilterOff,
+  IconMathGreater,
+  IconMathLower,
+  IconPlus,
+  IconSettings,
+  IconStack3,
+  IconWorld
+} from "@tabler/icons-react";
+import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
+import {Comparison} from "../api";
+import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
+import {useActions} from "../hooks/settings";
+import {useTranslation} from "../hooks/translation";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -26,41 +44,32 @@ import {
   selectLocale,
   selectMeasureMap
 } from "../state/queries";
-import {useTranslation} from "../hooks/translation";
-import {selectOlapMeasureItems, selectOlapDimensionItems} from "../state/selectors";
-import {useActions} from "../hooks/settings";
+import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
+import {abbreviateFullName} from "../utils/format";
+import {getCaption} from "../utils/string";
 import {
-  buildMeasure,
-  CutItem,
+  type CutItem,
+  type DrilldownItem,
+  FilterItem,
+  type MeasureItem,
   buildCut,
   buildDrilldown,
   buildFilter,
-  MeasureItem,
-  FilterItem
+  buildMeasure
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
-import {
-  IconFilter,
-  IconFilterOff,
-  IconMathGreater,
-  IconMathLower,
-  IconStack3,
-  IconSettings,
-  IconArrowsLeftRight,
-  IconPlus,
-  IconWorld,
-  IconClock,
-  IconTag,
-  IconBox
-} from "@tabler/icons-react";
-import type {PlainLevel} from "@datawheel/olap-client";
-import {getCaption} from "../utils/string";
-import {abbreviateFullName} from "../utils/format";
-import {stringifyName} from "../utils/transform";
-import {Comparison} from "@datawheel/olap-client";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
+
+const styles = (t: MantineTheme) => ({
+  header: {
+    background: "transparent"
+  },
+  content: {
+    backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
+  }
+});
 
 function AddColumnsDrawer() {
   const [opened, {open, close}] = useDisclosure(false);
@@ -79,22 +88,10 @@ function AddColumnsDrawer() {
             <Text fw={700}>{t("params.add_columns")}</Text>
           </Group>
         }
-        styles={t => ({
-          inner: {
-            position: "absolute",
-            inset: 0
-          },
-          header: {
-            background: "transparent"
-          },
-          content: {
-            backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
-          }
-        })}
+        styles={styles}
         overlayProps={{
           opacity: 0.1
         }}
-        withinPortal={false}
       >
         <MeasuresOptions />
         <DrillDownOptions />
@@ -129,7 +126,6 @@ function DrillDownOptions() {
   const dimensions = useSelector(selectOlapDimensionItems) || [];
 
   const activeItems = selectedDimensions.filter(i => i.active);
-  const activeCount = activeItems.length;
 
   const options = useMemo(
     () =>
@@ -137,18 +133,25 @@ function DrillDownOptions() {
         <DimensionItem
           dimension={dimension}
           locale={locale.code}
-          key={dimension.uri}
+          key={dimension.name}
           activeItems={activeItems}
-          activeCount={activeCount} // Pass the active count
         />
       )),
-    [dimensions, activeItems, activeCount]
+    [dimensions, activeItems, locale.code]
   );
 
   return options;
 }
 
-function DimensionItem({dimension, locale, activeItems, activeCount}) {
+function DimensionItem({
+  dimension,
+  locale,
+  activeItems
+}: {
+  dimension: TesseractDimension;
+  locale: string;
+  activeItems: DrilldownItem[];
+}) {
   const isChildSubMenu = dimension.hierarchies.length !== 1;
 
   const options = dimension.hierarchies.map(hie => (
@@ -156,22 +159,21 @@ function DimensionItem({dimension, locale, activeItems, activeCount}) {
       dimension={dimension}
       hierarchy={hie}
       isSubMenu={isChildSubMenu}
-      key={hie.uri}
+      key={hie.name}
       locale={locale}
       activeItems={activeItems}
-      activeCount={activeCount}
     />
   ));
   // if (!isChildSubMenu) {
   //   return options[0];
   // }
   return (
-    <div key={dimension.id}>
+    <div key={dimension.name}>
       <Divider
         my="md"
         label={
           <Group>
-            {getIconForDimensionType(dimension.dimensionType)}
+            {getIconForDimensionType(dimension.type)}
             <Text italic>{getCaption(dimension, locale)}</Text>
           </Group>
         }
@@ -181,7 +183,19 @@ function DimensionItem({dimension, locale, activeItems, activeCount}) {
   );
 }
 
-function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, activeCount}) {
+function HierarchyItem({
+  dimension,
+  hierarchy,
+  isSubMenu,
+  locale,
+  activeItems
+}: {
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  isSubMenu: boolean;
+  locale: string;
+  activeItems: DrilldownItem[];
+}) {
   const {translate: t} = useTranslation();
 
   const label = useMemo(() => {
@@ -194,7 +208,7 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, ac
       dimension: captions[0],
       hierarchy: captions[1]
     });
-  }, [locale, dimension, hierarchy, isSubMenu]);
+  }, [locale, dimension, hierarchy, isSubMenu, t]);
 
   const isChildSubMenu = hierarchy.levels.length !== 1;
 
@@ -203,11 +217,10 @@ function HierarchyItem({dimension, hierarchy, isSubMenu, locale, activeItems, ac
       dimension={dimension}
       hierarchy={hierarchy}
       isSubMenu={isChildSubMenu}
-      key={lvl.uri}
+      key={lvl.name}
       level={lvl}
       locale={locale}
       activeItems={activeItems}
-      activeCount={activeCount}
       depth={index}
     />
   ));
@@ -226,14 +239,21 @@ function LevelItem({
   level,
   locale,
   activeItems,
-  activeCount,
   depth = 0
+}: {
+  dimension: TesseractDimension;
+  hierarchy: TesseractHierarchy;
+  level: TesseractLevel;
+  isSubMenu: boolean;
+  locale: string;
+  activeItems: DrilldownItem[];
+  depth?: number;
 }) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
-  const drilldowns = useSelector(selectDrilldownMap);
+  let drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
   const dimensions = useSelector(selectOlapDimensionItems);
 
@@ -252,37 +272,38 @@ function LevelItem({
       hierarchy: captions[1],
       level: captions[2]
     });
-  }, [locale, dimension, hierarchy, level, isSubMenu]);
+  }, [locale, dimension, hierarchy, level, isSubMenu, t]);
 
-  const createCutHandler = React.useCallback((level: PlainLevel) => {
-    const cutItem = buildCut({...level, members: [], key: level.fullName});
-    cutItem.active = false;
+  const createCutHandler = useCallback((level: TesseractLevel) => {
+    const cutItem = buildCut({...level, members: [], active: false});
     actions.updateCut(cutItem);
   }, []);
 
-  function createDrilldown(level: PlainLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, key: stringifyName(level), active: false});
+  function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
+    const drilldown = buildDrilldown({...level, active: false});
     actions.updateDrilldown(drilldown);
 
-    const cut = cuts.find(cut => cut.uniqueName === drilldown.uniqueName);
+    const cut = cuts.find(cut => cut.level === drilldown.level);
     if (!cut) {
-      createCutHandler({...level, key: stringifyName(level)});
+      createCutHandler(level);
     }
-    actions.willFetchMembers({...level, level: level.name}).then(members => {
-      const dimension = dimensions.find(dim => dim.name === level.dimension);
-      if (!dimension) return;
+    actions.willFetchMembers(level.name).then(levelMeta => {
       actions.updateDrilldown({
         ...drilldown,
-        dimType: dimension.dimensionType,
-        memberCount: members.length,
-        members
+        members: levelMeta.members
       });
     });
 
     return drilldown;
   }
 
-  const currentDrilldown = drilldowns[stringifyName(level)];
+  drilldowns = Object.keys(drilldowns).reduce((acc, key) => {
+    const drilldown = drilldowns[key];
+    acc[drilldown.level] = drilldown;
+    return acc;
+  }, {});
+
+  const currentDrilldown = drilldowns[level.name];
 
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
@@ -290,45 +311,44 @@ function LevelItem({
   );
 
   useLayoutEffect(() => {
-    if (
-      !drilldowns[stringifyName(level)] &&
-      !ditems.find(d => d.uniqueName === buildDrilldown(level).uniqueName)
-    ) {
+    if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
       createDrilldown(level, cutItems);
     }
   }, [level, ditems]);
 
   const cut = cutItems.find(cut => {
-    return cut.uniqueName === currentDrilldown?.uniqueName;
+    return cut.level === currentDrilldown?.level;
   });
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   }, []);
 
-  const checked = activeItems.map(stringifyName).includes(stringifyName(level));
-  const disableUncheck = activeCount === 1 && checked;
+  const checked = activeItems.map(i => i.level).includes(level.name);
+  const disableUncheck = activeItems.length === 1 && checked;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
   const isDisabled = isOtherHierarchySelected && !checked;
 
   if (!currentDrilldown) return;
 
-  const paddingLeft = `${20 * depth + 10}px`;
+  const paddingLeft = `${5 * depth + 5}px`;
 
   return (
     currentDrilldown && (
       <>
-        <Group mt="sm" position="apart" key={level.uri} noWrap>
+        <Group mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
-            // pl="sm"
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               if (cut) {
-                const active = checked ? false : cut.members.length ? true : false;
+                const active = checked ? false : !!cut.members.length;
                 actions.updateCut({...cut, active});
               }
-              actions.updateDrilldown({...currentDrilldown, active: !currentDrilldown.active});
+              actions.updateDrilldown({
+                ...currentDrilldown,
+                active: !currentDrilldown.active
+              });
             }}
             checked={checked}
             label={label}
@@ -367,7 +387,7 @@ function LevelItem({
               value={cut?.members || []}
               data={currentDrilldown.members.map(m => ({
                 value: String(m.key),
-                label: m.caption ? `${m.caption} ${m.key}` : m.name
+                label: m.caption ? `${m.caption} ${m.key}` : `${m.key}`
               }))}
               clearable
               nothingFound="Nothing found"
@@ -433,7 +453,7 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
     const isEmpty = value === "";
     const conditions =
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
-    const active = isEmpty ? false : true;
+    const active = !isEmpty;
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
   }
 
@@ -470,6 +490,7 @@ export function MinMax({filter, ...rest}: {filter: FilterItem}) {
 
   const min = getFilterValue(filter.conditionOne);
   const max = getFilterValue(filter.conditionTwo);
+
   return (
     <Flex gap="xs">
       <NumberInput
@@ -548,19 +569,20 @@ function MeasuresOptions() {
   //actions
   const actions = useActions();
 
-  function handlerCreateMeasure(data: MeasureItem) {
+  const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
     return measure;
-  }
-  function handlerCreateFilter(data: FilterItem) {
+  }, []);
+
+  const handlerCreateFilter = useCallback((data: FilterItem) => {
     const filter = buildFilter(data);
     actions.updateFilter(filter);
     return filter;
-  }
+  }, []);
 
   const filteredItems = useMemo(() => {
-    return filterMap(measures, (m: MeasureItem) => {
+    return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
       const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
@@ -572,7 +594,7 @@ function MeasuresOptions() {
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems]);
+  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
@@ -616,7 +638,7 @@ function FilterItem({
             // Only toggle the measure if it's not the last one selected
             if (!isLastSelected) {
               actions.updateMeasure({...measure, active: !measure.active});
-              actions.updateFilter({...filter, active: checked ? false : true});
+              actions.updateFilter({...filter, active: !checked});
             }
           }}
           checked={checked}
