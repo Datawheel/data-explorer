@@ -89,10 +89,12 @@ function SelectCubeInternal(props: {
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
       if (measure && dimension) {
-        updateMeasure({...measure, active: true});
         const drilldowns = pickDefaultDrilldowns(dimensions);
         if (measure && drilldowns.length > 0) {
           updateMeasure({...measure, active: true});
+          Object.values(itemMap).map(m => {
+            updateMeasure({...m, active: true});
+          });
           for (const level of drilldowns) {
             createDrilldown(level, cutItems);
           }

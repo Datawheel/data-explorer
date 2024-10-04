@@ -566,7 +566,7 @@ function MeasuresOptions() {
   const measures = useSelector(selectOlapMeasureItems);
   //actions
   const actions = useActions();
-  
+
   const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
@@ -579,11 +579,12 @@ function MeasuresOptions() {
     return filter;
   }, []);
 
-  const measureCaptions = Object.values(measures).map(m => `${m.caption}`).join(",");
+  const measureCaptions = Object.values(measures)
+    .map(m => `${m.caption}`)
+    .join(",");
   const filteredItems = useMemo(() => {
     return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
-      console.log(itemMap[m.name])
       const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
@@ -594,7 +595,15 @@ function MeasuresOptions() {
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure, measureCaptions]);
+  }, [
+    itemMap,
+    measures,
+    filtersMap,
+    filtersItems,
+    handlerCreateFilter,
+    handlerCreateMeasure,
+    measureCaptions
+  ]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
