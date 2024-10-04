@@ -103,7 +103,7 @@ function SelectCubeInternal(props: {items: TesseractCube[]; selectedItem: Tesser
   }, [selectedItem, cube]);
 
   return (
-    <Stack id="select-cube" spacing={"xs"} w={"100%"}>
+    <Stack id="dex-select-cube" spacing={"xs"} w={"100%"}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
     </Stack>
   );

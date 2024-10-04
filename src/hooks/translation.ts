@@ -199,8 +199,64 @@ export const defaultTranslation = {
         text2: "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
       },
       locale: {
-        title: "Locale",
-        text1: "dsñkfj"
+        title: "Multilingual",
+        text1: "DataSaudi makes data available in both Arabic and English.",
+        text2: "Use the dropdown menu to change the output language of the data."
+      },
+      dataset: {
+        title: "Selecting a Dataset",
+        text1: "Begin by selecting a topic of interest.",
+        text2: "Then, select a specific data table within that topic grouping."
+      },
+      search: {
+        title: "Searching for a Dataset",
+        text1: "You can also explore the list of topics and datasets.",
+        text2: "Start typing to filter the list of datasets with your search",
+      },
+      table: {
+        title: "Data Table",
+        text1: "Results are initially displayed as a data table.",
+        text2: "Each column header allows live sorting and filtering options."
+      },
+      metrics: {
+        title: "Metrics",
+        text1: "Select the metrics that you are interested in viewing. A Metric is a column of numeric data that will be displayed in the query results.",
+        text2: "You must select at least one to make a query."
+      },
+      columns: {
+        title: "Columns",
+        text1: "Next, select the category drilldowns you want to display as the columns in your data table.",
+        text2: "You must select at least one to make a query."
+      },
+      filters: {
+        title: "Filters",
+        text1: "You can filter the elements of each column that you want to display in the data table and visualization.",
+        text2: "If you want all available elements to be displayed, you don't need to apply filters."
+      },
+      options: {
+        title: "Advanced Query Options",
+        text1: "You can change the default order or include parents levels using the query options panel."
+      },
+      execute: {
+        title: "Run the Query",
+        text1: "Execute the query based on your current selection of metrics, and columns, and filters."
+      },
+      download: {
+        title: "Downloading the Data",
+        text1: "You are able to download the information in CSV and JSON formats."
+      },
+      vizbuilderTab: {
+        title: "Vizbuilder",
+        text1: "You can see the results of your query in different types of visualizations."
+      },
+      apiTab: {
+        title: "API",
+        text1: "You can access the raw data programmatically using the DataSaudi JSON REST API."
+      },
+      last: {
+        title: "Let's get started!",
+        text: "You are ready to start exploring the DataSaudi database and generate your own tables and visualizations.",
+        button: "Begin"
       }
     }
   },

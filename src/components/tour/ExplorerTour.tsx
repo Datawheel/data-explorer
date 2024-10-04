@@ -1,43 +1,9 @@
 import React from "react";
-import {TourProvider, useTour, components} from "@reactour/tour";
-import {Affix, Box, Button, Container, Flex, Group, Image, Stack, useMantineTheme} from "@mantine/core";
-import { useSelector } from "../state";
-import { selectLocale } from "../state/queries";
+import {TourProvider, useTour} from "@reactour/tour";
+import {Affix, Button, useMantineTheme} from "@mantine/core";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
-import { useTranslation } from "../hooks/translation";
-
-function FirstStep() {
-    const {translate: t} = useTranslation();
-    return (
-      <Container className="tour-item tour-welcome">
-        <div className="tour-img">
-          <Image src="/images/tour/tour-start.png" width={237} height={136} alt="Tour Intro Image" />
-        </div>
-        <div className="tour-text">
-          <h3>{t("tour.steps.welcome.title")}</h3>
-          <p>{t("tour.steps.welcome.text1")}</p>
-          <p>{t("tour.steps.welcome.text2")}</p>
-        </div>
-      </Container>
-    );
-  }
-
-const createSteps = t => [
-    {
-        selector: "document",
-        content: <FirstStep />,
-        position: "center",
-    },
-    {
-      selector: '#dex-select-locale',
-      content: 'This is my first Step',
-    },
-    {
-      selector: '#dex-search',
-      content: 'This is my first Step',
-    },
-    // ...
-  ]
+import { useTranslation } from "../../hooks/translation";
+import { useTourSteps } from "./useTourSteps";
 
 function PrevButton(props) {
     const {translate: t} = useTranslation();
@@ -103,6 +69,7 @@ const withBase = (styles: React.CSSProperties) => (base: React.CSSProperties) =>
 export default function ExplorerTour({children}) {
     const theme = useMantineTheme();
     const {translations} = useTranslation();
+    const steps = useTourSteps();
     const styles = {
         popover: withBase({padding: 0, borderRadius: theme.radius.md, overflow: "hidden"}),
         controls: withBase({flexWrap: "wrap"}),
@@ -116,7 +83,7 @@ export default function ExplorerTour({children}) {
 
     return (
         <TourProvider
-            steps={createSteps(key => translations(`steps.${key}`))}
+            steps={steps}
             position="right"
             prevButton={PrevButton}
             nextButton={NextButton}

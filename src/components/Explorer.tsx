@@ -11,7 +11,7 @@ import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
-import ExplorerTour from "./ExplorerTour";
+import ExplorerTour from "./tour/ExplorerTour";
 
 export type Pagination = {
   rowsLimits: number[];
