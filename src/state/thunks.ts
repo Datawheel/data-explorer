@@ -307,11 +307,13 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     const nextCube = cubeMap[cubeName];
     if (!nextCube) return Promise.resolve();
 
-    const currMeasures = selectMeasureItems(state);
-    const measureStatus = Object.fromEntries(currMeasures.map(item => [item.name, item.active]));
+    // const currMeasures = selectMeasureItems(state);
+    // const measureStatus = Object.fromEntries(currMeasures.map(item => [item.name, item.active]));
+
     const nextMeasures = nextCube.measures.map((measure, index) =>
       buildMeasure({
-        active: measureStatus[measure.name] || !index,
+        // active: measureStatus[measure.name] || !index,
+        active: true,
         key: measure.name,
         name: measure.name
       })
