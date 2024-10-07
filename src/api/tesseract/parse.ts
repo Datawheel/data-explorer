@@ -101,9 +101,11 @@ export function requestToQueryParams(
         })
       : null;
   });
-  const measures = getList(search, "measures", ",").map(name =>
-    buildMeasure({name, active: true}),
-  );
+  const measures = getList(search, "measures", ",").map(name =>{
+    const measureOlap = cube.measures.find(m => m.name === name);
+    return buildMeasure(measureOlap ? {...measureOlap, active: true} : {name, active: true})
+  });
+  
   const filters = getList(search, "filters", ",").map(filterParse);
 
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");

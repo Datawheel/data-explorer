@@ -559,8 +559,6 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
 
 function MeasuresOptions() {
   // param measures
-  const {code: locale} = useSelector(selectLocale);
-  const {translate: t} = useTranslation();
   const itemMap = useSelector(selectMeasureMap);
   const filtersMap = useSelector(selectFilterMap);
   const filtersItems = useSelector(selectFilterItems);
@@ -568,7 +566,7 @@ function MeasuresOptions() {
   const measures = useSelector(selectOlapMeasureItems);
   //actions
   const actions = useActions();
-
+  
   const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
@@ -581,9 +579,11 @@ function MeasuresOptions() {
     return filter;
   }, []);
 
+  const measureCaptions = Object.values(measures).map(m => `${m.caption}`).join(",");
   const filteredItems = useMemo(() => {
     return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
+      console.log(itemMap[m.name])
       const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
@@ -594,7 +594,7 @@ function MeasuresOptions() {
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure]);
+  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure, measureCaptions]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
@@ -642,13 +642,13 @@ function FilterItem({
             }
           }}
           checked={checked}
-          label={measure.name}
+          label={measure.caption}
           size="xs"
           disabled={isLastSelected} // Disable checkbox if it's the last one selected
         />
         <Group sx={{flexWrap: "nowrap"}}>
           {activeFilter && <FilterFnsMenu filter={filter} />}
-          <ActionIcon size="xs" onClick={() => setActiveFilter(value => !value)}>
+          <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
             {activeFilter ? <IconFilterOff /> : <IconFilter />}
           </ActionIcon>
           <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">

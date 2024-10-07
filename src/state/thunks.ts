@@ -181,7 +181,8 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
           measureItems[measure.name] || {
             active: false,
             key: measure.name,
-            name: measure.name
+            name: measure.name,
+            caption: measure.caption
           }
         )
       );
@@ -309,14 +310,16 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
 
     const currMeasures = selectMeasureItems(state);
     const measureStatus = Object.fromEntries(currMeasures.map(item => [item.name, item.active]));
+    console.log(nextCube.measures)
     const nextMeasures = nextCube.measures.map((measure, index) =>
       buildMeasure({
         active: measureStatus[measure.name] || !index,
         key: measure.name,
-        name: measure.name
+        name: measure.name,
+        caption: measure.caption
       })
     );
-
+    console.log({nextMeasures})
     const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
       buildDrilldown({
         ...level,
@@ -351,6 +354,13 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
   };
 }
 
+export function willReloadCube(): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState) => {
+    const state = getState();
+    const cubeName = selectCubeName(state);
+    return dispatch(willSetCube(cubeName));
+  };
+}
 /**
  * Sets the necessary info for the client instance to be able to connect to the
  * server, then loads the base data from its schema.
