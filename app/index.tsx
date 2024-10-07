@@ -40,6 +40,7 @@ function App() {
         <Explorer
           // pagination={{defaultLimit: 100, rowsLimits: [100, 300, 500, 1000]}}
           // defaultCube="gastat_gdp"
+          measuresActive={2}
           serverURL={settings.server.value}
           serverConfig={settings.server.config}
           defaultOpenParams="drilldowns"

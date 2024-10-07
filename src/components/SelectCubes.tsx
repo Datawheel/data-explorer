@@ -3,7 +3,7 @@ import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState
 import {useSelector} from "react-redux";
 import yn from "yn";
 import type {TesseractCube, TesseractLevel} from "../api/tesseract/schema";
-import {useActions} from "../hooks/settings";
+import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
   selectCubeName,
@@ -46,8 +46,8 @@ function SelectCubeInternal(props: {
   items: TesseractCube[];
   selectedItem: TesseractCube | undefined;
 }) {
+  const {measuresActive} = useSettings();
   const {items, selectedItem} = props;
-  const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
   const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
   const cutItems = useSelector(selectCutItems);
@@ -91,17 +91,24 @@ function SelectCubeInternal(props: {
       if (measure && dimension) {
         const drilldowns = pickDefaultDrilldowns(dimensions);
         if (measure && drilldowns.length > 0) {
-          updateMeasure({...measure, active: true});
-          Object.values(itemMap).map(m => {
-            updateMeasure({...m, active: true});
-          });
+          const measuresLimit =
+            typeof measuresActive !== "undefined" ? measuresActive : Object.values(itemMap).length;
+
+          Object.values(itemMap)
+            .slice(0, measuresLimit)
+            .forEach(m => {
+              updateMeasure({...m, active: true});
+            });
+          // Object.values(itemMap).map(m => {
+          //   updateMeasure({...m, active: true});
+          // });
           for (const level of drilldowns) {
             createDrilldown(level, cutItems);
           }
         }
       }
     }
-  }, [selectedItem, cube]);
+  }, [selectedItem, cube, measuresActive]);
 
   return (
     <Stack id="select-cube" spacing={"xs"} w={"100%"}>
@@ -198,7 +205,7 @@ function CubeTree({
 }) {
   const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
-
+  const {measuresActive} = useSettings();
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
 
@@ -211,7 +218,7 @@ function CubeTree({
       actions.setLoadingState("FETCHING");
       actions.resetAllParams(newQuery);
       actions.updateResult(EMPTY_RESPONSE);
-      actions.willSetCube(cube.name).then(() => {
+      actions.willSetCube(cube.name, measuresActive).then(() => {
         actions.setLoadingState("SUCCESS");
       });
     }

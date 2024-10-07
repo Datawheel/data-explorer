@@ -300,7 +300,10 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
  *
  * @param cubeName The name of the cube we intend to switch to.
  */
-export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
+export function willSetCube(
+  cubeName: string,
+  measuresActive?: number
+): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
     const state = getState();
 
@@ -308,14 +311,17 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     const nextCube = cubeMap[cubeName];
     if (!nextCube) return Promise.resolve();
 
-    const nextMeasures = nextCube.measures.map((measure, index) =>
-      buildMeasure({
+    const measuresLimit =
+      typeof measuresActive !== "undefined" ? measuresActive : nextCube.measures.length;
+
+    const nextMeasures = nextCube.measures.slice(0, measuresLimit).map(measure => {
+      return buildMeasure({
         active: true,
         key: measure.name,
         name: measure.name,
         caption: measure.caption
-      })
-    );
+      });
+    });
 
     const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
       buildDrilldown({

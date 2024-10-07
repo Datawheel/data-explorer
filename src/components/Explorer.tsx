@@ -23,6 +23,7 @@ export type Pagination = {
  * and pass the other properties to them.
  */
 export function ExplorerComponent<Locale extends string>(props: {
+  measuresActive?: number;
   pagination?: Pagination;
   /**
    * The main server endpoint.
@@ -143,7 +144,8 @@ export function ExplorerComponent<Locale extends string>(props: {
     withinMantineProvider = true,
     withinReduxProvider = false,
     withMultiQuery = false,
-    pagination
+    pagination,
+    measuresActive
   } = props;
 
   const panels = useMemo(
@@ -171,6 +173,7 @@ export function ExplorerComponent<Locale extends string>(props: {
       withPermalink={props.withPermalink}
       panels={panels}
       pagination={pagination}
+      measuresActive={measuresActive}
     >
       <TranslationProvider defaultLocale={locale} translations={props.translations}>
         <ExplorerContent
