@@ -65,7 +65,9 @@ export function LocaleSelector() {
   const localeChangeHandler = async (l: LocaleOptions) => {
     if (currentCode !== l.value) {
       await actions.willReloadCubes({locale: {code: l.value}});
+      await actions.willReloadCube();
       actions.updateLocale(l.value);
+      // reloads measures and members for new locale
     }
   };
 

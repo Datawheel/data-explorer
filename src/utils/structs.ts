@@ -96,6 +96,7 @@ export interface FilterItem extends QueryParamsItem {
 
 export interface MeasureItem extends QueryParamsItem {
   name: string;
+  caption?: string;
 }
 
 export interface MemberItem extends QueryParamsItem {
@@ -244,11 +245,13 @@ export function buildMeasure(props: {
   active?: boolean;
   key?: string;
   name?: string;
+  caption?: string;
 }): MeasureItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
     key: props.key || props.name || randomKey(),
     name: props.name || props.key || `${props}`,
+    caption: props.caption || props.name || props.key,
   };
 }
 

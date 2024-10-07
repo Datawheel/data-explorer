@@ -471,7 +471,6 @@ export function useTable({
           return 0;
         },
         Header: ({column}) => {
-          console.log(column, "C");
           return (
             <Box mb={rem(5)} key="header">
               <Flex justify="center" align="center">

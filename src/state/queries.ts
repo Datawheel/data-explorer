@@ -203,10 +203,9 @@ export const queriesSlice = createSlice({
         query.params = params;
         query.result = result;
       }
-      if (payload.measures.length !== query.params.measures.length) {
-        query.params.cube = payload.cube;
-        query.params.measures = payload.measures;
-      }
+      // reload measures to account for locale changes
+      query.params.cube = payload.cube;
+      query.params.measures = payload.measures;
     },
 
     /**
