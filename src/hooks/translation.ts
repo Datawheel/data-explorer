@@ -200,7 +200,7 @@ export const defaultTranslation = {
       },
       locale: {
         title: "Multilingual",
-        text1: "DataSaudi makes data available in both Arabic and English.",
+        text1: "The Data Explorer makes data available multiple languages.",
         text2: "Use the dropdown menu to change the output language of the data."
       },
       dataset: {
@@ -218,44 +218,31 @@ export const defaultTranslation = {
         text1: "Results are initially displayed as a data table.",
         text2: "Each column header allows live sorting and filtering options."
       },
-      metrics: {
-        title: "Metrics",
-        text1: "Select the metrics that you are interested in viewing. A Metric is a column of numeric data that will be displayed in the query results.",
-        text2: "You must select at least one to make a query."
-      },
       columns: {
         title: "Columns",
-        text1: "Next, select the category drilldowns you want to display as the columns in your data table.",
-        text2: "You must select at least one to make a query."
+        text1: "Select the columns that you are interested in viewing.",
+        text2: "When you toggle any column checkbox, the data table will automatically update to reflect your selection."
       },
       filters: {
         title: "Filters",
         text1: "You can filter the elements of each column that you want to display in the data table and visualization.",
         text2: "If you want all available elements to be displayed, you don't need to apply filters."
       },
-      options: {
-        title: "Advanced Query Options",
-        text1: "You can change the default order or include parents levels using the query options panel."
-      },
-      execute: {
-        title: "Run the Query",
-        text1: "Execute the query based on your current selection of metrics, and columns, and filters."
-      },
       download: {
         title: "Downloading the Data",
         text1: "You are able to download the information in CSV and JSON formats."
+      },
+      api: {
+        title: "API",
+        text1: "You can access the raw data programmatically using the Data Explorer JSON REST API."
       },
       vizbuilderTab: {
         title: "Vizbuilder",
         text1: "You can see the results of your query in different types of visualizations."
       },
-      apiTab: {
-        title: "API",
-        text1: "You can access the raw data programmatically using the DataSaudi JSON REST API."
-      },
       last: {
         title: "Let's get started!",
-        text: "You are ready to start exploring the DataSaudi database and generate your own tables and visualizations.",
+        text: "You are ready to start exploring the Data Explorer database and generate your own tables and visualizations.",
         button: "Begin"
       }
     }

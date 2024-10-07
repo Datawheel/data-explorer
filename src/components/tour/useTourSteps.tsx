@@ -2,9 +2,19 @@
 import React from "react";
 import FirstStep from "./FirstStep";
 import SlideStep from "./SlideStep";
-import { useTranslation } from "../../hooks/translation";
+import LastStep from "./LastStep";
 
-export const useTourSteps = () => {
+import { useTranslation } from "../../hooks/translation";
+import {StepType} from "@reactour/tour"
+const click = (selector) => () => {
+  const element = document.querySelector(selector);
+  element?.click();
+};
+
+interface ExplorerStepType extends StepType{
+  actionBefore?: () => void;
+}
+export const useTourSteps = (extraSteps: ExplorerStepType[] = []): ExplorerStepType[] => {
     const {translate: t} = useTranslation();
     return [
     {
@@ -56,7 +66,56 @@ export const useTourSteps = () => {
         ]}
       />,
     },
-
+    {
+      selector: '#dex-column-drawer-body',
+      actionBefore: click("#dex-column-btn"),
+      stepInteraction: true,
+      content: 
+      <SlideStep
+        title={t("tour.steps.columns.title")}
+        texts={[
+          t("tour.steps.columns.text1"),
+          t("tour.steps.columns.text2")
+        ]}
+      />,
+    },
+    {
+      selector: '.dex-dimension-control',
+      actionBefore:
+        click(".dex-level-filter"),
+      actionAfter: click("#dex-column-drawer-close"),
+      stepInteraction: true,
+      content: 
+      <SlideStep
+        title={t("tour.steps.filters.title")}
+        texts={[
+          t("tour.steps.filters.text1"),
+          t("tour.steps.filters.text2")
+        ]}
+      />,
+    },
+    {
+      selector: '#dex-btn-group-download',
+      content: 
+      <SlideStep
+        title={t("tour.steps.download.title")}
+        texts={[t("tour.steps.download.text1")]}
+      />,
+    },
+    {
+      selector: '#dex-api-btn',
+      content: 
+      <SlideStep
+        title={t("tour.steps.api.title")}
+        texts={[t("tour.steps.api.text1")]}
+      />,
+    },
+    ...extraSteps,
+    {
+      selector: "viewport",
+      content: <LastStep t={t} />,
+      position: "center",
+    },
     // ...
   ]
 }

@@ -79,9 +79,13 @@ function AddColumnsDrawer() {
   return (
     <>
       <Drawer
+        id="dex-column-drawer"
         opened={opened}
         position="right"
         onClose={close}
+        closeButtonProps={{
+          id: "dex-column-drawer-close"
+        }}
         title={
           <Group>
             <IconPlus size="1.2rem" />
@@ -102,7 +106,7 @@ function AddColumnsDrawer() {
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
-          <Button leftIcon={<IconPlus size="1.2rem" />} onClick={open} m="md" size="sm">
+          <Button id="dex-column-btn" leftIcon={<IconPlus size="1.2rem" />} onClick={open} m="md" size="sm">
             {t("params.add_columns")}
           </Button>
         )}
@@ -168,7 +172,7 @@ function DimensionItem({
   //   return options[0];
   // }
   return (
-    <div key={dimension.name}>
+    <div key={dimension.name} className="dex-dimension-control" id={`dex-dimension-${dimension.name}`}>
       <Divider
         my="md"
         label={
@@ -337,7 +341,7 @@ function LevelItem({
   return (
     currentDrilldown && (
       <>
-        <Group mt="sm" position="apart" key={level.name} noWrap>
+        <Group className="dex-level-control" mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
@@ -357,6 +361,7 @@ function LevelItem({
           />
           <Group sx={{flexWrap: "nowrap"}}>
             <ActionIcon
+              className="dex-level-filter"
               size="sm"
               onClick={() => setActiveFilter(value => !value)}
               disabled={isDisabled}

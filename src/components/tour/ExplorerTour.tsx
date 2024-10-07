@@ -36,7 +36,13 @@ function NextButton(props) {
             props.setIsOpen(false);
             props.setCurrentStep(0);
         } else {
-            props.setCurrentStep((s:number) => s + 1);
+            const nextStep = props.steps[props.currentStep + 1];
+            if (nextStep.hasOwnProperty("actionBefore")) {
+                nextStep.actionBefore();
+                setTimeout(() => props.setCurrentStep((s:number) => s + 1), 250);
+            } else {
+                props.setCurrentStep((s:number) => s + 1);
+            }
         }
         
     }
@@ -68,7 +74,6 @@ const withBase = (styles: React.CSSProperties) => (base: React.CSSProperties) =>
 
 export default function ExplorerTour({children}) {
     const theme = useMantineTheme();
-    const {translations} = useTranslation();
     const steps = useTourSteps();
     const styles = {
         popover: withBase({padding: 0, borderRadius: theme.radius.md, overflow: "hidden"}),
