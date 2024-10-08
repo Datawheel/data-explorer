@@ -74,6 +74,7 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
     const lvl = levels[name];
     return buildDrilldown({
       active: true,
+      key: lvl.name,
       dimension: dimensions[name],
       hierarchy: hierarchies[name],
       level: name,
@@ -84,6 +85,7 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
       )
     });
   });
+
   const cuts = filterMap(getList(search, "include", ";"), cut => {
     const [name, members] = cut.split(":");
     return levels[name]
