@@ -29,7 +29,8 @@ function App() {
     () => [
       {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
       {value: "https://pytesseract-dev.oec.world/tesseract/", label: "OEC"},
-      {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"}
+      {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"},
+      {value: "https://api-ts-dev.datausa.io/tesseract/", label: "DATA USA"}
     ],
     []
   );
@@ -40,6 +41,7 @@ function App() {
         <Explorer
           // pagination={{defaultLimit: 100, rowsLimits: [100, 300, 500, 1000]}}
           // defaultCube="gastat_gdp"
+          measuresActive={5}
           serverURL={settings.server.value}
           serverConfig={settings.server.config}
           defaultOpenParams="drilldowns"

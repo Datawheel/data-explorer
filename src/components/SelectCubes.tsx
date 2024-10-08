@@ -3,7 +3,7 @@ import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState
 import {useSelector} from "react-redux";
 import yn from "yn";
 import type {TesseractCube, TesseractLevel} from "../api/tesseract/schema";
-import {useActions} from "../hooks/settings";
+import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {
   selectCubeName,
@@ -23,7 +23,7 @@ import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
-const EMPTY_RESPONSE = {
+export const EMPTY_RESPONSE = {
   data: [],
   types: {},
   url: "",
@@ -46,8 +46,8 @@ function SelectCubeInternal(props: {
   items: TesseractCube[];
   selectedItem: TesseractCube | undefined;
 }) {
+  const {measuresActive} = useSettings();
   const {items, selectedItem} = props;
-  const {translate: t} = useTranslation();
   const {code: locale} = useSelector(selectLocale);
   const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
   const cutItems = useSelector(selectCutItems);
@@ -65,19 +65,19 @@ function SelectCubeInternal(props: {
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
     if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-      const drilldown = buildDrilldown({...level, active: true});
+      const drilldown = buildDrilldown({...level, key: level.name, active: true});
       updateDrilldown(drilldown);
       const cut = cuts.find(cut => cut.level === drilldown.level);
       if (!cut) {
         createCutHandler(level);
       }
-
       willFetchMembers(level.name).then(levelMeta => {
         updateDrilldown({
           ...drilldown,
           members: levelMeta.members
         });
       });
+
       return drilldown;
     }
   }
@@ -89,17 +89,22 @@ function SelectCubeInternal(props: {
       const [measure] = Object.values(itemMap);
       const [dimension] = dimensions;
       if (measure && dimension) {
-        updateMeasure({...measure, active: true});
         const drilldowns = pickDefaultDrilldowns(dimensions);
         if (measure && drilldowns.length > 0) {
-          updateMeasure({...measure, active: true});
+          const measuresLimit =
+            typeof measuresActive !== "undefined" ? measuresActive : Object.values(itemMap).length;
+          Object.values(itemMap)
+            .slice(0, measuresLimit)
+            .forEach(m => {
+              updateMeasure({...m, active: true});
+            });
           for (const level of drilldowns) {
             createDrilldown(level, cutItems);
           }
         }
       }
     }
-  }, [selectedItem, cube]);
+  }, [selectedItem, cube, measuresActive]);
 
   return (
     <Stack id="select-cube" spacing={"xs"} w={"100%"}>
@@ -196,7 +201,7 @@ function CubeTree({
 }) {
   const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
-
+  const {measuresActive} = useSettings();
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
 
@@ -209,7 +214,7 @@ function CubeTree({
       actions.setLoadingState("FETCHING");
       actions.resetAllParams(newQuery);
       actions.updateResult(EMPTY_RESPONSE);
-      actions.willSetCube(cube.name).then(() => {
+      actions.willSetCube(cube.name, measuresActive).then(() => {
         actions.setLoadingState("SUCCESS");
       });
     }

@@ -4,10 +4,11 @@ import React, {useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLocale} from "../state/queries";
+import {selectCurrentQueryParams, selectLocale} from "../state/queries";
 import {selectServerState} from "../state/server";
 import {SelectObject} from "./Select";
 import {IconLanguage} from "@tabler/icons-react";
+import {EMPTY_RESPONSE} from "./SelectCubes";
 
 const localeSelectorStyle = (theme: MantineTheme) => ({
   input: {
@@ -64,10 +65,11 @@ export function LocaleSelector() {
 
   const localeChangeHandler = async (l: LocaleOptions) => {
     if (currentCode !== l.value) {
+      actions.setLoadingState("FETCHING");
+      actions.updateResult(EMPTY_RESPONSE);
       await actions.willReloadCubes({locale: {code: l.value}});
-      await actions.willReloadCube();
-      actions.updateLocale(l.value);
-      // reloads measures and members for new locale
+      await actions.willReloadCube({locale: {code: l.value}});
+      actions.setLoadingState("SUCCESS");
     }
   };
 

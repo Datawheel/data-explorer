@@ -21,6 +21,7 @@ interface SettingsContextProps {
   previewLimit: number;
   panels: PanelDescriptor[];
   paginationConfig: Pagination;
+  measuresActive?: number;
 }
 
 /**
@@ -42,6 +43,7 @@ export function SettingsProvider(props: {
   previewLimit?: number;
   withPermalink: boolean | undefined;
   pagination?: Pagination;
+  measuresActive?: number;
 }) {
   usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
 
@@ -52,7 +54,8 @@ export function SettingsProvider(props: {
       formatters: props.formatters || {},
       panels: props.panels,
       previewLimit: props.previewLimit || 50,
-      paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100}
+      paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100},
+      measuresActive: props.measuresActive
     }),
     [props.formatters, props.previewLimit]
   );

@@ -46,6 +46,7 @@ import {selectLoadingState} from "../state/loading";
 import {
   selectCutItems,
   selectDrilldownItems,
+  selectDrilldownMap,
   selectFilterItems,
   selectFilterMap,
   selectLocale,
@@ -232,7 +233,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   const pageSize = pagination.pageSize;
   const page = pagination.pageIndex;
   const enabled = Boolean(columns.length);
-  const initialKey = permaKey ? [permaKey, page, pageSize, locale] : permaKey;
+  const initialKey = permaKey ? [permaKey, page, pageSize] : permaKey;
 
   const [filterKeydebouced, setDebouncedTerm] = useState<
     string | boolean | (string | boolean | number)[]
@@ -242,7 +243,7 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
     if (!enabled && permaKey) return;
     const handler = debounce(
       () => {
-        const term = [permaKey, page, pageSize, locale];
+        const term = [permaKey, page, pageSize];
         setDebouncedTerm(term);
       },
       loadingState.loading ? 0 : 800
@@ -263,12 +264,12 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
-  // useUpdatePermaLink({
-  //   isFetched: Boolean(cachedData),
-  //   cube,
-  //   enabled,
-  //   isLoading: query.isLoading
-  // });
+  useUpdatePermaLink({
+    isFetched: Boolean(cachedData),
+    cube,
+    enabled,
+    isLoading: query.isLoading
+  });
   return query;
 }
 
@@ -287,7 +288,6 @@ function usePrefetch({
   pagination,
   isFetching
 }: usePrefetchType) {
-  const {code: locale} = useSelector(selectLocale);
   const queryClient = useQueryClient();
   const actions = useActions();
   const page = pagination.pageIndex + 1;
@@ -297,7 +297,7 @@ function usePrefetch({
   const paramKey = useKey({pagiLimit: pageSize, pagiOffset: off});
 
   useEffect(() => {
-    const key = [paramKey, page, pageSize, locale];
+    const key = [paramKey, page, pageSize];
     if (!isPlaceholderData && hasMore && !isFetching) {
       queryClient.prefetchQuery({
         queryKey: ["table", key],
@@ -309,18 +309,7 @@ function usePrefetch({
         staleTime: 300000
       });
     }
-  }, [
-    limit,
-    page,
-    pageSize,
-    locale,
-    isPlaceholderData,
-    queryClient,
-    hasMore,
-    off,
-    isFetching,
-    paramKey
-  ]);
+  }, [limit, page, pageSize, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
 }
 
 export function useTable({
@@ -394,7 +383,6 @@ export function useTable({
     cube: cube.name
   });
 
-  // check no data
   const tableData = data?.data || [];
   const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
   const totalRowCount = data?.page.total;
@@ -425,6 +413,7 @@ export function useTable({
   }, [pagination]);
 
   const {translate: t} = useTranslation();
+  // check formatters
   const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
     cube.measures
   );
@@ -825,7 +814,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
-  const drilldown = drilldownItems.find(c => c.level === header.column.id);
+  const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
 
   const cut = cutItems.find(cut => {

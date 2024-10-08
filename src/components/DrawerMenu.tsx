@@ -255,7 +255,6 @@ function LevelItem({
   const cutItems = useSelector(selectCutItems);
   let drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
-  const dimensions = useSelector(selectOlapDimensionItems);
 
   const label = useMemo(() => {
     const captions = [
@@ -280,7 +279,7 @@ function LevelItem({
   }, []);
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, active: false});
+    const drilldown = buildDrilldown({...level, key: level.name, active: false});
     actions.updateDrilldown(drilldown);
 
     const cut = cuts.find(cut => cut.level === drilldown.level);
@@ -296,15 +295,7 @@ function LevelItem({
 
     return drilldown;
   }
-
-  drilldowns = Object.keys(drilldowns).reduce((acc, key) => {
-    const drilldown = drilldowns[key];
-    acc[drilldown.level] = drilldown;
-    return acc;
-  }, {});
-
   const currentDrilldown = drilldowns[level.name];
-
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
@@ -566,7 +557,7 @@ function MeasuresOptions() {
   const measures = useSelector(selectOlapMeasureItems);
   //actions
   const actions = useActions();
-  
+
   const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
@@ -579,11 +570,12 @@ function MeasuresOptions() {
     return filter;
   }, []);
 
-  const measureCaptions = Object.values(measures).map(m => `${m.caption}`).join(",");
+  const measureCaptions = Object.values(measures)
+    .map(m => `${m.caption}`)
+    .join(",");
   const filteredItems = useMemo(() => {
     return filterMap(measures, m => {
       const measure = itemMap[m.name] || handlerCreateMeasure({...m, active: false});
-      console.log(itemMap[m.name])
       const foundFilter = filtersMap[m.name] || filtersItems.find(f => f.measure === measure.name);
       const filter =
         foundFilter ||
@@ -594,7 +586,15 @@ function MeasuresOptions() {
         } as FilterItem);
       return {measure, filter};
     });
-  }, [itemMap, measures, filtersMap, filtersItems, handlerCreateFilter, handlerCreateMeasure, measureCaptions]);
+  }, [
+    itemMap,
+    measures,
+    filtersMap,
+    filtersItems,
+    handlerCreateFilter,
+    handlerCreateMeasure,
+    measureCaptions
+  ]);
 
   const activeItems = filteredItems.filter(f => isActiveItem(f.measure));
 
