@@ -1,9 +1,10 @@
 import {useEffect} from "react";
 import {decodeUrlFromBase64} from "../utils/string";
-import {type QueryItem, buildQuery} from "../utils/structs";
+import {type QueryItem, buildCut, buildQuery} from "../utils/structs";
 import {hasProperty, isValidQuery} from "../utils/validation";
 import {parsePermalink} from "./permalink";
 import {useSettings} from "./settings";
+import {keyBy} from "../utils/transform";
 
 /**
  * Keeps in sync the internal datasources with the setup parameters.
@@ -34,11 +35,40 @@ export function useSetup(
           return;
         }
 
+        let promisesData: Promise<void> | undefined = undefined;
         const cubeName = search.get("cube");
+
         if (cubeName) {
           // Search params are a QueryItem permalink
           query = parsePermalink(cubeMap[cubeName], search);
+
+          const promises = Object.values(query.params.drilldowns).map(dd => {
+            return actions
+              .willFetchMembers(dd.level, query?.params.locale, cubeName)
+              .then(levelMeta => {
+                const cut = buildCut({...dd, active: false});
+                return {
+                  drilldown: {
+                    ...dd,
+                    members: levelMeta.members
+                  },
+                  cut
+                };
+              });
+          });
+
           query = isValidQuery(query.params) ? query : undefined;
+
+          promisesData = Promise.all(promises).then(data => {
+            if (query) {
+              const drilldowns = data.map(item => item.drilldown);
+              const cuts = data.map(item => item.cut);
+              query.params.drilldowns = keyBy(drilldowns, "key");
+              query.params.cuts = keyBy(cuts, "key");
+
+              query = isValidQuery(query.params) ? query : undefined;
+            }
+          });
         } else if (isValidQuery(historyState)) {
           query = buildQuery({params: {...historyState, pagiLimit: paginationConfig.defaultLimit}});
         }
@@ -49,12 +79,19 @@ export function useSetup(
             : Object.keys(cubeMap)[0];
         }
 
-        if (query) {
-          query.params.locale = query.params.locale || defaultLocale;
-          actions.resetQueries({[query.key]: query});
+        if (query && promisesData) {
+          console.log("ACACACACCA");
+          return promisesData.then(() => {
+            console.log("entro aca si");
+            query.params.locale = query.params.locale || defaultLocale;
+            actions.resetQueries({[query.key]: query});
+          });
         }
+
+        query.params.locale = query.params.locale || defaultLocale;
+        actions.resetQueries({[query.key]: query});
       })
-      .then(actions.willHydrateParams)
+      .then(cube => actions.willHydrateParams(typeof cube === "string" ? cube : undefined))
       .then(
         () => actions.setLoadingState("SUCCESS"),
         error => {
