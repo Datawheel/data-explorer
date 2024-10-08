@@ -173,7 +173,7 @@ function SearchSVG() {
 
 function FullScreenSVG() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" strokeWidth={1.5}>
       <g clipPath="url(#clip0_905_15763)">
         <path
           d="M3.33325 6.66668V5.00001C3.33325 4.55798 3.50885 4.13406 3.82141 3.8215C4.13397 3.50894 4.55789 3.33334 4.99992 3.33334H6.66659"

@@ -61,14 +61,6 @@ function NextButton(props) {
     );
 }
 
-const TourPanel = () => {
-    const tour = useTour();
-    return (
-        <Affix top={0} right={0}>
-            <Button onClick={() => tour.setIsOpen(true)}>Start Tour</Button>
-        </Affix>
-    )
-}
 
 const withBase = (styles: React.CSSProperties) => (base: React.CSSProperties) => ({...base, ...styles});
 
@@ -97,7 +89,6 @@ export default function ExplorerTour({children}) {
             disableInteraction
         >
             {children}
-            <TourPanel />
         </TourProvider>
     )
 }

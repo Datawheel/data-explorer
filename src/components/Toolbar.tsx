@@ -15,7 +15,8 @@ import {ClearSVG, FullScreenSVG, SearchSVG} from "./icons";
 import {MRT_TableInstance} from "mantine-react-table";
 import {useDebouncedValue, useMediaQuery} from "@mantine/hooks";
 import {useTranslation} from "../main";
-import {IconSettings} from "@tabler/icons-react";
+import {IconHelpCircle, IconQuestionMark, IconSettings} from "@tabler/icons-react";
+import { useTour } from "@reactour/tour";
 
 const toolbarSx: Sx = t => ({
   background: t.colorScheme === "dark" ? t.black : t.white,
@@ -96,6 +97,22 @@ function ToolbarSearch({table}: {table: MRT_TableInstance}) {
     </Flex>
   );
 }
+
+function TourButton() {
+  const {setIsOpen, setCurrentStep} = useTour();
+
+  const startTour = () => {
+    setCurrentStep(0);
+    setIsOpen(true);
+  }
+  return (
+    <ToolbarButton
+      icon={<IconHelpCircle strokeWidth={1.5} />}
+      label="Help"
+      onClick={startTour}
+    ></ToolbarButton>
+  )
+}
 export default function Toolbar({
   table,
   fullscreen
@@ -116,6 +133,7 @@ export default function Toolbar({
       wrap="nowrap"
       gap="xs"
     >
+      <TourButton />
       <ToolbarButton
         icon={<FullScreenSVG />}
         label={t("params.label_fullscreen")}
