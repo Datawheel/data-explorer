@@ -20,9 +20,12 @@ export function serializePermalink(item: QueryItem): string {
 /** */
 export function parsePermalink(cube: TesseractCube, value: string | URLSearchParams): QueryItem {
   const search = new URLSearchParams(value);
+
+  const params = requestToQueryParams(cube, search);
+
   return buildQuery({
     panel: search.get("panel") || "table",
-    params: requestToQueryParams(cube, search)
+    params
   });
 }
 
