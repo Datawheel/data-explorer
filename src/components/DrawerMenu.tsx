@@ -255,7 +255,6 @@ function LevelItem({
   const cutItems = useSelector(selectCutItems);
   let drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
-  const dimensions = useSelector(selectOlapDimensionItems);
 
   const label = useMemo(() => {
     const captions = [
@@ -280,7 +279,7 @@ function LevelItem({
   }, []);
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, active: false});
+    const drilldown = buildDrilldown({...level, key: level.name, active: false});
     actions.updateDrilldown(drilldown);
 
     const cut = cuts.find(cut => cut.level === drilldown.level);
@@ -296,15 +295,7 @@ function LevelItem({
 
     return drilldown;
   }
-
-  drilldowns = Object.keys(drilldowns).reduce((acc, key) => {
-    const drilldown = drilldowns[key];
-    acc[drilldown.level] = drilldown;
-    return acc;
-  }, {});
-
   const currentDrilldown = drilldowns[level.name];
-
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
