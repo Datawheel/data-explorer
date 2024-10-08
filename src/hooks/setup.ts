@@ -80,11 +80,11 @@ export function useSetup(
         }
 
         if (query && promisesData) {
-          console.log("ACACACACCA");
           return promisesData.then(() => {
-            console.log("entro aca si");
-            query.params.locale = query.params.locale || defaultLocale;
-            actions.resetQueries({[query.key]: query});
+            if (query) {
+              query.params.locale = query.params.locale || defaultLocale;
+              actions.resetQueries({[query.key]: query});
+            }
           });
         }
 
