@@ -342,6 +342,7 @@ function CubeButton({
   const {classes} = useLinkStyles();
 
   const table = graph.getName(item, locale);
+
   const subtopic = parent ?? "";
   return (
     <Text
@@ -366,7 +367,7 @@ function CubeButton({
       })}
       onClick={() => onSelectCube(item, subtopic)}
     >
-      {table}
+      {table ?? item}
     </Text>
   );
 }
