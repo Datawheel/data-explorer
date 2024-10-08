@@ -712,16 +712,25 @@ export function TableView({
                         key={header.id}
                         sx={theme => (isRowIndex ? index(theme) : base(theme))}
                       >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.Header ?? header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                        <Box
+                          sx={{
+                            display: "flex",
+                            flexFlow: "column",
+                            height: "100%",
+                            justifyContent: "space-between"
+                          }}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.Header ?? header.column.columnDef.header,
+                                header.getContext()
+                              )}
 
-                        {!isRowIndex && (
-                          <ColumnFilterCell isNumeric={isNumeric} header={header} table={table} />
-                        )}
+                          {!isRowIndex && (
+                            <ColumnFilterCell isNumeric={isNumeric} header={header} table={table} />
+                          )}
+                        </Box>
                       </Box>
                     );
                   })}
