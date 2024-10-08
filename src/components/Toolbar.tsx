@@ -107,7 +107,7 @@ function ToolbarSearch({table}: {table: MRT_TableInstance}) {
 
 function TourButton() {
   const {setIsOpen, setCurrentStep} = useTour();
-
+  const {translate: t} = useTranslation();
   const startTour = () => {
     setCurrentStep(0);
     setIsOpen(true);
@@ -115,7 +115,7 @@ function TourButton() {
   return (
     <ToolbarButton
       icon={<IconHelpCircle strokeWidth={1.5} />}
-      label="Help"
+      label={t("tour.controls.help")}
       onClick={startTour}
     ></ToolbarButton>
   )

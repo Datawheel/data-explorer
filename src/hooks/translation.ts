@@ -191,6 +191,7 @@ export const defaultTranslation = {
     controls: {
       prev: "Previous",
       next: "Next",
+      help: "Help",
     },
     steps: {
       welcome: {
