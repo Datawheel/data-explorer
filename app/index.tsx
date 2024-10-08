@@ -1,8 +1,10 @@
 import React, {useMemo} from "react";
-import {Explorer, PivotView, TableView, createVizbuilderView} from "../src/main";
+import {Explorer, PivotView, TableView, ToolbarButton, TourStep, createVizbuilderView} from "../src/main";
 import {createRoot} from "react-dom/client";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
+import { Image, Center } from "@mantine/core";
+import { IconDatabase } from "@tabler/icons-react";
 
 const VizbuilderView = createVizbuilderView({
   downloadFormats: ["png", "svg"]
@@ -53,6 +55,23 @@ function App() {
             {key: "matrix", label: "Pivot Table", component: PivotView},
             {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
           ]}
+          tourConfig={{
+            introImage: <Center p="xl" bg="dark.1">
+                <Image src="https://datasaudi.sa/images/tour/tour-start.png" height={120} width="auto" fit="contain" />
+              </Center>,
+            extraSteps: [
+              {
+                selector: "body",
+                content: <TourStep title="Extra Step" texts={"This is an extra step added via props"} />
+              }
+            ],
+          }}
+          toolbarConfig={{
+            buttons: [
+              {icon: <IconDatabase strokeWidth={1.5}/>, label: "Dataset", onClick: () => alert("Explore datasets!")}
+            ],
+            showLabels: true,
+          }}
           translations={translations}
           withinMantineProvider={false}
           withinReduxProvider

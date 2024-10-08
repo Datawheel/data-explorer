@@ -1,7 +1,8 @@
 import React from "react";
 import {Title, Text, Container} from "@mantine/core";
+import { TourStepsPropsType } from "./types";
 
-export default function SlideStep(props) {
+export default function TourStep(props: TourStepsPropsType) {
     const {title, texts} = props;
     const paragraphs = Array.isArray(texts) ? texts : [texts];
     return (

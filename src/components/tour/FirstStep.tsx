@@ -1,19 +1,24 @@
 import React from "react";
-import { Container } from "@mantine/core";
+import { Box, Container } from "@mantine/core";
 import { useTranslation } from "../../hooks/translation";
 
-export default function FirstStep() {
+interface FirstStepProps {
+  introImage?: React.ReactNode;
+}
+export default function FirstStep({introImage}:FirstStepProps) {
     const {translate: t} = useTranslation();
     return (
-      <Container className="tour-item tour-welcome">
-        {/* <div className="tour-img">
-          <Image src="/images/tour/tour-start.png" width={237} height={136} alt="Tour Intro Image" />
-        </div> */}
-        <div className="tour-text">
+      <Container className="tour-item tour-welcome" px={0}>
+        {introImage && 
+          <div className="tour-img">
+            {introImage}
+          </div>
+        }
+        <Box className="tour-text" px="md">
           <h3>{t("tour.steps.welcome.title")}</h3>
           <p>{t("tour.steps.welcome.text1")}</p>
           <p>{t("tour.steps.welcome.text2")}</p>
-        </div>
+        </Box>
       </Container>
     );
   }

@@ -12,12 +12,19 @@ import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
 import ExplorerTour from "./tour/ExplorerTour";
+import {TourConfig} from "./tour/types";
+import { ToolbarConfigType } from "./Toolbar";
 
 export type Pagination = {
   rowsLimits: number[];
   defaultLimit: Pagination["rowsLimits"][number]; // Ensures defaultLimit is one of the values in rowsLimits
 };
 
+const defaultTourConfig: TourConfig = {
+  extraSteps: [],
+  introImage: null,
+  tourProps: {}
+}
 /**
  * Main DataExplorer component
  * This components wraps the interface components in the needed Providers,
@@ -106,6 +113,12 @@ export function ExplorerComponent<Locale extends string>(props: {
    */
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
 
+  toolbarConfig?: Partial<ToolbarConfigType>;
+  /**
+   * Tour configuration 
+   */
+  tourConfig?: Partial<TourConfig>;
+
   /**
    * The Translation labels to use in the UI.
    */
@@ -146,6 +159,7 @@ export function ExplorerComponent<Locale extends string>(props: {
     withinReduxProvider = false,
     withMultiQuery = false,
     pagination,
+    tourConfig,
     measuresActive
   } = props;
 
@@ -175,9 +189,10 @@ export function ExplorerComponent<Locale extends string>(props: {
       panels={panels}
       pagination={pagination}
       measuresActive={measuresActive}
+      toolbarConfig={props.toolbarConfig}
     >
       <TranslationProvider defaultLocale={locale} translations={props.translations}>
-        <ExplorerTour>
+        <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
           <ExplorerContent
             defaultCube={props.defaultCube}
             defaultDataLocale={props.defaultDataLocale}

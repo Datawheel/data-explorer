@@ -1,9 +1,10 @@
 import React from "react";
-import {TourProvider, useTour} from "@reactour/tour";
-import {Affix, Button, useMantineTheme} from "@mantine/core";
+import {TourProps, TourProvider} from "@reactour/tour";
+import {Button, useMantineTheme} from "@mantine/core";
 import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
 import { useTranslation } from "../../hooks/translation";
 import { useTourSteps } from "./useTourSteps";
+import { TourConfig } from "./types";
 
 function PrevButton(props) {
     const {translate: t} = useTranslation();
@@ -64,9 +65,13 @@ function NextButton(props) {
 
 const withBase = (styles: React.CSSProperties) => (base: React.CSSProperties) => ({...base, ...styles});
 
-export default function ExplorerTour({children}) {
+interface ExplorerTourProps {
+    tourConfig: TourConfig;
+};
+
+export default function ExplorerTour({children, tourConfig}: React.PropsWithChildren<ExplorerTourProps>) {
     const theme = useMantineTheme();
-    const steps = useTourSteps();
+    const steps = useTourSteps(tourConfig);
     const styles = {
         popover: withBase({padding: 0, borderRadius: theme.radius.md, overflow: "hidden"}),
         controls: withBase({flexWrap: "wrap"}),
@@ -86,7 +91,9 @@ export default function ExplorerTour({children}) {
             nextButton={NextButton}
             showBadge={false}
             styles={styles}
+            rtl={theme.dir === "rtl"}
             disableInteraction
+            {...tourConfig?.tourProps}
         >
             {children}
         </TourProvider>

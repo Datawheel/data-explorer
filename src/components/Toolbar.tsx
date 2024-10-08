@@ -14,7 +14,8 @@ import {
 import {ClearSVG, FullScreenSVG, SearchSVG} from "./icons";
 import {MRT_TableInstance} from "mantine-react-table";
 import {useDebouncedValue, useMediaQuery} from "@mantine/hooks";
-import {useTranslation} from "../main";
+import {useTranslation} from "../hooks/translation";
+import {useSettings} from "../hooks/settings"
 import {IconHelpCircle, IconQuestionMark, IconSettings} from "@tabler/icons-react";
 import { useTour } from "@reactour/tour";
 
@@ -26,11 +27,17 @@ const toolbarSx: Sx = t => ({
 
 interface ToolBarButtonProps {
   icon: ReactNode;
-  label: string;
+  label?: string;
   onClick?: () => void;
 }
 
-function ToolbarButton({icon, label, onClick = () => undefined}: ToolBarButtonProps) {
+export interface ToolbarConfigType {
+  buttons: ToolBarButtonProps[];
+  showLabels: Boolean;
+}
+
+export function ToolbarButton({icon, label, onClick = () => undefined}: ToolBarButtonProps) {
+  const {toolbarConfig} = useSettings();
   return (
     <UnstyledButton
       onClick={onClick}
@@ -39,7 +46,7 @@ function ToolbarButton({icon, label, onClick = () => undefined}: ToolBarButtonPr
     >
       <Group spacing={"xs"} noWrap>
         {icon}
-        <Text size="sm">{label}</Text>
+        {(toolbarConfig?.showLabels && label) && <Text size="sm">{label}</Text>}
       </Group>
     </UnstyledButton>
   );
@@ -123,6 +130,8 @@ export default function Toolbar({
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
+  const {toolbarConfig} = useSettings();
+  
   const settings = (
     <Flex
       direction={{base: "column", md: "row"}}
@@ -133,6 +142,7 @@ export default function Toolbar({
       wrap="nowrap"
       gap="xs"
     >
+      {toolbarConfig?.buttons.map(b => <ToolbarButton {...b}/>)}
       <TourButton />
       <ToolbarButton
         icon={<FullScreenSVG />}
