@@ -23,7 +23,7 @@ import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
-const EMPTY_RESPONSE = {
+export const EMPTY_RESPONSE = {
   data: [],
   types: {},
   url: "",
@@ -65,19 +65,19 @@ function SelectCubeInternal(props: {
 
   function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
     if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-      const drilldown = buildDrilldown({...level, active: true});
+      const drilldown = buildDrilldown({...level, key: level.name, active: true});
       updateDrilldown(drilldown);
       const cut = cuts.find(cut => cut.level === drilldown.level);
       if (!cut) {
         createCutHandler(level);
       }
-
       willFetchMembers(level.name).then(levelMeta => {
         updateDrilldown({
           ...drilldown,
           members: levelMeta.members
         });
       });
+
       return drilldown;
     }
   }
@@ -93,15 +93,11 @@ function SelectCubeInternal(props: {
         if (measure && drilldowns.length > 0) {
           const measuresLimit =
             typeof measuresActive !== "undefined" ? measuresActive : Object.values(itemMap).length;
-
           Object.values(itemMap)
             .slice(0, measuresLimit)
             .forEach(m => {
               updateMeasure({...m, active: true});
             });
-          // Object.values(itemMap).map(m => {
-          //   updateMeasure({...m, active: true});
-          // });
           for (const level of drilldowns) {
             createDrilldown(level, cutItems);
           }
