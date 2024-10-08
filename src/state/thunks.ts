@@ -25,7 +25,6 @@ import {
   selectCubeName,
   selectCurrentQueryParams,
   selectLocale,
-  selectMeasureItems,
   selectQueryItems
 } from "./queries";
 import {selectOlapCubeMap, serverActions} from "./server";
@@ -144,14 +143,18 @@ export function willFetchQuery(params?: {
  * @param level - The name of the Level for whom we want to retrieve members.
  * @returns The list of members for the requested level.
  */
-export function willFetchMembers(level: string): ExplorerThunk<Promise<TesseractMembersResponse>> {
+export function willFetchMembers(
+  level: string,
+  localeStr?: string,
+  cubeName?: string
+): ExplorerThunk<Promise<TesseractMembersResponse>> {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const cube = selectCubeName(state);
     const locale = selectLocale(state);
 
     return tesseract.fetchMembers({
-      request: {cube, level, locale: locale.code}
+      request: {cube: cubeName || cube, level, locale: localeStr || locale.code}
     });
   };
 }
@@ -181,7 +184,8 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
           measureItems[measure.name] || {
             active: false,
             key: measure.name,
-            name: measure.name
+            name: measure.name,
+            caption: measure.caption
           }
         )
       );
@@ -195,6 +199,7 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
         return level
           ? buildDrilldown({
               ...item,
+              key: level.name,
               dimension: dimension.name,
               hierarchy: hierarchy.name,
               properties: level.properties.map(property =>
@@ -232,17 +237,32 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
  * then creates a new QueryItem in the UI containing it.
  */
 export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void>> {
-  return (dispatch, getState) => {
+  return async (dispatch, getState) => {
     const state = getState();
     const cubeMap = selectOlapCubeMap(state);
 
     const search = new URL(url).searchParams;
     const cube = search.get("cube");
     if (cube && cubeMap[cube]) {
+      const params = requestToQueryParams(cubeMap[cube], search);
+      // const promises = Object.values(params.drilldowns).map(dd => {
+      //   return dispatch(willFetchMembers(dd.level)).then(levelMeta => {
+      //     dispatch(queriesActions.updateCut(buildCut({...dd, active: true})));
+      //     return {
+      //       ...dd,
+      //       members: levelMeta.members
+      //     };
+      //   });
+      // });
+
+      // const dds = await Promise.all(promises);
+
       const queryItem = buildQuery({
         panel: search.get("panel") || "table",
-        params: requestToQueryParams(cubeMap[cube], search)
+        // params: {...params, drilldowns: keyBy(dds, "key")}
+        params
       });
+
       dispatch(queriesActions.updateQuery(queryItem));
       dispatch(queriesActions.selectQuery(queryItem.key));
     }
@@ -255,7 +275,12 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
  * Performs a full replacement of the cubes stored in the state with fresh data
  * from the server.
  */
-export function willReloadCubes({locale}): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
+type realoadCubes = {
+  locale?: any;
+};
+export function willReloadCubes({locale}: realoadCubes = {}): ExplorerThunk<
+  Promise<{[k: string]: TesseractCube}>
+> {
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const newLocale = locale || selectLocale(state);
@@ -299,7 +324,11 @@ export function willRequestQuery(): ExplorerThunk<Promise<void>> {
  *
  * @param cubeName The name of the cube we intend to switch to.
  */
-export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
+export function willSetCube(
+  cubeName: string,
+  measuresActive?: number,
+  locale?: string
+): ExplorerThunk<Promise<void>> {
   return (dispatch, getState) => {
     const state = getState();
 
@@ -307,25 +336,30 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     const nextCube = cubeMap[cubeName];
     if (!nextCube) return Promise.resolve();
 
-    const currMeasures = selectMeasureItems(state);
-    const measureStatus = Object.fromEntries(currMeasures.map(item => [item.name, item.active]));
-    const nextMeasures = nextCube.measures.map((measure, index) =>
-      buildMeasure({
-        active: measureStatus[measure.name] || !index,
+    const measuresLimit =
+      typeof measuresActive !== "undefined" ? measuresActive : nextCube.measures.length;
+
+    const nextMeasures = nextCube.measures.slice(0, measuresLimit).map(measure => {
+      return buildMeasure({
+        active: true,
         key: measure.name,
-        name: measure.name
-      })
-    );
+        name: measure.name,
+        caption: measure.caption
+      });
+    });
 
     const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
       buildDrilldown({
         ...level,
+        key: level.name,
         active: true,
         properties: level.properties.map(prop =>
           buildProperty({level: level.name, name: prop.name})
         )
       })
     );
+
+    locale && dispatch(queriesActions.updateLocale(locale));
 
     dispatch(
       queriesActions.updateCube({
@@ -336,7 +370,7 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
     );
 
     const promises = nextDrilldowns.map(dd => {
-      return dispatch(willFetchMembers(dd.level)).then(levelMeta => {
+      return dispatch(willFetchMembers(dd.level, locale)).then(levelMeta => {
         dispatch(
           queriesActions.updateDrilldown({
             ...dd,
@@ -351,6 +385,14 @@ export function willSetCube(cubeName: string): ExplorerThunk<Promise<void>> {
   };
 }
 
+export function willReloadCube({locale}: {locale: {code: string}}): ExplorerThunk<Promise<void>> {
+  return (dispatch, getState) => {
+    const state = getState();
+    const cubeName = selectCubeName(state);
+
+    return dispatch(willSetCube(cubeName, undefined, locale.code));
+  };
+}
 /**
  * Sets the necessary info for the client instance to be able to connect to the
  * server, then loads the base data from its schema.

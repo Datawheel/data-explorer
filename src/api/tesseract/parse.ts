@@ -5,7 +5,7 @@ import {
   buildCut,
   buildDrilldown,
   buildMeasure,
-  buildProperty,
+  buildProperty
 } from "../../utils/structs";
 import {keyBy} from "../../utils/transform";
 import {Comparison} from "../enum";
@@ -16,29 +16,27 @@ export function queryParamsToRequest(params: QueryParams): TesseractDataRequest 
     cube: params.cube,
     locale: params.locale,
     drilldowns: filterMap(Object.values(params.drilldowns), item =>
-      item.active ? item.level : null,
+      item.active ? item.level : null
     ).join(","),
     measures: filterMap(Object.values(params.measures), item =>
-      item.active ? item.name : null,
+      item.active ? item.name : null
     ).join(","),
     properties: filterMap(Object.values(params.drilldowns), item =>
-      item.active
-        ? filterMap(item.properties, item => (item.active ? item.name : null))
-        : null,
+      item.active ? filterMap(item.properties, item => (item.active ? item.name : null)) : null
     )
       .flat()
       .join(","),
     include: filterMap(Object.values(params.cuts), item =>
-      item.active ? `${item.level}:${item.members.join(",")}` : null,
+      item.active ? `${item.level}:${item.members.join(",")}` : null
     ).join(";"),
     // exclude: filterMap(Object.values(params.exclude), item =>
     //   item.active ? `${item.level}:${item.members.join(",")}` : null,
     // ).join(";"),
     filters: filterMap(Object.values(params.filters), item =>
-      item.active ? filterSerialize(item) : null,
-    ).join(";"),
+      item.active ? filterSerialize(item) : null
+    ).join(","),
     limit: `${params.pagiLimit || 0},${params.pagiOffset || 0}`,
-    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
+    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined
     // sparse: params.sparse,
     // ranking:
     //   typeof params.ranking === "boolean"
@@ -56,10 +54,7 @@ export function queryParamsToRequest(params: QueryParams): TesseractDataRequest 
   }
 }
 
-export function requestToQueryParams(
-  cube: TesseractCube,
-  search: URLSearchParams,
-): QueryParams {
+export function requestToQueryParams(cube: TesseractCube, search: URLSearchParams): QueryParams {
   const dimensions: Record<string, string> = {};
   const hierarchies: Record<string, string> = {};
   const levels = Object.fromEntries(
@@ -69,9 +64,9 @@ export function requestToQueryParams(
           dimensions[lvl.name] = dim.name;
           hierarchies[lvl.name] = hie.name;
           return [lvl.name, lvl];
-        }),
-      ),
-    ),
+        })
+      )
+    )
   );
 
   const properties = getList(search, "properties", ",");
@@ -79,16 +74,18 @@ export function requestToQueryParams(
     const lvl = levels[name];
     return buildDrilldown({
       active: true,
+      key: lvl.name,
       dimension: dimensions[name],
       hierarchy: hierarchies[name],
       level: name,
       properties: filterMap(lvl.properties, prop =>
         properties.includes(prop.name)
           ? buildProperty({name: prop.name, level: name, active: true})
-          : null,
-      ),
+          : null
+      )
     });
   });
+
   const cuts = filterMap(getList(search, "include", ";"), cut => {
     const [name, members] = cut.split(":");
     return levels[name]
@@ -97,13 +94,15 @@ export function requestToQueryParams(
           dimension: dimensions[name],
           hierarchy: hierarchies[name],
           level: name,
-          members: members.split(","),
+          members: members.split(",")
         })
       : null;
   });
-  const measures = getList(search, "measures", ",").map(name =>
-    buildMeasure({name, active: true}),
-  );
+  const measures = getList(search, "measures", ",").map(name => {
+    const measureOlap = cube.measures.find(m => m.name === name);
+    return buildMeasure(measureOlap ? {...measureOlap, active: true} : {name, active: true});
+  });
+
   const filters = getList(search, "filters", ",").map(filterParse);
 
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
@@ -123,7 +122,7 @@ export function requestToQueryParams(
     isPreview: false,
     booleans: {
       // parents: search.get("parents") || undefined,
-    },
+    }
   };
 
   function getList(params: URLSearchParams, key: string, separator: string): string[] {
@@ -137,7 +136,7 @@ export function requestToQueryParams(
 
 export function filterSerialize(item: FilterItem): string {
   const conditions = filterMap([item.conditionOne, item.conditionTwo], cond =>
-    cond ? `${cond[0]}.${cond[2]}` : null,
+    cond ? `${cond[0]}.${cond[2]}` : null
   );
   return `${item.measure}.${conditions.join(`.${item.joint}.`)}`;
 }
@@ -153,7 +152,7 @@ export function filterParse(item: string): FilterItem {
     measure: item.slice(0, indexName),
     joint,
     conditionOne: filterParseCondition(cond1),
-    conditionTwo: cond2 ? filterParseCondition(cond2) : undefined,
+    conditionTwo: cond2 ? filterParseCondition(cond2) : undefined
   };
 }
 
