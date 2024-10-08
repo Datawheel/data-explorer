@@ -359,6 +359,8 @@ export function willSetCube(
       })
     );
 
+    locale && dispatch(queriesActions.updateLocale(locale));
+
     dispatch(
       queriesActions.updateCube({
         cube: nextCube.name,
@@ -378,8 +380,6 @@ export function willSetCube(
         dispatch(queriesActions.updateCut(buildCut({...dd, active: false})));
       });
     });
-
-    locale && dispatch(queriesActions.updateLocale(locale));
 
     return Promise.all(promises).then(noop);
   };
