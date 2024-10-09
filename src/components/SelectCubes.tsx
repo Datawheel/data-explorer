@@ -107,7 +107,7 @@ function SelectCubeInternal(props: {
   }, [selectedItem, cube, measuresActive]);
 
   return (
-    <Stack id="select-cube" spacing={"xs"} w={"100%"}>
+    <Stack id="dex-select-cube" spacing={"xs"} w={"100%"}>
       <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
     </Stack>
   );

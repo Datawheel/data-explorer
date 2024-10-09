@@ -78,7 +78,7 @@ export function LocaleSelector() {
   }
 
   return (
-    <Box id="select-locale">
+    <Box id="dex-select-locale">
       <Tooltip label={t("params.label_locale")}>
         <SelectObject
           getLabel="value"

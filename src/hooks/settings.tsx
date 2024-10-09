@@ -4,7 +4,7 @@ import {type ExplorerActionMap} from "../state";
 import {Formatter, PanelDescriptor} from "../utils/types";
 import {usePermalink} from "./permalink";
 import type {Pagination} from "../components/Explorer";
-
+import type {ToolbarConfigType} from "../components/Toolbar";
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
   [K in keyof ExplorerActionMap]: ExplorerActionMap[K] extends (
@@ -14,6 +14,11 @@ export type ExplorerBoundActionMap = {
     : ExplorerActionMap[K];
 };
 
+const defaultToolbarConfig: ToolbarConfigType = {
+  buttons: [],
+  showLabels: true,
+}
+
 interface SettingsContextProps {
   actions: ExplorerBoundActionMap;
   defaultMembersFilter: "id" | "name" | "any";
@@ -22,6 +27,7 @@ interface SettingsContextProps {
   panels: PanelDescriptor[];
   paginationConfig: Pagination;
   measuresActive?: number;
+  toolbarConfig?: ToolbarConfigType;
 }
 
 /**
@@ -44,9 +50,10 @@ export function SettingsProvider(props: {
   withPermalink: boolean | undefined;
   pagination?: Pagination;
   measuresActive?: number;
+  toolbarConfig?: Partial<ToolbarConfigType>;
 }) {
   usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
-
+  
   const value: SettingsContextProps = useMemo(
     () => ({
       actions: props.actions,
@@ -55,9 +62,10 @@ export function SettingsProvider(props: {
       panels: props.panels,
       previewLimit: props.previewLimit || 50,
       paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100},
-      measuresActive: props.measuresActive
+      measuresActive: props.measuresActive,
+      toolbarConfig: {...defaultToolbarConfig,...props.toolbarConfig},
     }),
-    [props.formatters, props.previewLimit]
+    [props.formatters, props.previewLimit, props.toolbarConfig]
   );
 
   return <ContextProvider value={value}>{props.children}</ContextProvider>;

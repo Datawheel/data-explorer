@@ -651,6 +651,7 @@ export function TableView({
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
         <ProgressBar isTopToolbar={false} table={table} />
         <ScrollArea
+          id="dex-table"
           h={isData ? "100%" : "auto"}
           sx={{
             flex: "1 1 auto",
