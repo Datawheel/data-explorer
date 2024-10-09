@@ -187,6 +187,67 @@ export const defaultTranslation = {
     sort_asc: "Sort Asc",
     sort_desc: "Sort Desc"
   },
+  tour: {
+    controls: {
+      prev: "Previous",
+      next: "Next",
+      help: "Help",
+    },
+    steps: {
+      welcome: {
+        title: "Welcome to the Data Explorer",
+        text1: "This tutorial will guide you through the steps on how to use the Data Explorer",
+        text2: "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
+      },
+      locale: {
+        title: "Multilingual",
+        text1: "The Data Explorer makes data available multiple languages.",
+        text2: "Use the dropdown menu to change the output language of the data."
+      },
+      dataset: {
+        title: "Selecting a Dataset",
+        text1: "Begin by selecting a topic of interest.",
+        text2: "Then, select a specific data table within that topic grouping."
+      },
+      search: {
+        title: "Searching for a Dataset",
+        text1: "You can also explore the list of topics and datasets.",
+        text2: "Start typing to filter the list of datasets with your search",
+      },
+      table: {
+        title: "Data Table",
+        text1: "Results are initially displayed as a data table.",
+        text2: "Each column header allows live sorting and filtering options."
+      },
+      columns: {
+        title: "Columns",
+        text1: "Select the columns that you are interested in viewing.",
+        text2: "When you toggle any column checkbox, the data table will automatically update to reflect your selection."
+      },
+      filters: {
+        title: "Filters",
+        text1: "You can filter the elements of each column that you want to display in the data table and visualization.",
+        text2: "If you want all available elements to be displayed, you don't need to apply filters."
+      },
+      download: {
+        title: "Downloading the Data",
+        text1: "You are able to download the information in CSV and JSON formats."
+      },
+      api: {
+        title: "API",
+        text1: "You can access the raw data programmatically using the Data Explorer JSON REST API."
+      },
+      vizbuilderTab: {
+        title: "Vizbuilder",
+        text1: "You can see the results of your query in different types of visualizations."
+      },
+      last: {
+        title: "Let's get started!",
+        text: "You are ready to start exploring the Data Explorer database and generate your own tables and visualizations.",
+        button: "Begin"
+      }
+    }
+  },
   transfer_input: {
     count_hidden: "{{n}} item hidden",
     count_hidden_plural: "{{n}} items hidden",

@@ -124,6 +124,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           </Flex>
         </Box>
         <ScrollArea
+          id="dex-select-cube-area"
           sx={theme => ({
             borderTopColor:
               theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[3],
@@ -182,6 +183,7 @@ function Auto() {
   return (
     <Input
       icon={<IconSearch />}
+      id="dex-search"
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}

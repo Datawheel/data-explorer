@@ -100,6 +100,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
       <Group spacing="xs">
         {url && (
           <Button
+            id="dex-api-btn"
             variant="filled"
             color="dark"
             leftIcon={<IconCopy size={20} />}
@@ -140,7 +141,7 @@ const DownloadQuery = ({data}) => {
   }
 
   return (
-    <Box id="button-group-download-results">
+    <Box id="dex-btn-group-download">
       <Group spacing={"xs"}>
         {components}
         <MenuOpts formats={formats.filter(f => f !== "csv")} />
