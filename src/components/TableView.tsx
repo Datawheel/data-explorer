@@ -34,7 +34,7 @@ import {
   flexRender,
   useMantineReactTable
 } from "mantine-react-table";
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState} from "react";
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRef} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
@@ -645,6 +645,11 @@ export function TableView({
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const loadingState = useSelector(selectLoadingState);
+  const viewport = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    viewport.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [pagination?.pageIndex, pagination?.pageSize])
 
   return (
     <Box sx={{height: "100%"}}>
@@ -653,6 +658,7 @@ export function TableView({
         <ScrollArea
           id="dex-table"
           h={isData ? "100%" : "auto"}
+          viewportRef={viewport}
           sx={{
             flex: "1 1 auto",
             position: "relative",

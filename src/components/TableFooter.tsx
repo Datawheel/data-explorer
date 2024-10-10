@@ -101,10 +101,9 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
         {url && (
           <Button
             id="dex-api-btn"
-            variant="filled"
-            color="dark"
+            variant="subtle"
             leftIcon={<IconCopy size={20} />}
-            sx={{height: 30, backgroundColor: "#5A5A5A"}}
+            sx={{height: 30}}
             onClick={copyHandler}
           >
             {copied ? t("action_copy_done") : t("action_copy")} API
@@ -125,10 +124,9 @@ const DownloadQuery = ({data}) => {
 
   components.push(
     <ButtonDownload
-      variant="filled"
-      color="dark"
+      variant="light"
       leftIcon={<IconDownload size={20} />}
-      sx={{height: 30, backgroundColor: "#5A5A5A"}}
+      sx={{height: 30}}
       key="download_csv"
       provider={() => actions.willDownloadQuery("csv")}
     >
@@ -170,6 +168,7 @@ function useDownload(props) {
           : new window.Blob([file.content], {
               type: mimeTypes[file.extension] || "application/octet-stream"
             });
+      
       const blobURL = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = blobURL;

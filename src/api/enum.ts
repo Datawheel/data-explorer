@@ -67,7 +67,7 @@ export enum DimensionType {
 
 export enum Format {
   csv = "csv",
-  jsonarrays = "jsonarrays",
+  // jsonarrays = "jsonarrays",
   jsonrecords = "jsonrecords",
   parquet = "parquet",
   tsv = "tsv",

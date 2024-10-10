@@ -129,12 +129,12 @@ export default function Toolbar({
 }) {
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
-  const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
+  const smallerThanLg = useMediaQuery(`(max-width: ${theme.breakpoints.lg})`);
   const {toolbarConfig} = useSettings();
   
   const settings = (
     <Flex
-      direction={{base: "column", md: "row"}}
+      direction={{base: "column", lg: "row"}}
       justify={"flex-start"}
       sx={toolbarSx}
       p="0.325rem"
@@ -142,7 +142,7 @@ export default function Toolbar({
       wrap="nowrap"
       gap="xs"
     >
-      {toolbarConfig?.buttons.map(b => <ToolbarButton {...b}/>)}
+      {toolbarConfig?.buttons.map(b => <ToolbarButton key={b.label} {...b}/>)}
       <TourButton />
       <ToolbarButton
         icon={<FullScreenSVG />}
@@ -151,7 +151,7 @@ export default function Toolbar({
       />
     </Flex>
   );
-  return smallerThanMd ? (
+  return smallerThanLg ? (
     <Menu>
       <Menu.Target>
         <ActionIcon>

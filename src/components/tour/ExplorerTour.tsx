@@ -74,6 +74,53 @@ interface ExplorerTourProps {
     tourConfig: TourConfig;
 };
 
+const keyboardHandler = (rtl: Boolean) => (e, clickProps) => {
+    e.stopPropagation();
+    if(!clickProps) return;
+    function next() {
+        if(clickProps.currentStep === clickProps.steps.length - 1) {
+            clickProps.setIsOpen(false);
+            clickProps.setCurrentStep(0);
+        } else {
+            const nextStep = clickProps.steps[clickProps.currentStep + 1];
+            if (nextStep.hasOwnProperty("actionBefore")) {
+                nextStep.actionBefore();
+                setTimeout(() => clickProps.setCurrentStep((s:number) => s + 1), 250);
+            } else {
+                clickProps.setCurrentStep((s:number) => s + 1);
+            }
+        }
+    }
+  
+    function prev() {
+        clickProps.setCurrentStep(
+            (s:number) => s === 0
+                ?  clickProps.steps.length - 1
+                : s - 1
+        )
+    }
+
+    if (e.keyCode === 27) {
+        e.preventDefault()
+        clickProps.setIsOpen(false)
+      }
+      if (e.keyCode === 39) {
+        e.preventDefault()
+        if (rtl) {
+          prev()
+        } else {
+          next()
+        }
+      }
+      if (e.keyCode === 37) {
+        e.preventDefault()
+        if (rtl) {
+          next()
+        } else {
+          prev()
+        }
+      }
+}
 export default function ExplorerTour({children, tourConfig}: React.PropsWithChildren<ExplorerTourProps>) {
     const theme = useMantineTheme();
     const steps = useTourSteps(tourConfig);
@@ -94,6 +141,8 @@ export default function ExplorerTour({children, tourConfig}: React.PropsWithChil
         })
     };
 
+    const rtl = theme.dir === "rtl";
+
     return (
         <TourProvider
             steps={steps}
@@ -103,6 +152,7 @@ export default function ExplorerTour({children, tourConfig}: React.PropsWithChil
             showBadge={false}
             styles={styles}
             rtl={theme.dir === "rtl"}
+            keyboardHandler={keyboardHandler(rtl)}
             disableInteraction
             {...tourConfig?.tourProps}
         >
