@@ -8,6 +8,8 @@ import { TourConfig } from "./types";
 
 function PrevButton(props) {
     const {translate: t} = useTranslation();
+    const theme = useMantineTheme();
+    const isRtl = theme.dir === "rtl";
     const handleClick = () => props.setCurrentStep(
         (s:number) => s === 0
             ?  props.steps.length - 1
@@ -15,7 +17,7 @@ function PrevButton(props) {
     )
     return (
         <Button            
-            leftIcon={<IconArrowLeft size="0.8rem" />}
+            leftIcon={isRtl ? <IconArrowRight size="0.8rem" /> : <IconArrowLeft size="0.8rem" />}
             onClick={handleClick}
             radius={0}
             size="lg"
@@ -32,6 +34,9 @@ function PrevButton(props) {
 
 function NextButton(props) {
     const {translate: t} = useTranslation();
+    const theme = useMantineTheme();
+    const isRtl = theme.dir === "rtl";
+
     const handleClick = () => {
         if(props.currentStep === props.steps.length - 1) {
             props.setIsOpen(false);
@@ -54,7 +59,7 @@ function NextButton(props) {
             size="lg"
             sx={{flex: "0 0 50%"}}
             onClick={handleClick}
-            rightIcon={<IconArrowRight size="0.8rem" />}
+            rightIcon={isRtl ? <IconArrowLeft size="0.8rem" /> : <IconArrowRight size="0.8rem" />}
             radius={0}
         >
             {t("tour.controls.next")}
@@ -80,6 +85,12 @@ export default function ExplorerTour({children, tourConfig}: React.PropsWithChil
             order: -1,
             width: "100%",
             margin: `0 auto ${theme.spacing.xs}`,
+        }),
+        dot: (base: React.CSSProperties, {current}) => ({
+            ...base,
+            background: current ? theme.fn.primaryColor(): "transparent",
+            color: theme.fn.primaryColor(),
+            borderColor: theme.colors.gray[5]
         })
     };
 
