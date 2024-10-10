@@ -16,7 +16,7 @@ export class TesseractModuleClient {
   requestConfig: RequestInit;
 
   constructor(baseURL?: string, config?: RequestInit) {
-    this.baseURL = baseURL || "";
+    this.baseURL = baseURL ? baseURL.replace(/\/?$/, '/'):  "";
     this.requestConfig = config || {headers: new Headers()};
   }
 

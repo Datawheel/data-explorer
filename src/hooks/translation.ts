@@ -34,7 +34,9 @@ export const defaultTranslation = {
   formats: {
     csv: "CSV",
     json: "JSON",
-    jsonarrays: "JSON Arrays",
+    tsv: "TSV",
+    parquet: "Parquet",
+    // jsonarrays: "JSON Arrays",
     jsonrecords: "JSON Records",
     xlsx: "XLSX"
   },

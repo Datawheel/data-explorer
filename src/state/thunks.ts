@@ -53,7 +53,7 @@ export function willDownloadQuery(
       .fetchData({request: queryParamsToRequest(queryParams), format})
       .then(response => response.blob())
       .then(result => ({
-        content: result[0],
+        content: result,
         extension: format.replace(/json\w+/, "json"),
         name: `${params.cube}_${new Date().toISOString()}`
       }));
@@ -403,7 +403,7 @@ export function willSetupClient(
   requestConfig?: RequestInit
 ): ExplorerThunk<Promise<{[k: string]: TesseractCube}>> {
   return (dispatch, getState, {tesseract}) => {
-    tesseract.baseURL = baseURL;
+    tesseract.baseURL = baseURL.replace(/\/?$/, '/');
     const state = getState();
     const search = new URLSearchParams(location.search);
     const locale = search.get("locale");

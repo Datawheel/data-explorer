@@ -91,7 +91,7 @@ export const useStyles = createStyles(theme => ({
       theme.colorScheme === "dark"
         ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.45)
         : theme.colors[theme.primaryColor][4],
-    color: theme.colorScheme === "dark" ? theme.colors[theme.primaryColor][1] : theme.white,
+    color: theme.white,
     fontWeight: 500
   }
 }));
