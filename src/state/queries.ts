@@ -183,12 +183,12 @@ export const queriesSlice = createSlice({
     updateCube(
       state,
       {
-        payload,
+        payload
       }: Action<{
         cube: string;
         measures: Record<string, MeasureItem>;
         drilldowns: Record<string, DrilldownItem>;
-      }>,
+      }>
     ) {
       const query = taintCurrentQuery(state);
       if (payload.cube !== query.params.cube) {
@@ -197,8 +197,8 @@ export const queriesSlice = createSlice({
             cube: payload.cube,
             drilldowns: payload.drilldowns,
             measures: payload.measures,
-            locale: query.params.locale,
-          },
+            locale: query.params.locale
+          }
         });
         query.params = params;
         query.result = result;
@@ -268,6 +268,11 @@ export const queriesSlice = createSlice({
       const query = taintCurrentQuery(state);
       query.params.sortDir = payload.dir;
       query.params.sortKey = payload.key;
+    },
+
+    clearSorting(state) {
+      const query = taintCurrentQuery(state);
+      query.params.sortKey = undefined;
     },
 
     /**
