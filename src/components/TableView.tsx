@@ -46,13 +46,13 @@ import {selectLoadingState} from "../state/loading";
 import {
   selectCutItems,
   selectDrilldownItems,
-  selectDrilldownMap,
   selectFilterItems,
   selectFilterMap,
   selectLocale,
   selectMeasureItems,
   selectMeasureMap,
-  selectPaginationParams
+  selectPaginationParams,
+  selectSortingParams
 } from "../state/queries";
 import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
@@ -73,6 +73,10 @@ import type {TesseractCube} from "../api/tesseract/schema";
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
+
+function isColumnSorted(column: string, key: string) {
+  return column == key;
+}
 
 const removeColumn = (
   actions: ExplorerBoundActionMap,
@@ -418,6 +422,8 @@ export function useTable({
     cube.measures
   );
 
+  const {sortKey, sortDir} = useSelector(selectSortingParams);
+
   const columns = useMemo<ColumnDef<TData>[]>(() => {
     const indexColumn = {
       id: "#",
@@ -460,6 +466,8 @@ export function useTable({
           return 0;
         },
         Header: ({column}) => {
+          const isSorted = isColumnSorted(entity.name, sortKey);
+
           return (
             <Box mb={rem(5)} key="header">
               <Flex justify="center" align="center">
@@ -471,9 +479,19 @@ export function useTable({
                       key={`sort-${header}`}
                       size={22}
                       ml={rem(5)}
-                      onClick={column.getToggleSortingHandler()}
+                      onClick={() => {
+                        if (!isSorted) {
+                          actions.updateSorting({key: entity.name, dir: "desc"});
+                        }
+                        if (isSorted && sortDir === "desc") {
+                          actions.updateSorting({key: entity.name, dir: "asc"});
+                        }
+                        if (isSorted && sortDir === "asc") {
+                          actions.clearSorting();
+                        }
+                      }}
                     >
-                      {getSortIcon(column.getIsSorted(), entityType)}
+                      {getSortIcon(isSorted ? sortDir : false, entityType)}
                     </ActionIcon>
                   </Flex>
                 </Box>
@@ -612,7 +630,7 @@ export function useTable({
     enableHiding: false,
     manualFiltering: true,
     manualPagination: true,
-    manualSorting: false,
+    manualSorting: true,
     rowCount: totalRowCount,
     state: {
       isLoading: isLoading || data === undefined || isTransitionState,
@@ -648,8 +666,8 @@ export function TableView({
   const viewport = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    viewport.current?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [pagination?.pageIndex, pagination?.pageSize])
+    viewport.current?.scrollTo({top: 0, behavior: "smooth"});
+  }, [pagination?.pageIndex, pagination?.pageSize]);
 
   return (
     <Box sx={{height: "100%"}}>
