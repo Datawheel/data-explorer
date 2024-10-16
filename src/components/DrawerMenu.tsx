@@ -13,7 +13,8 @@ import {
   Text,
   ThemeIcon,
   useMantineTheme,
-  MantineTheme
+  MantineTheme,
+  Tooltip
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
@@ -379,9 +380,11 @@ function LevelItem({
               {activeFilter ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
             {properities && (
-              <ActionIcon onClick={() => setActiveProperties(value => !value)}>
-                <IconAdjustments />
-              </ActionIcon>
+              <Tooltip label={t("params.add_metadata")}>
+                <ActionIcon onClick={() => setActiveProperties(value => !value)}>
+                  <IconAdjustments />
+                </ActionIcon>
+              </Tooltip>
             )}
             <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
               <StackSVG />

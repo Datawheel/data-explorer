@@ -47,6 +47,7 @@ export const defaultTranslation = {
     message_default: "Please wait..."
   },
   params: {
+    add_metadata: "Add metadata",
     action_clear: "Clear query",
     action_clear_description: "Clear all parameters from your current query",
     action_execute: "Execute query",
@@ -193,13 +194,14 @@ export const defaultTranslation = {
     controls: {
       prev: "Previous",
       next: "Next",
-      help: "Help",
+      help: "Help"
     },
     steps: {
       welcome: {
         title: "Welcome to the Data Explorer",
         text1: "This tutorial will guide you through the steps on how to use the Data Explorer",
-        text2: "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
+        text2:
+          "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
       },
       locale: {
         title: "Multilingual",
@@ -214,7 +216,7 @@ export const defaultTranslation = {
       search: {
         title: "Searching for a Dataset",
         text1: "You can also explore the list of topics and datasets.",
-        text2: "Start typing to filter the list of datasets with your search",
+        text2: "Start typing to filter the list of datasets with your search"
       },
       table: {
         title: "Data Table",
@@ -224,12 +226,15 @@ export const defaultTranslation = {
       columns: {
         title: "Columns",
         text1: "Select the columns that you are interested in viewing.",
-        text2: "When you toggle any column checkbox, the data table will automatically update to reflect your selection."
+        text2:
+          "When you toggle any column checkbox, the data table will automatically update to reflect your selection."
       },
       filters: {
         title: "Filters",
-        text1: "You can filter the elements of each column that you want to display in the data table and visualization.",
-        text2: "If you want all available elements to be displayed, you don't need to apply filters."
+        text1:
+          "You can filter the elements of each column that you want to display in the data table and visualization.",
+        text2:
+          "If you want all available elements to be displayed, you don't need to apply filters."
       },
       download: {
         title: "Downloading the Data",
