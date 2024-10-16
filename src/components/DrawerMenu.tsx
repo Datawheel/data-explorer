@@ -17,6 +17,7 @@ import {
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
+  IconAdjustments,
   IconArrowsLeftRight,
   IconBox,
   IconClock,
@@ -29,7 +30,7 @@ import {
   IconStack3,
   IconWorld
 } from "@tabler/icons-react";
-import React, {useCallback, useLayoutEffect, useMemo, useState} from "react";
+import React, {PropsWithChildren, useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
@@ -44,7 +45,11 @@ import {
   selectLocale,
   selectMeasureMap
 } from "../state/queries";
-import {selectOlapDimensionItems, selectOlapMeasureItems} from "../state/selectors";
+import {
+  selectLevelTriadMap,
+  selectOlapDimensionItems,
+  selectOlapMeasureItems
+} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
@@ -56,11 +61,13 @@ import {
   buildCut,
   buildDrilldown,
   buildFilter,
-  buildMeasure
+  buildMeasure,
+  buildProperty
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
+import {keyBy} from "../utils/transform";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -106,7 +113,13 @@ function AddColumnsDrawer() {
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
-          <Button id="dex-column-btn" leftIcon={<IconPlus size="1.2rem" />} onClick={open} m="md" size="sm">
+          <Button
+            id="dex-column-btn"
+            leftIcon={<IconPlus size="1.2rem" />}
+            onClick={open}
+            m="md"
+            size="sm"
+          >
             {t("params.add_columns")}
           </Button>
         )}
@@ -172,7 +185,11 @@ function DimensionItem({
   //   return options[0];
   // }
   return (
-    <div key={dimension.name} className="dex-dimension-control" id={`dex-dimension-${dimension.name}`}>
+    <div
+      key={dimension.name}
+      className="dex-dimension-control"
+      id={`dex-dimension-${dimension.name}`}
+    >
       <Divider
         my="md"
         label={
@@ -254,6 +271,7 @@ function LevelItem({
   depth?: number;
 }) {
   const [activeFilter, setActiveFilter] = useState(false);
+  const [activePropertiesFilter, setActiveProperties] = useState(false);
   const {translate: t} = useTranslation();
   const actions = useActions();
   const cutItems = useSelector(selectCutItems);
@@ -329,6 +347,7 @@ function LevelItem({
 
   const paddingLeft = `${5 * depth + 5}px`;
 
+  const properities = currentDrilldown.properties.length ? currentDrilldown.properties : null;
   return (
     currentDrilldown && (
       <>
@@ -359,7 +378,11 @@ function LevelItem({
             >
               {activeFilter ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
-
+            {properities && (
+              <ActionIcon onClick={() => setActiveProperties(value => !value)}>
+                <IconAdjustments />
+              </ActionIcon>
+            )}
             <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
               <StackSVG />
             </ThemeIcon>
@@ -391,8 +414,71 @@ function LevelItem({
             />
           </Box>
         )}
+        {activePropertiesFilter && <PropertiesMultiSelect item={currentDrilldown} />}
       </>
     )
+  );
+}
+
+type PropertiesMultiSelectType = {
+  item: DrilldownItem;
+};
+function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectType>) {
+  const levelTriadMap = useSelector(selectLevelTriadMap);
+  const locale = useSelector(selectLocale);
+  const actions = useActions();
+  const {translate: t} = useTranslation();
+
+  const propertiesUpdateHandler = useCallback(
+    (activeProps: string[]) => {
+      const properties = item.properties.map(prop =>
+        buildProperty({
+          ...prop,
+          active: activeProps.includes(prop.key)
+        })
+      );
+      actions.updateDrilldown({...item, properties});
+    },
+    [item]
+  );
+
+  const propertyRecords = useMemo(
+    () => keyBy(item.properties, item => item.key),
+    [item.properties]
+  );
+
+  const activeProperties = filterMap(item.properties, item =>
+    isActiveItem(item) ? item.key : null
+  );
+
+  const label = useMemo(() => {
+    const triad = levelTriadMap[`${item.level}`];
+    const triadCaptions = triad.map(item => getCaption(item, locale.code));
+    return t("params.tag_drilldowns", {
+      abbr: abbreviateFullName(triadCaptions, t("params.tag_drilldowns_abbrjoint")),
+      dimension: triadCaptions[0],
+      hierarchy: triadCaptions[1],
+      level: triadCaptions[2],
+      propCount: activeProperties.length
+    });
+  }, [activeProperties.join("-"), item, locale.code]);
+
+  return (
+    <Box pt="md">
+      <MultiSelect
+        sx={{flex: "1 1 100%"}}
+        searchable
+        onChange={propertiesUpdateHandler}
+        value={activeProperties || []}
+        placeholder={`Filter by ${label}`}
+        data={item.properties.map(property => ({
+          value: String(property.key),
+          label: property.name
+        }))}
+        clearable
+        nothingFound="Nothing found"
+      />
+    </Box>
   );
 }
 
