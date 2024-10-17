@@ -445,11 +445,6 @@ function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectTy
     [item]
   );
 
-  const propertyRecords = useMemo(
-    () => keyBy(item.properties, item => item.key),
-    [item.properties]
-  );
-
   const activeProperties = filterMap(item.properties, item =>
     isActiveItem(item) ? item.key : null
   );
