@@ -57,7 +57,7 @@ import {
 import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import type {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryResult} from "../utils/structs";
-import {type AnyResultColumn, buildFilter, buildMeasure} from "../utils/structs";
+import {type AnyResultColumn, buildFilter, buildMeasure, buildProperty} from "../utils/structs";
 import type {ViewProps} from "../utils/types";
 import CustomActionIcon from "./CustomActionIcon";
 import {
@@ -78,11 +78,22 @@ function isColumnSorted(column: string, key: string) {
   return column == key;
 }
 
+const propertiesUpdateHandler = (actions, item: DrilldownItem, activeProps: string[]) => {
+  const properties = item.properties.map(prop =>
+    buildProperty({
+      ...prop,
+      active: activeProps.includes(prop.key)
+    })
+  );
+  actions.updateDrilldown({...item, properties});
+};
+
 const removeColumn = (
   actions: ExplorerBoundActionMap,
   entity: TesseractMeasure | TesseractProperty | TesseractLevel,
   measures: MeasureItem[],
-  drilldowns: DrilldownItem[]
+  drilldowns: DrilldownItem[],
+  type: EntityTypes
 ) => {
   if ("aggregator" in entity) {
     const measure = measures.find(d => d.name === entity.name);
@@ -92,12 +103,30 @@ const removeColumn = (
     const drilldown = drilldowns.find(d => d.level === entity.name);
     drilldown && actions.updateDrilldown({...drilldown, active: false});
   }
-  // maybe need to handle case for property columns.
+
+  if (isProperty(type)) {
+    const activeDrilldowns = drilldowns.filter(d => d.active);
+    const drilldown = activeDrilldowns.find(dd =>
+      dd.properties.some(property => property.name === entity.name)
+    );
+
+    const activeProperties = drilldown?.properties
+      .filter(p => p.active)
+      .filter(p => p.name !== entity.name)
+      .filter(p => p.active)
+      .map(p => p.name);
+
+    if (drilldown && activeProperties) {
+      propertiesUpdateHandler(actions, drilldown, activeProperties);
+    }
+  }
 };
+
+const isProperty = (entity: EntityTypes) => entity === "property";
 
 function showTrashIcon(columns: AnyResultColumn[], type: EntityTypes) {
   const result = columns.filter(c => c.entityType === type);
-  return result.length > 1;
+  return result.length > 1 || isProperty(type);
 }
 
 const getActionIcon = (entityType: EntityTypes) => {
@@ -122,6 +151,8 @@ const getEntityText = (entityType: EntityTypes) => {
       return "Metric";
     case "level":
       return "Dimension";
+    case "property":
+      return "Property";
     default:
       return "";
   }
@@ -499,7 +530,7 @@ export function useTable({
                   label={`At least one ${getEntityText(entityType)} is required.`}
                   key={`remove-${column.columnDef.header}`}
                   disabled={!showTrashIcon(finalKeys, entityType)}
-                  onClick={() => removeColumn(actions, entity, measures, drilldowns)}
+                  onClick={() => removeColumn(actions, entity, measures, drilldowns, entityType)}
                   showTooltip={!showTrashIcon(finalKeys, entityType)}
                   size={25}
                   ml={rem(5)}
