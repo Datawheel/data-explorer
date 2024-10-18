@@ -1,19 +1,19 @@
 export enum Aggregator {
-  avg = "avg",
-  basic_grouped_median = "basic_grouped_median",
-  count = "count",
-  distinct_count = "distinct_count",
-  max = "max",
-  median = "median",
-  min = "min",
-  mode = "mode",
-  moe = "moe",
-  quantile = "quantile",
-  replicate_weight_moe = "replicate_weight_moe",
-  sum = "sum",
-  weighted_average_moe = "weighted_average_moe",
-  weighted_avg = "weighted_avg",
-  weighted_sum = "weighted_sum",
+  AVERAGE = "Average",
+  COUNT = "Count",
+  MAX = "Max",
+  MEDIAN = "Median",
+  MIN = "Min",
+  MODE = "Mode",
+  SUM = "Sum",
+  BASICGROUPEDMEDIAN = "BasicGroupedMedian",
+  CALCULATEDMOE = "CalculatedMoe",
+  QUANTILE = "Quantile",
+  REPLICATEWEIGHTMOE = "ReplicateWeightMoe",
+  WEIGHTEDAVERAGE = "WeightedAverage",
+  WEIGHTEDAVERAGEMOE = "WeightedAverageMoe",
+  WEIGHTEDSUM = "WeightedSum",
+  DISTINCTCOUNT = "DistinctCount",
 }
 
 export enum ColumnType {
@@ -60,9 +60,9 @@ export enum Comparison {
 }
 
 export enum DimensionType {
-  geo = "geo",
-  standard = "standard",
-  time = "time",
+  GEO = "geo",
+  STANDARD = "standard",
+  TIME = "time",
 }
 
 export enum Format {

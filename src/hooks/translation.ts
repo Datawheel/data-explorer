@@ -1,5 +1,4 @@
 import {translationFactory} from "@datawheel/use-translation";
-import {translationDict as vizbuilderTranslationDict} from "@datawheel/vizbuilder";
 
 export const defaultTranslation = {
   action_copy: "Copy",
@@ -266,7 +265,41 @@ export const defaultTranslation = {
     selected_items: "Selected items",
     unselected_items: "Unselected items"
   },
-  vizbuilder: vizbuilderTranslationDict
+  vizbuilder: {
+    action_close: "Close",
+    action_enlarge: "Enlarge",
+    action_fileissue: "File an issue",
+    action_retry: "Retry",
+    aggregators: {
+      avg: "Average",
+      max: "Max",
+      min: "Min",
+      sum: "",
+    },
+    chart_labels: {
+      ci: "Confidence Interval",
+      moe: "Margin of Error",
+      source: "Source",
+      collection: "Collection",
+    },
+    error: {
+      detail: "",
+      message: 'Details: "{{message}}".',
+      title: "Error",
+    },
+    sentence_connectors: {
+      and: "and",
+    },
+    title: {
+      nonidealstate: "No results",
+      of_selected_cut_members: "of Selected {{members}} Members",
+      top_drilldowns: "for Top {{drilldowns}}",
+      by_drilldowns: "by {{drilldowns}}",
+      over_time: "Over Time",
+      measure_and_modifier: "{{modifier}} {{measure}}",
+      total: "Total",
+    },
+  },
 };
 
 export type TranslationDict = typeof defaultTranslation;

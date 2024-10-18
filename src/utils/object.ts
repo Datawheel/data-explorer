@@ -1,5 +1,5 @@
-import type {TesseractCube} from "../api";
-import {mapCubeEntities} from "../api/traverse";
+import type {TesseractCube, TesseractDataResponse} from "../api";
+import {entityFinder} from "../api/traverse";
 import {filterMap} from "./array";
 import {getCaption, parseNumeric} from "./string";
 import type {AnyResultColumn, QueryParams} from "./structs";
@@ -9,14 +9,14 @@ import {hasProperty} from "./validation";
 /**
  * Wraps `Object.keys` for reusability.
  */
-export function getKeys<T>(map: { [s: string]: T }): string[] {
+export function getKeys<T>(map: {[s: string]: T}): string[] {
   return Object.keys(map);
 }
 
 /**
  * Wraps `Object.values` for reusability.
  */
-export function getValues<T>(map: { [s: string]: T }): T[] {
+export function getValues<T>(map: {[s: string]: T}): T[] {
   return Object.values(map);
 }
 
@@ -43,20 +43,17 @@ export function getOrderValue<T extends Annotated>(schemaObject: T) {
 export function describeData(
   cube: TesseractCube,
   params: QueryParams,
-  data: Record<string, unknown>[],
+  result: TesseractDataResponse,
 ): Record<string, AnyResultColumn> {
   const {locale} = params;
-  const entityMap = mapCubeEntities(cube);
-  const entityFinder = (name: string) => {
-    const nameWoId = name.replace(/^ID\s|\sID$/, "");
-    return entityMap[name] || entityMap[nameWoId];
-  };
 
   return Object.fromEntries(
-    filterMap(Object.keys(data[0] || {}), column => {
-      const entity = entityFinder(column);
-      if (!entity) return null;
-      const typeSet = new Set(data.map(item => typeof item[column]));
+    filterMap(result.columns, column => {
+      const entityResult = entityFinder(cube, column);
+      if (!entityResult) return null;
+      const [entity] = entityResult;
+
+      const typeSet = new Set(result.data.map(item => typeof item[column]));
       const valueType =
         typeSet.size === 1
           ? typeSet.has("number")
@@ -81,7 +78,7 @@ export function describeData(
           entity,
           entityType,
           isId,
-          range: valueType === "number" ? getDomain(data, column) : undefined,
+          range: valueType === "number" ? getDomain(result.data, column) : undefined,
           valueType,
         } as AnyResultColumn,
       ];

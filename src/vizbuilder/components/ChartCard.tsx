@@ -1,9 +1,4 @@
-import {
-  type Chart,
-  type ChartType,
-  type D3plusConfig,
-  createChartConfig,
-} from "@datawheel/vizbuilder";
+import type {Chart, D3plusConfig} from "@datawheel/vizbuilder";
 import {Box, Button, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
@@ -13,27 +8,12 @@ import {
   IconVectorTriangle,
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
-import {BarChart, Donut, Geomap, LinePlot, Pie, StackedArea, Treemap} from "d3plus-react";
 import React, {useMemo, useRef} from "react";
 import type {TesseractMeasure} from "../../api/tesseract/schema";
-import {useTranslation} from "../../main";
-import {asArray} from "../tooling/collection";
+import {useTranslation} from "../../hooks/translation";
+import {asArray as castArray} from "../../utils/array";
+import {useD3plusConfig} from "../hooks/useD3plusConfig";
 import {ErrorBoundary} from "./ErrorBoundary";
-
-export const chartComponents: Record<
-  ChartType,
-  React.ComponentType<{config: D3plusConfig}>
-> = {
-  barchart: BarChart,
-  barchartyear: BarChart,
-  donut: Donut,
-  geomap: Geomap,
-  histogram: BarChart,
-  lineplot: LinePlot,
-  pie: Pie,
-  stacked: StackedArea,
-  treemap: Treemap,
-};
 
 const iconByFormat = {
   jpg: IconPhotoDown,
@@ -41,82 +21,77 @@ const iconByFormat = {
   svg: IconVectorTriangle,
 };
 
-/**  */
 export function ChartCard(props: {
+  /** The information needed to build a specific chart configuration. */
   chart: Chart;
-  currentChart: string;
-  downloadFormats?: string[] | undefined;
-  isSingleChart: boolean;
-  measureConfig: (item: TesseractMeasure) => D3plusConfig;
-  onToggle: () => void;
-  showConfidenceInt: boolean;
-  userConfig: D3plusConfig;
-}) {
-  const {
-    chart,
-    currentChart,
-    isSingleChart,
-    measureConfig,
-    showConfidenceInt,
-    userConfig,
-  } = props;
-  const isFocused = currentChart === chart.key;
 
-  const {translate, locale} = useTranslation();
+  /**
+   * An accessor that generates custom defined d3plus configs by measure name.
+   * Has priority over all other configs.
+   */
+  measureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
+
+  /** A list of the currently enabled formats to download. Options are "PNG" and "SVG". */
+  downloadFormats?: string[];
+
+  /** Flag to render the card in full feature mode. */
+  isFullMode?: boolean;
+
+  /**
+   * An event handler to call when the user click the 'focus' button.
+   * If not defined, the button will not be rendered.
+   */
+  onFocus?: () => void;
+
+  /** Toggles confidence intervals/margins of error when available. */
+  showConfidenceInt?: boolean;
+
+  /**
+   * A global d3plus config that gets applied on all charts.
+   * Has priority over the individually generated configs per chart,
+   * but can be overridden by internal working configurations.
+   */
+  userConfig?: (chart: Chart) => Partial<D3plusConfig>;
+}) {
+  const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt} = props;
+
+  const {translate} = useTranslation();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
-  const ChartComponent = chartComponents[chart.chartType];
-
-  const config = useMemo(
-    () =>
-      createChartConfig(chart, {
-        currentChart,
-        isSingleChart,
-        isUniqueChart: isSingleChart,
-        measureConfig,
-        showConfidenceInt: !!showConfidenceInt,
-        translate: (template, data) => translate(`vizbuilder.${template}`, data),
-        userConfig: userConfig || {},
-      }),
-    [
-      chart,
-      currentChart,
-      isSingleChart,
-      translate,
-      measureConfig,
-      userConfig,
-      showConfidenceInt,
-    ],
-  );
+  const [ChartComponent, config] = useD3plusConfig(chart, {
+    fullMode: !!isFullMode,
+    showConfidenceInt: !!showConfidenceInt,
+    getMeasureConfig: props.measureConfig,
+    t: translate,
+  });
 
   const downloadButtons = useMemo(() => {
-    if (!isFocused && !isSingleChart) return [];
-
-    const filename = (config.title instanceof Function ? config.title() : config.title)
-      // and replace special characters with underscores
+    // Sanitize filename for Windows and Unix
+    const filename = (
+      typeof config.title === "function" ? config.title() : config.title || ""
+    )
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
 
-    return asArray(props.downloadFormats).map(format => {
+    return castArray(downloadFormats).map(format => {
       const formatLower = format.toLowerCase();
       const Icon = iconByFormat[formatLower] || IconDownload;
       return (
         <Button
-          compact
           key={format}
+          compact
           leftIcon={<Icon size={16} />}
           onClick={() => {
             const {current: boxElement} = nodeRef;
             const svgElement = boxElement?.querySelector("svg");
-            svgElement &&
+            if (svgElement) {
               saveElement(
                 svgElement,
                 {filename, type: formatLower},
-                {
-                  background: getBackground(svgElement),
-                },
+                {background: getBackground(svgElement)},
               );
+            }
           }}
           size="sm"
           variant="light"
@@ -125,28 +100,28 @@ export function ChartCard(props: {
         </Button>
       );
     });
-  }, [isFocused, isSingleChart, props.downloadFormats, config.title]);
+  }, [config, downloadFormats]);
 
   const focusButton = useMemo(() => {
-    if (!isFocused && isSingleChart) return null;
-
-    const Icon = isFocused ? IconArrowsMinimize : IconArrowsMaximize;
+    const Icon = isFullMode ? IconArrowsMinimize : IconArrowsMaximize;
     return (
       <Button
         compact
         leftIcon={<Icon size={16} />}
-        onClick={props.onToggle}
+        onClick={onFocus}
         size="sm"
-        variant={isFocused ? "filled" : "light"}
+        variant={isFullMode ? "filled" : "light"}
       >
-        {isFocused
+        {isFullMode
           ? translate("vizbuilder.action_close")
           : translate("vizbuilder.action_enlarge")}
       </Button>
     );
-  }, [isFocused, isSingleChart, translate, props.onToggle]);
+  }, [isFullMode, translate, onFocus]);
 
-  const height = isFocused ? "calc(100vh - 3rem)" : isSingleChart ? "75vh" : 300;
+  const height = isFullMode ? "calc(100vh - 3rem)" : 300;
+
+  if (!ChartComponent) return null;
 
   return (
     <Paper h={height} w="100%" style={{overflow: "hidden"}}>
@@ -154,7 +129,7 @@ export function ChartCard(props: {
         <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
           <Group position="right" p="xs" spacing="xs" align="center">
             {downloadButtons}
-            {focusButton}
+            {onFocus && focusButton}
           </Group>
           <Box style={{flex: "1 1 auto"}} ref={nodeRef} pb="xs" px="xs">
             <ChartComponent config={config} />
