@@ -99,7 +99,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
         id="dex-sidebar"
         py="md"
         sx={t => ({
-          height: "calc(100vh - 50px)",
+          height: "100%",
           backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1],
           boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
           maxWidth: expanded ? 300 : 54,
@@ -109,7 +109,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           [t.fn.smallerThan("md")]: {
             position: "absolute",
             width: expanded ? 300 : 0,
-            height: expanded ? "calc(100vh - 50px)" : 0,
+            height: expanded ? "100%" : 0,
             bottom: expanded ? "unset" : t.spacing.md,
             left: expanded ? "unset" : t.spacing.md,
             overflow: "hidden",
