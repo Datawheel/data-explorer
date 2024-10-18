@@ -135,3 +135,25 @@ export function tuple<T, U>(one: T, two: U): [T, U] {
 export function triad<T, U, V>(one: T, two: U, three: V): [T, U, V] {
   return [one, two, three];
 }
+
+/**
+ * Replicates the functionality of the next function in python.
+ */
+export function next<T>(
+  iterable: Iterator<T>,
+  condition: (item: T) => boolean,
+): T | undefined {
+  let result = iterable.next();
+  while (!result.done) {
+    if (condition(result.value)) return result.value;
+    result = iterable.next();
+  }
+}
+
+/**
+ * Returns the last element of the array.
+ */
+export function getLast<T>(array: T[]): T {
+  if (array.length === 0) throw new Error("Attempt to get last element from empty array");
+  return array[array.length - 1];
+}

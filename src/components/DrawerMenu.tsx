@@ -33,7 +33,7 @@ import {
 } from "@tabler/icons-react";
 import React, {PropsWithChildren, useCallback, useLayoutEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
-import {Comparison} from "../api";
+import {Comparison, DimensionType} from "../api";
 import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
@@ -450,16 +450,16 @@ function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectTy
   );
 
   const label = useMemo(() => {
-    const triad = levelTriadMap[`${item.level}`];
-    const triadCaptions = triad.map(item => getCaption(item, locale.code));
+    const triad = levelTriadMap[item.level] || [];
+    const triadCaptions = triad.map(item => getCaption(item, locale.code)).reverse();
     return t("params.tag_drilldowns", {
       abbr: abbreviateFullName(triadCaptions, t("params.tag_drilldowns_abbrjoint")),
       dimension: triadCaptions[0],
       hierarchy: triadCaptions[1],
       level: triadCaptions[2],
-      propCount: activeProperties.length
+      propCount: activeProperties.length,
     });
-  }, [activeProperties.join("-"), item, locale.code]);
+  }, [activeProperties.length, levelTriadMap, item, locale.code, t]);
 
   return (
     <Box pt="md">
@@ -759,13 +759,12 @@ function FilterItem({
 }
 
 // Function to get the appropriate icon for each dimension type
-const getIconForDimensionType = dimensionType => {
+const getIconForDimensionType = (dimensionType: DimensionType) => {
   switch (dimensionType) {
-    case "geo":
+    case DimensionType.GEO:
       return <IconWorld size={20} />;
-    case "time":
+    case DimensionType.TIME:
       return <IconClock size={20} />;
-    // Add more cases for other dimension types
     default:
       return <IconBox size={20} />; // Default icon
   }

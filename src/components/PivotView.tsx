@@ -83,7 +83,7 @@ export function PivotView<TData extends Record<string, unknown>>(
     return Object.values(params.drilldowns)
       .filter(isActiveItem)
       .flatMap(item => {
-        const [dimension, hierarchy, level] = levelMap[item.level];
+        const [level, hierarchy, dimension] = levelMap[item.level];
         const caption = getCaption(level, locale);
         const type = dimension.type as DrilldownType;
         const propertyMap = keyBy(level.properties, "name");
@@ -141,7 +141,7 @@ export function PivotView<TData extends Record<string, unknown>>(
     const drilldownCount = Object.values(params.drilldowns).filter(isActiveItem).length;
     if (drilldownCount > 2) {
       warnings.push(
-        valProp.type !== Aggregator.sum 
+        valProp.type !== Aggregator.SUM 
           ? <Alert
             color="yellow"
             m="sm"
