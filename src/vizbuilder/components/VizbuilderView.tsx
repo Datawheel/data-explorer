@@ -25,7 +25,6 @@ export function VizbuilderView(props: {
   result: QueryResult;
 }) {
   const {cube, params, result} = props;
-  console.log(props);
 
   const dataset = useMemo<Dataset | Dataset[]>(() => {
     const columns = Object.keys(result.types);
