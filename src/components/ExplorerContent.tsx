@@ -22,7 +22,7 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     display: "flex",
     flexFlow: "column nowrap",
     position: "relative",
-    height: "calc(100% - 70px)",
+    height: "100%",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row",
       // height: params.height,
@@ -31,7 +31,7 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
   },
   flexCol: {
     flex: "1 1 auto",
-    height: "calc(100vh - 70px)",
+    height: "100%",
     [theme.fn.largerThan("md")]: {
       width: 0,
       paddingLeft: 0,

@@ -1,5 +1,5 @@
 import React, {useMemo} from "react";
-import {Explorer, PivotView, TableView, ToolbarButton, TourStep, createVizbuilderView} from "../src/main";
+import {Explorer, PivotView, TableView, TourStep, createVizbuilderView} from "../src/main";
 import {createRoot} from "react-dom/client";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
@@ -48,7 +48,7 @@ function App() {
           serverConfig={settings.server.config}
           defaultOpenParams="drilldowns"
           formatters={formatters}
-          height={"calc(100vh - 50px)"}
+          height={"calc(100vh - 55px)"}
           locale={settings.locale}
           panels={[
             {key: "table", label: "Data Table", component: TableView},
