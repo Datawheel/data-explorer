@@ -1,16 +1,15 @@
 import React, {useMemo} from "react";
-import {Explorer, PivotView, TableView, TourStep, createVizbuilderView} from "../src/main";
 import {createRoot} from "react-dom/client";
+import {Explorer, PivotView, TableView, TourStep, VizbuilderView} from "../src/main";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
-import { Image, Center } from "@mantine/core";
-import { IconDatabase } from "@tabler/icons-react";
+import {Center, Image} from "@mantine/core";
+import {IconDatabase} from "@tabler/icons-react";
 
-const VizbuilderView = createVizbuilderView({
-  downloadFormats: ["png", "svg"]
-});
-
-//default formatters as example. The client app should provide or not custom formatters.
+/**
+ * Default formatters as example.
+ * The client app should provide or not custom formatters.
+ */
 const formatters = {
   Index: n => (typeof n === "number" ? n.toFixed(3) : n || " "),
   "Metric Ton": n => `${n.toFixed()} 📦`,
@@ -53,7 +52,7 @@ function App() {
           panels={[
             {key: "table", label: "Data Table", component: TableView},
             {key: "matrix", label: "Pivot Table", component: PivotView},
-            {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
+            {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView},
           ]}
           tourConfig={{
             introImage: <Center p="xl" bg="dark.1">

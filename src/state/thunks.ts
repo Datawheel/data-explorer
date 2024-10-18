@@ -127,7 +127,7 @@ export function willFetchQuery(params?: {
         return {
           data: content.data,
           page: content.page,
-          types: describeData(cube, params, content.data),
+          types: describeData(cube, params, content),
           headers: Object.fromEntries(response.headers),
           status: response.status || 200,
           url: response.url
@@ -191,7 +191,7 @@ export function willHydrateParams(suggestedCube = ""): ExplorerThunk<Promise<voi
       );
 
       const resolvedDrilldowns = filterMap(Object.values(params.drilldowns), item => {
-        const [dimension, hierarchy, level] = levelMap[item.level] || [];
+        const [level, hierarchy, dimension] = levelMap[item.level] || [];
         if (!level) return null;
         const activeProperties = filterMap(item.properties, prop =>
           prop.active ? prop.name : null
@@ -275,12 +275,11 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
  * Performs a full replacement of the cubes stored in the state with fresh data
  * from the server.
  */
-type realoadCubes = {
-  locale?: any;
-};
-export function willReloadCubes({locale}: realoadCubes = {}): ExplorerThunk<
+
+export function willReloadCubes(params?: {locale: {code: string}}): ExplorerThunk<
   Promise<{[k: string]: TesseractCube}>
 > {
+  const {locale} = params || {};
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
     const newLocale = locale || selectLocale(state);
