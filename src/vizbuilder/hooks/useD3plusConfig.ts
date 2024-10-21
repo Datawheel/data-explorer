@@ -3,6 +3,7 @@ import type {
   BarChart,
   Chart,
   ChoroplethMap,
+  Column,
   D3plusConfig,
   DonutChart,
   LinePlot,
@@ -23,8 +24,8 @@ import type {TesseractMeasure} from "../../api/tesseract/schema";
 import {useFormatter} from "../../hooks/formatter";
 import {filterMap, getLast} from "../../utils/array";
 import type {Formatter} from "../../utils/types";
-import {isIn} from "../../utils/validation";
-import {type Column, getColumnEntity} from "../tooling/columns";
+import {isOneOf} from "../../utils/validation";
+import {getColumnEntity} from "../tooling/columns";
 
 type DataPoint = Record<string, unknown>;
 
@@ -105,7 +106,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
     legend: fullMode,
     locale,
     stacked:
-      (stackedSeries && isIn(measureAggregator.toUpperCase(), ["COUNT", "SUM"])) ||
+      (stackedSeries && isOneOf(measureAggregator.toUpperCase(), ["COUNT", "SUM"])) ||
       isPercentage,
     time: timeline?.name === "Quarter ID" ? timeline.level.name : timeline?.name,
     timeline: timeline && fullMode,
@@ -113,10 +114,15 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
       brushing: false,
       playButton: false,
     },
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltipConfig: {
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
     total: !timeline,
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
   };
 
   if (orientation === "horizontal") {
@@ -183,6 +189,10 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
       brushing: false,
       playButton: false,
     },
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltip: true,
     tooltipConfig: {
       title(d) {
@@ -190,6 +200,7 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
       },
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
     zoomScroll: false,
   };
 
@@ -218,10 +229,15 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
       brushing: false,
       playButton: false,
     },
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltipConfig: {
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
     total: !timeline,
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
   };
 
@@ -251,10 +267,15 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
       brushing: true,
       playButton: false,
     },
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltipConfig: {
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
     total: false,
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
     x: time.level.name,
     xConfig: {
       title: time.level.caption,
@@ -284,9 +305,14 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
     locale,
     time: timeline?.name,
     timeline: timeline && fullMode,
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltipConfig: {
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
     value: values.measure.name,
   };
 
@@ -311,9 +337,14 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
     thresholdName: series[0].name,
     time: timeline?.name,
     timeline: timeline && fullMode,
+    title: _buildTitle(t, chart),
+    titleConfig: {
+      fontSize: fullMode ? 20 : 10,
+    },
     tooltipConfig: {
       tbody: _buildTooltipTbody(columns, values.measure, measureFormatter, locale),
     },
+    totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
   };
 
   return config;
@@ -334,4 +365,77 @@ function _buildTooltipTbody(
       return [caption, d[name]] as [string, string];
     }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
   };
+}
+
+function _buildTitle(t: TranslateFunction, chart: Chart) {
+  const {series, values} = chart;
+  const [mainSeries, otherSeries] = series;
+  const {measure} = values;
+  const timeline = chart.timeline || chart.time;
+
+  const seriesStr = (series: Chart["series"][number]) => {
+    const {members} = series.captions[series.level.name];
+
+    if (series.members.length < 5) {
+      return t("vizbuilder.title.series_members", {
+        series: series.level.caption,
+        members: _buildTranslatedList(t, members as string[]),
+      });
+    }
+
+    return t("vizbuilder.title.series", {
+      series: series.level.caption,
+    });
+  };
+
+  const getMembers = (data: DataPoint[] | undefined, series: Chart["series"][number]) => {
+    if (!data) return series.members;
+    return [...new Set(data.map(d => d[series.name]))].sort();
+  };
+
+  return (data?: DataPoint[]): string => {
+    const aggregator = measure.annotations.aggregation_method || measure.aggregator;
+    const valuesKey = `vizbuilder.aggregator.${aggregator.toLowerCase()}`;
+    const values = t(valuesKey, {measure: measure.caption});
+
+    const config = {
+      values: values === valuesKey ? measure.caption : values,
+      series: otherSeries
+        ? _buildTranslatedList(t, [seriesStr(mainSeries), seriesStr(otherSeries)])
+        : seriesStr(mainSeries),
+      time: timeline?.level.caption,
+      time_period: timeline ? getLast(getMembers(data, timeline)) : "",
+    };
+
+    // time is on the axis, so multiple periods are shown at once
+    if (isOneOf(chart.type, ["lineplot", "stackedarea"])) {
+      return t("vizbuilder.title.main_over_period", config);
+    }
+
+    // time is on timeline dimension, so a single period is shown
+    if (timeline) return t("vizbuilder.title.main_on_period", config);
+
+    // time dimension is not part of the chart
+    return t("vizbuilder.title.main", config);
+  };
+}
+
+/**
+ * Concatenates a list of strings, by offering the possibility to use special
+ * syntax for the first and last items.
+ */
+function _buildTranslatedList(t: TranslateFunction, list: string[]) {
+  return t("vizbuilder.list.suffix", {
+    n: list.length,
+    nlessone: list.length - 1,
+    item: getLast<unknown>(list),
+    rest: t("vizbuilder.list.prefix", {
+      n: list.length - 1,
+      nlessone: list.length - 2,
+      item: list[0],
+      rest: list.slice(1, -1).join(t("vizbuilder.list.join")),
+      list: list.slice(0, -1).join(t("vizbuilder.list.join")),
+    }),
+    list: list.join(t("vizbuilder.list.join")),
+  });
 }

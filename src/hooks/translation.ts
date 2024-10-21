@@ -270,11 +270,10 @@ export const defaultTranslation = {
     action_enlarge: "Enlarge",
     action_fileissue: "File an issue",
     action_retry: "Retry",
-    aggregators: {
-      avg: "Average",
-      max: "Max",
-      min: "Min",
-      sum: "",
+    aggregator: {
+      average: "Average {{measure}}",
+      max: "Max {{measure}}",
+      min: "Min {{measure}}",
     },
     chart_labels: {
       ci: "Confidence Interval",
@@ -287,17 +286,24 @@ export const defaultTranslation = {
       message: 'Details: "{{message}}".',
       title: "Error",
     },
-    sentence_connectors: {
-      and: "and",
+    list: {
+      join: ", ",
+      suffix: "{{rest}}, and {{item}}",
+      prefix: "{{list}}",
     },
     title: {
-      nonidealstate: "No results",
+      series: "{{series}}",
+      series_members: "{{series}} ({{members}})",
+      main: "{{values}} by {{series}}",
+      main_over_period: "{{values}} by {{series}} over {{time}}",
+      main_on_period: "{{values}} by {{series}} on {{time_period}}",
+      total: "Total: {{value}}",
+
       of_selected_cut_members: "of Selected {{members}} Members",
       top_drilldowns: "for Top {{drilldowns}}",
       by_drilldowns: "by {{drilldowns}}",
       over_time: "Over Time",
       measure_and_modifier: "{{modifier}} {{measure}}",
-      total: "Total",
     },
   },
 };

@@ -1,4 +1,4 @@
-import type {ChartLimits, Column, Dataset} from "@datawheel/vizbuilder";
+import type {ChartLimits, Dataset} from "@datawheel/vizbuilder";
 import React, {useMemo} from "react";
 import type {TesseractCube} from "../../api";
 import type {QueryParams, QueryResult} from "../../utils/structs";
@@ -17,7 +17,7 @@ const CHART_LIMITS: Partial<ChartLimits> = {
   TREE_MAP_SHAPE_MAX: 1000,
 };
 
-const DOWNLOAD_FORMATS = ["SVG", "PNG"];
+const DOWNLOAD_FORMATS = ["SVG", "PNG"] as const;
 
 export function VizbuilderView(props: {
   cube: TesseractCube;
@@ -30,10 +30,7 @@ export function VizbuilderView(props: {
     const columns = Object.keys(result.types);
     return {
       columns: Object.fromEntries(
-        columns.map(columnName => [
-          columnName,
-          buildColumn(cube, columnName, columns) as Column,
-        ]),
+        columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)]),
       ),
       data: result.data,
       locale: params.locale || "en",
