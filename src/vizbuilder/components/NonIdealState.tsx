@@ -32,5 +32,5 @@ export function NonIdealState(props: {
     );
   }, [status, t]);
 
-  return <Center h="40vh">{description}</Center>;
+  return <Center h="100%">{description}</Center>;
 }

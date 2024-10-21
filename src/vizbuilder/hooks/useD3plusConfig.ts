@@ -43,11 +43,7 @@ export function useD3plusConfig(
 ) {
   const {fullMode, getMeasureConfig, showConfidenceInt, t} = params;
 
-  const measures = useMemo(() => {
-    return chart?.datagroup.measureColumns.map(item => item.measure) || [];
-  }, [chart?.datagroup]);
-
-  const {getFormatter} = useFormatter(measures);
+  const {getFormatter} = useFormatter();
 
   return useMemo((): [
     React.ComponentType<{config: D3plusConfig}> | null,
@@ -90,7 +86,7 @@ export function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams)
 
   const collate = new Intl.Collator(locale, {numeric: true, ignorePunctuation: true});
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
   const measureAggregator =
     values.measure.annotations.aggregation_method || values.measure.aggregator;
   const measureUnits = values.measure.annotations.units_of_measurement || "";
@@ -164,7 +160,7 @@ export function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilder
 
   const lastSeries = getLast(series);
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     colorScale: values.measure.name,
@@ -216,7 +212,7 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
   const {columns, dataset, locale} = datagroup;
   const [mainSeries] = series;
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     data: dataset,
@@ -250,14 +246,12 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
 
   const {columns, dataset, locale} = datagroup;
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     data: dataset,
     discrete: "x",
-    label: (d: DataPoint) => {
-      return series.map(series => d[series.level.name]).join("\n");
-    },
+    label: (d: DataPoint) => series.map(series => d[series.level.name]).join("\n"),
     legend: fullMode,
     locale,
     groupBy: series.map(series => series.name),
@@ -297,7 +291,7 @@ export function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderP
 
   const {columns, dataset, locale} = datagroup;
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     data: dataset,
@@ -325,7 +319,7 @@ export function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
 
   const {columns, dataset, locale} = datagroup;
 
-  const measureFormatter = getFormatter(values.measure.name);
+  const measureFormatter = getFormatter(values.measure);
 
   const config: D3plusConfig = {
     data: dataset,

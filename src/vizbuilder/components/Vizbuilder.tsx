@@ -224,7 +224,7 @@ export function Vizbuilder(props: {
   ]);
 
   return (
-    <div className={cls("vb-wrapper", props.className)}>
+    <div style={{height: "100%"}} className={cls("vb-wrapper", props.className)}>
       {props.customHeader}
       {content}
       {props.customFooter}
