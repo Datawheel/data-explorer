@@ -47,7 +47,7 @@ function App() {
           serverConfig={settings.server.config}
           defaultOpenParams="drilldowns"
           formatters={formatters}
-          height={"calc(100vh - 55px)"}
+          height={"calc(100vh - 60px)"}
           locale={settings.locale}
           panels={[
             {key: "table", label: "Data Table", component: TableView},
