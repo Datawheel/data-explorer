@@ -305,6 +305,12 @@ export const defaultTranslation = {
       over_time: "Over Time",
       measure_and_modifier: "{{modifier}} {{measure}}",
     },
+    transient: {
+      title_loading: "Generating charts...",
+      title_empty: "No results",
+      description_empty:
+        "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
+    },
   },
 };
 

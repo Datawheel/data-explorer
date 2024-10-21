@@ -12,6 +12,7 @@ import React, {useCallback, useMemo, useState} from "react";
 import type {TesseractLevel, TesseractMeasure} from "../../api/tesseract/schema";
 import {asArray as castArray} from "../../utils/array";
 import {ChartCard} from "./ChartCard";
+import {ErrorBoundary} from "./ErrorBoundary";
 import {NonIdealState} from "./NonIdealState";
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
@@ -29,7 +30,7 @@ export function Vizbuilder(props: {
    *
    * @see {@link ChartLimits} for details on its properties.
    */
-  chartLimits?: ChartLimits;
+  chartLimits?: Partial<ChartLimits>;
 
   /**
    * A list of the chart types the algorithm will generate.
@@ -71,7 +72,7 @@ export function Vizbuilder(props: {
    *
    * @default ["SVG", "PNG"]
    */
-  downloadFormats?: ("PNG" | "SVG" | "JPG")[];
+  downloadFormats?: readonly ("PNG" | "SVG" | "JPG")[];
 
   /**
    * Custom d3plus configuration to apply when a chart value references a
@@ -84,7 +85,7 @@ export function Vizbuilder(props: {
   /**
    * A component to show in case no valid/useful charts can be generated from the datasets.
    */
-  nonIdealState?: React.ComponentType;
+  nonIdealState?: React.ComponentType<{status: string}>;
 
   /**
    * Determines if the charts will use associated measures to show confidence
@@ -150,45 +151,50 @@ export function Vizbuilder(props: {
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
   const content = useMemo(() => {
+    const Notice = nonIdealState || NonIdealState;
+
+    if (!datasets || (Array.isArray(datasets) && datasets.length === 0))
+      return <Notice status="loading" />;
+
     const chartList = Object.values(charts);
 
-    if (chartList.length === 0) {
-      const Notice = nonIdealState || NonIdealState;
-      return <Notice />;
-    }
+    if (chartList.length === 0) return <Notice status="empty" />;
 
     const isSingleChart = chartList.length === 1;
 
     return (
-      <SimpleGrid
-        breakpoints={[
-          {minWidth: "xs", cols: 1},
-          {minWidth: "md", cols: 2},
-          {minWidth: "lg", cols: 3},
-          {minWidth: "xl", cols: 4},
-        ]}
-        className={cls({unique: isSingleChart})}
-      >
-        {chartList.map(chart => (
-          <ChartCard
-            key={chart.key}
-            chart={chart}
-            downloadFormats={downloadFormats}
-            measureConfig={getMeasureConfig}
-            onFocus={() => setCurrentChart(chart.key)}
-            showConfidenceInt={showConfidenceInt}
-            userConfig={userConfig}
-          />
-        ))}
-      </SimpleGrid>
+      <ErrorBoundary>
+        <SimpleGrid
+          breakpoints={[
+            {minWidth: "xs", cols: 1},
+            {minWidth: "md", cols: 2},
+            {minWidth: "lg", cols: 3},
+            {minWidth: "xl", cols: 4},
+          ]}
+          className={cls({unique: isSingleChart})}
+        >
+          {chartList.map(chart => (
+            <ChartCard
+              key={chart.key}
+              chart={chart}
+              downloadFormats={downloadFormats}
+              measureConfig={getMeasureConfig}
+              onFocus={() => setCurrentChart(chart.key)}
+              showConfidenceInt={showConfidenceInt}
+              userConfig={userConfig}
+            />
+          ))}
+        </SimpleGrid>
+      </ErrorBoundary>
     );
   }, [
     charts,
+    datasets,
+    downloadFormats,
     getMeasureConfig,
     nonIdealState,
-    downloadFormats,
-    userConfig,
     showConfidenceInt,
+    userConfig,
   ]);
 
   const focusContent = useMemo(() => {
