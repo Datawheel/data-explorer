@@ -153,8 +153,13 @@ export function Vizbuilder(props: {
   const content = useMemo(() => {
     const Notice = nonIdealState || NonIdealState;
 
-    if (!datasets || (Array.isArray(datasets) && datasets.length === 0))
+    const isLoading = castArray(datasets).some(
+      dataset => Object.keys(dataset.columns).length === 0,
+    );
+    if (isLoading) {
+      console.debug("Loading datasets...", datasets);
       return <Notice status="loading" />;
+    }
 
     const chartList = Object.values(charts);
 

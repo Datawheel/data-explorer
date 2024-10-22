@@ -268,7 +268,7 @@ export const defaultTranslation = {
   vizbuilder: {
     action_close: "Close",
     action_enlarge: "Enlarge",
-    action_fileissue: "File an issue",
+    action_fileissue: "Report an issue",
     action_retry: "Retry",
     aggregator: {
       average: "Average {{measure}}",
@@ -298,12 +298,6 @@ export const defaultTranslation = {
       main_over_period: "{{values}} by {{series}} over {{time}}",
       main_on_period: "{{values}} by {{series}} on {{time_period}}",
       total: "Total: {{value}}",
-
-      of_selected_cut_members: "of Selected {{members}} Members",
-      top_drilldowns: "for Top {{drilldowns}}",
-      by_drilldowns: "by {{drilldowns}}",
-      over_time: "Over Time",
-      measure_and_modifier: "{{modifier}} {{measure}}",
     },
     transient: {
       title_loading: "Generating charts...",
