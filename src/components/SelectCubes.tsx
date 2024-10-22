@@ -400,9 +400,10 @@ function SubtopicAccordion({
       ml={0}
       styles={t => ({
         control: {
+          // marginLeft: 10,
           fontSize: t.fontSizes.sm,
           background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[2],
-          borderLeft: 8,
+          borderLeft: 18,
           borderLeftColor: "transparent",
           borderLeftStyle: "solid",
           "&[data-active] span": {

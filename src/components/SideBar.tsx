@@ -1,9 +1,23 @@
 import React, {PropsWithChildren, useState} from "react";
-import {Box, Flex, ActionIcon, Text, ScrollArea, Input, Group, MantineTheme, useMantineTheme, Affix, ActionIconProps, Sx, packSx} from "@mantine/core";
+import {
+  Box,
+  Flex,
+  ActionIcon,
+  Text,
+  ScrollArea,
+  Input,
+  Group,
+  MantineTheme,
+  useMantineTheme,
+  Affix,
+  ActionIconProps,
+  Sx,
+  packSx
+} from "@mantine/core";
 import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
-import {IconSearch} from "@tabler/icons-react";
-import {DataSetSVG, IconChevronLeft, IconChevronRight} from "./icons";
+import {IconSearch, IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
+import {DataSetSVG} from "./icons";
 import Graph from "../utils/graph";
 import {LocaleSelector} from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
@@ -41,7 +55,7 @@ export function SideBarProvider(props: PropsWithChildren<{}>) {
         results,
         input,
         map,
-        setInput,
+        setInput
       }}
     />
   );
@@ -49,13 +63,12 @@ export function SideBarProvider(props: PropsWithChildren<{}>) {
 
 type SidebarProps = {};
 
-function SideBarControlBtn ({actionIconProps = {}}: {actionIconProps?: Partial<ActionIconProps>}) {
+function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<ActionIconProps>}) {
   const {expanded, setExpanded} = useSideBar();
-  
+
   const sx: Sx = (t: MantineTheme) => ({
     alignSelf: "center",
-    color: t.colorScheme === "dark" ? t.white : t.colors.gray[7],
-    
+    color: t.colorScheme === "dark" ? t.white : t.colors.gray[7]
   });
   if (expanded) return null;
   return (
@@ -64,34 +77,36 @@ function SideBarControlBtn ({actionIconProps = {}}: {actionIconProps?: Partial<A
       variant="subtle"
       {...actionIconProps}
       sx={[sx, ...packSx(actionIconProps.sx)]}
-      >
-        <DataSetSVG />
+    >
+      <DataSetSVG />
     </ActionIcon>
-)
+  );
 }
 
-function SideBarControlBtnFixed () {
+function SideBarControlBtnFixed() {
   const actionIconProps: Partial<ActionIconProps> = {
     sx: t => ({
-      backgroundColor: `${t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]} !important`,
+      backgroundColor: `${
+        t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
+      } !important`,
       padding: `calc(${t.spacing.xs} / 2)`,
       borderRadius: t.radius.xl,
       width: 50,
       height: 50
     })
-  }
+  };
   return (
     <Affix position={{left: "1rem", bottom: 150}}>
-      <SideBarControlBtn actionIconProps={actionIconProps}/>
+      <SideBarControlBtn actionIconProps={actionIconProps} />
     </Affix>
-  )
+  );
 }
 function SideBar(props: PropsWithChildren<SidebarProps>) {
   const {expanded, setExpanded} = useSideBar();
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
-  
+
   return (
     <>
       {smallerThanMd && <SideBarControlBtnFixed />}
@@ -151,7 +166,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   width: expanded ? "100%" : 0
                 }}
               >
-                <Auto  />
+                <Auto />
               </Box>
               <Box sx={{flexGrow: 1}}></Box>
             </Flex>
@@ -179,9 +194,10 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
               onClick={() => setExpanded(!expanded)}
               variant="subtle"
               mt="auto"
-              sx={t => ({alignSelf: "flex-end", color: t.colors.gray[7]})}
+              color="primaryColor"
+              sx={t => ({alignSelf: "flex-end"})}
             >
-              {expanded ? <IconChevronLeft /> : <IconChevronRight />}
+              {expanded ? <IconChevronLeft size="1.5rem" /> : <IconChevronRight size="1.5rem" />}
             </ActionIcon>
           </Group>
         </Flex>
