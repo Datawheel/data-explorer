@@ -1,20 +1,24 @@
 import {format, formatAbbreviate} from "d3plus-format";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useMemo, useRef, useState} from "react";
 import type {TesseractMeasure} from "../api/tesseract/schema";
 import {useSettings} from "./settings";
 
-type FormatterHookContext = {
+type Format = string;
+
+type Formatter = (value: number | null, locale?: string) => string;
+
+interface FormatterContextValue {
   /** Stores the format choice made by the user during the session. */
   currentFormats: Record<string, string>;
-  /** Returns a list of keys that determine an available formatter function for a `ref` measure name. */
-  getAvailableKeys: (ref: string) => string[];
+  /** Returns a list of keys that determine an available Format for a measure. */
+  getAvailableFormats: (measure: string | TesseractMeasure) => string[];
   /** Returns the formatter key currently assigned to a `ref` measure name. */
-  getFormatterKey: (ref: string) => string | undefined;
-  /** Returns the corresponding formatter function for the provided `key`. */
-  getFormatter: (key: string) => import("../utils/types").Formatter;
+  getFormat: (ref: string | TesseractMeasure, defaultValue?: string) => string;
   /** Saves the user's choice of formatter `key` (by its name) for a `ref` measure name. */
-  setFormat: (ref: string, key: string) => void;
-};
+  setFormat: (ref: string | TesseractMeasure, key: string) => void;
+  /** Returns the corresponding formatter function for the provided `key`. */
+  getFormatter: (item: string | TesseractMeasure) => Formatter;
+}
 
 export const defaultFormatters = {
   undefined: n => n,
@@ -23,6 +27,7 @@ export const defaultFormatters = {
   Dollars: new Intl.NumberFormat(undefined, {style: "currency", currency: "USD"}).format,
   Human: n => formatAbbreviate(n, "en-US"),
   Milliards: new Intl.NumberFormat(undefined, {useGrouping: true}).format,
+  Million: new Intl.NumberFormat(undefined, {useGrouping: true}).format,
 };
 
 export const basicFormatterKeys = ["Decimal", "Milliards", "Human"];
@@ -34,69 +39,71 @@ export const basicFormatterKeys = ["Decimal", "Milliards", "Human"];
  * stored in the `currentFormats` object.
  * The resulting object is memoized, so can also be used as dependency.
  */
-export function useFormatter(measures: TesseractMeasure[]): FormatterHookContext {
-  // Get the formatter functions defined by the user
+export function useFormatter() {
+  // Get the Formatter functions defined by the user
   const {formatters} = useSettings();
 
-  // This will store the user choices of formatter for the available measures
-  const [currentFormats, setCurrentFormats] = useState({});
+  // This will store the user choices of Format for the measures used in the session
+  const [formatMap, setFormatMap] = useState<Record<string, Format>>({});
 
-  // This will silently store the formatters intended by the server schema
-  const originKeys = useRef({});
+  // This will silently store the Formatters intended by the server schema
+  const formatterMap = useRef(formatters);
 
-  // We need to capture the default formatter intended for any new measure
-  // Since measure arrays come from the server schema, the containing array
-  // can be considered stable to use as dependency. We also want to refresh the
-  // choice if the user changes the cube and there's a measure with the same name.
-  useEffect(() => {
-    // Create an array of tuples, containing (measure name, formatter key)
-    const tuplesRefKey = measures.map(item => {
-      const {annotations: ann} = item;
-      return [item.name, ann.format_template || ann.units_of_measurement] as const;
-    });
-    // Convert the tuple array into Record<measure name, formatter key>
-    const record = Object.fromEntries(tuplesRefKey);
-    // Save the record, then make sure it triggers a render
-    originKeys.current = record;
-    setCurrentFormats(record);
-  }, [measures]);
-
-  return useMemo(
-    () => ({
-      currentFormats,
-      getAvailableKeys(ref) {
-        const originKey = originKeys.current[ref];
-        return originKey && !basicFormatterKeys.includes(originKey)
-          ? [originKey].concat(basicFormatterKeys)
-          : basicFormatterKeys;
+  return useMemo<FormatterContextValue>(() => {
+    return {
+      currentFormats: formatMap,
+      getAvailableFormats(measure) {
+        const formatterKeys = basicFormatterKeys.slice();
+        if (typeof measure !== "string") {
+          const {format_template, units_of_measurement} = measure.annotations;
+          units_of_measurement && formatterKeys.unshift(units_of_measurement);
+          format_template && formatterKeys.unshift(format_template);
+        }
+        return formatterKeys;
       },
-      getFormatterKey(ref) {
-        return currentFormats[ref] || originKeys.current[ref];
-      },
-      getFormatter(key) {
+      setFormat,
+      getFormat,
+      getFormatter(item) {
+        const key = typeof item === "object" ? getFormat(item) : item;
+        let formatter = formatterMap.current[key] || defaultFormatters[key];
+        if (formatter) return formatter;
+
         // If formatter key is three uppercase letters, assume currency
         if (/^[A-Z]{3}$/.test(key)) {
-          return (
-            formatters[key] ||
-            (key => {
-              const options = {style: "currency", currency: key};
-              const formatter = new Intl.NumberFormat(undefined, options).format;
-              formatters[key] = formatter;
-              return formatter;
-            })(key)
-          );
+          const formatter = new Intl.NumberFormat(undefined, {
+            style: "currency",
+            currency: key,
+          }).format;
+          formatterMap.current[key] = formatter;
+          return formatter;
         }
+
+        // At this point formatter key is assumed a template
         try {
-          return formatters[key] || defaultFormatters[key] || format(key);
+          formatter = format(key);
         } catch {
-          console.debug(`Formatter not configured: "${key}"`);
-          return defaultFormatters.identity;
+          console.warn(`Formatter not configured: "${key}"`);
+          formatter = defaultFormatters.identity;
         }
+        formatterMap.current[key] = formatter;
+        return formatter;
       },
-      setFormat(ref, formatterKey) {
-        setCurrentFormats({...currentFormats, [ref]: formatterKey});
-      },
-    }),
-    [currentFormats],
-  );
+    };
+
+    function setFormat(measure: string | TesseractMeasure, format: Format) {
+      const key = typeof measure === "string" ? measure : measure.name;
+      setFormatMap(formatMap => ({...formatMap, [key]: format}));
+    }
+
+    function getFormat(
+      measure: string | TesseractMeasure,
+      defaultValue = "identity",
+    ): Format {
+      if (typeof measure === "string") return formatMap[measure] || defaultValue;
+      const {format_template, units_of_measurement} = measure.annotations;
+      return (
+        formatMap[measure.name] || format_template || units_of_measurement || defaultValue
+      );
+    }
+  }, [formatMap]);
 }

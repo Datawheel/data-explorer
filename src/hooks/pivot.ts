@@ -10,10 +10,10 @@ import {useTranslation} from "./translation.js";
  */
 export function useFormatParams(measures: TesseractMeasure[], valueProperty: string) {
   const {translate: t} = useTranslation();
-  const fmt = useFormatter(measures);
+  const fmt = useFormatter();
 
   return useMemo(() => {
-    const formatterKey = fmt.getFormatterKey(valueProperty) || "undefined";
+    const formatterKey = fmt.getFormat(valueProperty);
     const formatter = fmt.getFormatter(formatterKey);
     return {
       formatExample: formatter(12345.6789),
@@ -21,7 +21,7 @@ export function useFormatParams(measures: TesseractMeasure[], valueProperty: str
       formatterKey,
       formatterKeyOptions: [{label: t("placeholders.none"), value: "undefined"}].concat(
         fmt
-          .getAvailableKeys(valueProperty)
+          .getAvailableFormats(valueProperty)
           .map(key => ({label: fmt.getFormatter(key)(12345.6789), value: key})),
       ),
       setFormat: fmt.setFormat,
