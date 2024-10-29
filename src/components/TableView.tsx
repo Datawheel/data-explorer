@@ -448,10 +448,9 @@ export function useTable({
   }, [pagination]);
 
   const {translate: t} = useTranslation();
+
   // check formatters
-  const {currentFormats, getAvailableKeys, getFormatter, getFormatterKey, setFormat} = useFormatter(
-    cube.measures
-  );
+  const {getFormat, getFormatter} = useFormatter();
 
   const {sortKey, sortDir} = useSelector(selectSortingParams);
 
@@ -479,7 +478,7 @@ export function useTable({
       } = column;
 
       const isNumeric = valueType === "number" && columnKey !== "Year";
-      const formatterKey = getFormatterKey(columnKey) || (isNumeric ? "Decimal" : "identity");
+      const formatterKey = getFormat(columnKey, isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
       const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
@@ -569,7 +568,7 @@ export function useTable({
       };
     });
     return columnsDef.length ? [indexColumn, ...columnsDef] : [];
-  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormatterKey, locale]);
+  }, [drilldowns, measures, finalKeys, offset, getFormatter, getFormat, locale]);
 
   const constTableProps = useMemo(
     () =>
