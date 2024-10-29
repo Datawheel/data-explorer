@@ -1,44 +1,13 @@
 import type {
-  TesseractCube,
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-  TesseractMeasure,
-  TesseractProperty,
-} from "../../api/tesseract/schema";
+  Column,
+  LevelColumn,
+  MeasureColumn,
+  PropertyColumn,
+} from "@datawheel/vizbuilder";
+import type {TesseractCube} from "../../api/tesseract/schema";
 import {yieldLevels, yieldMeasures, yieldProperties} from "../../api/traverse";
 import {next} from "../../utils/array";
 import {getAnnotation} from "../../utils/string";
-
-export type Column = MeasureColumn | LevelColumn | PropertyColumn;
-
-export interface MeasureColumn {
-  name: string;
-  type: "measure";
-  measure: TesseractMeasure;
-  parentMeasure: TesseractMeasure | undefined;
-  parentRelationship: "collection" | "source" | "moe" | "uci" | "lci" | undefined;
-}
-
-export interface LevelColumn {
-  name: string;
-  type: "level";
-  dimension: TesseractDimension;
-  hierarchy: TesseractHierarchy;
-  level: TesseractLevel;
-  property?: undefined;
-  hasID: boolean;
-  isID: boolean;
-}
-
-export interface PropertyColumn {
-  name: string;
-  type: "property";
-  dimension: TesseractDimension;
-  hierarchy: TesseractHierarchy;
-  level: TesseractLevel;
-  property: TesseractProperty;
-}
 
 export function buildColumn(
   cube: TesseractCube,
@@ -57,7 +26,7 @@ export function buildColumn(
       measure,
       parentMeasure,
       parentRelationship: undefined, // TODO
-    };
+    } as MeasureColumn;
   }
 
   const maybeLevel = next(
@@ -75,7 +44,7 @@ export function buildColumn(
       level,
       isID: !hasID || name === nameWithID,
       hasID,
-    };
+    } as LevelColumn;
   }
 
   const maybeProperty = next(yieldProperties(cube), item => item[0].name === name);
@@ -88,7 +57,7 @@ export function buildColumn(
       hierarchy,
       level,
       property,
-    };
+    } as PropertyColumn;
   }
 
   throw new Error(`Missing entity in cube '${cube.name}': ${nameWithoutID}`);
