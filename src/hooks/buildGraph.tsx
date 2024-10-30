@@ -9,9 +9,8 @@ import Graph from "../utils/graph";
 import { getAnnotation } from "../utils/string";
 
 
-export default function useBuildGraph(): Graph {
+export default function useBuildGraph(locale: string): Graph {
     const items = useSelector(selectOlapCubeItems);
-    const {code: locale} = useSelector(selectLocale);
     const graph = useMemo(() => {
       const graph = new Graph();
       const filteredItems = items

@@ -15,6 +15,7 @@ import {selectLoadingState} from "../state/loading";
 import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
+import { LocaleSelector } from "./LocaleSelector";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -61,6 +62,7 @@ function TableFooter(props: Props) {
         <CubeSource />
         {!loading.loading && !isLoading && (
           <Group position="right" spacing="sm">
+            <LocaleSelector />
             <Box maw="7rem" miw={"fit"}>
               <SelectObject
                 getValue={(item: Item) => item.value}

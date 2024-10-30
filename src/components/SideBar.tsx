@@ -38,13 +38,13 @@ type SidebarProviderProps = {
 export const [useSideBar, Provider] =
   createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
 
-export function SideBarProvider(props: PropsWithChildren<{}>) {
+export function SideBarProvider(props: PropsWithChildren<{locale: string}>) {
   const [input, setInput] = useDebouncedState<string>("", 200);
   const [expanded, setExpanded] = useState<boolean>(true);
 
-  const graph = useBuildGraph();
+  const graph = useBuildGraph(props.locale);
   const {results, map} = useCubeSearch(input, graph);
-
+  
   return (
     <Provider
       {...props}
@@ -153,7 +153,6 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   <Text sx={t => ({color: t.colorScheme === "dark" ? t.white : t.black})} ml={"sm"}>
                     {t("params.label_dataset")}
                   </Text>
-                  <LocaleSelector />
                 </Group>
               </Flex>
               <Box
