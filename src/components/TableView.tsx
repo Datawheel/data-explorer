@@ -9,7 +9,8 @@ import {
   ScrollArea,
   Table,
   Text,
-  rem
+  rem,
+  type MantineTheme
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -70,6 +71,12 @@ import {
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
+
+
+type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
+  dataType?: string;
+};
+
 
 type EntityTypes = "measure" | "level" | "property";
 type TData = Record<string, any> & Record<string, string | number>;
@@ -167,7 +174,9 @@ function getMemberFilterFnTypes(member) {
 function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, range) {
   let result: {
     filterVariant?: "multi-select" | "text";
-    mantineFilterMultiSelectProps?: {data: unknown};
+    mantineFilterMultiSelectProps?: {
+      data: (string | { value: string; label: string })[]
+    };
   } = {};
   const filterVariant =
     !isId && !isNumeric && (!range || (range && range[1] - range[0] <= 100))
@@ -258,7 +267,13 @@ type useTableDataType = {
   cube: string;
 };
 
-type ApiResponse = {data: any; types: any};
+type ApiResponse = {
+  data: any;
+  types: any;
+  page: {
+    total: number;
+  };
+};
 
 function useTableData({columns, pagination, cube}: useTableDataType) {
   const {code: locale} = useSelector(selectLocale);
@@ -435,7 +450,7 @@ export function useTable({
   usePrefetch({
     isPlaceholderData,
     limit,
-    totalRowCount,
+    totalRowCount: totalRowCount ?? 0,
     pagination,
     isFetching: isFetching || isLoading
   });
@@ -454,10 +469,10 @@ export function useTable({
 
   const {sortKey, sortDir} = useSelector(selectSortingParams);
 
-  const columns = useMemo<ColumnDef<TData>[]>(() => {
+  const columns = useMemo<CustomColumnDef<TData>[]>(() => {
     const indexColumn = {
       id: "#",
-      Header: "#",
+      header: "#",
       Cell: ({row}) => row.index + 1 + offset,
       minWidth: 50,
       maxWidth: 50,
@@ -546,7 +561,7 @@ export function useTable({
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
-          ? ({cell}) => formatter(cell.getValue<number>())
+          ? ({cell}) => formatter(cell.getValue())
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
               return (
@@ -736,24 +751,23 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-                    const isNumeric = column.columnDef.dataType === "number";
+                    const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
-                    const base = theme => ({
-                      backgroundColor:
-                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
-                      align: isNumeric ? "right" : "left",
+                    const base = (theme: MantineTheme) => ({
+                      backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                      textAlign: isNumeric ? ("right" as const) : ("left" as const),
                       height: 60,
                       paddingBottom: 10,
                       minWidth: 210,
                       width: 300,
                       maxWidth: 450,
-                      position: "sticky",
+                      position: "sticky" as const,
                       fontSize: theme.fontSizes.sm,
                       top: 0,
-                      display: "table-cell"
+                      display: "table-cell" as const
                     });
 
-                    const index = theme => ({
+                    const index = (theme: MantineTheme) => ({
                       ...base(theme),
                       minWidth: 10,
                       width: 10,
@@ -802,6 +816,7 @@ export function TableView({
                         cell={cell}
                         rowIndex={row.index}
                         table={table}
+                        rowRef={row.original.current}
                       />
                     ))}
                   </tr>

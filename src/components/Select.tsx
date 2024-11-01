@@ -1,27 +1,30 @@
-import {Button, Group, Input, Select, SelectProps} from "@mantine/core";
+import {Button, Group, Input, Select, SelectItem, SelectProps} from "@mantine/core";
 import React, {useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
 
 type PropertyAccesor<T> =
   | (T extends string | number ? never : keyof T)
-  | ((item: T) => string | number);
+  | ((item: T) => string);
+
+export type SelectObjectProps<T> = {
+  disabled?: boolean;
+  getLabel?: PropertyAccesor<T>;
+  getValue?: PropertyAccesor<T>;
+  hidden?: boolean;
+  items: T[];
+  label?: string;
+  loading?: boolean;
+  onItemSelect?: (item: T) => void;
+  searchable?: boolean;
+  selectedItem?: T | string | null;
+  selectProps?: Partial<SelectProps>;
+};
+
 
 /** */
-export const SelectObject = forwardRef(function <T>(
-  props: {
-    disabled?: boolean;
-    getLabel?: PropertyAccesor<T>;
-    getValue?: PropertyAccesor<T>;
-    hidden?: boolean;
-    items: T[];
-    label?: string;
-    loading?: boolean;
-    onItemSelect?: (item: T) => void;
-    searchable?: boolean;
-    selectedItem?: T | string | null;
-    selectProps?: Partial<SelectProps>;
-  },
-  ref
+export const SelectObject = forwardRef(function <T extends SelectItem>(
+  props: SelectObjectProps<T> & { ref?: React.Ref<any> },
+  ref: React.Ref<any>
 ) {
   const {
     getLabel,
@@ -33,8 +36,8 @@ export const SelectObject = forwardRef(function <T>(
   } = props;
 
   const [itemList, itemMap] = useMemo(() => {
-    const valueAccessor = accesorFactory(getValue);
-    const labelAccessor = getLabel ? accesorFactory(getLabel) : valueAccessor;
+    const valueAccessor = accesorFactory<T, string>(getValue);
+    const labelAccessor = getLabel ? accesorFactory<T, string>(getLabel) : valueAccessor;
 
     const list = items.map(item => ({
       label: labelAccessor(item),
@@ -78,7 +81,7 @@ export const SelectObject = forwardRef(function <T>(
 });
 
 /** */
-export function SelectWithButtons<T>(props: {
+export function SelectWithButtons<T extends SelectItem>(props: {
   getLabel?: PropertyAccesor<T>;
   getValue?: PropertyAccesor<T>;
   hidden?: boolean;
@@ -121,8 +124,8 @@ export function SelectWithButtons<T>(props: {
   return (
     buttons || (
       <SelectObject
-        getLabel={props.getLabel}
-        getValue={props.getValue}
+        getLabel={props.getLabel ? accesorFactory(props.getLabel) : undefined}
+        getValue={props.getValue ? accesorFactory(props.getValue) : undefined}
         hidden={props.hidden}
         items={items}
         label={props.label}

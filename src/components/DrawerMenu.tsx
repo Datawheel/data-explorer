@@ -549,7 +549,13 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
   );
 }
 
-export function MinMax({filter, ...rest}: {filter: FilterItem}) {
+// Add hideControls to the MinMax props interface
+interface MinMaxProps {
+  filter: FilterItem;
+  hideControls?: boolean;  // Make it optional with ?
+}
+
+export const MinMax: React.FC<MinMaxProps> = ({ filter, hideControls, ...rest }) => {
   const actions = useActions();
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
@@ -578,6 +584,7 @@ export function MinMax({filter, ...rest}: {filter: FilterItem}) {
         description={"Min"}
         value={min}
         onChange={value => onInputChangeMinMax({filter, min: value, max})}
+        hideControls={hideControls}
         {...rest}
       />
       <NumberInput
@@ -585,11 +592,12 @@ export function MinMax({filter, ...rest}: {filter: FilterItem}) {
         description={"Max"}
         value={max}
         onChange={value => onInputChangeMinMax({filter, min, max: value})}
+        hideControls={hideControls}
         {...rest}
       />
     </Flex>
   );
-}
+};
 
 export function FilterFnsMenu({filter}: {filter: FilterItem}) {
   const actions = useActions();
