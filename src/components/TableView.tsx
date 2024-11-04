@@ -362,11 +362,23 @@ function usePrefetch({
   }, [limit, page, pageSize, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
 }
 
+
+const columnSrt = (a: AnyResultColumn, b: AnyResultColumn) => {
+  // Define order priority: level (dimension) first, then measure
+  const order = {
+    level: 0,
+    property: 1,
+    measure: 2
+  };
+
+  return (order[a.entityType] ?? 3) - (order[b.entityType] ?? 3);
+};
+
 export function useTable({
   cube,
   result,
   columnFilter = () => true,
-  columnSorting = () => 0,
+  columnSorting = columnSrt,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const filterItems = useSelector(selectFilterItems);
@@ -378,6 +390,7 @@ export function useTable({
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
+
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
