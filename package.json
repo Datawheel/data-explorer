@@ -1,11 +1,10 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "exports": {
     ".": {
       "types": "./dist/main.d.ts",
-      "import": "./dist/main.js",
-      "require": "./dist/main.cjs"
+      "import": "./dist/main.js"
     }
   },
   "types": "./dist/main.d.ts",
