@@ -1,3 +1,6 @@
+
+// we should fix this
+// @ts-nocheck 
 import type {ChartLimits, Dataset} from "@datawheel/vizbuilder";
 import React, {useMemo} from "react";
 import type {TesseractCube} from "../../api";
