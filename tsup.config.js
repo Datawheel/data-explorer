@@ -12,4 +12,6 @@ export default defineConfig(options => ({
   sourcemap: !!options.watch,
   splitting: false,
   treeshake: true,
+  declaration: true,
+  dts: true,
 }));

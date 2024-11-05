@@ -108,7 +108,7 @@ export interface NamedSetItem extends QueryParamsItem {
 }
 
 export interface PropertyItem extends QueryParamsItem {
-  level: string;
+  level: string; 
   name: string;
 }
 
@@ -131,6 +131,11 @@ export function buildQuery(props: RecursivePartial<QueryItem>): QueryItem {
     params: buildQueryParams(props.params || {}),
     result: {
       data: [],
+      page: {
+        limit: 0,
+        offset: 0,
+        total: 0
+      },
       types: {},
       headers: {},
       status: 0,
@@ -280,10 +285,18 @@ export function buildProperty(
         property?: string;
       },
 ): PropertyItem {
+  if ('active' in props) {
+    return {
+      active: typeof props.active === "boolean" ? props.active : false,
+      key: props.key || randomKey(),
+      level: props.level || "",
+      name: props.name || props.property || "",
+    };
+  } 
   return {
-    active: typeof props.active === "boolean" ? props.active : false,
-    key: props.key || randomKey(),
-    level: props.level,
-    name: props.name || props.property,
+    active: false,
+    key: randomKey(),
+    level: "",
+    name: props.name || "",
   };
 }

@@ -31,7 +31,7 @@ export const EMPTY_RESPONSE = {
   page: {offset: 0, limit: 0, total: 0}
 };
 
-export function SelectCube() {
+export function SelectCube({locale}: {locale: string}) {
   const items = useSelector(selectOlapCubeItems);
   const selectedItem = useSelector(selectOlapCube);
 
@@ -39,16 +39,16 @@ export function SelectCube() {
     return null;
   }
 
-  return <SelectCubeInternal items={items} selectedItem={selectedItem} />;
+  return <SelectCubeInternal items={items} selectedItem={selectedItem} locale={locale} />;
 }
 
 function SelectCubeInternal(props: {
   items: TesseractCube[];
   selectedItem: TesseractCube | undefined;
+  locale: string;
 }) {
   const {measuresActive} = useSettings();
-  const {items, selectedItem} = props;
-  const {code: locale} = useSelector(selectLocale);
+  const {items, selectedItem, locale} = props;
   const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
   const cutItems = useSelector(selectCutItems);
 

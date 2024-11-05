@@ -5,7 +5,7 @@ import {
   useMantineReactTable,
   type MRT_TableOptions as TableOptions,
 } from "mantine-react-table";
-import React, {useMemo, useState} from "react";
+import React, {forwardRef, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Aggregator} from "../api";
 import {mapDimensionHierarchyLevels} from "../api/traverse";
@@ -20,11 +20,24 @@ import {isActiveItem} from "../utils/validation";
 import {ButtonDownload} from "./ButtonDownload";
 import {NonIdealState} from "./NonIdealState";
 import {SelectObject} from "./Select";
+import type {SelectObjectProps} from "./Select";
+
 
 type DrilldownType = "geo" | "standard" | "time" | "prop";
 type VoidFunction = (...args) => void;
 
-const SelectOption = SelectObject<{label: string; value: string; type: string}>;
+type SelectOptionType = {
+  label: string;
+  value: string;
+  type: string;
+};
+
+const SelectOption = forwardRef<HTMLSelectElement, SelectObjectProps<SelectOptionType>>(
+  (props, ref) => {
+    return <SelectObject ref={ref} {...props} />;
+  }
+);
+
 
 const useStyles = createStyles(theme => ({
   container: {

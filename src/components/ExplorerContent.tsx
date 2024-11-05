@@ -45,7 +45,7 @@ export function ExplorerContent(props: {
   defaultDataLocale?: string;
   defaultOpenParams: string;
   height: CSSObject["height"];
-  locale?: string;
+  locale: string;
   panels: PanelDescriptor[];
   serverConfig?: RequestInit;
   serverURL: string;
@@ -83,10 +83,10 @@ export function ExplorerContent(props: {
     <div className={classes.container}>
       <div className={classes.root}>
         <AppProviders>
-          <SideBarProvider>
+          <SideBarProvider locale={props.locale}>
             <SideBar>
               <SideBarItem>
-                <ParamsExplorer />
+                <ParamsExplorer locale={props.locale} />
               </SideBarItem>
             </SideBar>
           </SideBarProvider>
