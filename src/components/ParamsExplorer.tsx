@@ -1,12 +1,14 @@
 import React from "react";
 import {SelectCube} from "./SelectCubes";
 
-type Props = {};
+type Props = {
+  locale: string
+};
 
 function ParamsExplorer(props: Props) {
-  const {} = props;
+  const {locale} = props;
   return (
-      <SelectCube />
+      <SelectCube locale={locale}/>
   );
 }
 
