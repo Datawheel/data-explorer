@@ -3,7 +3,7 @@ import {createRoot} from "react-dom/client";
 import {Explorer, PivotView, TableView, TourStep, VizbuilderView} from "../src/main";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
-import {Center, Image} from "@mantine/core";
+import {Box, Center, Image} from "@mantine/core";
 import {IconDatabase} from "@tabler/icons-react";
 
 /**
@@ -37,8 +37,10 @@ function App() {
   );
 
   return (
+    
     <SettingsProvider locales={locales} servers={items}>
       {settings => (
+        <Box className="" h="calc(100vh - 50px)">
         <Explorer
           // pagination={{defaultLimit: 100, rowsLimits: [100, 300, 500, 1000]}}
           // defaultCube="gastat_gdp"
@@ -47,7 +49,7 @@ function App() {
           serverConfig={settings.server.config}
           defaultOpenParams="drilldowns"
           formatters={formatters}
-          height={"calc(100vh - 60px)"}
+          height={"100%"}
           locale={settings.locale}
           panels={[
             {key: "table", label: "Data Table", component: TableView},
@@ -77,8 +79,11 @@ function App() {
           withMultiQuery
           withPermalink
         />
+        </Box>
       )}
+      
     </SettingsProvider>
+    
   );
 }
 

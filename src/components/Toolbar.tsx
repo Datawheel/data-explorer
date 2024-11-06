@@ -129,7 +129,8 @@ export default function Toolbar({
 }) {
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
-  const smallerThanLg = useMediaQuery(`(max-width: ${theme.breakpoints.lg})`);
+  const smallerThanLg = useMediaQuery(`(max-width: ${theme.breakpoints.lg}${/(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.lg) ? '' : 'px'})`);
+
   const {toolbarConfig} = useSettings();
   
   const settings = (
