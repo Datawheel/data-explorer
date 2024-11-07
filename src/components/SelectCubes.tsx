@@ -224,8 +224,7 @@ function CubeTree({
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
   );
-
-  topics = [topics[0], topics[1]];
+  
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
     return (
