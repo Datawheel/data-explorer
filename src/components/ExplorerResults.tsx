@@ -218,7 +218,7 @@ function SuccessResult(props: {
         ref={fullscreen.ref}
         id="query-results-success"
         h={"100%"}
-        sx={{display: "flex", flexDirection: "column", overflow: "hidden", border: "1px solid red",}}
+        sx={{display: "flex", flexDirection: "column", overflow: "hidden"}}
       >
         <Flex
           sx={t => ({
@@ -252,7 +252,7 @@ function SuccessResult(props: {
           </Alert>
         )}
 
-        <Box id="query-results-content" sx={{flex: "1 1 calc(100% - 70px)", maxHeight: "calc(100% - 70px)", border: "1px solid green"}}>
+        <Box id="query-results-content" sx={{flex: "1 1 calc(100% - 70px)", maxHeight: "calc(100% - 70px)"}}>
           <Suspense fallback={props.children}>
             <Flex h="100%">
               <Box sx={{flex: "1 1", overflowX: "scroll"}}>
