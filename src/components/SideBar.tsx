@@ -119,7 +119,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
           boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)",
           maxWidth: expanded ? 300 : 54,
           padding: 0,
-          zIndex: 99,
+          zIndex: 9,
           boxSizing: "border-box",
           [t.fn.smallerThan("md")]: {
             position: "absolute",

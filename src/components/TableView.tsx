@@ -757,7 +757,7 @@ export function TableView({
               sx={{
                 position: "relative",
                 top: 0,
-                zIndex: 10
+                zIndex: 8
               }}
             >
               {table.getHeaderGroups().map(headerGroup => (

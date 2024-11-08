@@ -206,8 +206,20 @@ function SuccessResult(props: {
   }, []);
 
   return (
-    <Flex gap="xs" direction="column" w="100%" className={props.className}>
-      <Paper ref={fullscreen.ref} id="query-results-success" h={"100%"}>
+    <Flex
+      gap="xs"
+      direction="column"
+      w="100%"
+      className={props.className}
+      h="100%"
+      sx={{ overflow: "hidden"}}
+    >
+      <Paper
+        ref={fullscreen.ref}
+        id="query-results-success"
+        h={"100%"}
+        sx={{display: "flex", flexDirection: "column", overflow: "hidden"}}
+      >
         <Flex
           sx={t => ({
             alignItems: "center",
@@ -215,6 +227,7 @@ function SuccessResult(props: {
             justifyContent: "space-between"
           })}
           w="100%"
+          h="fit-content"
         >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {/* need to update this logic */}
@@ -239,7 +252,7 @@ function SuccessResult(props: {
           </Alert>
         )}
 
-        <Box id="query-results-content" sx={{flex: "1 1", height: "calc(100% - 60px)"}}>
+        <Box id="query-results-content" sx={{flex: "1 1 calc(100% - 70px)", maxHeight: "calc(100% - 70px)"}}>
           <Suspense fallback={props.children}>
             <Flex h="100%">
               <Box sx={{flex: "1 1", overflowX: "scroll"}}>

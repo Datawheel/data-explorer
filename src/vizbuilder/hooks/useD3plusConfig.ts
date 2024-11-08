@@ -241,7 +241,7 @@ export function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) 
 }
 
 export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams) {
-  const {datagroup, values, series, time} = chart;
+  const {datagroup, values, series, timeline} = chart;
   const {fullMode, getFormatter, t} = params;
 
   const {columns, dataset, locale} = datagroup;
@@ -251,11 +251,19 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
   const config: D3plusConfig = {
     data: dataset,
     discrete: "x",
-    label: (d: DataPoint) => series.map(series => d[series.level.name]).join("\n"),
+    label: (d: DataPoint) => {
+      return (
+        series.map(series => d[series.level.name]).join("\n") ||
+        t("vizbuilder.title.measure_on_period", {
+          measure: values.measure.caption,
+          period: d[timeline.level.name],
+        })
+      );
+    },
     legend: fullMode,
     locale,
-    groupBy: series.map(series => series.name),
-    time: time.level.name,
+    groupBy: series.length ? series.map(series => series.name) : undefined,
+    time: timeline.level.name,
     timeline: fullMode,
     timelineConfig: {
       brushing: true,
@@ -270,9 +278,9 @@ export function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams)
     },
     total: false,
     totalFormat: d => t("vizbuilder.title.total", {value: measureFormatter(d, locale)}),
-    x: time.level.name,
+    x: timeline.level.name,
     xConfig: {
-      title: time.level.caption,
+      title: timeline.level.caption,
     },
     y: values.measure.name,
     yConfig: {
@@ -366,8 +374,9 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   const [mainSeries, otherSeries] = series;
   const {measure} = values;
   const timeline = chart.timeline || chart.time;
-
+  console.log({chart})
   const seriesStr = (series: Chart["series"][number]) => {
+    if(!series) return "";
     const {members} = series.captions[series.level.name];
 
     if (series.members.length < 5) {
@@ -390,19 +399,22 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   return (data?: DataPoint[]): string => {
     const aggregator = measure.annotations.aggregation_method || measure.aggregator;
     const valuesKey = `vizbuilder.aggregator.${aggregator.toLowerCase()}`;
-    const values = t(valuesKey, {measure: measure.caption});
+    const values = otherSeries ? t(valuesKey, {measure: measure.caption}) : measure.caption;
 
     const config = {
       values: values === valuesKey ? measure.caption : values,
+      measure: values === valuesKey ? measure.caption : values,
       series: otherSeries
         ? _buildTranslatedList(t, [seriesStr(mainSeries), seriesStr(otherSeries)])
         : seriesStr(mainSeries),
       time: timeline?.level.caption,
+      period: timeline?.level.caption,
       time_period: timeline ? getLast(getMembers(data, timeline)) : "",
     };
 
     // time is on the axis, so multiple periods are shown at once
     if (isOneOf(chart.type, ["lineplot", "stackedarea"])) {
+      if(!series.length) return t("vizbuilder.title.measure_over_period", config);
       return t("vizbuilder.title.main_over_period", config);
     }
 

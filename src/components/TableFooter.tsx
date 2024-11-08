@@ -55,7 +55,7 @@ function TableFooter(props: Props) {
       <Flex
         p="md"
         justify="space-between"
-        align="flex-end"
+        align="center"
         direction={{base: "column-reverse", md: "row"}}
         gap="sm"
       >
