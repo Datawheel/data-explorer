@@ -150,6 +150,7 @@ export function Vizbuilder(props: {
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
+  console.log("charts", charts);
   const content = useMemo(() => {
     const Notice = nonIdealState || NonIdealState;
 

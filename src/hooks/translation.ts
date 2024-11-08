@@ -295,8 +295,10 @@ export const defaultTranslation = {
       series: "{{series}}",
       series_members: "{{series}} ({{members}})",
       main: "{{values}} by {{series}}",
+      measure_over_period: "{{values}} over {{time}}",
       main_over_period: "{{values}} by {{series}} over {{time}}",
       main_on_period: "{{values}} by {{series}} on {{time_period}}",
+      measure_on_period: "{{measure}} on {{period}}",
       total: "Total: {{value}}",
     },
     transient: {

@@ -20,6 +20,7 @@ export default function useBuildGraph(locale: string): Graph {
           const subtopic = getAnnotation(item, "subtopic", locale);
           const table = getAnnotation(item, "table", locale);
           const hide = getAnnotation(item, "hide_in_ui", locale);
+
           if (!yn(hide)) {
             graph.addNode(topic);
             graph.addNode(subtopic);

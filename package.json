@@ -1,12 +1,8 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.3.2",
-  "exports": {
-    ".": {
-      "import": "./dist/main.js"
-    }
-  },
-  "types": "dist/main.d.ts",
+  "version": "0.3.7-rc.3",
+  "main": "./dist/main.mjs",
+  "types": "./dist/main.d.mts",
   "files": [
     "dist",
     "README.md"

@@ -4,6 +4,7 @@ import type {
   MeasureColumn,
   PropertyColumn,
 } from "@datawheel/vizbuilder";
+import type {TesseractMeasure, TesseractLevel, TesseractProperty} from "../../api/tesseract/schema";
 import type {TesseractCube} from "../../api/tesseract/schema";
 import {yieldLevels, yieldMeasures, yieldProperties} from "../../api/traverse";
 import {next} from "../../utils/array";
@@ -66,7 +67,7 @@ export function buildColumn(
 /**
  * Retrieves the main entity for the Column.
  */
-export function getColumnEntity(column: Column) {
+export function getColumnEntity(column: Column): TesseractMeasure | TesseractLevel | TesseractProperty {
   if (column.type === "measure") return column.measure;
   if (column.type === "level") return column.level;
   if (column.type === "property") return column.property;
