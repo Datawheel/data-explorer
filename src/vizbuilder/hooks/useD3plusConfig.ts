@@ -374,7 +374,7 @@ function _buildTitle(t: TranslateFunction, chart: Chart) {
   const [mainSeries, otherSeries] = series;
   const {measure} = values;
   const timeline = chart.timeline || chart.time;
-  console.log({chart})
+  
   const seriesStr = (series: Chart["series"][number]) => {
     if(!series) return "";
     const {members} = series.captions[series.level.name];

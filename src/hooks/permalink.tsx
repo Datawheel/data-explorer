@@ -14,6 +14,9 @@ export function serializePermalink(item: QueryItem): string {
     Object.entries(request).filter(entry => entry[1] != null && entry[1] !== "")
   );
   search.set("panel", item.panel || "table");
+  if (item.chart !== "" && item.chart){
+    search.set("chart", item.chart)
+  }
   return search.toString();
 }
 
@@ -22,9 +25,10 @@ export function parsePermalink(cube: TesseractCube, value: string | URLSearchPar
   const search = new URLSearchParams(value);
 
   const params = requestToQueryParams(cube, search);
-
+  console.log(search.get("chart"));
   return buildQuery({
     panel: search.get("panel") || "table",
+    chart: search.get("chart") || "",
     params
   });
 }
@@ -65,8 +69,12 @@ export function usePermalink(
     if (currPermalink !== nextPermalink) {
       const nextLocation = `${window.location.pathname}?${nextPermalink}`;
       const oldPanel = new URLSearchParams(window.location.search).get("panel");
-      // If only the panel changed, use replaceState
-      if (oldPanel && oldPanel[1] !== panel) {
+      const oldChart = new URLSearchParams(window.location.search).get("chart");
+      // If only the panel or chartchanged, use replaceState
+      if (
+        (oldPanel && oldPanel[1] !== panel)
+        || (oldChart && oldChart[1] !== queryItem.chart)
+      ) {
         window.history.replaceState(queryItem, "", nextLocation);
       } else {
         window.history.pushState(queryItem, "", nextLocation);
@@ -103,6 +111,7 @@ export function useUpdatePermaLink({
 
 export function useKey(params: Partial<QueryParams> = {}) {
   const queryItem = useSelector(selectCurrentQueryItem);
+  console.log(queryItem);
   if (isValidQuery(queryItem.params)) {
     return serializePermalink({...queryItem, params: {...queryItem.params, ...params}});
   }
