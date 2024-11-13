@@ -259,6 +259,7 @@ export function willParseQueryUrl(url: string | URL): ExplorerThunk<Promise<void
 
       const queryItem = buildQuery({
         panel: search.get("panel") || "table",
+        chart: search.get("chart") || "",
         // params: {...params, drilldowns: keyBy(dds, "key")}
         params
       });

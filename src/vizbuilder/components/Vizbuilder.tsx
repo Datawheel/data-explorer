@@ -8,12 +8,15 @@ import {
 } from "@datawheel/vizbuilder";
 import {Modal, SimpleGrid} from "@mantine/core";
 import cls from "clsx";
-import React, {useCallback, useMemo, useState} from "react";
+import React, {useCallback, useMemo} from "react";
 import type {TesseractLevel, TesseractMeasure} from "../../api/tesseract/schema";
 import {asArray as castArray} from "../../utils/array";
 import {ChartCard} from "./ChartCard";
 import {ErrorBoundary} from "./ErrorBoundary";
 import {NonIdealState} from "./NonIdealState";
+import {useSelector} from "react-redux";
+import {selectCurrentQueryItem} from "../../state/queries";
+import {useSettings} from "../../hooks/settings";
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
 
@@ -125,7 +128,13 @@ export function Vizbuilder(props: {
     userConfig,
   } = props;
 
-  const [currentChart, setCurrentChart] = useState("");
+  const queryItem = useSelector(selectCurrentQueryItem);
+  const currentChart = queryItem?.chart || "";
+  const {actions} = useSettings();
+
+  const setCurrentChart = useCallback((chart: string) => {
+    actions.updateChart(chart);
+  }, [actions]);
 
   // Normalize measureConfig to function type
   const getMeasureConfig = useMemo(() => {
@@ -142,7 +151,7 @@ export function Vizbuilder(props: {
   // Compute possible charts
   const charts = useMemo(() => {
     const charts = generateCharts(castArray(datasets), {
-      chartLimits,
+      chartLimits: chartLimits as ChartLimits | undefined,
       chartTypes,
       datacap,
       getTopojsonConfig,
@@ -150,7 +159,6 @@ export function Vizbuilder(props: {
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
-  console.log("charts", charts);
   const content = useMemo(() => {
     const Notice = nonIdealState || NonIdealState;
 
@@ -183,7 +191,7 @@ export function Vizbuilder(props: {
             <ChartCard
               key={chart.key}
               chart={chart}
-              downloadFormats={downloadFormats}
+              downloadFormats={downloadFormats as string[] | undefined}
               measureConfig={getMeasureConfig}
               onFocus={() => setCurrentChart(chart.key)}
               showConfidenceInt={showConfidenceInt}
@@ -212,7 +220,7 @@ export function Vizbuilder(props: {
       <ChartCard
         key={`${chart.key}-focus`}
         chart={chart}
-        downloadFormats={downloadFormats}
+        downloadFormats={downloadFormats as string[] | undefined}
         measureConfig={getMeasureConfig}
         onFocus={() => setCurrentChart("")}
         showConfidenceInt={showConfidenceInt}

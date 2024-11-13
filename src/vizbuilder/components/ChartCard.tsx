@@ -3,17 +3,20 @@ import {Box, Button, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
+  IconCheck,
   IconDownload,
   IconPhotoDown,
+  IconShare,
   IconVectorTriangle,
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
-import React, {useMemo, useRef} from "react";
+import React, {useMemo, useRef, useState} from "react";
 import type {TesseractMeasure} from "../../api/tesseract/schema";
 import {useTranslation} from "../../hooks/translation";
 import {asArray as castArray} from "../../utils/array";
 import {useD3plusConfig} from "../hooks/useD3plusConfig";
 import {ErrorBoundary} from "./ErrorBoundary";
+import {useClipboard} from '@mantine/hooks';
 
 const iconByFormat = {
   jpg: IconPhotoDown,
@@ -65,6 +68,10 @@ export function ChartCard(props: {
     getMeasureConfig: props.measureConfig,
     t: translate,
   });
+
+  const clipboard = useClipboard();
+
+  const [isShared, setIsShared] = useState(false);
 
   const downloadButtons = useMemo(() => {
     // Sanitize filename for Windows and Unix
@@ -119,6 +126,27 @@ export function ChartCard(props: {
     );
   }, [isFullMode, translate, onFocus]);
 
+  const shareButton = useMemo(() => {
+    return (
+      <Button
+        compact
+        leftIcon={isShared ? <IconCheck size={16} /> : <IconShare size={16} />}
+        onClick={() => {
+          clipboard.copy(window.location.href);
+          setIsShared(true);
+          setTimeout(() => setIsShared(false), 1500);
+        }}
+        size="sm"
+        variant={isShared ? "filled" : "light"}
+        color={isShared ? "green" : "blue"}
+      >
+        {isShared 
+          ? translate("vizbuilder.share_copied") 
+          : translate("vizbuilder.action_share")}
+      </Button>
+    );
+  }, [clipboard, translate, isShared]);
+
   const height = isFullMode ? "calc(100vh - 3rem)" : 300;
 
   if (!ChartComponent) return null;
@@ -128,6 +156,7 @@ export function ChartCard(props: {
       <ErrorBoundary>
         <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
           <Group position="right" p="xs" spacing="xs" align="center">
+            {isFullMode && shareButton}
             {downloadButtons}
             {onFocus && focusButton}
           </Group>

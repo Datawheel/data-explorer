@@ -88,6 +88,11 @@ export const queriesSlice = createSlice({
       const current = state.itemMap[state.current];
       current.panel = action.payload;
     },
+    
+    updateChart(state, action: Action<string | null>) {
+      const current = state.itemMap[state.current];
+      current.chart = action.payload;
+    },
 
     /**
      * Remove a single CutItem from the current QueryItem.

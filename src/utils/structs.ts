@@ -13,6 +13,7 @@ export interface QueryItem {
   key: string;
   label: string;
   panel: string | null;
+  chart: string | null;
   params: QueryParams;
   result: QueryResult;
 }
@@ -128,6 +129,7 @@ export function buildQuery(props: RecursivePartial<QueryItem>): QueryItem {
     label: props.label || "",
     isDirty: true,
     panel: props.panel || null,
+    chart: props.chart || null,
     params: buildQueryParams(props.params || {}),
     result: {
       data: [],
