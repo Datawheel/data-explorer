@@ -6,6 +6,15 @@ class Graph {
     this.nodes = new Set([]);
     this.adjList = {};
     this.items = [];
+    this.topicOrder = {};
+  }
+
+  addTopicOrder(topic, order) {
+    this.topicOrder[topic] = Number(order);
+  }
+
+  getTopicOrder(topic) {
+    return this.topicOrder[topic] || 0;
   }
 
   addNode(node) {

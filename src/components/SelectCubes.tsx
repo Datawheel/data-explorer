@@ -168,11 +168,17 @@ function useBuildGraph(items, locale) {
       .map(item => {
         const {name} = item;
         const topic = getAnnotation(item, "topic", locale);
+        const topic_order = getAnnotation(item, "topic_order", locale);
         const subtopic = getAnnotation(item, "subtopic", locale);
         const table = getAnnotation(item, "table", locale);
         const hide = getAnnotation(item, "hide_in_ui", locale);
+        console.log(topic, topic_order);
         if (!yn(hide)) {
           graph.addNode(topic);
+          if(topic_order) {
+            console.log(topic, topic_order);
+            graph.addTopicOrder(topic, topic_order)
+          };
           graph.addNode(subtopic);
           graph.addNode(name);
           graph.addEdge(topic, subtopic);
@@ -301,7 +307,7 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
         }
       })}
     >
-      {items.map(item => {
+      {items.sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b]).map(item => {
         return (
           <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
             <AccordionControl>{item}</AccordionControl>
