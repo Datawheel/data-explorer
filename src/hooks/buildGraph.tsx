@@ -17,6 +17,7 @@ export default function useBuildGraph(locale: string): Graph {
         .map(item => {
           const {name} = item;
           const topic = getAnnotation(item, "topic", locale);
+          const topic_order = getAnnotation(item, "topic_order", locale);
           const subtopic = getAnnotation(item, "subtopic", locale);
           const table = getAnnotation(item, "table", locale);
           const hide = getAnnotation(item, "hide_in_ui", locale);
@@ -27,6 +28,9 @@ export default function useBuildGraph(locale: string): Graph {
             graph.addNode(name);
             graph.addEdge(topic, subtopic);
             graph.addEdge(subtopic, name);
+            if(topic_order) {
+              graph.addTopicOrder(topic, topic_order)
+            }
             return item;
           }
   

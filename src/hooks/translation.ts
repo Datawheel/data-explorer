@@ -267,6 +267,8 @@ export const defaultTranslation = {
   },
   vizbuilder: {
     action_close: "Close",
+    action_share: "Share",
+    share_copied: "Copied",
     action_enlarge: "Enlarge",
     action_fileissue: "Report an issue",
     action_retry: "Retry",
