@@ -364,6 +364,9 @@ function _buildTooltipTbody(
       if (column.type === "measure") return null;
       if (column.type === "level" && column.hasID && column.isID) return null;
       const {caption, name} = getColumnEntity(column);
+      
+      if(Array.isArray(d[name])) return null;
+
       return [caption, d[name]] as [string, string];
     }).concat([[meaCaption, measureFormatter(d[meaName] as number, locale)]]);
   };

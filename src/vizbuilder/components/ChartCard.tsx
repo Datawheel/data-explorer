@@ -138,7 +138,6 @@ export function ChartCard(props: {
         }}
         size="sm"
         variant={isShared ? "filled" : "light"}
-        color={isShared ? "green" : "blue"}
       >
         {isShared 
           ? translate("vizbuilder.share_copied") 
