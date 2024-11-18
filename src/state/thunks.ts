@@ -103,20 +103,23 @@ export function willExecuteQuery(params?: {
 export function willFetchQuery(params?: {
   limit?: number;
   offset?: number;
+  withoutPagination?: boolean;
 }): ExplorerThunk<Promise<QueryResult>> {
   const {limit = 0, offset = 0} = params || {};
   return (dispatch, getState, {tesseract}) => {
     const state = getState();
-    const params = selectCurrentQueryParams(state);
-    const cube = selectOlapCubeMap(state)[params.cube];
+    const queryParams = selectCurrentQueryParams(state);
+    const cube = selectOlapCubeMap(state)[queryParams.cube];
 
-    if (!isValidQuery(params) || !cube) {
+    if (!isValidQuery(queryParams) || !cube) {
       return Promise.reject(new Error("Invalid query"));
     }
 
-    const request = queryParamsToRequest(params);
+    const request = queryParamsToRequest(queryParams);
     if (limit || offset) {
       request.limit = `${limit},${offset}`;
+    } else if (params?.withoutPagination) {
+      request.limit = "0,0";
     }
 
     return tesseract.fetchData({request, format: "jsonrecords"}).then(response =>
@@ -127,7 +130,7 @@ export function willFetchQuery(params?: {
         return {
           data: content.data,
           page: content.page,
-          types: describeData(cube, params, content),
+          types: describeData(cube, queryParams, content),
           headers: Object.fromEntries(response.headers),
           status: response.status || 200,
           url: response.url

@@ -1,6 +1,7 @@
-import {translationFactory} from "@datawheel/use-translation";
+import {type TranslationDict, translationFactory} from "@datawheel/use-translation";
+import type {Translation as VizbuilderTranslation} from "@datawheel/vizbuilder/react";
 
-export const defaultTranslation = {
+const explorerTranslation = {
   action_copy: "Copy",
   action_copy_done: "Copied",
   action_download: "Download",
@@ -265,56 +266,75 @@ export const defaultTranslation = {
     selected_items: "Selected items",
     unselected_items: "Unselected items"
   },
-  vizbuilder: {
-    action_close: "Close",
-    action_share: "Share",
-    share_copied: "Copied",
-    action_enlarge: "Enlarge",
-    action_fileissue: "Report an issue",
-    action_retry: "Retry",
-    aggregator: {
-      average: "Average {{measure}}",
-      max: "Max {{measure}}",
-      min: "Min {{measure}}",
-    },
-    chart_labels: {
-      ci: "Confidence Interval",
-      moe: "Margin of Error",
-      source: "Source",
-      collection: "Collection",
-    },
-    error: {
-      detail: "",
-      message: 'Details: "{{message}}".',
-      title: "Error",
-    },
-    list: {
-      join: ", ",
-      suffix: "{{rest}}, and {{item}}",
-      prefix: "{{list}}",
-    },
-    title: {
-      series: "{{series}}",
-      series_members: "{{series}} ({{members}})",
-      main: "{{values}} by {{series}}",
-      measure_over_period: "{{values}} over {{time}}",
-      main_over_period: "{{values}} by {{series}} over {{time}}",
-      main_on_period: "{{values}} by {{series}} on {{time_period}}",
-      measure_on_period: "{{measure}} on {{period}}",
-      total: "Total: {{value}}",
-    },
-    transient: {
-      title_loading: "Generating charts...",
-      title_empty: "No results",
-      description_empty:
-        "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
-    },
+};
+
+const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
+  action_close: "Close",
+  action_share: "Share",
+  share_copied: "Copied",
+  action_enlarge: "Enlarge",
+  action_fileissue: "Report an issue",
+  action_retry: "Retry",
+  aggregator: {
+    average: "Average {{measure}}",
+    max: "Max {{measure}}",
+    min: "Min {{measure}}",
+    sum: "{{measure}}",
+  },
+  chart_labels: {
+    ci: "Confidence Interval",
+    moe: "Margin of Error",
+    source: "Source",
+    collection: "Collection",
+  },
+  error: {
+    detail: "",
+    message: 'Details: "{{message}}".',
+    title: "Error",
+  },
+  list: {
+    join: ", ",
+    suffix: "{{rest}}, and {{item}}",
+    prefix: "{{list}}",
+    n_more: "{{n}} more",
+  },
+  title: {
+    main_on_period: "{{values}} by {{series}} on {{time_period}}",
+    main_over_period: "{{values}} by {{series}} over {{time}}",
+    main: "{{values}} by {{series}}",
+    measure_on_period: "{{measure}} on {{period}}",
+    measure_over_period: "{{values}} over {{time}}",
+    nonidealstate: "No results",
+    series_members: "{{series}} ({{members}})",
+    series: "{{series}}",
+    time_range: "in {{from}}-{{to}}",
+    total: "Total: {{value}}",
+  },
+  transient: {
+    title_loading: "Generating charts...",
+    title_empty: "No results",
+    description_empty:
+      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
   },
 };
 
-export type TranslationDict = typeof defaultTranslation;
+type ExtendibleTranslation<T extends {}> = {
+  [K in keyof T]: T[K] extends object ? ExtendibleTranslation<T[K]> : string;
+} & {
+  [K: string]: string | TranslationDict;
+};
 
-export const {useTranslation, TranslationConsumer, TranslationProvider} = translationFactory({
-  defaultLocale: "en",
-  defaultTranslation
-});
+export type Translation = ExtendibleTranslation<
+  typeof explorerTranslation & {vizbuilder: typeof vizbuilderTranslation}
+>;
+
+export const defaultTranslation = {
+  ...explorerTranslation,
+  vizbuilder: vizbuilderTranslation,
+};
+
+export const {useTranslation, TranslationConsumer, TranslationProvider} =
+  translationFactory({
+    defaultLocale: "en",
+    defaultTranslation,
+  });

@@ -54,12 +54,18 @@ export function ExplorerContent(props: {
 }) {
   const translation = useTranslation();
 
-  useSetup(
-    props.serverURL,
-    props.serverConfig || {},
-    props.defaultDataLocale,
-    props.defaultCube,
-  );
+  const serverConfig = useMemo(() => {
+    return props.serverConfig !== undefined ? props.serverConfig : {};
+  }, [props.serverConfig]);
+
+  useEffect(() => {
+    useSetup(
+      props.serverURL,
+      serverConfig,
+      props.defaultDataLocale,
+      props.defaultCube,
+    );
+  }, [props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube]);
 
   const {classes} = useStyles({height: props.height});
 

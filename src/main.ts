@@ -6,7 +6,7 @@ export {SettingsConsumer, useSettings} from "./hooks/settings";
 export {ToolbarButton} from "./components/Toolbar";
 export {
   TranslationConsumer,
-  type TranslationDict,
+  type Translation as TranslationDict,
   defaultTranslation as translationDict,
   useTranslation,
 } from "./hooks/translation";

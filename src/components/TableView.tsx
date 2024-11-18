@@ -310,7 +310,8 @@ function useTableData({columns, pagination, cube}: useTableDataType) {
         return result;
       }),
     staleTime: 300000,
-    enabled: enabled && !!filterKeydebouced
+    enabled: enabled && !!filterKeydebouced,
+    retry: false
   });
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", filterKeydebouced]);
