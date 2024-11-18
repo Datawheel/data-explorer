@@ -7,6 +7,7 @@ import type {TesseractCube} from "../../api";
 import type {QueryParams, QueryResult} from "../../utils/structs";
 import {buildColumn} from "../tooling/columns";
 import {Vizbuilder} from "./Vizbuilder";
+import { useVizbuilderData } from "../hooks/useVizbuilderData";
 
 const CHART_LIMITS: Partial<ChartLimits> = {
   BARCHART_MAX_BARS: 20,
@@ -29,22 +30,25 @@ export function VizbuilderView(props: {
 }) {
   const {cube, params, result} = props;
 
+  const query = useVizbuilderData();
+
   const dataset = useMemo<Dataset | Dataset[]>(() => {
     const columns = Object.keys(result.types);
     return {
       columns: Object.fromEntries(
         columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)]),
       ),
-      data: result.data,
+      data: query.data?.data || [],
       locale: params.locale || "en",
     };
   }, [cube, result, params.locale]);
-
   return (
-    <Vizbuilder
-      datasets={dataset}
-      chartLimits={CHART_LIMITS}
-      downloadFormats={DOWNLOAD_FORMATS}
-    />
+    !query.isLoading && (
+      <Vizbuilder
+        datasets={dataset}
+        chartLimits={CHART_LIMITS}
+        downloadFormats={DOWNLOAD_FORMATS}
+      />
+    )
   );
 }
