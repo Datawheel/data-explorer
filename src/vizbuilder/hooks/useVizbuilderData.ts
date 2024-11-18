@@ -9,8 +9,6 @@ import {useKey} from "../../hooks/permalink";
 import {useActions} from "../../hooks/settings";
 
 import {selectDrilldownItems, selectMeasureItems} from "../../state/queries";
-// import {useQueryClient} from "@tanstack/react-query";
-// import {useUpdatePermaLink} from "@/hooks/useUpdatePermaLink";
 
 type ApiResponse = {
   data: any;
@@ -69,13 +67,6 @@ export function useVizbuilderData() {
       staleTime: 300000,
       enabled: enabled && !!filterKeydebouced
     });
-    // const client = useQueryClient();
-    // const cachedData = client.getQueryData(["table", filterKeydebouced]);
-    // useUpdatePermaLink({
-    //   isFetched: Boolean(cachedData),
-    //   cube,
-    //   enabled,
-    //   isLoading: query.isLoading
-    // });
+
     return query;
 }
