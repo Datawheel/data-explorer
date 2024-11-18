@@ -4,7 +4,7 @@ import {bindActionCreators} from "@reduxjs/toolkit";
 import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
-import {type TranslationDict, TranslationProvider} from "../hooks/translation";
+import {type Translation, TranslationProvider} from "../hooks/translation";
 import {type ExplorerActionMap, type ExplorerStore, actions, storeFactory} from "../state";
 import type {Formatter, PanelDescriptor} from "../utils/types";
 import {DebugView} from "./DebugView";
@@ -122,7 +122,7 @@ export function ExplorerComponent<Locale extends string>(props: {
   /**
    * The Translation labels to use in the UI.
    */
-  translations?: Record<Locale, TranslationDict>;
+  translations?: Record<Locale, Translation>;
 
   /**
    * Determines whether Explorer should be rendered within a MantineProvider
