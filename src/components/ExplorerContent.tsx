@@ -58,14 +58,13 @@ export function ExplorerContent(props: {
     return props.serverConfig !== undefined ? props.serverConfig : {};
   }, [props.serverConfig]);
 
-  useEffect(() => {
-    useSetup(
-      props.serverURL,
-      serverConfig,
-      props.defaultDataLocale,
-      props.defaultCube,
-    );
-  }, [props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube]);
+
+  useSetup(
+    props.serverURL,
+    serverConfig,
+    props.defaultDataLocale,
+    props.defaultCube,
+  );
 
   const {classes} = useStyles({height: props.height});
 

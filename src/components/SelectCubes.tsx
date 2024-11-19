@@ -172,11 +172,11 @@ function useBuildGraph(items, locale) {
         const subtopic = getAnnotation(item, "subtopic", locale);
         const table = getAnnotation(item, "table", locale);
         const hide = getAnnotation(item, "hide_in_ui", locale);
-        console.log(topic, topic_order);
+        
         if (!yn(hide)) {
           graph.addNode(topic);
           if(topic_order) {
-            console.log(topic, topic_order);
+        
             graph.addTopicOrder(topic, topic_order)
           };
           graph.addNode(subtopic);
