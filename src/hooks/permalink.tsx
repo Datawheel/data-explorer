@@ -25,7 +25,7 @@ export function parsePermalink(cube: TesseractCube, value: string | URLSearchPar
   const search = new URLSearchParams(value);
 
   const params = requestToQueryParams(cube, search);
-  console.log(search.get("chart"));
+
   return buildQuery({
     panel: search.get("panel") || "table",
     chart: search.get("chart") || "",
@@ -111,7 +111,6 @@ export function useUpdatePermaLink({
 
 export function useKey(params: Partial<QueryParams> = {}) {
   const queryItem = useSelector(selectCurrentQueryItem);
-  console.log(queryItem);
   if (isValidQuery(queryItem.params)) {
     return serializePermalink({...queryItem, params: {...queryItem.params, ...params}});
   }
