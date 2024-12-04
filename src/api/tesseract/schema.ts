@@ -198,6 +198,8 @@ export interface TesseractLevel {
   annotations: Annotations;
   depth: number;
   properties: TesseractProperty[];
+  type?: "geo" | "time" | string;
+  count?: number;
 }
 
 export interface TesseractProperty {
