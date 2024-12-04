@@ -37,9 +37,5 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[]) {
     totalCount = calcMaxMemberCount(levels.map(l => l.count)); // Recalculate totalCount
   }
 
-  console.log(levels, "lkvs");
-
   return levels;
 }
-
-// if level.count exists
