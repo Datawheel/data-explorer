@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.3.12",
+  "version": "0.3.14",
   "main": "./dist/main.mjs",
   "types": "./dist/main.d.mts",
   "files": [
@@ -50,7 +50,6 @@
     "react-dom": "^17.0.0 || ^18.0.0"
   },
   "devDependencies": {
-    "@datawheel/vizbuilder": "^0.6.0-rc.4",
     "@emotion/react": "^11.10.0",
     "@mantine/core": "^6.0.7",
     "@mantine/dates": "^6.0.7",
