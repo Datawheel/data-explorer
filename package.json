@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.3.14",
+  "version": "0.3.15",
   "main": "./dist/main.mjs",
   "types": "./dist/main.d.mts",
   "files": [
@@ -39,7 +39,7 @@
     "yn": "^5.0.0"
   },
   "peerDependencies": {
-    "@datawheel/vizbuilder": "^0.6.0-0",
+    "@datawheel/vizbuilder": "^0.6.0-rc.4",
     "@emotion/react": "^11.0.0",
     "@mantine/core": "^6.0.0",
     "@mantine/dates": "^6.0.0",
