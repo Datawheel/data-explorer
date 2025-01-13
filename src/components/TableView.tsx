@@ -581,7 +581,7 @@ export function useTable({
           ? ({cell}) => {
             return (
               <span style={{display: "block", textAlign: "right"}}>
-                {formatter(cell.getValue())}
+                {formatter(cell.getValue(), locale)}
               </span>
             );
           }

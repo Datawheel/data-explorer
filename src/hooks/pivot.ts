@@ -13,7 +13,8 @@ export function useFormatParams(measures: TesseractMeasure[], valueProperty: str
   const fmt = useFormatter();
 
   return useMemo(() => {
-    const formatterKey = fmt.getFormat(valueProperty);
+    const measure = measures.find(item => item.name === valueProperty);
+    const formatterKey = fmt.getFormat(measure || valueProperty);
     const formatter = fmt.getFormatter(formatterKey);
     return {
       formatExample: formatter(12345.6789),
@@ -21,7 +22,7 @@ export function useFormatParams(measures: TesseractMeasure[], valueProperty: str
       formatterKey,
       formatterKeyOptions: [{label: t("placeholders.none"), value: "undefined"}].concat(
         fmt
-          .getAvailableFormats(valueProperty)
+          .getAvailableFormats(measure || valueProperty)
           .map(key => ({label: fmt.getFormatter(key)(12345.6789), value: key})),
       ),
       setFormat: fmt.setFormat,
