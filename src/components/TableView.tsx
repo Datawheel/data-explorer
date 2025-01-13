@@ -507,7 +507,7 @@ export function useTable({
       } = column;
 
       const isNumeric = valueType === "number" && columnKey !== "Year";
-      const formatterKey = getFormat(columnKey, isNumeric ? "Decimal" : "identity");
+      const formatterKey = getFormat(entity, isNumeric ? "Decimal" : "identity");
       const formatter = getFormatter(formatterKey);
       const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
@@ -575,7 +575,13 @@ export function useTable({
         dataType: valueType,
         accessorFn: item => item[columnKey],
         Cell: isNumeric
-          ? ({cell}) => formatter(cell.getValue())
+          ? ({cell}) => {
+            return (
+              <span style={{display: "block", textAlign: "right"}}>
+                {formatter(cell.getValue())}
+              </span>
+            );
+          }
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
               return (
