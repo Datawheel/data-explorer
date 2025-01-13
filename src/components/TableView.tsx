@@ -507,7 +507,10 @@ export function useTable({
       } = column;
 
       const isNumeric = valueType === "number" && columnKey !== "Year";
-      const formatterKey = getFormat(entity, isNumeric ? "Decimal" : "identity");
+      const formatterKey = getFormat(
+        "aggregator" in entity ? entity : columnKey, 
+        isNumeric ? "Decimal" : "identity",
+      );
       const formatter = getFormatter(formatterKey);
       const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
