@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "main": "./dist/main.mjs",
   "types": "./dist/main.d.mts",
   "files": [
