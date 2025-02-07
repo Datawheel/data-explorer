@@ -39,7 +39,7 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRe
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
-import {useFormatter} from "../hooks/formatter";
+import {useFormatter, useidFormatters} from "../hooks/formatter";
 import {useKey, useUpdatePermaLink} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
@@ -72,14 +72,12 @@ import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
 
-
-type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
+export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
 
-
 type EntityTypes = "measure" | "level" | "property";
-type TData = Record<string, any> & Record<string, string | number>;
+export type TData = Record<string, any> & Record<string, string | number>;
 
 function isColumnSorted(column: string, key: string) {
   return column == key;
@@ -175,7 +173,7 @@ function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, ran
   let result: {
     filterVariant?: "multi-select" | "text";
     mantineFilterMultiSelectProps?: {
-      data: (string | { value: string; label: string })[]
+      data: (string | {value: string; label: string})[];
     };
   } = {};
   const filterVariant =
@@ -197,6 +195,10 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
     default:
       return <IconArrowsSort />;
   }
+}
+
+function removeFirstTwo(str) {
+  return str.slice(2);
 }
 
 type TableProps = {
@@ -363,7 +365,6 @@ function usePrefetch({
   }, [limit, page, pageSize, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
 }
 
-
 const columnSrt = (a: AnyResultColumn, b: AnyResultColumn) => {
   // Define order priority: level (dimension) first, then measure
   const order = {
@@ -391,7 +392,6 @@ export function useTable({
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-
 
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
@@ -477,9 +477,8 @@ export function useTable({
   }, [pagination]);
 
   const {translate: t} = useTranslation();
-
-  // check formatters
   const {getFormat, getFormatter} = useFormatter();
+  const {idFormatters} = useidFormatters();
 
   const {sortKey, sortDir} = useSelector(selectSortingParams);
 
@@ -507,11 +506,14 @@ export function useTable({
       } = column;
 
       const isNumeric = valueType === "number" && columnKey !== "Year";
+
       const formatterKey = getFormat(
-        "aggregator" in entity ? entity : columnKey, 
-        isNumeric ? "Decimal" : "identity",
+        "aggregator" in entity ? entity : columnKey,
+        isNumeric ? "Decimal" : "identity"
       );
+
       const formatter = getFormatter(formatterKey);
+
       const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
         ...mantineFilterVariantObject,
@@ -557,17 +559,19 @@ export function useTable({
                     </ActionIcon>
                   </Flex>
                 </Box>
-                <CustomActionIcon
-                  label={`At least one ${getEntityText(entityType)} is required.`}
-                  key={`remove-${column.columnDef.header}`}
-                  disabled={!showTrashIcon(finalKeys, entityType)}
-                  onClick={() => removeColumn(actions, entity, measures, drilldowns, entityType)}
-                  showTooltip={!showTrashIcon(finalKeys, entityType)}
-                  size={25}
-                  ml={rem(5)}
-                >
-                  <IconTrash />
-                </CustomActionIcon>
+                {showTrashIcon(finalKeys, entityType) && (
+                  <CustomActionIcon
+                    label={`At least one ${getEntityText(entityType)} is required.`}
+                    key={`remove-${column.columnDef.header}`}
+                    disabled={!showTrashIcon(finalKeys, entityType)}
+                    onClick={() => removeColumn(actions, entity, measures, drilldowns, entityType)}
+                    showTooltip={!showTrashIcon(finalKeys, entityType)}
+                    size={25}
+                    ml={rem(5)}
+                  >
+                    <IconTrash />
+                  </CustomActionIcon>
+                )}
               </Flex>
             </Box>
           );
@@ -579,14 +583,16 @@ export function useTable({
         accessorFn: item => item[columnKey],
         Cell: isNumeric
           ? ({cell}) => {
-            return (
-              <span style={{display: "block", textAlign: "right"}}>
-                {formatter(cell.getValue(), locale)}
-              </span>
-            );
-          }
+              return (
+                <span style={{display: "block", textAlign: "right"}}>
+                  {formatter(cell.getValue(), locale)}
+                </span>
+              );
+            }
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
+              const idFormatter = idFormatters[`${cell.column.id} ID`];
+
               return (
                 <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
                   <Text
@@ -599,7 +605,11 @@ export function useTable({
                   >
                     {renderedCellValue}
                   </Text>
-                  <Box>{cellId && <Text color="dimmed">{cellId}</Text>}</Box>
+                  <Box>
+                    {cellId && (
+                      <Text color="dimmed">{idFormatter ? idFormatter(cellId) : cellId}</Text>
+                    )}
+                  </Box>
                 </Flex>
               );
             }
@@ -690,7 +700,6 @@ export function useTable({
 
   const isTransitionState = status !== "success" && !isError;
   const isLoad = isLoading || data === undefined || isTransitionState;
-
   const table = useMantineReactTable({
     columns,
     data: tableData,
@@ -777,7 +786,8 @@ export function TableView({
                     const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({
-                      backgroundColor: theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
+                      backgroundColor:
+                        theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
                       textAlign: isNumeric ? ("right" as const) : ("left" as const),
                       height: 60,
                       paddingBottom: 10,

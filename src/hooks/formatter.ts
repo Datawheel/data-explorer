@@ -27,7 +27,7 @@ export const defaultFormatters = {
   Dollars: new Intl.NumberFormat(undefined, {style: "currency", currency: "USD"}).format,
   Human: n => formatAbbreviate(n, "en-US"),
   Milliards: new Intl.NumberFormat(undefined, {useGrouping: true}).format,
-  Million: new Intl.NumberFormat(undefined, {useGrouping: true}).format,
+  Million: new Intl.NumberFormat(undefined, {useGrouping: true}).format
 };
 
 export const basicFormatterKeys = ["Decimal", "Milliards", "Human"];
@@ -49,6 +49,7 @@ export function useFormatter() {
   // This will silently store the Formatters intended by the server schema
   const formatterMap = useRef(formatters);
 
+  console.log(formatterMap, "formatMap");
   return useMemo<FormatterContextValue>(() => {
     return {
       currentFormats: formatMap,
@@ -72,7 +73,7 @@ export function useFormatter() {
         if (/^[A-Z]{3}$/.test(key)) {
           const formatter = new Intl.NumberFormat(undefined, {
             style: "currency",
-            currency: key,
+            currency: key
           }).format;
           formatterMap.current[key] = formatter;
           return formatter;
@@ -87,7 +88,7 @@ export function useFormatter() {
         }
         formatterMap.current[key] = formatter;
         return formatter;
-      },
+      }
     };
 
     function setFormat(measure: string | TesseractMeasure, format: Format) {
@@ -95,15 +96,15 @@ export function useFormatter() {
       setFormatMap(formatMap => ({...formatMap, [key]: format}));
     }
 
-    function getFormat(
-      measure: string | TesseractMeasure,
-      defaultValue = "identity",
-    ): Format {
+    function getFormat(measure: string | TesseractMeasure, defaultValue = "identity"): Format {
       if (typeof measure === "string") return formatMap[measure] || defaultValue;
       const {format_template, units_of_measurement} = measure.annotations;
-      return (
-        formatMap[measure.name] || format_template || units_of_measurement || defaultValue
-      );
+      return formatMap[measure.name] || format_template || units_of_measurement || defaultValue;
     }
   }, [formatMap]);
+}
+
+export function useidFormatters() {
+  const {idFormatters} = useSettings();
+  return {idFormatters};
 }
