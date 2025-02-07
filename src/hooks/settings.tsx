@@ -16,13 +16,14 @@ export type ExplorerBoundActionMap = {
 
 const defaultToolbarConfig: ToolbarConfigType = {
   buttons: [],
-  showLabels: true,
-}
+  showLabels: true
+};
 
 interface SettingsContextProps {
   actions: ExplorerBoundActionMap;
   defaultMembersFilter: "id" | "name" | "any";
   formatters: Record<string, Formatter>;
+  idFormatters: Record<string, Formatter>;
   previewLimit: number;
   panels: PanelDescriptor[];
   paginationConfig: Pagination;
@@ -45,6 +46,7 @@ export function SettingsProvider(props: {
   children?: React.ReactElement;
   defaultMembersFilter?: "id" | "name" | "any";
   formatters?: Record<string, Formatter>;
+  idFormatters?: Record<string, Formatter>;
   panels: PanelDescriptor[];
   previewLimit?: number;
   withPermalink: boolean | undefined;
@@ -53,17 +55,18 @@ export function SettingsProvider(props: {
   toolbarConfig?: Partial<ToolbarConfigType>;
 }) {
   usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
-  
+
   const value: SettingsContextProps = useMemo(
     () => ({
       actions: props.actions,
       defaultMembersFilter: props.defaultMembersFilter || "id",
       formatters: props.formatters || {},
+      idFormatters: props.idFormatters || {},
       panels: props.panels,
       previewLimit: props.previewLimit || 50,
       paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100},
       measuresActive: props.measuresActive,
-      toolbarConfig: {...defaultToolbarConfig,...props.toolbarConfig},
+      toolbarConfig: {...defaultToolbarConfig, ...props.toolbarConfig}
     }),
     [props.formatters, props.previewLimit, props.toolbarConfig]
   );

@@ -15,7 +15,7 @@ import {selectLoadingState} from "../state/loading";
 import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
-import { LocaleSelector } from "./LocaleSelector";
+import {LocaleSelector} from "./LocaleSelector";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -103,7 +103,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
         {url && (
           <Button
             id="dex-api-btn"
-            variant="subtle"
+            // variant="light"
             leftIcon={<IconCopy size={20} />}
             sx={{height: 30}}
             onClick={copyHandler}
@@ -126,7 +126,7 @@ const DownloadQuery = ({data}) => {
 
   components.push(
     <ButtonDownload
-      variant="light"
+      // variant="light"
       leftIcon={<IconDownload size={20} />}
       sx={{height: 30}}
       key="download_csv"
@@ -170,7 +170,7 @@ function useDownload(props) {
           : new window.Blob([file.content], {
               type: mimeTypes[file.extension] || "application/octet-stream"
             });
-      
+
       const blobURL = window.URL.createObjectURL(blob);
       const anchor = document.createElement("a");
       anchor.href = blobURL;

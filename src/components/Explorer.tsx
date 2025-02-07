@@ -13,7 +13,7 @@ import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
 import ExplorerTour from "./tour/ExplorerTour";
 import {TourConfig} from "./tour/types";
-import { ToolbarConfigType } from "./Toolbar";
+import {ToolbarConfigType} from "./Toolbar";
 
 export type Pagination = {
   rowsLimits: number[];
@@ -24,7 +24,7 @@ const defaultTourConfig: TourConfig = {
   extraSteps: [],
   introImage: null,
   tourProps: {}
-}
+};
 /**
  * Main DataExplorer component
  * This components wraps the interface components in the needed Providers,
@@ -87,6 +87,12 @@ export function ExplorerComponent<Locale extends string>(props: {
   formatters?: Record<string, Formatter>;
 
   /**
+   * Defines an index of formatter functions available for dimension IDs
+   * that are displayed next to the value.
+   * */
+
+  idFormatters?: Record<string, Formatter>;
+  /**
    * Defines an alternative height for the component structure.
    * @default "100vh"
    */
@@ -115,7 +121,7 @@ export function ExplorerComponent<Locale extends string>(props: {
 
   toolbarConfig?: Partial<ToolbarConfigType>;
   /**
-   * Tour configuration 
+   * Tour configuration
    */
   tourConfig?: Partial<TourConfig>;
 
@@ -185,6 +191,7 @@ export function ExplorerComponent<Locale extends string>(props: {
       actions={boundActions}
       defaultMembersFilter={props.defaultMembersFilter}
       formatters={props.formatters}
+      idFormatters={props.idFormatters}
       withPermalink={props.withPermalink}
       panels={panels}
       pagination={pagination}
