@@ -172,13 +172,12 @@ function useBuildGraph(items, locale) {
         const subtopic = getAnnotation(item, "subtopic", locale);
         const table = getAnnotation(item, "table", locale);
         const hide = getAnnotation(item, "hide_in_ui", locale);
-        
+
         if (!yn(hide)) {
           graph.addNode(topic);
-          if(topic_order) {
-        
-            graph.addTopicOrder(topic, topic_order)
-          };
+          if (topic_order) {
+            graph.addTopicOrder(topic, topic_order);
+          }
           graph.addNode(subtopic);
           graph.addNode(name);
           graph.addEdge(topic, subtopic);
@@ -230,7 +229,8 @@ function CubeTree({
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
   );
-  
+
+
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
     return (
@@ -239,6 +239,7 @@ function CubeTree({
       </Text>
     );
   }
+
   return map && map.size > 0 ? (
     <Results
       onSelectCube={onSelectCube}
@@ -294,9 +295,9 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
           fontSize: t.fontSizes.md,
           "&[data-active]": {
             borderLeft: 6,
-            borderLeftColor: t.colors[t.primaryColor][t.fn.primaryShade()],
+            borderLeftColor: t.fn.primaryColor(),
             borderLeftStyle: "solid",
-            color: t.colors[t.primaryColor][t.fn.primaryShade()]
+            color: t.fn.primaryColor()
           }
         },
         content: {
@@ -307,24 +308,26 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
         }
       })}
     >
-      {items.sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b]).map(item => {
-        return (
-          <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
-            <AccordionControl>{item}</AccordionControl>
-            <Accordion.Panel>
-              <SubtopicAccordion
-                graph={graph}
-                parent={item}
-                items={graph.adjList[item]}
-                key={item}
-                locale={locale}
-                selectedItem={selectedItem}
-                onSelectCube={onSelectCube}
-              />
-            </Accordion.Panel>
-          </Accordion.Item>
-        );
-      })}
+      {items
+        .sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b])
+        .map(item => {
+          return (
+            <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
+              <AccordionControl>{item}</AccordionControl>
+              <Accordion.Panel>
+                <SubtopicAccordion
+                  graph={graph}
+                  parent={item}
+                  items={graph.adjList[item]}
+                  key={item}
+                  locale={locale}
+                  selectedItem={selectedItem}
+                  onSelectCube={onSelectCube}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          );
+        })}
     </Accordion>
   );
 }
@@ -363,7 +366,7 @@ function CubeButton({
           : classes.link
       }
       sx={t => ({
-        background: isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
+        backgroundColor: isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
           ? t.fn.primaryColor()
           : t.colorScheme === "dark"
           ? t.colors.dark[6]
@@ -395,8 +398,11 @@ function SubtopicAccordion({
   locale
 }: PropsWithChildren<NestedAccordionType>) {
   const {value, setValue} = useAccordionValue("subtopic", locale);
+
+
   return (
     <Accordion
+      id="data-accordion-topic"
       value={value}
       onChange={setValue}
       key={`subtopic-${parent}`}
@@ -419,7 +425,7 @@ function SubtopicAccordion({
         }
       })}
     >
-      {[...items].map((item, index) => {
+      {[...items].sort((a, b) => a.localeCompare(b, locale, { sensitivity: "base" })).map((item, index) => {
         const filtered = [...graph.adjList[item]].filter(value => value !== parent);
 
         return (
