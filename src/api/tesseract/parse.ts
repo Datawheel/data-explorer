@@ -105,6 +105,8 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
 
   const filters = getList(search, "filters", ",").map(filterParse);
 
+  console.log(filters, "ACA");
+
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
   const [sortKey, sortDir] = (search.get("sort") || "").split(".");
 
@@ -141,11 +143,18 @@ export function filterSerialize(item: FilterItem): string {
   return `${item.measure}.${conditions.join(`.${item.joint}.`)}`;
 }
 
-export function filterParse(item: string): FilterItem {
+function filterParseCondition(value) {
+  const index = value.indexOf(".");
+  const number = value.slice(index + 1);
+  return [Comparison[value.slice(0, index)], number, Number(number)];
+}
+
+// Main filterParse function (updated to use the new filterParseCondition)
+function filterParse(item) {
   const indexName = item.indexOf(".");
   const condition = item.slice(indexName + 1);
   const joint = condition.includes(".and.") ? "and" : "or";
-  const [cond1, cond2] = condition.split(joint);
+  const [cond1, cond2] = condition.split(`.${joint}.`);
   return {
     key: Math.random().toString(16).slice(2),
     active: true,
@@ -154,10 +163,4 @@ export function filterParse(item: string): FilterItem {
     conditionOne: filterParseCondition(cond1),
     conditionTwo: cond2 ? filterParseCondition(cond2) : undefined
   };
-}
-
-function filterParseCondition(value: string): [Comparison, string, number] {
-  const index = value.indexOf(".");
-  const number = value.slice(index + 1);
-  return [Comparison[value.slice(0, index)], number, Number(number)];
 }
