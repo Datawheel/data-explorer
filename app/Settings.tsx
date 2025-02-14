@@ -13,6 +13,7 @@ import {
   createEmotionCache,
   useMantineTheme
 } from "@mantine/core";
+
 import {
   IconLanguage,
   IconMoon,
@@ -82,10 +83,37 @@ export function SettingsProvider({
 
   const theme: MantineThemeOverride = useMemo(
     () => ({
+      globalStyles: (theme) => ({
+        "#data-accordion-topic > .mantine-Accordion-control[data-active] span": {
+          color: theme.colors.dark[6]
+        },
+      }),
+      colors: {
+        oec: [
+          "#FFF9DB",
+          "#FFF9DB",
+          "#FFF9DB",
+          "#FFF3BF",
+          "#FFEC99",
+          "#FFE066",
+          "#FFD43B",
+          "#FCC419",
+          "#FAB005"
+        ]
+      },
       primaryColor,
       colorScheme,
       dir: direction,
-      emotionCache: direction === "rtl" ? rtlCache : undefined
+      emotionCache: direction === "rtl" ? rtlCache : undefined,
+      components: {
+        Button: {
+          styles: theme => ({
+            root: {
+              color: theme.colorScheme === "dark" ? theme.colors.white : theme.colors.dark[4]
+            }
+          })
+        }
+      }
     }),
     [primaryColor, colorScheme, direction]
   );
@@ -93,6 +121,8 @@ export function SettingsProvider({
   useEffect(() => {
     document.querySelector("html")?.setAttribute("dir", direction);
   }, [direction]);
+
+  const customColor = {};
 
   return (
     <MantineProvider inherit withNormalizeCSS withGlobalStyles theme={theme}>
