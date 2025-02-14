@@ -105,8 +105,6 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
 
   const filters = getList(search, "filters", ",").map(filterParse);
 
-  console.log(filters, "ACA");
-
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
   const [sortKey, sortDir] = (search.get("sort") || "").split(".");
 
