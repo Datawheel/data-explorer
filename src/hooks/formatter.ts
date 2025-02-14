@@ -49,7 +49,6 @@ export function useFormatter() {
   // This will silently store the Formatters intended by the server schema
   const formatterMap = useRef(formatters);
 
-  console.log(formatterMap, "formatMap");
   return useMemo<FormatterContextValue>(() => {
     return {
       currentFormats: formatMap,
