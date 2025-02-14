@@ -83,11 +83,11 @@ export function SettingsProvider({
 
   const theme: MantineThemeOverride = useMemo(
     () => ({
-      globalStyles: (theme) => ({
-        "#data-accordion-topic > .mantine-Accordion-control[data-active] span": {
-          color: theme.colors.dark[6]
-        },
-      }),
+      // globalStyles: (theme) => ({
+      //   "#data-accordion-topic > .mantine-Accordion-control[data-active] span": {
+      //     color: theme.colors.dark[6]
+      //   },
+      // }),
       colors: {
         oec: [
           "#FFF9DB",
@@ -106,13 +106,13 @@ export function SettingsProvider({
       dir: direction,
       emotionCache: direction === "rtl" ? rtlCache : undefined,
       components: {
-        Button: {
-          styles: theme => ({
-            root: {
-              color: theme.colorScheme === "dark" ? theme.colors.white : theme.colors.dark[4]
-            }
-          })
-        }
+        // Button: {
+        //   styles: theme => ({
+        //     root: {
+        //       color: theme.colorScheme === "dark" ? theme.colors.white : theme.colors.dark[4]
+        //     }
+        //   })
+        // }
       }
     }),
     [primaryColor, colorScheme, direction]
