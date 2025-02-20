@@ -1,13 +1,12 @@
-
 // we should fix this
-// @ts-nocheck 
+// @ts-nocheck
 import type {ChartLimits, Dataset} from "@datawheel/vizbuilder";
 import React, {useMemo} from "react";
 import type {TesseractCube} from "../../api";
 import type {QueryParams, QueryResult} from "../../utils/structs";
 import {buildColumn} from "../tooling/columns";
 import {Vizbuilder} from "./Vizbuilder";
-import { useVizbuilderData } from "../hooks/useVizbuilderData";
+import {useVizbuilderData} from "../hooks/useVizbuilderData";
 
 const CHART_LIMITS: Partial<ChartLimits> = {
   BARCHART_MAX_BARS: 20,
@@ -18,7 +17,7 @@ const CHART_LIMITS: Partial<ChartLimits> = {
   LINEPLOT_LINE_MAX: 20,
   STACKED_SHAPE_MAX: 200,
   STACKED_TIME_MEMBER_MIN: 2,
-  TREE_MAP_SHAPE_MAX: 1000,
+  TREE_MAP_SHAPE_MAX: 1000
 };
 
 const DOWNLOAD_FORMATS = ["SVG", "PNG"] as const;
@@ -36,12 +35,13 @@ export function VizbuilderView(props: {
     const columns = Object.keys(result.types);
     return {
       columns: Object.fromEntries(
-        columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)]),
+        columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
       ),
       data: query.data?.data || [],
-      locale: params.locale || "en",
+      locale: params.locale || "en"
     };
-  }, [cube, result, params.locale]);
+  }, [cube, result, params.locale, query]);
+
   return (
     !query.isLoading && (
       <Vizbuilder
