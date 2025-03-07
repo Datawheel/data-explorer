@@ -64,7 +64,14 @@ export function useSetup(
               const drilldowns = data.map(item => item.drilldown);
               const cuts = data.map(item => item.cut);
               query.params.drilldowns = keyBy(drilldowns, "key");
-              query.params.cuts = keyBy(cuts, "key");
+
+              // Merge existing cuts with new cuts, preserving existing ones
+              const existingCuts = keyBy(
+                Object.values(query.params.cuts || {}).map(c => ({...c, key: c.level})),
+                "key"
+              );
+              const newCuts = keyBy(cuts, "key");
+              query.params.cuts = {...newCuts, ...existingCuts};
 
               query = isValidQuery(query.params) ? query : undefined;
             }
