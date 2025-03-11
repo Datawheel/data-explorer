@@ -21,7 +21,7 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-import {useQuery, useQueryClient} from "@tanstack/react-query";
+import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import {
   type MRT_ColumnDef as ColumnDef,
@@ -35,7 +35,15 @@ import {
   flexRender,
   useMantineReactTable
 } from "mantine-react-table";
-import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRef} from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+  useRef,
+  useContext
+} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
@@ -71,6 +79,7 @@ import {
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
+import _ from "lodash";
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
@@ -277,46 +286,68 @@ type ApiResponse = {
   };
 };
 
-function useTableData({columns, pagination, cube}: useTableDataType) {
+// Create a context to manage table refresh state
+interface TableRefreshContextType {
+  setQueryEnabled: (enabled: boolean) => void;
+  isQueryEnabled: boolean;
+}
+
+const TableRefreshContext = React.createContext<TableRefreshContextType | undefined>(undefined);
+
+export function TableRefreshProvider({children}: {children: React.ReactNode}) {
+  const [isQueryEnabled, setQueryEnabled] = useState(true);
+
+  const value = useMemo(
+    () => ({
+      isQueryEnabled,
+      setQueryEnabled
+    }),
+    [isQueryEnabled]
+  );
+
+  return <TableRefreshContext.Provider value={value}>{children}</TableRefreshContext.Provider>;
+}
+
+// Hook to use the context
+export function useTableRefresh() {
+  const context = useContext(TableRefreshContext);
+  if (context === undefined) {
+    throw new Error("useTableRefresh must be used within a TableRefreshProvider");
+  }
+  return context;
+}
+
+export function useTableData({columns, pagination, cube}: useTableDataType) {
   const {code: locale} = useSelector(selectLocale);
-  const permaKey = useKey();
   const loadingState = useSelector(selectLoadingState);
+  const permaKey = useKey();
   const actions = useActions();
   const pageSize = pagination.pageSize;
   const page = pagination.pageIndex;
-  const enabled = Boolean(columns.length);
-  const initialKey = permaKey ? [permaKey, page, pageSize] : permaKey;
 
-  const [filterKeydebouced, setDebouncedTerm] = useState<
-    string | boolean | (string | boolean | number)[]
-  >(initialKey);
+  // Get query enabled state from context
+  const {isQueryEnabled, setQueryEnabled} = useTableRefresh();
 
-  useEffect(() => {
-    if (!enabled && permaKey) return;
-    const handler = debounce(
-      () => {
-        const term = [permaKey, page, pageSize];
-        setDebouncedTerm(term);
-      },
-      loadingState.loading ? 0 : 800
-    );
-    handler();
-    return () => handler.cancel();
-  }, [page, enabled, locale, pageSize, loadingState.loading, permaKey]);
+  // Only enable the query when there are columns AND isQueryEnabled is true
+  const enabled = Boolean(columns.length) && isQueryEnabled;
+  const key = permaKey ? [permaKey, page, pageSize] : permaKey;
 
   const query = useQuery<ApiResponse>({
-    queryKey: ["table", filterKeydebouced],
+    queryKey: ["table", key],
     queryFn: () =>
       actions.willFetchQuery().then(result => {
         actions.updateResult(result);
+        setQueryEnabled(false);
         return result;
       }),
     staleTime: 300000,
-    enabled: enabled && !!filterKeydebouced,
-    retry: false
+    enabled: enabled && !!key,
+    retry: false,
+    placeholderData: keepPreviousData
   });
+
   const client = useQueryClient();
-  const cachedData = client.getQueryData(["table", filterKeydebouced]);
+  const cachedData = client.getQueryData(["table", key]);
   useUpdatePermaLink({
     isFetched: Boolean(cachedData),
     cube,
@@ -461,13 +492,13 @@ export function useTable({
     .filter(columnFilter)
     .sort(columnSorting);
 
-  usePrefetch({
-    isPlaceholderData,
-    limit,
-    totalRowCount: totalRowCount ?? 0,
-    pagination,
-    isFetching: isFetching || isLoading
-  });
+  // usePrefetch({
+  //   isPlaceholderData,
+  //   limit,
+  //   totalRowCount: totalRowCount ?? 0,
+  //   pagination,
+  //   isFetching: isFetching || isLoading
+  // });
 
   useEffect(() => {
     actions.updatePagination({
@@ -698,8 +729,9 @@ export function useTable({
     [isError, t]
   );
 
-  const isTransitionState = status !== "success" && !isError;
-  const isLoad = isLoading || data === undefined || isTransitionState;
+  // const isTransitionState = status !== "success" && !isError;
+  // const isLoad = isLoading || data === undefined || isTransitionState;
+  // isLoading: isLoading || data === undefined || isTransitionState,
   const table = useMantineReactTable({
     columns,
     data: tableData,
@@ -710,7 +742,7 @@ export function useTable({
     manualSorting: true,
     rowCount: totalRowCount,
     state: {
-      isLoading: isLoading || data === undefined || isTransitionState,
+      isLoading,
       pagination,
       showAlertBanner: isError,
       showProgressBars: isFetching || isLoading
@@ -719,7 +751,15 @@ export function useTable({
     ...mantineTableProps
   });
 
-  return {table, isError, isLoading: isLoad, data: tableData, columns, pagination, setPagination};
+  return {
+    table,
+    isError,
+    isLoading,
+    data: tableData,
+    columns,
+    pagination,
+    setPagination
+  };
 }
 
 type TableView = {
@@ -928,7 +968,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const label = header.column.id;
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
-
+  const {idFormatters} = useidFormatters();
   const cut = cutItems.find(cut => {
     return cut.level === drilldown?.level;
   });
@@ -936,6 +976,9 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   }, []);
+
+  console.log(idFormatters);
+  console.log(label);
 
   return (
     drilldown &&
@@ -949,10 +992,14 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           }}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
-          data={drilldown.members.map(m => ({
-            value: `${m.key}`,
-            label: m.caption ? `${m.caption} (${m.key})` : `${m.key}`
-          }))}
+          data={drilldown.members.map(m => {
+            const idFormatter = idFormatters[`${label} ID`];
+            const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
+            return {
+              value: `${m.key}`,
+              label: m.caption ? `${m.caption} (${formattedKey})` : `${formattedKey}`
+            };
+          })}
           clearButtonProps={{"aria-label": "Clear selection"}}
           clearable
           nothingFound="Nothing found"

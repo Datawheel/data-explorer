@@ -28,7 +28,7 @@ import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
-// import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -212,7 +212,7 @@ function SuccessResult(props: {
       w="100%"
       className={props.className}
       h="100%"
-      sx={{ overflow: "hidden"}}
+      sx={{overflow: "hidden"}}
     >
       <Paper
         ref={fullscreen.ref}
@@ -252,7 +252,10 @@ function SuccessResult(props: {
           </Alert>
         )}
 
-        <Box id="query-results-content" sx={{flex: "1 1 calc(100% - 70px)", maxHeight: "calc(100% - 70px)"}}>
+        <Box
+          id="query-results-content"
+          sx={{flex: "1 1 calc(100% - 70px)", maxHeight: "calc(100% - 70px)"}}
+        >
           <Suspense fallback={props.children}>
             <Flex h="100%">
               <Box sx={{flex: "1 1", overflowX: "scroll"}}>
@@ -274,7 +277,7 @@ function SuccessResult(props: {
           </Suspense>
         </Box>
       </Paper>
-      {/* <ReactQueryDevtools initialIsOpen /> */}
+      <ReactQueryDevtools initialIsOpen />
     </Flex>
   );
 }

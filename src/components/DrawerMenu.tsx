@@ -66,7 +66,7 @@ import {
   buildProperty
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
-import {getFiltersConditions} from "./TableView";
+import {getFiltersConditions, useTableRefresh} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
 import {keyBy} from "../utils/transform";
 
@@ -79,8 +79,14 @@ const styles = (t: MantineTheme) => ({
   }
 });
 
-function AddColumnsDrawer() {
+type AddColumnsDrawerProps = {
+  children?: React.ReactNode;
+};
+
+const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   const [opened, {open, close}] = useDisclosure(false);
+  const {setQueryEnabled} = useTableRefresh();
+
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
@@ -90,7 +96,10 @@ function AddColumnsDrawer() {
         id="dex-column-drawer"
         opened={opened}
         position="right"
-        onClose={close}
+        onClose={() => {
+          setQueryEnabled(true);
+          close();
+        }}
         closeButtonProps={{
           id: "dex-column-drawer-close"
         }}
@@ -127,7 +136,7 @@ function AddColumnsDrawer() {
       </Group>
     </>
   );
-}
+};
 
 export function DrawerMenu() {
   return (
@@ -457,7 +466,7 @@ function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectTy
       dimension: triadCaptions[0],
       hierarchy: triadCaptions[1],
       level: triadCaptions[2],
-      propCount: activeProperties.length,
+      propCount: activeProperties.length
     });
   }, [activeProperties.length, levelTriadMap, item, locale.code, t]);
 
@@ -552,10 +561,10 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
 // Add hideControls to the MinMax props interface
 interface MinMaxProps {
   filter: FilterItem;
-  hideControls?: boolean;  // Make it optional with ?
+  hideControls?: boolean; // Make it optional with ?
 }
 
-export const MinMax: React.FC<MinMaxProps> = ({ filter, hideControls, ...rest }) => {
+export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) => {
   const actions = useActions();
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {

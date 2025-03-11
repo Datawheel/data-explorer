@@ -22,6 +22,7 @@ import {getAnnotation} from "../utils/string";
 import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
+import {useTableRefresh} from "./TableView";
 
 export const EMPTY_RESPONSE = {
   data: [],
@@ -209,6 +210,7 @@ function CubeTree({
   const {measuresActive} = useSettings();
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
+  const {setQueryEnabled} = useTableRefresh();
 
   const onSelectCube = (table: string, subtopic: string) => {
     const cube = items.find(
@@ -221,6 +223,7 @@ function CubeTree({
       actions.updateResult(EMPTY_RESPONSE);
       actions.willSetCube(cube.name, measuresActive).then(() => {
         actions.setLoadingState("SUCCESS");
+        setQueryEnabled(true);
       });
     }
   };
@@ -229,7 +232,6 @@ function CubeTree({
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
   );
-
 
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
@@ -399,7 +401,6 @@ function SubtopicAccordion({
 }: PropsWithChildren<NestedAccordionType>) {
   const {value, setValue} = useAccordionValue("subtopic", locale);
 
-
   return (
     <Accordion
       id="data-accordion-topic"
@@ -425,28 +426,30 @@ function SubtopicAccordion({
         }
       })}
     >
-      {[...items].sort((a, b) => a.localeCompare(b, locale, { sensitivity: "base" })).map((item, index) => {
-        const filtered = [...graph.adjList[item]].filter(value => value !== parent);
+      {[...items]
+        .sort((a, b) => a.localeCompare(b, locale, {sensitivity: "base"}))
+        .map((item, index) => {
+          const filtered = [...graph.adjList[item]].filter(value => value !== parent);
 
-        return (
-          <Accordion.Item value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
-            <AccordionControl>{item}</AccordionControl>
-            <Accordion.Panel>
-              {filtered.map((table, index) => (
-                <CubeButton
-                  key={index}
-                  graph={graph}
-                  item={table}
-                  locale={locale}
-                  onSelectCube={onSelectCube}
-                  selectedItem={selectedItem}
-                  parent={item}
-                />
-              ))}
-            </Accordion.Panel>
-          </Accordion.Item>
-        );
-      })}
+          return (
+            <Accordion.Item value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
+              <AccordionControl>{item}</AccordionControl>
+              <Accordion.Panel>
+                {filtered.map((table, index) => (
+                  <CubeButton
+                    key={index}
+                    graph={graph}
+                    item={table}
+                    locale={locale}
+                    onSelectCube={onSelectCube}
+                    selectedItem={selectedItem}
+                    parent={item}
+                  />
+                ))}
+              </Accordion.Panel>
+            </Accordion.Item>
+          );
+        })}
     </Accordion>
   );
 }
