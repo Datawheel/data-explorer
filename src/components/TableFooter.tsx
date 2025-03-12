@@ -16,6 +16,7 @@ import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
 import {LocaleSelector} from "./LocaleSelector";
+import {useTableRefresh} from "./TableView";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -27,7 +28,7 @@ type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
     data?: Record<string, string | number>[];
     isLoading: boolean;
     pagination?: MRT_PaginationState;
-    setPagination?: React.Dispatch<React.SetStateAction<MRT_PaginationState>>;
+    setPagination?: (pagination: MRT_PaginationState) => void;
   };
 
 type Item = {
@@ -41,6 +42,7 @@ function TableFooter(props: Props) {
   const {result, table, data = [], isLoading, pagination, setPagination} = props;
   const {translate: t} = useTranslation();
   const {url} = result;
+  const {setQueryEnabled} = useTableRefresh();
 
   const {copy, copied} = useClipboard({timeout: 1000});
   const copyHandler = useCallback(() => copy(url), [url]);
@@ -50,6 +52,20 @@ function TableFooter(props: Props) {
     pagination: {pageSize}
   } = table.getState();
   const showPagination = totalRowCount && Boolean(totalRowCount > pageSize);
+
+  // Handle page size change
+  const handlePageSizeChange = useCallback(
+    (item: Item) => {
+      if (setPagination && pagination) {
+        // Reset to first page when changing page size
+        setPagination({pageIndex: 0, pageSize: item.value});
+        // Enable query to fetch new data with updated pagination
+        setQueryEnabled(true);
+      }
+    },
+    [setPagination, pagination, setQueryEnabled]
+  );
+
   return (
     <Box w="100%" sx={{flex: "0 0 70px"}}>
       <Flex
@@ -69,9 +85,7 @@ function TableFooter(props: Props) {
                 getLabel={(item: Item) => item.label}
                 items={paginationConfig.rowsLimits.map(value => ({value, label: String(value)}))}
                 selectedItem={{value: pagination?.pageSize}}
-                onItemSelect={(item: Item) =>
-                  setPagination && setPagination({pageIndex: 0, pageSize: item.value})
-                }
+                onItemSelect={handlePageSizeChange}
               />
             </Box>
             {totalRowCount && (

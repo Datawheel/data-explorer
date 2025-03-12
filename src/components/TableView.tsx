@@ -323,14 +323,14 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
   const permaKey = useKey();
   const actions = useActions();
   const pageSize = pagination.pageSize;
-  const page = pagination.pageIndex;
+  const pageIndex = pagination.pageIndex;
 
   // Get query enabled state from context
   const {isQueryEnabled, setQueryEnabled} = useTableRefresh();
 
   // Only enable the query when there are columns AND isQueryEnabled is true
   const enabled = Boolean(columns.length) && isQueryEnabled;
-  const key = permaKey ? [permaKey, page, pageSize] : permaKey;
+  const key = permaKey ? [permaKey, pageIndex, pageSize] : permaKey;
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", key],
@@ -354,6 +354,17 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
     enabled,
     isLoading: query.isLoading
   });
+
+  // Update Redux pagination state whenever table pagination changes
+  useEffect(() => {
+    if (pageSize && pageIndex !== undefined) {
+      actions.updatePagination({
+        limit: pageSize,
+        offset: pageIndex
+      });
+    }
+  }, [pageSize, pageIndex, actions]);
+
   return query;
 }
 
@@ -423,11 +434,22 @@ export function useTable({
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
+  const {setQueryEnabled} = useTableRefresh();
 
+  // Initialize pagination state from Redux
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: offset,
     pageSize: limit
   });
+
+  // Custom pagination handler that updates both local state and enables query
+  const handlePaginationChange = useCallback(
+    (updatedPagination: MRT_PaginationState) => {
+      setPagination(updatedPagination);
+      setQueryEnabled(true); // Enable the query when pagination changes
+    },
+    [setQueryEnabled]
+  );
 
   const finalUniqueKeys = useMemo(
     () =>
@@ -735,7 +757,7 @@ export function useTable({
   const table = useMantineReactTable({
     columns,
     data: tableData,
-    onPaginationChange: setPagination,
+    onPaginationChange: handlePaginationChange,
     enableHiding: false,
     manualFiltering: true,
     manualPagination: true,
@@ -758,7 +780,7 @@ export function useTable({
     data: tableData,
     columns,
     pagination,
-    setPagination
+    setPagination: handlePaginationChange
   };
 }
 
