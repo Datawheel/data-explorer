@@ -85,12 +85,17 @@ const idFormatters = {
   "Country ID": function removeFirstTwo(str) {
     return str.slice(2);
   },
+  "Importer Country ID": function removeFirstTwo(str) {
+    return str.slice(2);
+  },
+  "Exporter Country ID": function removeFirstTwo(str) {
+    return str.slice(2);
+  },
   "Section ID": formatHSCode,
   "HS2 ID": formatHSCode,
   "HS4 ID": formatHSCode,
   "HS6 ID": formatHSCode
 };
-
 const locales = Object.keys(translations);
 
 const container = document.getElementById("app");
