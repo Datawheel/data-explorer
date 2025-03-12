@@ -18,10 +18,12 @@ type Props = {
     locale: string
   ) => AnnotatedCube | undefined;
   isSelected: (selectedItem?: TesseractCube, currentItem?: AnnotatedCube) => boolean | undefined;
+  isSelectionInProgress: boolean;
 };
 
 function Results(props: Props) {
-  const {onSelectCube, graph, selectedItem, locale, getCube, isSelected} = props;
+  const {onSelectCube, graph, selectedItem, locale, getCube, isSelected, isSelectionInProgress} =
+    props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
   const result: React.ReactElement[] = [];
@@ -35,23 +37,33 @@ function Results(props: Props) {
           <Divider my="xs" label={key} />
           {items.map(item => {
             const cube = getCube(graph.items, item, subtopic, locale);
+            if (!cube) return null;
+
             const table = getAnnotation(cube, "table", locale);
+            const isItemSelected = isSelected(selectedItem, cube);
+
+            const handleClick = () => {
+              // Only process the click if no selection is in progress
+              if (!isSelectionInProgress) {
+                onSelectCube(item, subtopic);
+                setExpanded(false);
+                setInput("");
+              }
+            };
 
             return (
               <Text
                 key={cube.name}
                 component="a"
                 fz="xs"
-                className={
-                  isSelected(selectedItem, cube)
-                    ? `${classes.link} ${classes.linkActive}`
-                    : classes.link
-                }
-                onClick={() => {
-                  onSelectCube(item, subtopic);
-                  setExpanded(false);
-                  setInput("");
-                }}
+                className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
+                sx={theme => ({
+                  opacity: isSelectionInProgress ? 0.5 : 1,
+                  cursor: isSelectionInProgress ? "not-allowed" : "pointer",
+                  transition: "opacity 0.2s ease",
+                  pointerEvents: isSelectionInProgress ? "none" : "auto"
+                })}
+                onClick={handleClick}
               >
                 {table}
               </Text>
@@ -65,33 +77,32 @@ function Results(props: Props) {
   return <Box px="sm">{result}</Box>;
 }
 
-export const useStyles = createStyles(theme => ({
+export const useStyles = createStyles(t => ({
   link: {
-    ...theme.fn.focusStyles(),
+    ...t.fn.focusStyles(),
     WebkitTapHighlightColor: "transparent",
     outline: 0,
     display: "block",
     textDecoration: "none",
-    color: theme.colorScheme === "dark" ? theme.colors.dark[1] : theme.colors.gray[7],
-    padding: theme.spacing.xs,
+    // color: t.colorScheme === "dark" ? t.white : t.colors.dark[6],
+    color: t.colorScheme === "dark" ? t.colors.dark[1] : t.colors.gray[7],
+
+    padding: t.spacing.xs,
     minHeight: rem(20),
-    fontSize: theme.fontSizes.sm,
+    fontSize: t.fontSizes.sm,
     whiteSpace: "wrap",
     cursor: "pointer",
     "&:hover": {
       backgroundColor:
-        theme.colorScheme === "dark"
-          ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.45)
-          : theme.fn.rgba(theme.colors[theme.primaryColor][4], 0.45)
+        t.colorScheme === "dark" ? t.colors[t.primaryColor][4] : t.colors[t.primaryColor][4]
     }
   },
-
   linkActive: {
     backgroundColor:
-      theme.colorScheme === "dark"
-        ? theme.fn.rgba(theme.colors[theme.primaryColor][9], 0.45)
-        : theme.colors[theme.primaryColor][4],
-    color: theme.white,
+      t.colorScheme === "dark"
+        ? t.fn.rgba(t.colors[t.primaryColor][9], 0.45)
+        : t.colors[t.primaryColor][4],
+    color: t.white,
     fontWeight: 500
   }
 }));
