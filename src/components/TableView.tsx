@@ -994,6 +994,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cut = cutItems.find(cut => {
     return cut.level === drilldown?.level;
   });
+  const {setQueryEnabled} = useTableRefresh();
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
@@ -1011,6 +1012,9 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           searchable
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
+          }}
+          onDropdownClose={() => {
+            setQueryEnabled(true);
           }}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}

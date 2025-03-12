@@ -211,22 +211,44 @@ function CubeTree({
   const actions = useActions();
   const query = useSelector(selectCurrentQueryParams);
   const {setQueryEnabled} = useTableRefresh();
+  const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
 
-  const onSelectCube = (table: string, subtopic: string) => {
-    const cube = items.find(
-      item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
-    );
-    if (cube) {
-      const {drilldowns, cuts, filters, measures, ...newQuery} = query;
-      actions.setLoadingState("FETCHING");
-      actions.resetAllParams(newQuery);
-      actions.updateResult(EMPTY_RESPONSE);
-      actions.willSetCube(cube.name, measuresActive).then(() => {
-        actions.setLoadingState("SUCCESS");
-        setQueryEnabled(true);
-      });
-    }
-  };
+  // Define the onSelectCube function
+  const onSelectCube = useCallback(
+    (table: string, subtopic: string) => {
+      // If a selection is already in progress, ignore this click
+      if (isSelectionInProgress) return;
+
+      // Set selection in progress to prevent further clicks
+      setIsSelectionInProgress(true);
+
+      const cube = items.find(
+        item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
+      );
+
+      if (cube) {
+        const {drilldowns, cuts, filters, measures, ...newQuery} = query;
+        actions.setLoadingState("FETCHING");
+        actions.resetAllParams(newQuery);
+        actions.updateResult(EMPTY_RESPONSE);
+
+        actions
+          .willSetCube(cube.name, measuresActive)
+          .then(() => {
+            actions.setLoadingState("SUCCESS");
+            setQueryEnabled(true);
+          })
+          .finally(() => {
+            // Re-enable selection when the operation is complete
+            setIsSelectionInProgress(false);
+          });
+      } else {
+        // If no cube was found, re-enable selection
+        setIsSelectionInProgress(false);
+      }
+    },
+    [items, locale, query, actions, measuresActive, setQueryEnabled, isSelectionInProgress]
+  );
 
   let topics = useMemo(
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
@@ -250,6 +272,7 @@ function CubeTree({
       isSelected={isSelected}
       graph={graph}
       locale={locale}
+      isSelectionInProgress={isSelectionInProgress}
     />
   ) : (
     graph.items.length > 0 && (
@@ -259,6 +282,7 @@ function CubeTree({
         onSelectCube={onSelectCube}
         selectedItem={selectedItem}
         locale={locale}
+        isSelectionInProgress={isSelectionInProgress}
       />
     )
   );
@@ -279,7 +303,7 @@ function useAccordionValue(key: Keys, locale) {
   return {value, setValue};
 }
 
-function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
+function RootAccordions({items, graph, locale, selectedItem, onSelectCube, isSelectionInProgress}) {
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -325,6 +349,7 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
                   locale={locale}
                   selectedItem={selectedItem}
                   onSelectCube={onSelectCube}
+                  isSelectionInProgress={isSelectionInProgress}
                 />
               </Accordion.Panel>
             </Accordion.Item>
@@ -340,7 +365,8 @@ function CubeButton({
   selectedItem,
   graph,
   locale,
-  parent
+  parent,
+  isSelectionInProgress
 }: {
   item: string;
   selectedItem?: TesseractCube;
@@ -348,12 +374,22 @@ function CubeButton({
   graph: Graph;
   locale: string;
   parent?: string;
+  isSelectionInProgress: boolean;
 }) {
   const {classes} = useLinkStyles();
 
   const table = graph.getName(item, locale);
-
   const subtopic = parent ?? "";
+
+  const handleClick = () => {
+    // Only process the click if no selection is in progress
+    if (!isSelectionInProgress) {
+      onSelectCube(item, subtopic);
+    }
+  };
+
+  const isItemSelected = isSelected(selectedItem, getCube(graph.items, item, subtopic, locale));
+
   return (
     <Text
       key={`table-${item}`}
@@ -362,20 +398,20 @@ function CubeButton({
       maw={"100%"}
       pr="md"
       component="a"
-      className={
-        isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
-          ? `${classes.link} ${classes.linkActive}`
-          : classes.link
-      }
+      className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
       sx={t => ({
-        backgroundColor: isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
+        backgroundColor: isItemSelected
           ? t.fn.primaryColor()
           : t.colorScheme === "dark"
           ? t.colors.dark[6]
           : t.colors.gray[3],
-        overflow: "hidden"
+        overflow: "hidden",
+        opacity: isSelectionInProgress ? 0.5 : 1,
+        cursor: isSelectionInProgress ? "not-allowed" : "pointer",
+        transition: "opacity 0.2s ease",
+        pointerEvents: isSelectionInProgress ? "none" : "auto"
       })}
-      onClick={() => onSelectCube(item, subtopic)}
+      onClick={handleClick}
     >
       {table ?? item}
     </Text>
@@ -387,8 +423,9 @@ type NestedAccordionType = {
   graph: any;
   parent?: string;
   selectedItem?: TesseractCube;
-  onSelectCube: (name: string) => void;
+  onSelectCube: (name: string, subtopic: string) => void;
   locale: string;
+  isSelectionInProgress: boolean;
 };
 
 function SubtopicAccordion({
@@ -397,7 +434,8 @@ function SubtopicAccordion({
   parent,
   onSelectCube,
   selectedItem,
-  locale
+  locale,
+  isSelectionInProgress
 }: PropsWithChildren<NestedAccordionType>) {
   const {value, setValue} = useAccordionValue("subtopic", locale);
 
@@ -444,6 +482,7 @@ function SubtopicAccordion({
                     onSelectCube={onSelectCube}
                     selectedItem={selectedItem}
                     parent={item}
+                    isSelectionInProgress={isSelectionInProgress}
                   />
                 ))}
               </Accordion.Panel>
