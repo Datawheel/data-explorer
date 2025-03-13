@@ -265,12 +265,12 @@ function MenuOpts({formats}: MenuOptsProps) {
     [formats, t]
   );
   return (
-    <Menu shadow="md" width={200} opened={opened}>
+    <Menu shadow="md" width={200} opened={opened} onClose={() => setOpened(false)}>
       <Menu.Target>
         <ActionIcon
           onClick={() => setOpened(o => !o)}
           variant="filled"
-          color="gray"
+          color="primary"
           sx={{
             width: 20,
             minWidth: 0
@@ -289,7 +289,7 @@ function MenuOpts({formats}: MenuOptsProps) {
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{t("params.title_downloaddata")}</Menu.Label>
-        <div ref={ref}>{buttons}</div>
+        {buttons}
       </Menu.Dropdown>
     </Menu>
   );
