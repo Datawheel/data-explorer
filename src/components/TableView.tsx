@@ -342,7 +342,6 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
   // Only enable the query when there are columns AND isQueryEnabled is true
   const enabled = Boolean(columns.length) && isQueryEnabled;
   const key = permaKey ? [permaKey, pageIndex, pageSize] : permaKey;
-  console.log(key);
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", key],
