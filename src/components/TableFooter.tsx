@@ -7,7 +7,6 @@ import type {ViewProps} from "../main";
 import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
 import {useClickOutside, useClipboard} from "@mantine/hooks";
-// import {selectServerFormatsEnabled} from "../state/server";
 import {ActionIcon, Box, Button, Flex, Group, Loader, Menu, Text} from "@mantine/core";
 import {TesseractFormat} from "../api";
 import {useAsync} from "../hooks/useAsync";
@@ -117,7 +116,6 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
         {url && (
           <Button
             id="dex-api-btn"
-            // variant="light"
             leftIcon={<IconCopy size={20} />}
             sx={{height: 30}}
             onClick={copyHandler}
@@ -140,7 +138,6 @@ const DownloadQuery = ({data}) => {
 
   components.push(
     <ButtonDownload
-      // variant="light"
       leftIcon={<IconDownload size={20} />}
       sx={{height: 30}}
       key="download_csv"

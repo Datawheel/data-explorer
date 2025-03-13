@@ -122,8 +122,6 @@ export function SettingsProvider({
     document.querySelector("html")?.setAttribute("dir", direction);
   }, [direction]);
 
-  const customColor = {};
-
   return (
     <MantineProvider inherit withNormalizeCSS withGlobalStyles theme={theme}>
       <Header height={{base: 50}} p="md">

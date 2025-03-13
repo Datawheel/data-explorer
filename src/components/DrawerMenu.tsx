@@ -69,6 +69,7 @@ import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions, useTableRefresh} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
 import {keyBy} from "../utils/transform";
+import {debounce} from "lodash";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -531,6 +532,15 @@ function isNotValid(value) {
 
 export function NumberInputComponent({text, filter}: {text: string; filter: FilterItem}) {
   const actions = useActions();
+  const {setQueryEnabled} = useTableRefresh();
+
+  // Create a debounced function to enable the query
+  const debouncedEnableQuery = useCallback(
+    debounce(() => {
+      setQueryEnabled(true);
+    }, 1200),
+    [setQueryEnabled]
+  );
 
   function getFilterValue(filter: FilterItem) {
     return isNotValid(filter.conditionOne[2]) || filter.conditionOne[2] === 0
@@ -544,6 +554,9 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
     const active = !isEmpty;
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
+
+    // Trigger the debounced query enable
+    debouncedEnableQuery();
   }
 
   return (
@@ -566,6 +579,15 @@ interface MinMaxProps {
 
 export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) => {
   const actions = useActions();
+  const {setQueryEnabled} = useTableRefresh();
+
+  // Create a debounced function to enable the query
+  const debouncedEnableQuery = useCallback(
+    debounce(() => {
+      setQueryEnabled(true);
+    }, 1200),
+    [setQueryEnabled]
+  );
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
@@ -574,6 +596,9 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
     const active = Boolean(min) && Boolean(max);
 
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
+
+    // Trigger the debounced query enable
+    debouncedEnableQuery();
   }
 
   function getFilterValue(condition?: [`${Comparison}`, string, number]) {

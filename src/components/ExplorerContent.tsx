@@ -15,8 +15,8 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     height: "100%",
     [theme.fn.largerThan("md")]: {
       height: params.height,
-      width: "100%",
-    },
+      width: "100%"
+    }
   },
   root: {
     display: "flex",
@@ -24,19 +24,19 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     position: "relative",
     height: "100%",
     [theme.fn.largerThan("md")]: {
-      flexDirection: "row",
+      flexDirection: "row"
       // height: params.height,
       // width: "100%"
-    },
+    }
   },
   flexCol: {
     flex: "1 1 auto",
     height: "100%",
     [theme.fn.largerThan("md")]: {
       width: 0,
-      paddingLeft: 0,
-    },
-  },
+      paddingLeft: 0
+    }
+  }
 }));
 
 /** */
@@ -58,13 +58,7 @@ export function ExplorerContent(props: {
     return props.serverConfig !== undefined ? props.serverConfig : {};
   }, [props.serverConfig]);
 
-
-  useSetup(
-    props.serverURL,
-    serverConfig,
-    props.defaultDataLocale,
-    props.defaultCube,
-  );
+  useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
 
   const {classes} = useStyles({height: props.height});
 
@@ -87,7 +81,7 @@ export function ExplorerContent(props: {
   return (
     <div className={classes.container}>
       <div className={classes.root}>
-        <AppProviders>
+        <AppProviders serverURL={props.serverURL}>
           <SideBarProvider locale={props.locale}>
             <SideBar>
               <SideBarItem>
@@ -95,11 +89,7 @@ export function ExplorerContent(props: {
               </SideBarItem>
             </SideBar>
           </SideBarProvider>
-          <ExplorerResults
-            className={classes.flexCol}
-            panels={props.panels}
-            splash={splash}
-          />
+          <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
         </AppProviders>
       </div>
     </div>

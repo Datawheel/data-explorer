@@ -294,8 +294,19 @@ interface TableRefreshContextType {
 
 const TableRefreshContext = React.createContext<TableRefreshContextType | undefined>(undefined);
 
-export function TableRefreshProvider({children}: {children: React.ReactNode}) {
+export function TableRefreshProvider({
+  children,
+  serverURL
+}: {
+  children: React.ReactNode;
+  serverURL: string;
+}) {
   const [isQueryEnabled, setQueryEnabled] = useState(true);
+
+  // Add effect to set isQueryEnabled to true when serverURL changes
+  useEffect(() => {
+    setQueryEnabled(true);
+  }, [serverURL]);
 
   const value = useMemo(
     () => ({
@@ -331,6 +342,7 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
   // Only enable the query when there are columns AND isQueryEnabled is true
   const enabled = Boolean(columns.length) && isQueryEnabled;
   const key = permaKey ? [permaKey, pageIndex, pageSize] : permaKey;
+  console.log(key);
 
   const query = useQuery<ApiResponse>({
     queryKey: ["table", key],
@@ -346,8 +358,15 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
     placeholderData: keepPreviousData
   });
 
+  useEffect(() => {
+    if (query.data && !query.isFetching && isQueryEnabled) {
+      setQueryEnabled(false);
+    }
+  }, [query.data, query.isFetching, isQueryEnabled, setQueryEnabled]);
+
   const client = useQueryClient();
   const cachedData = client.getQueryData(["table", key]);
+
   useUpdatePermaLink({
     isFetched: Boolean(cachedData),
     cube,
@@ -494,7 +513,7 @@ export function useTable({
     handlerCreateMeasure
   ]);
 
-  const {isLoading, isFetching, isError, data, isPlaceholderData, status} = useTableData({
+  const {isLoading, isFetching, isError, data} = useTableData({
     columns: finalUniqueKeys,
     pagination,
     cube: cube.name
@@ -999,9 +1018,6 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   }, []);
-
-  console.log(idFormatters);
-  console.log(label);
 
   return (
     drilldown &&

@@ -3,10 +3,10 @@ import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 const queryClient = new QueryClient();
 import {TableRefreshProvider} from "../components/TableView";
 
-function AppProviders({children}) {
+function AppProviders({children, serverURL}: {children: React.ReactNode; serverURL: string}) {
   return (
     <QueryClientProvider client={queryClient}>
-      <TableRefreshProvider>{children}</TableRefreshProvider>
+      <TableRefreshProvider serverURL={serverURL}>{children}</TableRefreshProvider>
     </QueryClientProvider>
   );
 }
