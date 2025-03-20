@@ -20,7 +20,7 @@ import {pickDefaultDrilldowns} from "../state/utils";
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
-import Results, {useStyles as useLinkStyles} from "./Results";
+import {Results, useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 
 export const EMPTY_RESPONSE = {
@@ -122,8 +122,9 @@ function AccordionControl(props: AccordionControlProps) {
 }
 
 type Keys = "subtopic" | "topic" | "table";
-export type AnnotatedCube = TesseractCube &
-  {annotations: {subtopic: string; topic: string; table: string}}[];
+export type AnnotatedCube = TesseractCube & {
+  annotations: {subtopic: string; topic: string; table: string};
+};
 
 export function getKeys(
   items: AnnotatedCube[],
@@ -154,9 +155,9 @@ function isSelected(selectedItem, currentItem) {
   }
 }
 
-function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale: string) {
+function getCube(items: AnnotatedCube[], name: string, subtopic: string, locale: string) {
   const cube = items.find(
-    item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
+    item => item.name === name && getAnnotation(item, "subtopic", locale) === subtopic
   );
   return cube;
 }
@@ -172,13 +173,12 @@ function useBuildGraph(items, locale) {
         const subtopic = getAnnotation(item, "subtopic", locale);
         const table = getAnnotation(item, "table", locale);
         const hide = getAnnotation(item, "hide_in_ui", locale);
-        
+
         if (!yn(hide)) {
           graph.addNode(topic);
-          if(topic_order) {
-        
-            graph.addTopicOrder(topic, topic_order)
-          };
+          if (topic_order) {
+            graph.addTopicOrder(topic, topic_order);
+          }
           graph.addNode(subtopic);
           graph.addNode(name);
           graph.addEdge(topic, subtopic);
@@ -230,7 +230,7 @@ function CubeTree({
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
   );
-  
+
   if (input.length > 0 && map && !(map.size > 0)) {
     // there is a query but not results in map
     return (
@@ -307,24 +307,26 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube}) {
         }
       })}
     >
-      {items.sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b]).map(item => {
-        return (
-          <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
-            <AccordionControl>{item}</AccordionControl>
-            <Accordion.Panel>
-              <SubtopicAccordion
-                graph={graph}
-                parent={item}
-                items={graph.adjList[item]}
-                key={item}
-                locale={locale}
-                selectedItem={selectedItem}
-                onSelectCube={onSelectCube}
-              />
-            </Accordion.Panel>
-          </Accordion.Item>
-        );
-      })}
+      {items
+        .sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b])
+        .map(item => {
+          return (
+            <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
+              <AccordionControl>{item}</AccordionControl>
+              <Accordion.Panel>
+                <SubtopicAccordion
+                  graph={graph}
+                  parent={item}
+                  items={graph.adjList[item]}
+                  key={item}
+                  locale={locale}
+                  selectedItem={selectedItem}
+                  onSelectCube={onSelectCube}
+                />
+              </Accordion.Panel>
+            </Accordion.Item>
+          );
+        })}
     </Accordion>
   );
 }
@@ -366,8 +368,8 @@ function CubeButton({
         background: isSelected(selectedItem, getCube(graph.items, item, subtopic, locale))
           ? t.fn.primaryColor()
           : t.colorScheme === "dark"
-          ? t.colors.dark[6]
-          : t.colors.gray[3],
+            ? t.colors.dark[6]
+            : t.colors.gray[3],
         overflow: "hidden"
       })}
       onClick={() => onSelectCube(item, subtopic)}

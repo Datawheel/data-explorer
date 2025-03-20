@@ -5,8 +5,9 @@ import type Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import type {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
+import {filterMap} from "../utils/array";
 
-type Props = {
+export function Results(props: {
   onSelectCube: (name: string, subtopic: string) => void;
   selectedItem?: TesseractCube;
   graph: Graph;
@@ -18,52 +19,50 @@ type Props = {
     locale: string
   ) => AnnotatedCube | undefined;
   isSelected: (selectedItem?: TesseractCube, currentItem?: AnnotatedCube) => boolean | undefined;
-};
-
-function Results(props: Props) {
+}) {
   const {onSelectCube, graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
-  const {setExpanded, setInput, map} = useSideBar();
-  const result: React.ReactElement[] = [];
+  const {map, setExpanded, setInput} = useSideBar();
 
-  if (map) {
-    for (let [key, items] of map) {
-      const [topic, subtopic] = key.split(" - ");
+  const results = [...map].flatMap(entry => {
+    const [key, items] = entry as [string, string[]];
+    const [topic, subtopic] = key.split(" - ");
 
-      const component = (
-        <div key={key}>
-          <Divider my="xs" label={key} />
-          {items.map(item => {
-            const cube = getCube(graph.items, item, subtopic, locale);
-            const table = getAnnotation(cube, "table", locale);
-
-            return (
-              <Text
-                key={cube.name}
-                component="a"
-                fz="xs"
-                className={
-                  isSelected(selectedItem, cube)
-                    ? `${classes.link} ${classes.linkActive}`
-                    : classes.link
-                }
-                onClick={() => {
-                  onSelectCube(item, subtopic);
-                  setExpanded(false);
-                  setInput("");
-                }}
-              >
-                {table}
-              </Text>
-            );
-          })}
-        </div>
+    // We need to filter out the cases where the cube can't be found
+    const topicResults = filterMap(items, item => {
+      const cube = getCube(graph.items, item, subtopic, locale);
+      if (!cube) return null;
+      const table = getAnnotation(cube, "table", locale);
+      return (
+        <Text
+          key={cube.name}
+          component="a"
+          fz="xs"
+          className={
+            isSelected(selectedItem, cube) ? `${classes.link} ${classes.linkActive}` : classes.link
+          }
+          onClick={() => {
+            onSelectCube(item, subtopic);
+            setExpanded(false);
+            setInput("");
+          }}
+        >
+          {table}
+        </Text>
       );
-      result.push(component);
-    }
-  }
-  return <Box px="sm">{result}</Box>;
+    });
+
+    // Skip topic divider if there's no results on it
+    if (topicResults.length === 0) return [];
+    // else, return divider and results in the same array, flatMap will combine them
+    const label = `${topic} - ${subtopic}`;
+    return [<Divider key={label} my="xs" label={label} />, ...topicResults];
+  });
+
+  return <Box px="sm">{results.length ? results : "No results"}</Box>;
 }
+
+Results.displayName = "SearchResults";
 
 export const useStyles = createStyles(theme => ({
   link: {
@@ -95,5 +94,3 @@ export const useStyles = createStyles(theme => ({
     fontWeight: 500
   }
 }));
-
-export default Results;

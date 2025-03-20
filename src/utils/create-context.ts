@@ -1,6 +1,6 @@
 import React from "react";
 
-export const createContext = <T extends {}>(name) => {
+export const createContext = <T extends {}>(name: string) => {
   const Context = React.createContext<T | undefined>(undefined);
 
   const useContext = () => {
