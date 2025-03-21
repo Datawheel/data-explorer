@@ -80,7 +80,8 @@ import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
 import _ from "lodash";
-
+import {useQueryItem} from "../context/query";
+import {useLocation, useParams} from "react-router-dom";
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
@@ -329,9 +330,13 @@ export function useTableRefresh() {
 }
 
 export function useTableData({columns, pagination, cube}: useTableDataType) {
+  const {query: queryitem, cube: queryCube} = useQueryItem();
+  console.log(queryitem, queryCube, "query item");
   const {code: locale} = useSelector(selectLocale);
   const loadingState = useSelector(selectLoadingState);
+
   const permaKey = useKey();
+  console.log("permaKey", permaKey);
   const actions = useActions();
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;

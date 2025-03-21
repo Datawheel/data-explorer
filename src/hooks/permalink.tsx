@@ -6,6 +6,7 @@ import {selectOlapCubeMap} from "../state/server";
 import {useSelector} from "../state/store";
 import {type QueryItem, type QueryParams, buildQuery} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
+import {useNavigate} from "react-router-dom";
 
 /** */
 export function serializePermalink(item: QueryItem): string {
@@ -14,8 +15,8 @@ export function serializePermalink(item: QueryItem): string {
     Object.entries(request).filter(entry => entry[1] != null && entry[1] !== "")
   );
   search.set("panel", item.panel || "table");
-  if (item.chart !== "" && item.chart){
-    search.set("chart", item.chart)
+  if (item.chart !== "" && item.chart) {
+    search.set("chart", item.chart);
   }
   return search.toString();
 }
@@ -42,6 +43,7 @@ export function usePermalink(
 ) {
   const cubeMap = useSelector(selectOlapCubeMap);
   const queryItem = useSelector(selectCurrentQueryItem);
+  const navigate = useNavigate();
 
   const listener = useCallback(
     (evt: PopStateEvent) => {
@@ -51,39 +53,61 @@ export function usePermalink(
   );
 
   // eslint-disable-next-line consistent-return
-  useEffect(() => {
-    if (isEnabled) {
-      window.addEventListener("popstate", listener);
-      return () => window.removeEventListener("popstate", listener);
-    }
-  }, [isEnabled, listener]);
+  // useEffect(() => {
+  //   if (isEnabled) {
+  //     window.addEventListener("popstate", listener);
+  //     return () => window.removeEventListener("popstate", listener);
+  //   }
+  // }, [isEnabled, listener]);
 
-  useEffect(() => {
-    const {isDirty, panel, params} = queryItem;
-    // We want to update the Permalink only when we are sure the current Query
-    // is successful: this is when `isDirty` changes from `false` to `true`
-    if (!isEnabled || isDirty || !cubeMap[params.cube]) return;
-    const currPermalink = window.location.search.slice(1);
-    const nextPermalink = serializePermalink(queryItem);
+  // useEffect(() => {
+  //   const {isDirty, panel, params} = queryItem;
+  //   // We want to update the Permalink only when we are sure the current Query
+  //   // is successful: this is when `isDirty` changes from `false` to `true`
+  //   if (!isEnabled || isDirty || !cubeMap[params.cube]) return;
+  //   const currPermalink = window.location.search.slice(1);
+  //   const nextPermalink = serializePermalink(queryItem);
 
-    if (currPermalink !== nextPermalink) {
-      const nextLocation = `${window.location.pathname}?${nextPermalink}`;
-      const oldPanel = new URLSearchParams(window.location.search).get("panel");
-      const oldChart = new URLSearchParams(window.location.search).get("chart");
-      // If only the panel or chartchanged, use replaceState
-      if (
-        (oldPanel && oldPanel[1] !== panel)
-        || (oldChart && oldChart[1] !== queryItem.chart)
-      ) {
-        window.history.replaceState(queryItem, "", nextLocation);
-      } else {
-        window.history.pushState(queryItem, "", nextLocation);
-      }
-    }
-  }, [cubeMap, queryItem, isEnabled]);
+  //   if (currPermalink !== nextPermalink) {
+  //     const nextLocation = `${window.location.pathname}?${nextPermalink}`;
+  //     const oldPanel = new URLSearchParams(window.location.search).get("panel");
+  //     const oldChart = new URLSearchParams(window.location.search).get("chart");
+  //     // If only the panel or chartchanged, use replaceState
+  //     if ((oldPanel && oldPanel[1] !== panel) || (oldChart && oldChart[1] !== queryItem.chart)) {
+  //       window.history.replaceState(queryItem, "", nextLocation);
+  //     } else {
+  //       window.history.pushState(queryItem, "", nextLocation);
+  //     }
+  //   }
+  // }, [cubeMap, queryItem, isEnabled]);
 
   return null;
 }
+
+// export function useUpdatePermaLink({
+//   isFetched,
+//   cube,
+//   enabled,
+//   isLoading,
+//   queryItem
+// }: {
+//   isFetched: boolean;
+//   cube: string;
+//   enabled: boolean;
+//   isLoading: boolean;
+// }) {
+//   // const queryItem = useSelector(selectCurrentQueryItem);
+//   const navigate = useNavigate();
+//   useEffect(() => {
+//     if (cube && enabled && !isLoading) {
+//       const currPermalink = window.location.search.slice(1);
+//       const nextPermalink = serializePermalink(queryItem);
+//       if (currPermalink !== nextPermalink) {
+//         navigate(`?${nextPermalink}`, {replace: true});
+//       }
+//     }
+//   }, [cube, queryItem, enabled, isLoading, navigate]);
+// }
 
 export function useUpdatePermaLink({
   isFetched,
@@ -97,16 +121,16 @@ export function useUpdatePermaLink({
   isLoading: boolean;
 }) {
   const queryItem = useSelector(selectCurrentQueryItem);
+  const navigate = useNavigate();
   useEffect(() => {
-    if (isFetched && cube && enabled && !isLoading) {
+    if (cube && enabled && !isLoading) {
       const currPermalink = window.location.search.slice(1);
       const nextPermalink = serializePermalink(queryItem);
       if (currPermalink !== nextPermalink) {
-        const nextLocation = `${window.location.pathname}?${nextPermalink}`;
-        window.history.pushState(queryItem, "", nextLocation);
+        navigate(`?${nextPermalink}`, {replace: true});
       }
     }
-  }, [isFetched, cube, queryItem, enabled, isLoading]);
+  }, [cube, queryItem, enabled, isLoading, navigate]);
 }
 
 export function useKey(params: Partial<QueryParams> = {}) {
@@ -116,3 +140,27 @@ export function useKey(params: Partial<QueryParams> = {}) {
   }
   return false;
 }
+
+// export function useUpdatePermaLink({
+//   isFetched,
+//   cube,
+//   enabled,
+//   isLoading
+// }: {
+//   isFetched: boolean;
+//   cube: string;
+//   enabled: boolean;
+//   isLoading: boolean;
+// }) {
+//   const queryItem = useSelector(selectCurrentQueryItem);
+//   useEffect(() => {
+//     if (isFetched && cube && enabled && !isLoading) {
+//       const currPermalink = window.location.search.slice(1);
+//       const nextPermalink = serializePermalink(queryItem);
+//       if (currPermalink !== nextPermalink) {
+//         const nextLocation = `${window.location.pathname}?${nextPermalink}`;
+//         window.history.pushState(queryItem, "", nextLocation);
+//       }
+//     }
+//   }, [isFetched, cube, queryItem, enabled, isLoading]);
+// }

@@ -1,7 +1,6 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
 import {type CSSObject, Center, createStyles} from "@mantine/core";
 import React, {useEffect, useMemo} from "react";
-import {AppProviders} from "../context";
 import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
 import type {PanelDescriptor} from "../utils/types";
@@ -81,16 +80,16 @@ export function ExplorerContent(props: {
   return (
     <div className={classes.container}>
       <div className={classes.root}>
-        <AppProviders serverURL={props.serverURL}>
-          <SideBarProvider locale={props.locale}>
-            <SideBar>
-              <SideBarItem>
-                <ParamsExplorer locale={props.locale} />
-              </SideBarItem>
-            </SideBar>
-          </SideBarProvider>
-          <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
-        </AppProviders>
+        {/* <AppProviders serverURL={props.serverURL}> */}
+        <SideBarProvider locale={props.locale}>
+          <SideBar>
+            <SideBarItem>
+              <ParamsExplorer locale={props.locale} />
+            </SideBarItem>
+          </SideBar>
+        </SideBarProvider>
+        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
+        {/* </AppProviders> */}
       </div>
     </div>
   );

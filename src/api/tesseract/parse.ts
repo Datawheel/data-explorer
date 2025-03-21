@@ -55,6 +55,8 @@ export function queryParamsToRequest(params: QueryParams): TesseractDataRequest 
 }
 
 export function requestToQueryParams(cube: TesseractCube, search: URLSearchParams): QueryParams {
+  console.log(search, "search !");
+  console.log(cube, "cube !");
   const dimensions: Record<string, string> = {};
   const hierarchies: Record<string, string> = {};
   const levels = Object.fromEntries(

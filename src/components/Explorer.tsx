@@ -14,6 +14,8 @@ import {TableView} from "./TableView";
 import ExplorerTour from "./tour/ExplorerTour";
 import {TourConfig} from "./tour/types";
 import {ToolbarConfigType} from "./Toolbar";
+import {AppProviders} from "../context";
+import {BrowserRouter as Router} from "react-router-dom";
 
 export type Pagination = {
   rowsLimits: number[];
@@ -187,34 +189,38 @@ export function ExplorerComponent<Locale extends string>(props: {
   );
 
   let content = (
-    <SettingsProvider
-      actions={boundActions}
-      defaultMembersFilter={props.defaultMembersFilter}
-      formatters={props.formatters}
-      idFormatters={props.idFormatters}
-      withPermalink={props.withPermalink}
-      panels={panels}
-      pagination={pagination}
-      measuresActive={measuresActive}
-      toolbarConfig={props.toolbarConfig}
-    >
-      <TranslationProvider defaultLocale={locale} translations={props.translations}>
-        <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-          <ExplorerContent
-            defaultCube={props.defaultCube}
-            defaultDataLocale={props.defaultDataLocale}
-            defaultOpenParams={defaultOpenParams}
-            height={height}
-            locale={locale}
-            panels={panels}
-            serverConfig={props.serverConfig}
-            serverURL={props.serverURL}
-            splash={props.splash}
-            withMultiQuery={withMultiQuery}
-          />
-        </ExplorerTour>
-      </TranslationProvider>
-    </SettingsProvider>
+    <Router>
+      <SettingsProvider
+        actions={boundActions}
+        defaultMembersFilter={props.defaultMembersFilter}
+        formatters={props.formatters}
+        idFormatters={props.idFormatters}
+        withPermalink={props.withPermalink}
+        panels={panels}
+        pagination={pagination}
+        measuresActive={measuresActive}
+        toolbarConfig={props.toolbarConfig}
+      >
+        <TranslationProvider defaultLocale={locale} translations={props.translations}>
+          <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
+            <AppProviders serverURL={props.serverURL}>
+              <ExplorerContent
+                defaultCube={props.defaultCube}
+                defaultDataLocale={props.defaultDataLocale}
+                defaultOpenParams={defaultOpenParams}
+                height={height}
+                locale={locale}
+                panels={panels}
+                serverConfig={props.serverConfig}
+                serverURL={props.serverURL}
+                splash={props.splash}
+                withMultiQuery={withMultiQuery}
+              />
+            </AppProviders>
+          </ExplorerTour>
+        </TranslationProvider>
+      </SettingsProvider>
+    </Router>
   );
 
   if (withinMantineProvider) {

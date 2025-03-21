@@ -15,7 +15,7 @@ interface LogicLayerContextValue {
   complexity: ComplexityModuleClient;
 }
 
-const LogicLayerContext = createContext<LogicLayerContextValue | null>(null);
+export const LogicLayerContext = createContext<LogicLayerContextValue | null>(null);
 
 export function LogicLayerProvider(props: {
   children: React.ReactNode;
@@ -31,11 +31,7 @@ export function LogicLayerProvider(props: {
     return {dataLocale, setDataLocale, tesseract, complexity};
   }, [props.serverURL, props.serverConfig, dataLocale]);
 
-  return (
-    <LogicLayerContext.Provider value={value}>
-      {props.children}
-    </LogicLayerContext.Provider>
-  );
+  return <LogicLayerContext.Provider value={value}>{props.children}</LogicLayerContext.Provider>;
 }
 
 export function useLogicLayer(): LogicLayerContextValue {
