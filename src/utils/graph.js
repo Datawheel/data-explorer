@@ -65,7 +65,7 @@ class Graph {
 
   getName(node, locale) {
     const item = this.items.find(item => item.name === node);
-    const name = item ? getAnnotation(item, "table", locale): node;
+    const name = item ? getAnnotation(item, "table", locale) : node;
     return name;
   }
 
@@ -99,22 +99,22 @@ class Graph {
 
     if (filter !== "") {
       const results = matchSorter(this.items, filter, {
-        keys: ['name', 
+        keys: [
+          "name",
           item => getAnnotation(item, "topic", locale) || "",
           item => getAnnotation(item, "subtopic", locale) || "",
           item => getAnnotation(item, "table", locale) || "",
-          item => item.name.replace(/_/g, ' '),
+          item => item.name.replace(/_/g, " ")
         ]
-    });
+      });
 
       for (const item of results) {
-          const topic = getAnnotation(item, "topic", locale);
-          const subtopic = getAnnotation(item, "subtopic", locale);
-          const title = getAnnotation(item, "table", locale);
-          addItemToSubtopic(map, `${topic} - ${subtopic}`, item.name);
-          matches.push(item.name);
+        const topic = getAnnotation(item, "topic", locale);
+        const subtopic = getAnnotation(item, "subtopic", locale);
+        const title = getAnnotation(item, "table", locale);
+        addItemToSubtopic(map, `${topic} - ${subtopic}`, item.name);
+        matches.push(item.name);
       }
-
     }
     return {matches, map};
   }

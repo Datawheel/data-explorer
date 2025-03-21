@@ -1,26 +1,27 @@
-import { useMemo } from "react";
-import Graph from "../utils/graph";
-import { useSelector } from "../state";
-import { selectLocale } from "../state/queries";
+import {useMemo} from "react";
+import type Graph from "../utils/graph";
 
-interface CubeSearchResult {
-    results: string[];
-    map: Map<string, string[]>;
-}
-export default function useCubeSearch(input: string, graph: Graph): CubeSearchResult {
-    const {code: locale} = useSelector(selectLocale);
-    const results = useMemo(() => {
+export function useCubeSearch(
+  graph: Graph,
+  input: string,
+  locale: string
+): {
+  results: string[];
+  map: Map<string, string[]>;
+} {
+  const results = useMemo(() => {
     if (graph.items.length > 0) {
       const {matches, map} = graph.filter(locale, input);
       return {
         results: matches,
         map: map
-      }
-    } return {
-        results: [],
-        map: new Map(),
+      };
     }
-  }, [input, graph]);
+    return {
+      results: [],
+      map: new Map()
+    };
+  }, [graph, input, locale]);
 
   return results;
 }

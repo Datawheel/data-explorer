@@ -1,67 +1,56 @@
-import React, {PropsWithChildren, useState} from "react";
+import React, {type PropsWithChildren, useState, useMemo, useRef, useCallback} from "react";
 import {
   Box,
   Flex,
   ActionIcon,
   Text,
   ScrollArea,
-  Input,
   Group,
-  MantineTheme,
+  type MantineTheme,
   useMantineTheme,
   Affix,
-  ActionIconProps,
-  Sx,
-  packSx
+  type ActionIconProps,
+  type Sx,
+  packSx,
+  TextInput
 } from "@mantine/core";
 import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
 import {IconSearch, IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {DataSetSVG} from "./icons";
-import Graph from "../utils/graph";
-import {LocaleSelector} from "./LocaleSelector";
+import type Graph from "../utils/graph";
 import {useTranslation} from "../hooks/translation";
 import {useDebouncedState, useMediaQuery} from "@mantine/hooks";
 import useBuildGraph from "../hooks/buildGraph";
-import useCubeSearch from "../hooks/cubeSearch";
+import {useCubeSearch} from "../hooks/cubeSearch";
 
-type SidebarProviderProps = {
+type SidebarContextProps = {
   expanded: boolean;
   setExpanded: React.Dispatch<React.SetStateAction<boolean>>;
-  graph: Graph;
-  results: string[];
   input: string;
   setInput: React.Dispatch<React.SetStateAction<string>>;
-  map: Map<string, string[]> | undefined;
+  graph: Graph;
+  results: string[];
+  map: Map<string, string[]>;
 };
 
-export const [useSideBar, Provider] =
-  createContext<PropsWithChildren<SidebarProviderProps>>("SideBar");
+export const [useSideBar, Provider] = createContext<SidebarContextProps>("SideBar");
 
 export function SideBarProvider(props: PropsWithChildren<{locale: string}>) {
-  const [input, setInput] = useDebouncedState<string>("", 200);
+  const [input, setInput] = useDebouncedState<string>("", 150, {leading: true});
   const [expanded, setExpanded] = useState<boolean>(true);
 
   const graph = useBuildGraph(props.locale);
-  const {results, map} = useCubeSearch(input, graph);
-  
-  return (
-    <Provider
-      {...props}
-      value={{
-        expanded,
-        graph,
-        setExpanded,
-        results,
-        input,
-        map,
-        setInput
-      }}
-    />
-  );
-}
+  const {results, map} = useCubeSearch(graph, input, props.locale);
 
-type SidebarProps = {};
+  // useMemo prevents unnecessary renders
+  const value = useMemo(
+    () => ({expanded, setExpanded, input, setInput, graph, results, map}),
+    [expanded, input, setInput, graph, results, map]
+  );
+
+  return <Provider value={value}>{props.children}</Provider>;
+}
 
 function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<ActionIconProps>}) {
   const {expanded, setExpanded} = useSideBar();
@@ -101,8 +90,9 @@ function SideBarControlBtnFixed() {
     </Affix>
   );
 }
-function SideBar(props: PropsWithChildren<SidebarProps>) {
-  const {expanded, setExpanded} = useSideBar();
+
+function SideBar(props: PropsWithChildren<{}>) {
+  const {expanded, input, setExpanded, setInput} = useSideBar();
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
@@ -165,7 +155,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
                   width: expanded ? "100%" : 0
                 }}
               >
-                <Auto />
+                <CubeSearchInput expanded={expanded} input={input} setInput={setInput} />
               </Box>
               <Box sx={{flexGrow: 1}}></Box>
             </Flex>
@@ -207,8 +197,7 @@ function SideBar(props: PropsWithChildren<SidebarProps>) {
 
 export default SideBar;
 
-type SideBarItemProps = {};
-export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
+export function SideBarItem(props: PropsWithChildren<{}>) {
   const {expanded} = useSideBar();
 
   return (
@@ -220,24 +209,27 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
         transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
       }}
     >
-      {children}
+      {props.children}
     </Box>
   );
 }
 
-function Auto() {
+function CubeSearchInput(props: Pick<SidebarContextProps, "expanded" | "input" | "setInput">) {
+  const {expanded, input, setInput} = props;
+
   const {translate: t} = useTranslation();
-  const {expanded, input, setInput} = useSideBar();
+  const ref = useRef<HTMLInputElement>(null);
 
   return (
-    <Input
+    <TextInput
+      ref={ref}
       icon={<IconSearch />}
       id="dex-search"
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}
       defaultValue={input}
-      onInput={e => setInput(e.currentTarget.value)}
+      onInput={useCallback(e => setInput(e.currentTarget.value), [setInput])}
       styles={{
         wrapper: {
           width: expanded ? "100%" : 0,
@@ -252,10 +244,16 @@ function Auto() {
       rightSection={
         <CloseButton
           aria-label="Clear input"
-          onClick={() => setInput("")}
+          onClick={useCallback(() => {
+            setInput("");
+            if (ref.current) {
+              ref.current.value = "";
+            }
+          }, [setInput])}
           style={{display: input ? undefined : "none"}}
         />
       }
     />
   );
 }
+CubeSearchInput.displayName = "CubeSearchInput";
