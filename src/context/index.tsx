@@ -3,7 +3,6 @@ import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
 import {TableRefreshProvider} from "../components/TableView";
 import {LogicLayerProvider} from "../api/context";
 import {QueryProvider} from "./query";
-import {BrowserRouter as Router} from "react-router-dom";
 
 const queryClient = new QueryClient();
 
