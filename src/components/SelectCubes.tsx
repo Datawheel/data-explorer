@@ -23,6 +23,7 @@ import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 import {useTableRefresh} from "./TableView";
+import {useQueryItem} from "../context/query";
 
 export const EMPTY_RESPONSE = {
   data: [],
@@ -212,6 +213,8 @@ function CubeTree({
   const query = useSelector(selectCurrentQueryParams);
   const {setQueryEnabled} = useTableRefresh();
   const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
+
+  const {onChangeCube} = useQueryItem();
 
   // Define the onSelectCube function
   const onSelectCube = useCallback(

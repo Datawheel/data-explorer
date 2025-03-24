@@ -11,9 +11,18 @@ interface AppProvidersProps {
   serverURL: string;
   defaultCube?: string;
   defaultQuery?: any;
+  locale?: string;
+  defaultDataLocale?: string;
 }
 
-function AppProviders({children, serverURL, defaultCube, defaultQuery}: AppProvidersProps) {
+function AppProviders({
+  children,
+  serverURL,
+  defaultCube,
+  defaultQuery,
+  locale,
+  defaultDataLocale
+}: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <TableRefreshProvider serverURL={serverURL}>
@@ -22,6 +31,8 @@ function AppProviders({children, serverURL, defaultCube, defaultQuery}: AppProvi
             defaultCube={defaultCube}
             defaultQuery={defaultQuery}
             serverURL={serverURL}
+            locale={locale}
+            defaultDataLocale={defaultDataLocale}
           >
             {children}
           </QueryProvider>

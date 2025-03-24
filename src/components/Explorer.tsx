@@ -59,6 +59,16 @@ export function ExplorerComponent<Locale extends string>(props: {
   defaultCube?: string | undefined;
 
   /**
+   * The locale to use in the Explorer component UI.
+   * This value is passed to the Translation utility and controls the language
+   * for the labels throughout the user interface.
+   *  Must be equal to one of the
+   * keys in the object provided to the `translations` property.
+   * @default "en"
+   */
+  locale?: Locale;
+
+  /**
    * Specifies which property should be used to filter elements in the member
    * selection control of the Cuts parameter area.
    * @default "id"
@@ -71,15 +81,6 @@ export function ExplorerComponent<Locale extends string>(props: {
    * @default "measures"
    */
   defaultOpenParams?: "measures" | "drilldowns" | "cuts" | "options";
-
-  /**
-   * The locale to use in the Explorer component UI.
-   * This value is passed to the Translation utility and controls the language
-   * for the labels throughout the user interface. Must be equal to one of the
-   * keys in the object provided to the `translations` property.
-   * @default "en"
-   */
-  locale?: Locale;
 
   /**
    * Defines an index of formatter functions available to the measures shown
@@ -203,13 +204,17 @@ export function ExplorerComponent<Locale extends string>(props: {
       >
         <TranslationProvider defaultLocale={locale} translations={props.translations}>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-            <AppProviders serverURL={props.serverURL}>
+            <AppProviders
+              serverURL={props.serverURL}
+              locale={locale}
+              defaultDataLocale={props.defaultDataLocale}
+            >
               <ExplorerContent
-                defaultCube={props.defaultCube}
                 defaultDataLocale={props.defaultDataLocale}
+                locale={locale}
+                defaultCube={props.defaultCube}
                 defaultOpenParams={defaultOpenParams}
                 height={height}
-                locale={locale}
                 panels={panels}
                 serverConfig={props.serverConfig}
                 serverURL={props.serverURL}

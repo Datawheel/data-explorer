@@ -43,7 +43,7 @@ export function getOrderValue<T extends Annotated>(schemaObject: T) {
 export function describeData(
   cube: TesseractCube,
   params: QueryParams,
-  result: TesseractDataResponse,
+  result: TesseractDataResponse
 ): Record<string, AnyResultColumn> {
   const {locale} = params;
 
@@ -59,17 +59,17 @@ export function describeData(
           ? typeSet.has("number")
             ? "number"
             : typeSet.has("boolean")
-              ? "boolean"
-              : /* else */ "string"
+            ? "boolean"
+            : /* else */ "string"
           : typeSet.has("number")
-            ? "number"
-            : "string";
+          ? "number"
+          : "string";
       const isId = column !== entity.name;
       const entityType = hasProperty(entity, "aggregator")
         ? "measure"
         : hasProperty(entity, "depth")
-          ? "level"
-          : "property";
+        ? "level"
+        : "property";
       return [
         column,
         {
@@ -79,10 +79,10 @@ export function describeData(
           entityType,
           isId,
           range: valueType === "number" ? getDomain(result.data, column) : undefined,
-          valueType,
-        } as AnyResultColumn,
+          valueType
+        } as AnyResultColumn
       ];
-    }),
+    })
   );
 }
 

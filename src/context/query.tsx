@@ -11,6 +11,8 @@ import {useSettings} from "../hooks/settings";
 import {useLogicLayer} from "../api/context";
 import {useLocation, useParams, useSearchParams} from "react-router-dom";
 import {pickDefaultDrilldowns} from "../state/utils";
+import {getValues} from "../utils/object";
+import {getAnnotation} from "../utils/string";
 
 interface QueryContextProps {
   query: QueryItem | undefined;
@@ -32,6 +34,7 @@ interface QueryContextProps {
   updatePagination: (pagination: {offset?: number; limit?: number}) => void;
   updateLocale: (locale: string) => void;
   resetQuery: () => void;
+  onChangeCube: (table: string, subtopic: string) => void;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -41,7 +44,8 @@ interface QueryProviderProps {
   defaultCube?: string;
   defaultQuery?: QueryItem;
   serverURL: string;
-  defaultLocale?: string;
+  defaultDataLocale?: string;
+  locale: string;
 }
 
 export function QueryProvider({
@@ -49,7 +53,8 @@ export function QueryProvider({
   defaultCube,
   defaultQuery,
   serverURL,
-  defaultLocale
+  defaultDataLocale,
+  locale
 }: QueryProviderProps) {
   const queryReducer = useQueryReducer({
     cube: defaultCube || undefined,
@@ -67,10 +72,7 @@ export function QueryProvider({
 
   const {paginationConfig, measuresActive} = useSettings();
 
-  const {data: schema, isLoading: schemaLoading} = useServerSchema(
-    serverURL,
-    defaultLocale || "en"
-  );
+  const {data: schema, isLoading: schemaLoading} = useServerSchema(serverURL, defaultDataLocale);
 
   const {
     run: runFetchMembers,
@@ -137,13 +139,15 @@ export function QueryProvider({
     }
   }, [location.search, runFetchMembers, schema]);
 
-  console.log(queryReducer.cube, queryReducer.query, "queryReducer");
-
-  const onChangeCube = (cube: string) => {
+  const onChangeCube = (table: string, subtopic: string) => {
     const cubeMap = schema?.cubeMap || {};
-    const nextCube = cubeMap[cube];
+    const cubeArray = getValues(cubeMap);
+    console.log(cubeArray, "cubes Array");
+    const nextCube = cubeArray.find(
+      cube => cube.name === table && getAnnotation(cube, "subtopic", locale) === subtopic
+    );
+
     if (nextCube) {
-      //add default params
       const measuresLimit =
         typeof measuresActive !== "undefined" ? measuresActive : nextCube.measures.length;
       const measures = nextCube.measures.slice(0, measuresLimit).map(measure => {
@@ -165,11 +169,12 @@ export function QueryProvider({
           )
         })
       );
-      queryReducer.setCube(cube);
+
+      queryReducer.setCube(nextCube.name);
       queryReducer.setQuery(
         buildQuery({
           params: {
-            cube,
+            cube: nextCube.name,
             measures: keyBy(measures, item => item.key),
             drilldowns: keyBy(drilldowns, item => item.key)
           }
@@ -178,7 +183,13 @@ export function QueryProvider({
     }
   };
 
-  return <QueryContext.Provider value={queryReducer}>{children}</QueryContext.Provider>;
+  console.log(queryReducer.cube, queryReducer.query, "queryReducer");
+
+  return (
+    <QueryContext.Provider value={{...queryReducer, onChangeCube}}>
+      {children}
+    </QueryContext.Provider>
+  );
 }
 
 export function useQueryItem() {

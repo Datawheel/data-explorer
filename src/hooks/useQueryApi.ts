@@ -25,6 +25,8 @@ import {pickDefaultDrilldowns} from "../state/utils";
 import {useLogicLayer} from "../api/context";
 
 // Hook to fetch and manage server schema
+// check locale usage. but it is working fine. Really useful
+// Add server config
 export function useServerSchema(baseURL: string, defaultLocale?: string) {
   const {tesseract} = useLogicLayer();
 
