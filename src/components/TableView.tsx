@@ -48,7 +48,7 @@ import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
 import {useFormatter, useidFormatters} from "../hooks/formatter";
-import {useKey, useUpdatePermaLink} from "../hooks/permalink";
+import {useKey, useUpdatePermaLink, useUpdateUrl} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectLoadingState} from "../state/loading";
@@ -63,7 +63,6 @@ import {
   selectPaginationParams,
   selectSortingParams
 } from "../state/queries";
-import {selectOlapMeasureItems} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import type {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryResult} from "../utils/structs";
 import {type AnyResultColumn, buildFilter, buildMeasure, buildProperty} from "../utils/structs";
@@ -80,8 +79,8 @@ import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
 import _ from "lodash";
-import {useQueryItem} from "../context/query";
-import {useLocation, useParams} from "react-router-dom";
+import {useFetchQuery, useMeasureItems, useServerSchema} from "../hooks/useQueryApi";
+import {selectCurrentQueryItem} from "../state/queries";
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
@@ -207,10 +206,6 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
   }
 }
 
-function removeFirstTwo(str) {
-  return str.slice(2);
-}
-
 type TableProps = {
   cube: TesseractCube;
   result: QueryResult<Record<string, string | number>>;
@@ -329,56 +324,21 @@ export function useTableRefresh() {
   return context;
 }
 
-export function useTableData({columns, pagination, cube}: useTableDataType) {
-  const {query: queryitem, cube: queryCube} = useQueryItem();
-  console.log(queryitem, queryCube, "query item");
-  const {code: locale} = useSelector(selectLocale);
-  const loadingState = useSelector(selectLoadingState);
+export function useTableData({pagination}: useTableDataType) {
+  const queryItem = useSelector(selectCurrentQueryItem);
 
-  const permaKey = useKey();
-  console.log("permaKey", permaKey);
+  console.log(queryItem, "query item");
+  const queryLink = queryItem.link;
+
   const actions = useActions();
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;
 
-  // Get query enabled state from context
-  const {isQueryEnabled, setQueryEnabled} = useTableRefresh();
-
-  // Only enable the query when there are columns AND isQueryEnabled is true
-  const enabled = Boolean(columns.length) && isQueryEnabled;
-  const key = permaKey ? [permaKey, pageIndex, pageSize] : permaKey;
-
-  const query = useQuery<ApiResponse>({
-    queryKey: ["table", key],
-    queryFn: () =>
-      actions.willFetchQuery().then(result => {
-        actions.updateResult(result);
-        setQueryEnabled(false);
-        return result;
-      }),
-    staleTime: 300000,
-    enabled: enabled && !!key,
-    retry: false,
-    placeholderData: keepPreviousData
+  const query = useFetchQuery(queryItem.params, queryLink, {
+    limit: pageSize,
+    offset: pageIndex
   });
 
-  useEffect(() => {
-    if (query.data && !query.isFetching && isQueryEnabled) {
-      setQueryEnabled(false);
-    }
-  }, [query.data, query.isFetching, isQueryEnabled, setQueryEnabled]);
-
-  const client = useQueryClient();
-  const cachedData = client.getQueryData(["table", key]);
-
-  useUpdatePermaLink({
-    isFetched: Boolean(cachedData),
-    cube,
-    enabled,
-    isLoading: query.isLoading
-  });
-
-  // Update Redux pagination state whenever table pagination changes
   useEffect(() => {
     if (pageSize && pageIndex !== undefined) {
       actions.updatePagination({
@@ -386,49 +346,18 @@ export function useTableData({columns, pagination, cube}: useTableDataType) {
         offset: pageIndex
       });
     }
-  }, [pageSize, pageIndex, actions]);
+  }, [pageSize, pageIndex]);
 
   return query;
 }
 
-type usePrefetchType = {
-  isPlaceholderData: boolean;
-  limit: number;
-  totalRowCount: number;
-  pagination: MRT_PaginationState;
-  isFetching: boolean;
-};
-
-function usePrefetch({
-  isPlaceholderData,
-  limit,
-  totalRowCount,
-  pagination,
-  isFetching
-}: usePrefetchType) {
-  const queryClient = useQueryClient();
-  const actions = useActions();
-  const page = pagination.pageIndex + 1;
-  const pageSize = pagination.pageSize;
-  const hasMore = page * pageSize <= totalRowCount;
-  const off = page * pageSize;
-  const paramKey = useKey({pagiLimit: pageSize, pagiOffset: off});
-
-  useEffect(() => {
-    const key = [paramKey, page, pageSize];
-    if (!isPlaceholderData && hasMore && !isFetching) {
-      queryClient.prefetchQuery({
-        queryKey: ["table", key],
-        queryFn: () =>
-          actions.willFetchQuery({offset: off, limit}).then(result => {
-            actions.updateResult(result);
-            return result;
-          }),
-        staleTime: 300000
-      });
-    }
-  }, [limit, page, pageSize, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
-}
+// type usePrefetchType = {
+//   isPlaceholderData: boolean;
+//   limit: number;
+//   totalRowCount: number;
+//   pagination: MRT_PaginationState;
+//   isFetching: boolean;
+// };
 
 const columnSrt = (a: AnyResultColumn, b: AnyResultColumn) => {
   // Define order priority: level (dimension) first, then measure
@@ -443,21 +372,20 @@ const columnSrt = (a: AnyResultColumn, b: AnyResultColumn) => {
 
 export function useTable({
   cube,
-  result,
+
   columnFilter = () => true,
   columnSorting = columnSrt,
   ...mantineTableProps
 }: TableProps & Partial<TableOptions<TData>>) {
   const filterItems = useSelector(selectFilterItems);
   const filtersMap = useSelector(selectFilterMap);
-  const measuresOlap = useSelector(selectOlapMeasureItems);
+  const measuresOlap = useMeasureItems();
   const measuresMap = useSelector(selectMeasureMap);
   const drilldowns = useSelector(selectDrilldownItems);
   const {code: locale} = useSelector(selectLocale);
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-  const {setQueryEnabled} = useTableRefresh();
 
   // Initialize pagination state from Redux
   const [pagination, setPagination] = useState<MRT_PaginationState>({
@@ -466,13 +394,9 @@ export function useTable({
   });
 
   // Custom pagination handler that updates both local state and enables query
-  const handlePaginationChange = useCallback(
-    (updatedPagination: MRT_PaginationState) => {
-      setPagination(updatedPagination);
-      setQueryEnabled(true); // Enable the query when pagination changes
-    },
-    [setQueryEnabled]
-  );
+  const handlePaginationChange = useCallback((updatedPagination: MRT_PaginationState) => {
+    setPagination(updatedPagination);
+  }, []);
 
   const finalUniqueKeys = useMemo(
     () =>
@@ -517,7 +441,7 @@ export function useTable({
     handlerCreateMeasure
   ]);
 
-  const {isLoading, isFetching, isError, data} = useTableData({
+  const {isLoading, isFetching, isError, data, error} = useTableData({
     columns: finalUniqueKeys,
     pagination,
     cube: cube.name
@@ -526,7 +450,6 @@ export function useTable({
   const tableData = data?.data || [];
   const tableTypes: Record<string, AnyResultColumn> = data?.types || {};
   const totalRowCount = data?.page.total;
-
   /**
    * This array contains a list of all the columns to be presented in the Table
    * Each item is an object containing useful information related to the column
@@ -815,7 +738,7 @@ type TableView = {
 
 export function TableView({
   table,
-  result,
+
   isError,
   isLoading = false,
   data,
@@ -824,13 +747,17 @@ export function TableView({
 }: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
-  const loadingState = useSelector(selectLoadingState);
+  // const loadingState = useSelector(selectLoadingState);
   const viewport = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     viewport.current?.scrollTo({top: 0, behavior: "smooth"});
   }, [pagination?.pageIndex, pagination?.pageSize]);
+  const {data: serverSchema} = useServerSchema();
+  const url = serverSchema?.url;
 
+  console.log(data);
+  console.log(url);
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>
@@ -845,7 +772,7 @@ export function TableView({
             overflow: "scroll"
           }}
         >
-          <LoadingOverlay visible={isLoading || loadingState.loading} />
+          <LoadingOverlay visible={isLoading} />
           <Table
             captionSide="top"
             fontSize="md"
@@ -948,7 +875,7 @@ export function TableView({
         <TableFooter
           table={table}
           data={data}
-          result={result}
+          url={url}
           isLoading={isLoading}
           pagination={pagination}
           setPagination={setPagination}
@@ -1013,11 +940,11 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const label = header.column.id;
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
+  const updateUrl = useUpdateUrl();
   const {idFormatters} = useidFormatters();
   const cut = cutItems.find(cut => {
     return cut.level === drilldown?.level;
   });
-  const {setQueryEnabled} = useTableRefresh();
 
   const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
@@ -1033,9 +960,8 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
           }}
-          onDropdownClose={() => {
-            setQueryEnabled(true);
-          }}
+          onDropdownClose={() => updateUrl()}
+          onBlur={() => updateUrl()}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => {
@@ -1069,3 +995,34 @@ const NoRecords = () => {
 export default TableView;
 
 TableView.displayName = "TesseractExplorer:TableView";
+
+// function usePrefetch({
+//   isPlaceholderData,
+//   limit,
+//   totalRowCount,
+//   pagination,
+//   isFetching
+// }: usePrefetchType) {
+//   const queryClient = useQueryClient();
+//   const actions = useActions();
+//   const page = pagination.pageIndex + 1;
+//   const pageSize = pagination.pageSize;
+//   const hasMore = page * pageSize <= totalRowCount;
+//   const off = page * pageSize;
+//   const paramKey = useKey({pagiLimit: pageSize, pagiOffset: off});
+
+//   useEffect(() => {
+//     const key = [paramKey, page, pageSize];
+//     if (!isPlaceholderData && hasMore && !isFetching) {
+//       queryClient.prefetchQuery({
+//         queryKey: ["table", key],
+//         queryFn: () =>
+//           actions.willFetchQuery({offset: off, limit}).then(result => {
+//             actions.updateResult(result);
+//             return result;
+//           }),
+//         staleTime: 300000
+//       });
+//     }
+//   }, [limit, page, pageSize, isPlaceholderData, queryClient, hasMore, off, isFetching, paramKey]);
+// }
