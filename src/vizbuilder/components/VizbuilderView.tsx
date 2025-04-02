@@ -22,27 +22,21 @@ const CHART_LIMITS: Partial<ChartLimits> = {
 
 const DOWNLOAD_FORMATS = ["SVG", "PNG"] as const;
 
-export function VizbuilderView(props: {
-  cube: TesseractCube;
-  params: QueryParams;
-  // result: QueryResult;
-}) {
+export function VizbuilderView(props: {cube: TesseractCube; params: QueryParams}) {
   const {cube, params} = props;
 
   const query = useVizbuilderData();
   const data = query.data;
   const types = query.data?.types;
-  const columns = Object.keys(types);
+  const columns = Object.keys(types || {});
 
-  const dataset = useMemo<Dataset | Dataset[]>(() => {
-    return {
-      columns: Object.fromEntries(
-        columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
-      ),
-      data: data?.data || [],
-      locale: params.locale || "en"
-    };
-  }, [cube, params.locale, query]);
+  const dataset = {
+    columns: Object.fromEntries(
+      columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
+    ),
+    data: data?.data || [],
+    locale: params.locale || "en"
+  };
 
   return (
     !query.isLoading && (

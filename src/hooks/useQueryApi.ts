@@ -163,7 +163,7 @@ export function useFetchQuery(
   const {limit = 0, offset = 0, withoutPagination = false} = options || {};
 
   return useQuery({
-    queryKey: ["table", queryLink, "withoutPagination"],
+    queryKey: ["table", queryLink, "withoutPagination", withoutPagination],
     queryFn: async () => {
       if (!isValidQuery(queryParams)) {
         throw new Error("Invalid query");
@@ -172,7 +172,8 @@ export function useFetchQuery(
         const request = queryParamsToRequest(queryParams);
         if (limit || offset) {
           request.limit = `${limit},${offset}`;
-        } else if (withoutPagination) {
+        }
+        if (withoutPagination) {
           request.limit = "0,0";
         }
 

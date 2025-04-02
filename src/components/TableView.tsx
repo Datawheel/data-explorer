@@ -85,8 +85,9 @@ import _ from "lodash";
 import {useFetchQuery, useMeasureItems, useServerSchema} from "../hooks/useQueryApi";
 import {selectCurrentQueryItem} from "../state/queries";
 import {debounce} from "lodash";
-import {useUpdateUrl} from "../hooks/permalink";
-
+import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
+import {useNavigate} from "react-router-dom";
+import type {QueryItem} from "../utils/structs";
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
@@ -948,10 +949,29 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
   const {idFormatters} = useidFormatters();
+  const navigate = useNavigate();
+
+  const debouncedUpdateUrl = useMemo(
+    () =>
+      debounce((query: QueryItem) => {
+        const currPermalink = window.location.search.slice(1);
+        const nextPermalink = serializePermalink(query);
+        if (currPermalink !== nextPermalink) {
+          navigate(`?${nextPermalink}`, {replace: true});
+        }
+      }, 1000),
+    [navigate]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdateUrl.cancel();
+    };
+  }, [debouncedUpdateUrl]);
+
   const cut = cutItems.find(cut => {
     return cut.level === drilldown?.level;
   });
-  const updateUrl = useUpdateUrl();
 
   const updatecutHandler = useCallback(
     (item: CutItem, members: string[]) => {
@@ -973,9 +993,8 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
             const newCut = {...cut, active: true};
             updatecutHandler(newCut, value);
             const newQuery = buildQuery(_.cloneDeep(query));
-            newQuery.params.cuts[cut.key] = newCut;
-
-            updateUrl(newQuery);
+            newQuery.params.cuts[cut.key] = {...newCut, members: value};
+            debouncedUpdateUrl(newQuery);
           }}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}

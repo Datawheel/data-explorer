@@ -96,7 +96,7 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
 
       if (paginationChanged) {
         prevPaginationRef.current = {limit, offset};
-        updateUrl();
+        // updateUrl();
       }
     }
   }, [limit, offset, schema]);
@@ -166,7 +166,7 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
     if (!cube && cubeMap) {
       const cubeDefault =
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
-      setDefaultValues(cubeMap[cubeDefault]);
+      // setDefaultValues(cubeMap[cubeDefault]);
     }
   }, [location.search, runFetchMembers, schema]);
 

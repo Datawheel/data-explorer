@@ -79,6 +79,6 @@ export function useVizbuilderData() {
   const query = useFetchQuery(queryItem.params, queryLink, {
     withoutPagination: true
   });
-
+  console.log("me llama useVizbuilderData");
   return query;
 }
