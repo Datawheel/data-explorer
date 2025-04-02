@@ -21,8 +21,7 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
-import debounce from "lodash.debounce";
+
 import {
   type MRT_ColumnDef as ColumnDef,
   type MRT_Header,
@@ -81,6 +80,8 @@ import type {TesseractCube} from "../api/tesseract/schema";
 import _ from "lodash";
 import {useFetchQuery, useMeasureItems, useServerSchema} from "../hooks/useQueryApi";
 import {selectCurrentQueryItem} from "../state/queries";
+import {debounce} from "lodash";
+
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
@@ -947,9 +948,27 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
     return cut.level === drilldown?.level;
   });
 
-  const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
-    actions.updateCut({...item, members});
-  }, []);
+  const debouncedUpdateUrl = useMemo(() => _.debounce(updateUrl, 900), [updateUrl]);
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdateUrl.cancel();
+    };
+  }, [debouncedUpdateUrl]);
+
+  useEffect(() => {
+    if (cut && cut.members) {
+      debouncedUpdateUrl();
+      console.log("cut me llama", cut);
+    }
+  }, [cut?.members, debouncedUpdateUrl]);
+
+  const updatecutHandler = useCallback(
+    (item: CutItem, members: string[]) => {
+      actions.updateCut({...item, members});
+    },
+    [actions]
+  );
 
   return (
     drilldown &&
@@ -961,8 +980,6 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
           }}
-          onDropdownClose={() => updateUrl()}
-          onBlur={() => updateUrl()}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}
           data={drilldown.members.map(m => {

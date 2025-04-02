@@ -20,7 +20,6 @@ import {
   selectCurrentQueryItem,
   selectPaginationParams
 } from "../state/queries";
-import {TesseractLevel} from "../api/tesseract/schema";
 
 interface QueryContextProps {
   onChangeCube: (table: string, subtopic: string) => void;
@@ -49,7 +48,7 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
   const {paginationConfig, measuresActive} = useSettings();
   const {data: schema, isLoading: schemaLoading} = useServerSchema();
   const updateUrl = useUpdateUrl();
-  const queryItem = useSelector(selectCurrentQueryItem);
+  // const queryItem = useSelector(selectCurrentQueryItem);
   const {limit, offset} = useSelector(selectPaginationParams);
 
   const {
@@ -65,12 +64,15 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
   >();
 
   useEffect(() => {
-    if (limit && offset !== undefined) {
+    if (limit && offset !== undefined && schema && isMembersSuccess) {
+      console.log(limit, offset, schema);
       console.log("limit", limit);
       console.log("offset", offset);
       updateUrl();
     }
-  }, [limit, offset]);
+  }, [limit, offset, schema, isMembersSuccess]);
+
+  // add the updates here with delay
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
