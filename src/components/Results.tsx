@@ -5,9 +5,9 @@ import type Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import type {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
+import {useQueryItem} from "../context/query";
 
 type Props = {
-  onSelectCube: (name: string, subtopic: string) => void;
   selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
@@ -22,10 +22,10 @@ type Props = {
 };
 
 function Results(props: Props) {
-  const {onSelectCube, graph, selectedItem, locale, getCube, isSelected, isSelectionInProgress} =
-    props;
+  const {graph, selectedItem, locale, getCube, isSelected, isSelectionInProgress} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
+  const {onChangeCube} = useQueryItem();
   const result: React.ReactElement[] = [];
 
   if (map) {
@@ -38,14 +38,13 @@ function Results(props: Props) {
           {items.map(item => {
             const cube = getCube(graph.items, item, subtopic, locale);
             if (!cube) return null;
-
             const table = getAnnotation(cube, "table", locale);
             const isItemSelected = isSelected(selectedItem, cube);
 
             const handleClick = () => {
               // Only process the click if no selection is in progress
               if (!isSelectionInProgress) {
-                onSelectCube(item, subtopic);
+                onChangeCube(item, subtopic);
                 setExpanded(false);
                 setInput("");
               }

@@ -1,7 +1,6 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
 import {type CSSObject, Center, createStyles} from "@mantine/core";
 import React, {useEffect, useMemo} from "react";
-import {useSetup} from "../hooks/setup";
 import {useTranslation} from "../hooks/translation";
 import type {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
@@ -52,14 +51,12 @@ export function ExplorerContent(props: {
   withMultiQuery: boolean;
 }) {
   const translation = useTranslation();
-
-  const serverConfig = useMemo(() => {
-    return props.serverConfig !== undefined ? props.serverConfig : {};
-  }, [props.serverConfig]);
-
-  useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
-
   const {classes} = useStyles({height: props.height});
+
+  // const serverConfig = useMemo(() => {
+  //   return props.serverConfig !== undefined ? props.serverConfig : {};
+  // }, [props.serverConfig]);
+  // useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
 
   // Monitor the uiLocale param to update the UI on change
   useEffect(() => {
@@ -80,7 +77,6 @@ export function ExplorerContent(props: {
   return (
     <div className={classes.container}>
       <div className={classes.root}>
-        {/* <AppProviders serverURL={props.serverURL}> */}
         <SideBarProvider locale={props.locale}>
           <SideBar>
             <SideBarItem>
@@ -88,8 +84,13 @@ export function ExplorerContent(props: {
             </SideBarItem>
           </SideBar>
         </SideBarProvider>
-        <ExplorerResults className={classes.flexCol} panels={props.panels} splash={splash} />
-        {/* </AppProviders> */}
+        <ExplorerResults
+          className={classes.flexCol}
+          panels={props.panels}
+          splash={splash}
+          serverURL={props.serverURL}
+          defaultDataLocale={props.defaultDataLocale}
+        />
       </div>
     </div>
   );

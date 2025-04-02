@@ -29,6 +29,11 @@ interface SettingsContextProps {
   paginationConfig: Pagination;
   measuresActive?: number;
   toolbarConfig?: ToolbarConfigType;
+  serverConfig?: RequestInit;
+  serverURL: string;
+  defaultDataLocale?: string;
+  defaultCube?: string;
+  defaultLocale: string;
 }
 
 /**
@@ -53,6 +58,11 @@ export function SettingsProvider(props: {
   pagination?: Pagination;
   measuresActive?: number;
   toolbarConfig?: Partial<ToolbarConfigType>;
+  serverConfig?: RequestInit;
+  serverURL: string;
+  defaultDataLocale?: string;
+  defaultCube?: string;
+  defaultLocale: string;
 }) {
   usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
 
@@ -66,7 +76,12 @@ export function SettingsProvider(props: {
       previewLimit: props.previewLimit || 50,
       paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100},
       measuresActive: props.measuresActive,
-      toolbarConfig: {...defaultToolbarConfig, ...props.toolbarConfig}
+      toolbarConfig: {...defaultToolbarConfig, ...props.toolbarConfig},
+      serverConfig: props.serverConfig,
+      serverURL: props.serverURL,
+      defaultDataLocale: props.defaultDataLocale,
+      defaultCube: props.defaultCube,
+      defaultLocale: props.defaultLocale
     }),
     [props.formatters, props.previewLimit, props.toolbarConfig]
   );

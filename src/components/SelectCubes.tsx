@@ -1,29 +1,18 @@
 import {Accordion, type AccordionControlProps, Box, Stack, Text} from "@mantine/core";
 import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
-import yn from "yn";
-import type {TesseractCube, TesseractLevel} from "../api/tesseract/schema";
+import type {TesseractCube} from "../api/tesseract/schema";
 import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {
-  selectCubeName,
-  selectCurrentQueryParams,
-  selectCutItems,
-  selectDrilldownItems,
-  selectDrilldownMap,
-  selectLocale,
-  selectMeasureMap
-} from "../state/queries";
-import {selectOlapCube, selectOlapDimensionItems} from "../state/selectors";
-import {selectOlapCubeItems} from "../state/server";
-import {pickDefaultDrilldowns} from "../state/utils";
+import {selectCurrentQueryParams} from "../state/queries";
+
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
-import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 import {useTableRefresh} from "./TableView";
 import {useQueryItem} from "../context/query";
+import {useCubeItems, useSelectedItem} from "../hooks/useQueryApi";
 
 export const EMPTY_RESPONSE = {
   data: [],
@@ -34,8 +23,8 @@ export const EMPTY_RESPONSE = {
 };
 
 export function SelectCube({locale}: {locale: string}) {
-  const items = useSelector(selectOlapCubeItems);
-  const selectedItem = useSelector(selectOlapCube);
+  const items = useCubeItems();
+  const selectedItem = useSelectedItem();
 
   if (items.length === 1) {
     return null;
@@ -49,64 +38,7 @@ function SelectCubeInternal(props: {
   selectedItem: TesseractCube | undefined;
   locale: string;
 }) {
-  const {measuresActive} = useSettings();
   const {items, selectedItem, locale} = props;
-  const {updateMeasure, updateDrilldown, willFetchMembers, updateCut} = useActions();
-  const cutItems = useSelector(selectCutItems);
-
-  const cube = useSelector(selectCubeName);
-  const itemMap = useSelector(selectMeasureMap);
-  const dimensions = useSelector(selectOlapDimensionItems);
-
-  const drilldowns = useSelector(selectDrilldownMap);
-  const ditems = useSelector(selectDrilldownItems);
-
-  const createCutHandler = useCallback((level: TesseractLevel) => {
-    updateCut(buildCut({...level, active: false}));
-  }, []);
-
-  function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-      const drilldown = buildDrilldown({...level, key: level.name, active: true});
-      updateDrilldown(drilldown);
-      const cut = cuts.find(cut => cut.level === drilldown.level);
-      if (!cut) {
-        createCutHandler(level);
-      }
-      willFetchMembers(level.name).then(levelMeta => {
-        updateDrilldown({
-          ...drilldown,
-          members: levelMeta.members
-        });
-      });
-
-      return drilldown;
-    }
-  }
-
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const cubeParam = params.get("cube");
-    if (selectedItem && cube && !cubeParam) {
-      const [measure] = Object.values(itemMap);
-      const [dimension] = dimensions;
-      if (measure && dimension) {
-        const drilldowns = pickDefaultDrilldowns(dimensions);
-        if (measure && drilldowns.length > 0) {
-          const measuresLimit =
-            typeof measuresActive !== "undefined" ? measuresActive : Object.values(itemMap).length;
-          Object.values(itemMap)
-            .slice(0, measuresLimit)
-            .forEach(m => {
-              updateMeasure({...m, active: true});
-            });
-          for (const level of drilldowns) {
-            createDrilldown(level, cutItems);
-          }
-        }
-      }
-    }
-  }, [selectedItem, cube, measuresActive]);
 
   return (
     <Stack id="dex-select-cube" spacing={"xs"} w={"100%"}>
@@ -163,40 +95,6 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
   return cube;
 }
 
-function useBuildGraph(items, locale) {
-  const graph = useMemo(() => {
-    const graph = new Graph();
-    const filteredItems = items
-      .map(item => {
-        const {name} = item;
-        const topic = getAnnotation(item, "topic", locale);
-        const topic_order = getAnnotation(item, "topic_order", locale);
-        const subtopic = getAnnotation(item, "subtopic", locale);
-        const table = getAnnotation(item, "table", locale);
-        const hide = getAnnotation(item, "hide_in_ui", locale);
-
-        if (!yn(hide)) {
-          graph.addNode(topic);
-          if (topic_order) {
-            graph.addTopicOrder(topic, topic_order);
-          }
-          graph.addNode(subtopic);
-          graph.addNode(name);
-          graph.addEdge(topic, subtopic);
-          graph.addEdge(subtopic, name);
-          return item;
-        }
-
-        return null;
-      })
-      .filter(Boolean);
-    graph.items = filteredItems;
-    return graph;
-  }, [items, locale]);
-
-  return {graph};
-}
-
 function CubeTree({
   items,
   locale,
@@ -214,45 +112,6 @@ function CubeTree({
   const {setQueryEnabled} = useTableRefresh();
   const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
 
-  const {onChangeCube} = useQueryItem();
-
-  // Define the onSelectCube function
-  const onSelectCube = useCallback(
-    (table: string, subtopic: string) => {
-      // If a selection is already in progress, ignore this click
-      if (isSelectionInProgress) return;
-
-      // Set selection in progress to prevent further clicks
-      setIsSelectionInProgress(true);
-
-      const cube = items.find(
-        item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
-      );
-
-      if (cube) {
-        const {drilldowns, cuts, filters, measures, ...newQuery} = query;
-        actions.setLoadingState("FETCHING");
-        actions.resetAllParams(newQuery);
-        actions.updateResult(EMPTY_RESPONSE);
-
-        actions
-          .willSetCube(cube.name, measuresActive)
-          .then(() => {
-            actions.setLoadingState("SUCCESS");
-            setQueryEnabled(true);
-          })
-          .finally(() => {
-            // Re-enable selection when the operation is complete
-            setIsSelectionInProgress(false);
-          });
-      } else {
-        // If no cube was found, re-enable selection
-        setIsSelectionInProgress(false);
-      }
-    },
-    [items, locale, query, actions, measuresActive, setQueryEnabled, isSelectionInProgress]
-  );
-
   let topics = useMemo(
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
@@ -269,7 +128,6 @@ function CubeTree({
 
   return map && map.size > 0 ? (
     <Results
-      onSelectCube={onSelectCube}
       selectedItem={selectedItem}
       getCube={getCube}
       isSelected={isSelected}
@@ -282,7 +140,6 @@ function CubeTree({
       <RootAccordions
         items={topics}
         graph={graph}
-        onSelectCube={onSelectCube}
         selectedItem={selectedItem}
         locale={locale}
         isSelectionInProgress={isSelectionInProgress}
@@ -292,8 +149,7 @@ function CubeTree({
 }
 
 function useAccordionValue(key: Keys, locale) {
-  const selectedItem = useSelector(selectOlapCube);
-
+  const selectedItem = useSelectedItem();
   const [value, setValue] = useState<string | null>(null);
 
   useEffect(() => {
@@ -306,7 +162,7 @@ function useAccordionValue(key: Keys, locale) {
   return {value, setValue};
 }
 
-function RootAccordions({items, graph, locale, selectedItem, onSelectCube, isSelectionInProgress}) {
+function RootAccordions({items, graph, locale, selectedItem, isSelectionInProgress}) {
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -351,7 +207,6 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube, isSel
                   key={item}
                   locale={locale}
                   selectedItem={selectedItem}
-                  onSelectCube={onSelectCube}
                   isSelectionInProgress={isSelectionInProgress}
                 />
               </Accordion.Panel>
@@ -364,7 +219,6 @@ function RootAccordions({items, graph, locale, selectedItem, onSelectCube, isSel
 
 function CubeButton({
   item,
-  onSelectCube,
   selectedItem,
   graph,
   locale,
@@ -373,22 +227,19 @@ function CubeButton({
 }: {
   item: string;
   selectedItem?: TesseractCube;
-  onSelectCube: (table: string, subtopic: string) => void;
   graph: Graph;
   locale: string;
   parent?: string;
   isSelectionInProgress: boolean;
 }) {
+  const {onChangeCube} = useQueryItem();
   const {classes} = useLinkStyles();
 
   const table = graph.getName(item, locale);
   const subtopic = parent ?? "";
 
   const handleClick = () => {
-    // Only process the click if no selection is in progress
-    if (!isSelectionInProgress) {
-      onSelectCube(item, subtopic);
-    }
+    onChangeCube(item, subtopic);
   };
 
   const isItemSelected = isSelected(selectedItem, getCube(graph.items, item, subtopic, locale));
@@ -426,7 +277,6 @@ type NestedAccordionType = {
   graph: any;
   parent?: string;
   selectedItem?: TesseractCube;
-  onSelectCube: (name: string, subtopic: string) => void;
   locale: string;
   isSelectionInProgress: boolean;
 };
@@ -435,7 +285,6 @@ function SubtopicAccordion({
   items,
   graph,
   parent,
-  onSelectCube,
   selectedItem,
   locale,
   isSelectionInProgress
@@ -482,7 +331,6 @@ function SubtopicAccordion({
                     graph={graph}
                     item={table}
                     locale={locale}
-                    onSelectCube={onSelectCube}
                     selectedItem={selectedItem}
                     parent={item}
                     isSelectionInProgress={isSelectionInProgress}
@@ -495,3 +343,29 @@ function SubtopicAccordion({
     </Accordion>
   );
 }
+
+// const {updateMeasure, updateDrilldown, updateCut} = useActions();
+// const cutItems = useSelector(selectCutItems);
+// const cube = useSelector(selectCubeName);
+// const itemMap = useSelector(selectMeasureMap);
+// const dimensions = useSelector(selectOlapDimensionItems);
+// const {measuresActive} = useSettings();
+
+// const drilldowns = useSelector(selectDrilldownMap);
+// const ditems = useSelector(selectDrilldownItems);
+
+// const createCutHandler = useCallback((level: TesseractLevel) => {
+//   updateCut(buildCut({...level, active: false}));
+// }, []);
+
+// function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
+//   if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
+//     const drilldown = buildDrilldown({...level, key: level.name, active: true});
+//     updateDrilldown(drilldown);
+//     const cut = cuts.find(cut => cut.level === drilldown.level);
+//     if (!cut) {
+//       createCutHandler(level);
+//     }
+//     return drilldown;
+//   }
+// }

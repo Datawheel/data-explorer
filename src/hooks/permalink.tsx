@@ -7,6 +7,7 @@ import {useSelector} from "../state/store";
 import {type QueryItem, type QueryParams, buildQuery} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
 import {useNavigate} from "react-router-dom";
+import {useQueryItem} from "../context/query";
 
 /** */
 export function serializePermalink(item: QueryItem): string {
@@ -24,7 +25,6 @@ export function serializePermalink(item: QueryItem): string {
 /** */
 export function parsePermalink(cube: TesseractCube, value: string | URLSearchParams): QueryItem {
   const search = new URLSearchParams(value);
-
   const params = requestToQueryParams(cube, search);
 
   return buildQuery({
@@ -109,6 +109,22 @@ export function usePermalink(
 //   }, [cube, queryItem, enabled, isLoading, navigate]);
 // }
 
+export function useUpdateUrl() {
+  const navigate = useNavigate();
+  const queryItem = useSelector(selectCurrentQueryItem);
+
+  return useCallback(
+    (query?: QueryItem) => {
+      const currPermalink = window.location.search.slice(1);
+      const nextPermalink = serializePermalink(query || queryItem);
+      if (currPermalink !== nextPermalink) {
+        navigate(`?${nextPermalink}`, {replace: true});
+      }
+    },
+    [navigate, queryItem]
+  );
+}
+
 export function useUpdatePermaLink({
   isFetched,
   cube,
@@ -137,6 +153,14 @@ export function useKey(params: Partial<QueryParams> = {}) {
   const queryItem = useSelector(selectCurrentQueryItem);
   if (isValidQuery(queryItem.params)) {
     return serializePermalink({...queryItem, params: {...queryItem.params, ...params}});
+  }
+  return false;
+}
+
+export function useUrl(params: Partial<QueryParams> = {}) {
+  const {query} = useQueryItem();
+  if (query && isValidQuery(query.params)) {
+    return serializePermalink(query);
   }
   return false;
 }

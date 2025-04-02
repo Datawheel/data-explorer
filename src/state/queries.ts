@@ -81,6 +81,9 @@ export const queriesSlice = createSlice({
       state.itemMap[payload.key] = payload;
     },
 
+    updateCurrentQuery(state, {payload}: Action<QueryItem>) {
+      state.itemMap[state.current] = payload;
+    },
     // =========================================================================
     // CURRENT QUERY MANAGEMENT
 
@@ -88,7 +91,7 @@ export const queriesSlice = createSlice({
       const current = state.itemMap[state.current];
       current.panel = action.payload;
     },
-    
+
     updateChart(state, action: Action<string | null>) {
       const current = state.itemMap[state.current];
       current.chart = action.payload;

@@ -1,5 +1,4 @@
 import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from "react";
-import {useSelector} from "react-redux";
 import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {IconCopy, IconDotsVertical, IconDownload} from "@tabler/icons-react";
@@ -10,7 +9,6 @@ import {useClickOutside, useClipboard} from "@mantine/hooks";
 import {ActionIcon, Box, Button, Flex, Group, Loader, Menu, Text} from "@mantine/core";
 import {TesseractFormat} from "../api";
 import {useAsync} from "../hooks/useAsync";
-import {selectLoadingState} from "../state/loading";
 import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
@@ -28,6 +26,7 @@ type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
     isLoading: boolean;
     pagination?: MRT_PaginationState;
     setPagination?: (pagination: MRT_PaginationState) => void;
+    url: string;
   };
 
 type Item = {
@@ -36,13 +35,9 @@ type Item = {
 };
 
 function TableFooter(props: Props) {
-  const loading = useSelector(selectLoadingState);
   const {paginationConfig} = useSettings();
-  const {result, table, data = [], isLoading, pagination, setPagination} = props;
+  const {table, data = [], isLoading, pagination, setPagination, url} = props;
   const {translate: t} = useTranslation();
-  const {url} = result;
-  const {setQueryEnabled} = useTableRefresh();
-
   const {copy, copied} = useClipboard({timeout: 1000});
   const copyHandler = useCallback(() => copy(url), [url]);
 
@@ -56,13 +51,14 @@ function TableFooter(props: Props) {
   const handlePageSizeChange = useCallback(
     (item: Item) => {
       if (setPagination && pagination) {
-        // Reset to first page when changing page size
-        setPagination({pageIndex: 0, pageSize: item.value});
-        // Enable query to fetch new data with updated pagination
-        setQueryEnabled(true);
+        // Reset to first page when changing page size and ensure offset is 0
+        setPagination({
+          pageIndex: 0,
+          pageSize: item.value
+        });
       }
     },
-    [setPagination, pagination, setQueryEnabled]
+    [setPagination] // Remove pagination from dependencies since we don't use it directly
   );
 
   return (
@@ -75,7 +71,7 @@ function TableFooter(props: Props) {
         gap="sm"
       >
         <CubeSource />
-        {!loading.loading && !isLoading && (
+        {!isLoading && (
           <Group position="right" spacing="sm">
             <LocaleSelector />
             <Box maw="7rem" miw={"fit"}>

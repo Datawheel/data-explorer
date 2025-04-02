@@ -68,8 +68,10 @@ import {
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions, useTableRefresh} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
-import {keyBy} from "../utils/transform";
 import {debounce} from "lodash";
+import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
+import {useidFormatters} from "../hooks/formatter";
+import {useUpdateUrl} from "../hooks/permalink";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -86,7 +88,7 @@ type AddColumnsDrawerProps = {
 
 const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   const [opened, {open, close}] = useDisclosure(false);
-  const {setQueryEnabled} = useTableRefresh();
+  const updateUrl = useUpdateUrl();
 
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
@@ -98,7 +100,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         opened={opened}
         position="right"
         onClose={() => {
-          setQueryEnabled(true);
+          updateUrl();
           close();
         }}
         closeButtonProps={{
@@ -117,6 +119,18 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
       >
         <MeasuresOptions />
         <DrillDownOptions />
+        <Box mt="3rem" pb="md">
+          <Button
+            fullWidth
+            color="primary"
+            onClick={() => {
+              updateUrl();
+              close();
+            }}
+          >
+            Submit
+          </Button>
+        </Box>
       </Drawer>
       <Group position="center" sx={{flexWrap: "nowrap"}}>
         {smallerThanMd ? (
@@ -149,9 +163,10 @@ export function DrawerMenu() {
 }
 
 function DrillDownOptions() {
+  //TODO: agregar locale
   const locale = useSelector(selectLocale);
   const selectedDimensions = useSelector(selectDrilldownItems);
-  const dimensions = useSelector(selectOlapDimensionItems) || [];
+  const dimensions = useDimensionItems();
 
   const activeItems = selectedDimensions.filter(i => i.active);
 
@@ -288,6 +303,7 @@ function LevelItem({
   const cutItems = useSelector(selectCutItems);
   let drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
+  const {idFormatters} = useidFormatters();
 
   const label = useMemo(() => {
     const captions = [
@@ -319,12 +335,6 @@ function LevelItem({
     if (!cut) {
       createCutHandler(level);
     }
-    actions.willFetchMembers(level.name).then(levelMeta => {
-      actions.updateDrilldown({
-        ...drilldown,
-        members: levelMeta.members
-      });
-    });
 
     return drilldown;
   }
@@ -417,10 +427,14 @@ function LevelItem({
               }}
               placeholder={`Filter by ${label}`}
               value={cut?.members || []}
-              data={currentDrilldown.members.map(m => ({
-                value: String(m.key),
-                label: m.caption ? `${m.caption} ${m.key}` : `${m.key}`
-              }))}
+              data={currentDrilldown.members.map(m => {
+                const idFormatter = idFormatters[`${label} ID`];
+                const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
+                return {
+                  value: `${m.key}`,
+                  label: m.caption ? `${m.caption} (${formattedKey})` : `${formattedKey}`
+                };
+              })}
               clearable
               nothingFound="Nothing found"
               disabled={isDisabled} // Disable filter selection if disabled
@@ -532,14 +546,13 @@ function isNotValid(value) {
 
 export function NumberInputComponent({text, filter}: {text: string; filter: FilterItem}) {
   const actions = useActions();
-  const {setQueryEnabled} = useTableRefresh();
-
+  const updateUrl = useUpdateUrl();
   // Create a debounced function to enable the query
   const debouncedEnableQuery = useCallback(
     debounce(() => {
-      setQueryEnabled(true);
+      updateUrl();
     }, 1200),
-    [setQueryEnabled]
+    [updateUrl]
   );
 
   function getFilterValue(filter: FilterItem) {
@@ -684,8 +697,8 @@ function MeasuresOptions() {
   const itemMap = useSelector(selectMeasureMap);
   const filtersMap = useSelector(selectFilterMap);
   const filtersItems = useSelector(selectFilterItems);
-  // server
-  const measures = useSelector(selectOlapMeasureItems);
+  const measures = useMeasureItems();
+
   //actions
   const actions = useActions();
 
@@ -808,7 +821,7 @@ const getIconForDimensionType = (dimensionType: DimensionType) => {
     case DimensionType.TIME:
       return <IconClock size={20} />;
     default:
-      return <IconBox size={20} />; // Default icon
+      return <IconBox size={20} />;
   }
 };
 

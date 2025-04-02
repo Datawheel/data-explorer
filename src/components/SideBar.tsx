@@ -19,7 +19,6 @@ import {createContext} from "../utils/create-context";
 import {IconSearch, IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
 import {DataSetSVG} from "./icons";
 import Graph from "../utils/graph";
-import {LocaleSelector} from "./LocaleSelector";
 import {useTranslation} from "../hooks/translation";
 import {useDebouncedState, useMediaQuery} from "@mantine/hooks";
 import useBuildGraph from "../hooks/buildGraph";
@@ -44,7 +43,7 @@ export function SideBarProvider(props: PropsWithChildren<{locale: string}>) {
 
   const graph = useBuildGraph(props.locale);
   const {results, map} = useCubeSearch(input, graph);
-  
+
   return (
     <Provider
       {...props}

@@ -1,4 +1,4 @@
-import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
+import {useQuery, useMutation, useQueryClient, keepPreviousData} from "@tanstack/react-query";
 import type {
   TesseractCube,
   TesseractDataResponse,
@@ -9,57 +9,113 @@ import type {TesseractLevel, TesseractHierarchy, TesseractDimension} from "../ap
 import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
 import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {filterMap} from "../utils/array";
-import {describeData} from "../utils/object";
+import {describeData, getOrderValue, getValues} from "../utils/object";
 import {
   type QueryResult,
   buildCut,
   buildDrilldown,
   buildMeasure,
   buildProperty,
-  buildQuery
+  buildQuery,
+  QueryParams
 } from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import type {FileDescriptor} from "../utils/types";
-import {isValidQuery, noop} from "../utils/validation";
+import {isValidQuery} from "../utils/validation";
 import {pickDefaultDrilldowns} from "../state/utils";
 import {useLogicLayer} from "../api/context";
+import {useSettings} from "./settings";
+import {useSelector} from "../state";
+import {selectCurrentQueryItem} from "../state/queries";
+import {useMemo} from "react";
 
 // Hook to fetch and manage server schema
 // check locale usage. but it is working fine. Really useful
 // Add server config
-export function useServerSchema(baseURL: string, defaultLocale?: string) {
+export function useServerSchema() {
   const {tesseract} = useLogicLayer();
+  const {serverConfig, serverURL, defaultDataLocale, defaultCube} = useSettings();
 
   return useQuery({
-    queryKey: ["schema", baseURL, defaultLocale],
+    queryKey: ["schema", serverURL, defaultDataLocale],
     queryFn: async () => {
       const search = new URLSearchParams(location.search);
       const locale = search.get("locale");
 
       try {
-        const schema = await tesseract.fetchSchema({locale: locale || defaultLocale});
+        const schema = await tesseract.fetchSchema({locale: locale || defaultDataLocale});
         const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
         const cubeMap = keyBy(cubes, "name");
 
         return {
           cubeMap,
-          locale: defaultLocale || schema.default_locale,
+          locale: defaultDataLocale || schema.default_locale,
           localeOptions: schema.locales,
           online: true,
-          url: baseURL
+          url: serverURL
         };
       } catch (error) {
         return {
           cubeMap: {},
-          locale: defaultLocale || "",
+          locale: defaultDataLocale || "",
           localeOptions: [],
           online: false,
-          url: baseURL
+          url: serverURL
         };
       }
     }
   });
 }
+
+export const useMeasureItems = () => {
+  const {data: schema} = useServerSchema();
+  const {params} = useSelector(selectCurrentQueryItem);
+  const measures = schema?.cubeMap[params.cube]?.measures || [];
+
+  return measures;
+};
+
+export const useSelectedItem = () => {
+  const {data: schema} = useServerSchema();
+  const {params} = useSelector(selectCurrentQueryItem);
+  const selectedItem = schema?.cubeMap[params.cube];
+  return selectedItem;
+};
+
+export const useCubeItems = () => {
+  const {data: schema} = useServerSchema();
+  const cubeItems = schema?.cubeMap;
+  return getValues(cubeItems || {});
+};
+
+export const useDimensionItems = () => {
+  const {data: schema} = useServerSchema();
+  const {params} = useSelector(selectCurrentQueryItem);
+  const dimensions = schema?.cubeMap[params.cube]?.dimensions || [];
+
+  return dimensions
+    .map(dim => ({
+      item: {
+        ...dim,
+        hierarchies: dim.hierarchies
+          .slice()
+          .map(hierarchy => {
+            hierarchy.levels.slice().sort((a, b) => getOrderValue(a) - getOrderValue(b));
+            return hierarchy;
+          })
+          .sort((a, b) => getOrderValue(a) - getOrderValue(b))
+      },
+      count: dim.hierarchies.reduce((acc, hie) => acc + hie.levels.length, 0),
+      alpha: dim.hierarchies.reduce((acc, hie) => acc.concat(hie.name, "-"), "")
+    }))
+    .sort(
+      (a, b) =>
+        getOrderValue(a.item) - getOrderValue(b.item) ||
+        b.count - a.count ||
+        a.alpha.localeCompare(b.alpha)
+    )
+    .map(i => i.item);
+};
 
 // Hook to download query data
 export function useDownloadQuery() {
@@ -93,9 +149,9 @@ export function useDownloadQuery() {
   });
 }
 
-// Hook to fetch query data
 export function useFetchQuery(
-  queryParams: any,
+  queryParams?: QueryParams,
+  queryLink?: string,
   options?: {
     limit?: number;
     offset?: number;
@@ -104,42 +160,46 @@ export function useFetchQuery(
   }
 ) {
   const {tesseract} = useLogicLayer();
-  const {limit = 0, offset = 0, withoutPagination = false, enabled = true} = options || {};
+  const {limit = 0, offset = 0, withoutPagination = false} = options || {};
 
   return useQuery({
-    queryKey: ["queryData", queryParams, limit, offset, withoutPagination],
-    queryFn: async (): Promise<QueryResult> => {
+    queryKey: ["table", queryLink],
+    queryFn: async () => {
       if (!isValidQuery(queryParams)) {
         throw new Error("Invalid query");
       }
+      if (queryParams) {
+        const request = queryParamsToRequest(queryParams);
+        if (limit || offset) {
+          request.limit = `${limit},${offset}`;
+        } else if (withoutPagination) {
+          request.limit = "0,0";
+        }
 
-      const request = queryParamsToRequest(queryParams);
-      if (limit || offset) {
-        request.limit = `${limit},${offset}`;
-      } else if (withoutPagination) {
-        request.limit = "0,0";
+        const response = await tesseract.fetchData({request, format: "jsonrecords"});
+        const content: TesseractDataResponse = await response.json();
+
+        if (!response.ok) {
+          throw new Error(`Backend Error: ${content.detail}`);
+        }
+
+        // Fetch the cube data (necessary for describeData ??)
+        const cubeData = await tesseract.fetchCube({cube: queryParams.cube});
+
+        return {
+          data: content.data,
+          page: content.page,
+          types: describeData(cubeData, queryParams, content),
+          headers: Object.fromEntries(response.headers),
+          status: response.status || 200,
+          url: response.url
+        };
       }
-
-      const response = await tesseract.fetchData({request, format: "jsonrecords"});
-      const content: TesseractDataResponse = await response.json();
-
-      if (!response.ok) {
-        throw new Error(`Backend Error: ${content.detail}`);
-      }
-
-      // Fetch the cube data
-      const cubeData = await tesseract.fetchCube({cube: queryParams.cube});
-
-      return {
-        data: content.data,
-        page: content.page,
-        types: describeData(cubeData, queryParams, content),
-        headers: Object.fromEntries(response.headers),
-        status: response.status || 200,
-        url: response.url
-      };
     },
-    enabled
+    staleTime: 300000,
+    enabled: Boolean(queryLink),
+    retry: false,
+    placeholderData: keepPreviousData
   });
 }
 

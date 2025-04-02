@@ -326,27 +326,24 @@ export function useTableRefresh() {
 
 export function useTableData({pagination}: useTableDataType) {
   const queryItem = useSelector(selectCurrentQueryItem);
-
-  console.log(queryItem, "query item");
   const queryLink = queryItem.link;
-
   const actions = useActions();
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;
 
   const query = useFetchQuery(queryItem.params, queryLink, {
     limit: pageSize,
-    offset: pageIndex
+    offset: pageIndex * pageSize
   });
 
   useEffect(() => {
     if (pageSize && pageIndex !== undefined) {
       actions.updatePagination({
         limit: pageSize,
-        offset: pageIndex
+        offset: pageIndex * pageSize
       });
     }
-  }, [pageSize, pageIndex]);
+  }, [pageSize, pageIndex, actions]);
 
   return query;
 }
@@ -387,16 +384,23 @@ export function useTable({
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
 
-  // Initialize pagination state from Redux
+  // Initialize pagination state from Redux with correct page index calculation
   const [pagination, setPagination] = useState<MRT_PaginationState>({
-    pageIndex: offset,
+    pageIndex: Math.floor(offset / (limit || 1)),
     pageSize: limit
   });
 
   // Custom pagination handler that updates both local state and enables query
-  const handlePaginationChange = useCallback((updatedPagination: MRT_PaginationState) => {
-    setPagination(updatedPagination);
-  }, []);
+  const handlePaginationChange = useCallback(
+    (updatedPagination: MRT_PaginationState) => {
+      setPagination(updatedPagination);
+      actions.updatePagination({
+        limit: updatedPagination.pageSize,
+        offset: updatedPagination.pageIndex * updatedPagination.pageSize
+      });
+    },
+    [actions]
+  );
 
   const finalUniqueKeys = useMemo(
     () =>
@@ -747,7 +751,6 @@ export function TableView({
 }: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
-  // const loadingState = useSelector(selectLoadingState);
   const viewport = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -756,8 +759,6 @@ export function TableView({
   const {data: serverSchema} = useServerSchema();
   const url = serverSchema?.url;
 
-  console.log(data);
-  console.log(url);
   return (
     <Box sx={{height: "100%"}}>
       <Flex direction="column" justify="space-between" sx={{height: "100%", flex: "1 1 auto"}}>

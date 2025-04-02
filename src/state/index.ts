@@ -1,19 +1,21 @@
-import {loadingActions} from "./loading";
 import {queriesActions} from "./queries";
-import {serverActions} from "./server";
-import * as thunks from "./thunks";
+// import {serverActions} from "./server";
+// import * as thunks from "./thunks";
 
-export type {LoadingState} from "./loading";
 export type {QueriesState} from "./queries";
 export type {ServerState} from "./server";
-export {type ExplorerState, type ExplorerStore, reducer, storeFactory, thunkExtraArg, useDispatch, useSelector} from "./store";
-export {loadingActions, queriesActions, serverActions, thunks};
+export {
+  type ExplorerState,
+  type ExplorerStore,
+  reducer,
+  storeFactory,
+  thunkExtraArg,
+  useDispatch,
+  useSelector
+} from "./store";
+export {queriesActions};
 
 export type ExplorerActionMap = typeof actions;
+export const actions = queriesActions;
 
-export const actions = {
-  ...serverActions,
-  ...loadingActions,
-  ...queriesActions,
-  ...thunks
-};
+// TODO: Remove thunks

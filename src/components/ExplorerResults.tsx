@@ -29,6 +29,7 @@ import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {useServerSchema} from "../hooks/useQueryApi";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -38,6 +39,8 @@ const useStyles = createStyles(() => ({
   }
 }));
 
+// const cube = useSelector(selectOlapCube);
+//const {error} = result;
 /**
  * Renders the result area in the UI.
  */
@@ -45,12 +48,21 @@ export function ExplorerResults(props: {
   className?: string;
   panels: PanelDescriptor[];
   splash: React.ReactElement | null;
+  serverURL: string;
+  defaultDataLocale?: string;
 }) {
-  const cube = useSelector(selectOlapCube);
-  const serverStatus = useSelector(selectServerState);
-  const {params, result} = useSelector(selectCurrentQueryItem);
-  const {online: isServerOnline, url: serverUrl} = serverStatus;
-  const {error} = result;
+  const {
+    data: schema,
+    isLoading: schemaLoading,
+    isError: schemaError,
+    error: schemaErrorDetail
+  } = useServerSchema();
+  const {params} = useSelector(selectCurrentQueryItem);
+  const cubeMap = schema?.cubeMap || {};
+  const cube = cubeMap[params.cube];
+
+  const {online: isServerOnline, url: serverUrl} = schema || {};
+
   const {translate: t} = useTranslation();
   const {classes, cx} = useStyles();
 
@@ -89,6 +101,7 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
+
   if (isServerOnline == null || !cube) {
     return (
       <Paper
@@ -102,14 +115,14 @@ export function ExplorerResults(props: {
   }
 
   // Check if there was an error in the last query
-  if (error) {
+  if (schemaError) {
     return (
       <FailureResult
         className={cx(classes.container, props.className)}
         description={
           <Stack align="center" spacing="xs">
             <Text>{t("results.error_execquery_detail")}</Text>
-            <Text>{error}</Text>
+            <Text>{schemaErrorDetail.message}</Text>
           </Stack>
         }
         icon={<IconAlertTriangle color="orange" size="5rem" />}
@@ -135,7 +148,7 @@ export function ExplorerResults(props: {
       cube={cube}
       panels={props.panels}
       params={params}
-      result={result}
+      // result={result}
     >
       {props.splash}
     </SuccessResult>
@@ -188,8 +201,7 @@ function SuccessResult(props: {
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
   const {table, isError, isLoading, data, columns, pagination, setPagination} = useTable({
-    cube,
-    result
+    cube
   });
 
   const fullscreen = useFullscreen();

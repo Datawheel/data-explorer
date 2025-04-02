@@ -1,9 +1,5 @@
 import {Comparison} from "../api/enum";
-import type {
-  TesseractLevel,
-  TesseractMeasure,
-  TesseractProperty,
-} from "../api/tesseract/schema";
+import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
 import {asArray} from "./array";
 import {parseNumeric, randomKey} from "./string";
 
@@ -16,6 +12,7 @@ export interface QueryItem {
   chart: string | null;
   params: QueryParams;
   result: QueryResult;
+  link?: string;
 }
 
 export interface QueryParams {
@@ -109,7 +106,7 @@ export interface NamedSetItem extends QueryParamsItem {
 }
 
 export interface PropertyItem extends QueryParamsItem {
-  level: string; 
+  level: string;
   name: string;
 }
 
@@ -141,8 +138,8 @@ export function buildQuery(props: RecursivePartial<QueryItem>): QueryItem {
       types: {},
       headers: {},
       status: 0,
-      url: "",
-    },
+      url: ""
+    }
   };
 }
 
@@ -161,9 +158,8 @@ export function buildQueryParams(props): QueryParams {
     measures: props.measures || {},
     pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
-    sortDir:
-      props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
-    sortKey: props.sortKey || props.sortProperty || "",
+    sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
+    sortKey: props.sortKey || props.sortProperty || ""
   };
 }
 
@@ -180,7 +176,7 @@ export function buildCut(props): CutItem {
     dimension,
     hierarchy,
     level,
-    members: Array.isArray(props.members) ? props.members : [],
+    members: Array.isArray(props.members) ? props.members : []
   };
 }
 
@@ -206,7 +202,7 @@ export function buildDrilldown(props: {
     hierarchy: `${props.hierarchy || ""}`,
     level: `${props.level || props.name}`,
     properties: asArray(props.properties).map(buildProperty),
-    members: Array.isArray(props.members) ? props.members : [],
+    members: Array.isArray(props.members) ? props.members : []
   };
 }
 
@@ -234,14 +230,14 @@ export function buildFilter(props: {
     conditionOne: props.conditionOne || [
       props.const1 ? `${props.const1[0]}` : `${Comparison.GT}`,
       props.const1 ? props.const1[1].toString() : props.inputtedValue || "0",
-      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0),
+      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0)
     ],
     conditionTwo: props.conditionTwo || [
       props.const2 ? `${props.const2[0]}` : `${Comparison.GT}`,
       props.const2 ? props.const2[1].toString() : props.inputtedValue || "0",
-      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0),
+      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0)
     ],
-    joint: props.joint === "or" ? "or" : "and",
+    joint: props.joint === "or" ? "or" : "and"
   };
 }
 
@@ -258,7 +254,7 @@ export function buildMeasure(props: {
     active: typeof props.active === "boolean" ? props.active : false,
     key: props.key || props.name || randomKey(),
     name: props.name || props.key || `${props}`,
-    caption: props.caption || props.name || props.key,
+    caption: props.caption || props.name || props.key
   };
 }
 
@@ -269,7 +265,7 @@ export function buildMember(props): MemberItem {
   return {
     active: typeof props.active === "boolean" ? props.active : false,
     key: props.key || props.name || `${props}`,
-    name: props.name || props.key || `${props}`,
+    name: props.name || props.key || `${props}`
   };
 }
 
@@ -285,20 +281,20 @@ export function buildProperty(
         level?: string;
         name?: string;
         property?: string;
-      },
+      }
 ): PropertyItem {
-  if ('active' in props) {
+  if ("active" in props) {
     return {
       active: typeof props.active === "boolean" ? props.active : false,
       key: props.key || randomKey(),
       level: props.level || "",
-      name: props.name || props.property || "",
+      name: props.name || props.property || ""
     };
-  } 
+  }
   return {
     active: false,
     key: randomKey(),
     level: "",
-    name: props.name || "",
+    name: props.name || ""
   };
 }

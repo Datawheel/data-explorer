@@ -4,8 +4,9 @@ import {useSelector} from "react-redux";
 import {useTranslation} from "../hooks/translation";
 import {selectOlapCube} from "../state/selectors";
 import {getAnnotation} from "../utils/string";
-import {selectLocale} from "../state/queries";
+import {selectCurrentQueryItem, selectLocale} from "../state/queries";
 import type {Annotated} from "../utils/types";
+import {useSelectedItem, useServerSchema} from "../hooks/useQueryApi";
 
 export function CubeAnnotation(
   props: TextProps & {
@@ -47,8 +48,8 @@ export function CubeSourceAnchor(
 }
 
 export default function CubeSource() {
-  const selectedItem = useSelector(selectOlapCube);
-
+  const selectedItem = useSelectedItem();
+  // TODO: agregar locale
   const {code: locale} = useSelector(selectLocale);
   return (
     selectedItem && (

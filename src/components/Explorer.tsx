@@ -201,6 +201,10 @@ export function ExplorerComponent<Locale extends string>(props: {
         pagination={pagination}
         measuresActive={measuresActive}
         toolbarConfig={props.toolbarConfig}
+        serverConfig={props.serverConfig}
+        serverURL={props.serverURL}
+        defaultDataLocale={props.defaultDataLocale}
+        defaultLocale={locale}
       >
         <TranslationProvider defaultLocale={locale} translations={props.translations}>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
@@ -208,6 +212,7 @@ export function ExplorerComponent<Locale extends string>(props: {
               serverURL={props.serverURL}
               locale={locale}
               defaultDataLocale={props.defaultDataLocale}
+              serverConfig={props.serverConfig}
             >
               <ExplorerContent
                 defaultDataLocale={props.defaultDataLocale}
