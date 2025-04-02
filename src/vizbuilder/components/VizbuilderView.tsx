@@ -25,22 +25,24 @@ const DOWNLOAD_FORMATS = ["SVG", "PNG"] as const;
 export function VizbuilderView(props: {
   cube: TesseractCube;
   params: QueryParams;
-  result: QueryResult;
+  // result: QueryResult;
 }) {
-  const {cube, params, result} = props;
+  const {cube, params} = props;
 
   const query = useVizbuilderData();
+  const data = query.data;
+  const types = query.data?.types;
+  const columns = Object.keys(types);
 
   const dataset = useMemo<Dataset | Dataset[]>(() => {
-    const columns = Object.keys(result.types);
     return {
       columns: Object.fromEntries(
         columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
       ),
-      data: query.data?.data || [],
+      data: data?.data || [],
       locale: params.locale || "en"
     };
-  }, [cube, result, params.locale, query]);
+  }, [cube, params.locale, query]);
 
   return (
     !query.isLoading && (

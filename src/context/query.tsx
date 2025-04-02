@@ -8,16 +8,23 @@ import {isValidQuery, hasProperty} from "../utils/validation";
 import {buildCut, buildDrilldown, buildMeasure, buildProperty, buildQuery} from "../utils/structs";
 import {useActions, useSettings} from "../hooks/settings";
 import {useLogicLayer} from "../api/context";
-import {useLocation, useSearchParams} from "react-router-dom";
+import {useLocation} from "react-router-dom";
 import {pickDefaultDrilldowns} from "../state/utils";
 import {getValues} from "../utils/object";
 import {getAnnotation} from "../utils/string";
 import {TesseractCube} from "../api";
 import {useSelector} from "react-redux";
-import {selectPaginationParams, selectCurrentQueryItem} from "../state/queries";
+import {
+  selectPaginationParams,
+  selectCurrentQueryItem,
+  selectFilterMap,
+  selectCutMap
+} from "../state/queries";
 
 interface QueryContextProps {
   onChangeCube: (table: string, subtopic: string) => void;
+  schemaLoading: boolean;
+  membersLoading: boolean;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -51,17 +58,21 @@ function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: num
 export function QueryProvider({children, defaultCube, locale}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
-  // const [searchParams, setSearchParams] = useSearchParams();
-  const {updateCurrentQuery, updateDrilldown, updateCut} = useActions();
+  const {updateCurrentQuery} = useActions();
   const {paginationConfig, measuresActive} = useSettings();
   const {data: schema, isLoading: schemaLoading} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
   const {limit, offset} = useSelector(selectPaginationParams);
-
+  const filters = useSelector(selectFilterMap);
+  const cuts = useSelector(selectCutMap);
   // Create debounced versions of updateUrl
   const debouncedUpdateUrlForFilters = useDebounce(updateUrl, 1200);
   const debouncedUpdateUrlForCuts = useDebounce(updateUrl, 700);
+
+  const prevFiltersRef = useRef(filters);
+  const prevCutsRef = useRef(cuts);
+  const prevPaginationRef = useRef({limit, offset});
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
@@ -79,28 +90,36 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
   >();
 
   useEffect(() => {
-    if (limit && offset !== undefined && schema && isMembersSuccess) {
-      updateUrl();
-    }
-  }, [limit, offset, schema, isMembersSuccess]);
+    if (limit && offset !== undefined && schema) {
+      const paginationChanged =
+        prevPaginationRef.current.limit !== limit || prevPaginationRef.current.offset !== offset;
 
-  // Add effect to update URL when filters change with 1.2 second debounce
+      if (paginationChanged) {
+        prevPaginationRef.current = {limit, offset};
+        updateUrl();
+      }
+    }
+  }, [limit, offset, schema]);
+
   useEffect(() => {
-    if (queryItem?.params.filters && schema && isMembersSuccess) {
-      console.log("filters", queryItem?.params.filters);
-      debouncedUpdateUrlForFilters();
+    if (filters && schema) {
+      const filtersChanged = filters !== prevFiltersRef.current;
+      if (filtersChanged) {
+        prevFiltersRef.current = filters;
+        debouncedUpdateUrlForFilters();
+      }
     }
-  }, [queryItem?.params.filters, schema, isMembersSuccess, debouncedUpdateUrlForFilters]);
+  }, [filters, schema, debouncedUpdateUrlForFilters]);
 
-  // Add effect to update URL when cuts change with 700 second debounce
   useEffect(() => {
-    if (queryItem?.params.cuts && schema && isMembersSuccess) {
-      console.log("cuts", queryItem?.params.cuts);
-      debouncedUpdateUrlForCuts();
+    if (cuts && schema) {
+      const cutsChanged = cuts !== prevCutsRef.current;
+      if (cutsChanged) {
+        prevCutsRef.current = cuts;
+        debouncedUpdateUrlForCuts();
+      }
     }
-  }, [queryItem?.params.cuts, schema, isMembersSuccess, debouncedUpdateUrlForCuts]);
-
-  // add the updates here with delay
+  }, [cuts, schema, debouncedUpdateUrlForCuts]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -130,7 +149,6 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
 
           newQuery.params.drilldowns = keyBy(drilldowns, "key");
 
-          // Merge existing cuts with new cuts, preserving existing ones
           const existingCuts = keyBy(
             Object.values(newQuery.params.cuts || {}).map(c => ({...c, key: c.level})),
             "key"
@@ -197,10 +215,18 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
     updateUrl(query);
   }
 
-  return <QueryContext.Provider value={{onChangeCube}}>{children}</QueryContext.Provider>;
+  return (
+    <QueryContext.Provider
+      value={{
+        onChangeCube,
+        schemaLoading,
+        membersLoading
+      }}
+    >
+      {children}
+    </QueryContext.Provider>
+  );
 }
-
-// THE SERIALIZATION OF THE QUERY IS DONE IN THE QUERY PROVIDER SHOULD BE IN A HOOK!!!
 
 export function useQueryItem() {
   const context = useContext(QueryContext);

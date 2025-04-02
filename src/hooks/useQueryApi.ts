@@ -163,7 +163,7 @@ export function useFetchQuery(
   const {limit = 0, offset = 0, withoutPagination = false} = options || {};
 
   return useQuery({
-    queryKey: ["table", queryLink],
+    queryKey: ["table", queryLink, "withoutPagination"],
     queryFn: async () => {
       if (!isValidQuery(queryParams)) {
         throw new Error("Invalid query");

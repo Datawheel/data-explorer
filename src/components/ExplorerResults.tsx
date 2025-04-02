@@ -148,7 +148,6 @@ export function ExplorerResults(props: {
       cube={cube}
       panels={props.panels}
       params={params}
-      // result={result}
     >
       {props.splash}
     </SuccessResult>

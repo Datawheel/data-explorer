@@ -106,10 +106,6 @@ function CubeTree({
 }) {
   const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
-  const {measuresActive} = useSettings();
-  const actions = useActions();
-  const query = useSelector(selectCurrentQueryParams);
-  const {setQueryEnabled} = useTableRefresh();
   const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
 
   let topics = useMemo(
@@ -222,19 +218,17 @@ function CubeButton({
   selectedItem,
   graph,
   locale,
-  parent,
-  isSelectionInProgress
+  parent
 }: {
   item: string;
   selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
   parent?: string;
-  isSelectionInProgress: boolean;
 }) {
-  const {onChangeCube} = useQueryItem();
+  const {onChangeCube, membersLoading, schemaLoading} = useQueryItem();
   const {classes} = useLinkStyles();
-
+  const isSelectionInProgress = membersLoading || schemaLoading;
   const table = graph.getName(item, locale);
   const subtopic = parent ?? "";
 

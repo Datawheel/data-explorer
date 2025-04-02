@@ -304,7 +304,7 @@ export const queriesActions = {
  */
 function taintCurrentQuery<S extends QueriesState>(state: S) {
   const current = state.itemMap[state.current];
-  current.isDirty = true;
+  // current.isDirty = true;
   return current as S["itemMap"][string];
 }
 
@@ -345,18 +345,21 @@ export const selectLocale = createSelector(
   }
 );
 
-export const selectCutMap = createSelector(selectCurrentQueryParams, params => params.cuts);
+export const selectCutMap = createSelector(selectCurrentQueryItem, query => query.params.cuts);
 export const selectCutKeys = createSelector(selectCutMap, getKeys);
 export const selectCutItems = createSelector(selectCutMap, getValues<CutItem>);
 
 export const selectDrilldownMap = createSelector(
-  selectCurrentQueryParams,
-  params => params.drilldowns
+  selectCurrentQueryItem,
+  query => query.params.drilldowns
 );
 export const selectDrilldownKeys = createSelector(selectDrilldownMap, getKeys);
 export const selectDrilldownItems = createSelector(selectDrilldownMap, getValues<DrilldownItem>);
 
-export const selectFilterMap = createSelector(selectCurrentQueryParams, params => params.filters);
+export const selectFilterMap = createSelector(
+  selectCurrentQueryItem,
+  query => query.params.filters
+);
 export const selectFilterKeys = createSelector(selectFilterMap, getKeys);
 export const selectFilterItems = createSelector(selectFilterMap, getValues<FilterItem>);
 
@@ -370,9 +373,9 @@ export const selectIsPreviewMode = createSelector(
   params => params.isPreview
 );
 
-export const selectPaginationParams = createSelector(selectCurrentQueryParams, params => ({
-  limit: params.pagiLimit || 0,
-  offset: params.pagiOffset || 0
+export const selectPaginationParams = createSelector(selectCurrentQueryItem, query => ({
+  limit: query.params.pagiLimit || 0,
+  offset: query.params.pagiOffset || 0
 }));
 
 export const selectSortingParams = createSelector(selectCurrentQueryParams, params => ({
