@@ -62,7 +62,13 @@ import {
 } from "../state/queries";
 import {filterMap} from "../utils/array";
 import type {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryResult} from "../utils/structs";
-import {type AnyResultColumn, buildFilter, buildMeasure, buildProperty} from "../utils/structs";
+import {
+  type AnyResultColumn,
+  buildFilter,
+  buildMeasure,
+  buildProperty,
+  buildQuery
+} from "../utils/structs";
 import type {ViewProps} from "../utils/types";
 import CustomActionIcon from "./CustomActionIcon";
 import {
@@ -79,6 +85,7 @@ import _ from "lodash";
 import {useFetchQuery, useMeasureItems, useServerSchema} from "../hooks/useQueryApi";
 import {selectCurrentQueryItem} from "../state/queries";
 import {debounce} from "lodash";
+import {useUpdateUrl} from "../hooks/permalink";
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
@@ -944,6 +951,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cut = cutItems.find(cut => {
     return cut.level === drilldown?.level;
   });
+  const updateUrl = useUpdateUrl();
 
   const updatecutHandler = useCallback(
     (item: CutItem, members: string[]) => {
@@ -951,6 +959,8 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
     },
     [actions]
   );
+
+  const query = useSelector(selectCurrentQueryItem);
 
   return (
     drilldown &&
@@ -960,7 +970,12 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           sx={{flex: "1 1 100%"}}
           searchable
           onChange={value => {
-            updatecutHandler({...cut, active: true}, value);
+            const newCut = {...cut, active: true};
+            updatecutHandler(newCut, value);
+            const newQuery = buildQuery(_.cloneDeep(query));
+            newQuery.params.cuts[cut.key] = newCut;
+
+            updateUrl(newQuery);
           }}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}

@@ -101,25 +101,25 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
     }
   }, [limit, offset, schema]);
 
-  useEffect(() => {
-    if (filters && schema) {
-      const filtersChanged = filters !== prevFiltersRef.current;
-      if (filtersChanged) {
-        prevFiltersRef.current = filters;
-        debouncedUpdateUrlForFilters();
-      }
-    }
-  }, [filters, schema, debouncedUpdateUrlForFilters]);
+  // useEffect(() => {
+  //   if (filters && schema) {
+  //     const filtersChanged = filters !== prevFiltersRef.current;
+  //     if (filtersChanged) {
+  //       prevFiltersRef.current = filters;
+  //       debouncedUpdateUrlForFilters();
+  //     }
+  //   }
+  // }, [filters, schema, debouncedUpdateUrlForFilters]);
 
-  useEffect(() => {
-    if (cuts && schema) {
-      const cutsChanged = cuts !== prevCutsRef.current;
-      if (cutsChanged) {
-        prevCutsRef.current = cuts;
-        debouncedUpdateUrlForCuts();
-      }
-    }
-  }, [cuts, schema, debouncedUpdateUrlForCuts]);
+  // useEffect(() => {
+  //   if (cuts && schema) {
+  //     const cutsChanged = cuts !== prevCutsRef.current;
+  //     if (cutsChanged) {
+  //       prevCutsRef.current = cuts;
+  //       debouncedUpdateUrlForCuts();
+  //     }
+  //   }
+  // }, [cuts, schema, debouncedUpdateUrlForCuts]);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
