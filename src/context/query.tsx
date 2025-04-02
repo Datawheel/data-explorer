@@ -1,4 +1,4 @@
-import React, {createContext, useContext, useCallback, useEffect} from "react";
+import React, {createContext, useContext, useCallback, useEffect, useRef} from "react";
 import type {QueryItem, DrilldownItem, CutItem} from "../utils/structs";
 import {parsePermalink, serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {useServerSchema} from "../hooks/useQueryApi";
@@ -14,12 +14,7 @@ import {getValues} from "../utils/object";
 import {getAnnotation} from "../utils/string";
 import {TesseractCube} from "../api";
 import {useSelector} from "react-redux";
-import {
-  selectDrilldownMap,
-  selectDrilldownItems,
-  selectCurrentQueryItem,
-  selectPaginationParams
-} from "../state/queries";
+import {selectPaginationParams, selectCurrentQueryItem} from "../state/queries";
 
 interface QueryContextProps {
   onChangeCube: (table: string, subtopic: string) => void;
@@ -35,22 +30,42 @@ interface QueryProviderProps {
   locale: string;
 }
 
+// Custom debounce hook
+function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: number) {
+  const timerRef = useRef<NodeJS.Timeout>();
+
+  return useCallback(
+    (...args: Parameters<T>) => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+
+      timerRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+}
+
 export function QueryProvider({children, defaultCube, locale}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
+  // const [searchParams, setSearchParams] = useSearchParams();
   const {updateCurrentQuery, updateDrilldown, updateCut} = useActions();
+  const {paginationConfig, measuresActive} = useSettings();
+  const {data: schema, isLoading: schemaLoading} = useServerSchema();
+  const updateUrl = useUpdateUrl();
+  const queryItem = useSelector(selectCurrentQueryItem);
+  const {limit, offset} = useSelector(selectPaginationParams);
+
+  // Create debounced versions of updateUrl
+  const debouncedUpdateUrlForFilters = useDebounce(updateUrl, 1200);
+  const debouncedUpdateUrlForCuts = useDebounce(updateUrl, 700);
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
   }
-
-  const {paginationConfig, measuresActive} = useSettings();
-  const {data: schema, isLoading: schemaLoading} = useServerSchema();
-  const updateUrl = useUpdateUrl();
-  // const queryItem = useSelector(selectCurrentQueryItem);
-  const {limit, offset} = useSelector(selectPaginationParams);
-
   const {
     run: runFetchMembers,
     data: membersData,
@@ -65,12 +80,25 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
 
   useEffect(() => {
     if (limit && offset !== undefined && schema && isMembersSuccess) {
-      console.log(limit, offset, schema);
-      console.log("limit", limit);
-      console.log("offset", offset);
       updateUrl();
     }
   }, [limit, offset, schema, isMembersSuccess]);
+
+  // Add effect to update URL when filters change with 1.2 second debounce
+  useEffect(() => {
+    if (queryItem?.params.filters && schema && isMembersSuccess) {
+      console.log("filters", queryItem?.params.filters);
+      debouncedUpdateUrlForFilters();
+    }
+  }, [queryItem?.params.filters, schema, isMembersSuccess, debouncedUpdateUrlForFilters]);
+
+  // Add effect to update URL when cuts change with 700 second debounce
+  useEffect(() => {
+    if (queryItem?.params.cuts && schema && isMembersSuccess) {
+      console.log("cuts", queryItem?.params.cuts);
+      debouncedUpdateUrlForCuts();
+    }
+  }, [queryItem?.params.cuts, schema, isMembersSuccess, debouncedUpdateUrlForCuts]);
 
   // add the updates here with delay
 
@@ -166,7 +194,6 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
         drilldowns: keyBy(drilldowns, item => item.key)
       }
     });
-    // saque el update query
     updateUrl(query);
   }
 

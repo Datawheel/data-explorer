@@ -47,10 +47,9 @@ import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
 import {useFormatter, useidFormatters} from "../hooks/formatter";
-import {useKey, useUpdatePermaLink, useUpdateUrl} from "../hooks/permalink";
+import {useUpdateUrl} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLoadingState} from "../state/loading";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -939,6 +938,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const {translate: t} = useTranslation();
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
+  const queryItem = useSelector(selectCurrentQueryItem);
   const label = header.column.id;
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
@@ -948,20 +948,18 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
     return cut.level === drilldown?.level;
   });
 
-  const debouncedUpdateUrl = useMemo(() => _.debounce(updateUrl, 900), [updateUrl]);
+  // useEffect(() => {
+  //   return () => {
+  //     debouncedUpdateUrl.cancel();
+  //   };
+  // }, [debouncedUpdateUrl]);
 
-  useEffect(() => {
-    return () => {
-      debouncedUpdateUrl.cancel();
-    };
-  }, [debouncedUpdateUrl]);
-
-  useEffect(() => {
-    if (cut && cut.members) {
-      debouncedUpdateUrl();
-      console.log("cut me llama", cut);
-    }
-  }, [cut?.members, debouncedUpdateUrl]);
+  // useEffect(() => {
+  //   if (cut && cut.members) {
+  //     debouncedUpdateUrl();
+  //     console.log("cut me llama", cut);
+  //   }
+  // }, [cut?.members, debouncedUpdateUrl]);
 
   const updatecutHandler = useCallback(
     (item: CutItem, members: string[]) => {
@@ -979,6 +977,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           searchable
           onChange={value => {
             updatecutHandler({...cut, active: true}, value);
+            // updateUrl(queryItem);
           }}
           placeholder={t("params.filter_by", {name: label})}
           value={cut.members || []}

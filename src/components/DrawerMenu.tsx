@@ -31,7 +31,14 @@ import {
   IconStack3,
   IconWorld
 } from "@tabler/icons-react";
-import React, {PropsWithChildren, useCallback, useLayoutEffect, useMemo, useState} from "react";
+import React, {
+  PropsWithChildren,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState
+} from "react";
 import {useSelector} from "react-redux";
 import {Comparison, DimensionType} from "../api";
 import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
@@ -46,11 +53,8 @@ import {
   selectLocale,
   selectMeasureMap
 } from "../state/queries";
-import {
-  selectLevelTriadMap,
-  selectOlapDimensionItems,
-  selectOlapMeasureItems
-} from "../state/selectors";
+import {selectLevelTriadMap} from "../state/selectors";
+import {selectCurrentQueryItem} from "../state/queries";
 import {filterMap} from "../utils/array";
 import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
@@ -100,7 +104,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         opened={opened}
         position="right"
         onClose={() => {
-          updateUrl();
+          // updateUrl();
           close();
         }}
         closeButtonProps={{
@@ -124,7 +128,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
             fullWidth
             color="primary"
             onClick={() => {
-              updateUrl();
+              // updateUrl();
               close();
             }}
           >
@@ -546,30 +550,18 @@ function isNotValid(value) {
 
 export function NumberInputComponent({text, filter}: {text: string; filter: FilterItem}) {
   const actions = useActions();
-  const updateUrl = useUpdateUrl();
-  // Create a debounced function to enable the query
-  const debouncedEnableQuery = useCallback(
-    debounce(() => {
-      updateUrl();
-    }, 1200),
-    [updateUrl]
-  );
 
   function getFilterValue(filter: FilterItem) {
     return isNotValid(filter.conditionOne[2]) || filter.conditionOne[2] === 0
       ? ""
       : filter.conditionOne[2];
   }
-
   function onInputChange({filter, value}: {filter: FilterItem; value: number | ""}) {
     const isEmpty = value === "";
     const conditions =
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
     const active = !isEmpty;
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
-
-    // Trigger the debounced query enable
-    debouncedEnableQuery();
   }
 
   return (
@@ -595,12 +587,12 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
   const {setQueryEnabled} = useTableRefresh();
 
   // Create a debounced function to enable the query
-  const debouncedEnableQuery = useCallback(
-    debounce(() => {
-      setQueryEnabled(true);
-    }, 1200),
-    [setQueryEnabled]
-  );
+  // const debouncedEnableQuery = useCallback(
+  //   debounce(() => {
+  //     setQueryEnabled(true);
+  //   }, 1200),
+  //   [setQueryEnabled]
+  // );
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
@@ -611,7 +603,7 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
     actions.updateFilter(buildFilter({...filter, active, ...conditions}));
 
     // Trigger the debounced query enable
-    debouncedEnableQuery();
+    // debouncedEnableQuery();
   }
 
   function getFilterValue(condition?: [`${Comparison}`, string, number]) {
