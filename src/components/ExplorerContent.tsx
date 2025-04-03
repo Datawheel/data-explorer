@@ -59,6 +59,7 @@ export function ExplorerContent(props: {
   // useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
 
   // Monitor the uiLocale param to update the UI on change
+
   useEffect(() => {
     if (props.locale) translation.setLocale(props.locale);
   }, [props.locale, translation]);

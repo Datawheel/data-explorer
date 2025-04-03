@@ -337,29 +337,3 @@ function SubtopicAccordion({
     </Accordion>
   );
 }
-
-// const {updateMeasure, updateDrilldown, updateCut} = useActions();
-// const cutItems = useSelector(selectCutItems);
-// const cube = useSelector(selectCubeName);
-// const itemMap = useSelector(selectMeasureMap);
-// const dimensions = useSelector(selectOlapDimensionItems);
-// const {measuresActive} = useSettings();
-
-// const drilldowns = useSelector(selectDrilldownMap);
-// const ditems = useSelector(selectDrilldownItems);
-
-// const createCutHandler = useCallback((level: TesseractLevel) => {
-//   updateCut(buildCut({...level, active: false}));
-// }, []);
-
-// function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-//   if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-//     const drilldown = buildDrilldown({...level, key: level.name, active: true});
-//     updateDrilldown(drilldown);
-//     const cut = cuts.find(cut => cut.level === drilldown.level);
-//     if (!cut) {
-//       createCutHandler(level);
-//     }
-//     return drilldown;
-//   }
-// }

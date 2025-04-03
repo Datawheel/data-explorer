@@ -2,12 +2,12 @@ import {Box, MantineTheme, CSSObject, Tooltip, useMantineTheme} from "@mantine/c
 import ISO6391, {LanguageCode} from "iso-639-1";
 import React, {useMemo} from "react";
 import {useSelector} from "react-redux";
-import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectLocale} from "../state/queries";
+import {selectCurrentQueryParams} from "../state/queries";
 import {SelectObject} from "./Select";
 import {IconLanguage} from "@tabler/icons-react";
 import {useServerSchema} from "../hooks/useQueryApi";
+import {useLogicLayer} from "../api";
 
 const localeSelectorStyle = (theme: MantineTheme) => ({
   input: {
@@ -38,14 +38,27 @@ const localeSelectorStyle = (theme: MantineTheme) => ({
 
 type LocaleOptions = {label: string; value: LanguageCode};
 
+const getCurrentLocale = (params, server) => {
+  const code = params.locale || server.localeOptions[0] || "";
+  return {
+    code,
+    name: ISO6391.getName(code),
+    nativeName: ISO6391.getNativeName(code)
+  };
+};
 /** */
 export function LocaleSelector() {
-  const actions = useActions();
+  const {dataLocale, setDataLocale} = useLogicLayer();
   const {translate: t, locale} = useTranslation();
-  const {code: currentCode} = useSelector(selectLocale);
+
+  // const {code: currentCode} = useSelector(selectLocale);
+
   const {data: schema} = useServerSchema();
   const localeOptions = schema?.localeOptions || [];
   const theme = useMantineTheme();
+  const params = useSelector(selectCurrentQueryParams);
+
+  const {code: currentCode} = getCurrentLocale(params, schema);
 
   const options: LocaleOptions[] = useMemo(() => {
     const languages = ISO6391.getLanguages(localeOptions);
@@ -62,18 +75,16 @@ export function LocaleSelector() {
   }, [locale, localeOptions]);
 
   const localeChangeHandler = async (l: LocaleOptions) => {
-    if (currentCode !== l.value) {
-      // actions.setLoadingState("FETCHING");
-      // actions.updateResult(EMPTY_RESPONSE);
-      await actions.willReloadCubes({locale: {code: l.value}});
-      await actions.willReloadCube({locale: {code: l.value}});
-      // actions.setLoadingState("SUCCESS");
-    }
+    console.log(l, "currentCode 1");
+
+    setDataLocale(l.value);
   };
 
   if (localeOptions.length < 2) {
     return null;
   }
+
+  console.log(currentCode, "currentCode");
 
   return (
     <Box id="dex-select-locale">

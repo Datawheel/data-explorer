@@ -113,7 +113,6 @@ export function QueryProvider({
   const onChangeCube = (table: string, subtopic: string) => {
     const cubeMap = schema?.cubeMap || {};
     const cubeArray = getValues(cubeMap);
-    // Is there a better way to find a cube ?
     const cube = cubeArray.find(
       cube => cube.name === table && getAnnotation(cube, "subtopic", locale) === subtopic
     );
