@@ -14,12 +14,7 @@ import {getValues} from "../utils/object";
 import {getAnnotation} from "../utils/string";
 import {TesseractCube} from "../api";
 import {useSelector} from "react-redux";
-import {
-  selectPaginationParams,
-  selectCurrentQueryItem,
-  selectFilterMap,
-  selectCutMap
-} from "../state/queries";
+import {selectCurrentQueryItem} from "../state/queries";
 
 interface QueryContextProps {
   onChangeCube: (table: string, subtopic: string) => void;
@@ -37,25 +32,12 @@ interface QueryProviderProps {
   locale: string;
 }
 
-// Custom debounce hook
-function useDebounce<T extends (...args: any[]) => void>(callback: T, delay: number) {
-  const timerRef = useRef<NodeJS.Timeout>();
-
-  return useCallback(
-    (...args: Parameters<T>) => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-
-      timerRef.current = setTimeout(() => {
-        callback(...args);
-      }, delay);
-    },
-    [callback, delay]
-  );
-}
-
-export function QueryProvider({children, defaultCube, locale}: QueryProviderProps) {
+export function QueryProvider({
+  children,
+  defaultCube,
+  locale,
+  defaultDataLocale
+}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
@@ -63,16 +45,6 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
   const {data: schema, isLoading: schemaLoading} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
-  const {limit, offset} = useSelector(selectPaginationParams);
-  const filters = useSelector(selectFilterMap);
-  const cuts = useSelector(selectCutMap);
-  // Create debounced versions of updateUrl
-  const debouncedUpdateUrlForFilters = useDebounce(updateUrl, 1200);
-  const debouncedUpdateUrlForCuts = useDebounce(updateUrl, 700);
-
-  const prevFiltersRef = useRef(filters);
-  const prevCutsRef = useRef(cuts);
-  const prevPaginationRef = useRef({limit, offset});
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
@@ -90,45 +62,13 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
   >();
 
   useEffect(() => {
-    if (limit && offset !== undefined && schema) {
-      const paginationChanged =
-        prevPaginationRef.current.limit !== limit || prevPaginationRef.current.offset !== offset;
-
-      if (paginationChanged) {
-        prevPaginationRef.current = {limit, offset};
-        // updateUrl();
-      }
-    }
-  }, [limit, offset, schema]);
-
-  // useEffect(() => {
-  //   if (filters && schema) {
-  //     const filtersChanged = filters !== prevFiltersRef.current;
-  //     if (filtersChanged) {
-  //       prevFiltersRef.current = filters;
-  //       debouncedUpdateUrlForFilters();
-  //     }
-  //   }
-  // }, [filters, schema, debouncedUpdateUrlForFilters]);
-
-  // useEffect(() => {
-  //   if (cuts && schema) {
-  //     const cutsChanged = cuts !== prevCutsRef.current;
-  //     if (cutsChanged) {
-  //       prevCutsRef.current = cuts;
-  //       debouncedUpdateUrlForCuts();
-  //     }
-  //   }
-  // }, [cuts, schema, debouncedUpdateUrlForCuts]);
-
-  useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
     if (cube && cubeMap) {
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
-
+      newQuery.params.locale = newQuery.params.locale || defaultDataLocale;
       if (newQuery) {
         const promises = Object.values(newQuery.params.drilldowns).map(dd => {
           return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
@@ -166,7 +106,7 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
     if (!cube && cubeMap) {
       const cubeDefault =
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
-      // setDefaultValues(cubeMap[cubeDefault]);
+      setDefaultValues(cubeMap[cubeDefault]);
     }
   }, [location.search, runFetchMembers, schema]);
 
@@ -205,13 +145,18 @@ export function QueryProvider({children, defaultCube, locale}: QueryProviderProp
       });
     });
 
+    const panel = queryItem.panel;
+
     const query = buildQuery({
       params: {
         cube: cube.name,
         measures: keyBy(measures, item => item.key),
-        drilldowns: keyBy(drilldowns, item => item.key)
-      }
+        drilldowns: keyBy(drilldowns, item => item.key),
+        locale: defaultDataLocale
+      },
+      panel: panel ?? "table"
     });
+
     updateUrl(query);
   }
 
@@ -235,66 +180,3 @@ export function useQueryItem() {
   }
   return context;
 }
-
-// useEffect(() => {
-//   const searchParams = new URLSearchParams(location.search);
-//   const cube = searchParams.get("cube");
-//   const cubeMap = schema?.cubeMap || undefined;
-
-//   if (cube && cubeMap) {
-//     let query: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
-//     query = isValidQuery(query?.params) ? query : buildQuery({params: {cube}});
-
-//     if (query && isValidQuery(query.params)) {
-//       updateCurrentQuery({...query, link: serializePermalink(query)});
-//     }
-//   }
-//   if (!cube && cubeMap) {
-//     const cubeDefault =
-//       defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
-//     setDefaultValues(cubeMap[cubeDefault]);
-//   }
-// }, [location.search, schema]);
-
-// useEffect(() => {
-//   if (isMembersSuccess && membersData) {
-//     if (queryItem) {
-//       const query = buildQuery({});
-
-//       const drilldowns = membersData.map(item => item.drilldown);
-//       const cuts = membersData.map(item => item.cut);
-//       query.params.drilldowns = keyBy(drilldowns, "key");
-//       // Merge existing cuts with new cuts, preserving existing ones
-//       const existingCuts = keyBy(
-//         Object.values(query.params.cuts || {}).map(c => ({...c, key: c.level})),
-//         "key"
-//       );
-//       const newCuts = keyBy(cuts, "key");
-//       query.params.cuts = {...newCuts, ...existingCuts};
-
-//       const newQueryItem = isValidQuery(query.params) ? query : undefined;
-//       if (newQueryItem) {
-//         updateCurrentQuery(newQueryItem);
-//       }
-//     }
-//   }
-// }, [isMembersSuccess, membersData, queryItem]);
-
-// const drilldowns = useSelector(selectDrilldownMap);
-// const ditems = useSelector(selectDrilldownItems);
-
-// const createCutHandler = useCallback((level: TesseractLevel) => {
-//   updateCut(buildCut({...level, active: false}));
-// }, []);
-
-// function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-//   if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-//     const drilldown = buildDrilldown({...level, key: level.name, active: true});
-//     updateDrilldown(drilldown);
-//     const cut = cuts.find(cut => cut.level === drilldown.level);
-//     if (!cut) {
-//       createCutHandler(level);
-//     }
-//     return drilldown;
-//   }
-// }

@@ -64,8 +64,6 @@ export function SettingsProvider(props: {
   defaultCube?: string;
   defaultLocale: string;
 }) {
-  usePermalink(props.withPermalink, {onChange: props.actions.resetAllParams});
-
   const value: SettingsContextProps = useMemo(
     () => ({
       actions: props.actions,

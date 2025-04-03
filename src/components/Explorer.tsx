@@ -208,12 +208,7 @@ export function ExplorerComponent<Locale extends string>(props: {
       >
         <TranslationProvider defaultLocale={locale} translations={props.translations}>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-            <AppProviders
-              serverURL={props.serverURL}
-              locale={locale}
-              defaultDataLocale={props.defaultDataLocale}
-              serverConfig={props.serverConfig}
-            >
+            <AppProviders>
               <ExplorerContent
                 defaultDataLocale={props.defaultDataLocale}
                 locale={locale}

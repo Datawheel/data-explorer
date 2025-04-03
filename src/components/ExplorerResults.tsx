@@ -19,8 +19,6 @@ import type {TesseractCube} from "../api";
 import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
-import {selectOlapCube} from "../state/selectors";
-import {selectServerState} from "../state/server";
 import type {QueryParams, QueryResult} from "../utils/structs";
 import type {PanelDescriptor} from "../utils/types";
 import AddColumnsDrawer from "./DrawerMenu";
@@ -30,6 +28,7 @@ import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
 import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {useServerSchema} from "../hooks/useQueryApi";
+import {useUpdateUrl} from "../hooks/permalink";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -193,6 +192,7 @@ function SuccessResult(props: {
   params: QueryParams;
   result: QueryResult;
 }) {
+  const updateUrl = useUpdateUrl();
   const {cube, panels, params, result} = props;
   const {translate: t} = useTranslation();
   const {previewLimit, actions} = useSettings();
@@ -212,9 +212,10 @@ function SuccessResult(props: {
     return [panel.component, panel.key, panelMeta.join("-")];
   }, [panels, queryItem.panel]);
 
-  const tabHandler = useCallback((newTab: TabsValue) => {
+  const tabHandler = (newTab: TabsValue) => {
     actions.switchPanel(newTab);
-  }, []);
+    updateUrl({...queryItem, panel: newTab});
+  };
 
   return (
     <Flex

@@ -27,14 +27,10 @@ import {useLogicLayer} from "../api/context";
 import {useSettings} from "./settings";
 import {useSelector} from "../state";
 import {selectCurrentQueryItem} from "../state/queries";
-import {useMemo} from "react";
 
-// Hook to fetch and manage server schema
-// check locale usage. but it is working fine. Really useful
-// Add server config
 export function useServerSchema() {
   const {tesseract} = useLogicLayer();
-  const {serverConfig, serverURL, defaultDataLocale, defaultCube} = useSettings();
+  const {serverURL, defaultDataLocale} = useSettings();
 
   return useQuery({
     queryKey: ["schema", serverURL, defaultDataLocale],
@@ -162,8 +158,10 @@ export function useFetchQuery(
   const {tesseract} = useLogicLayer();
   const {limit = 0, offset = 0, withoutPagination = false} = options || {};
 
+  const key = withoutPagination ? ["table", queryLink, "withoutPagination"] : ["table", queryLink];
+
   return useQuery({
-    queryKey: ["table", queryLink, "withoutPagination", withoutPagination],
+    queryKey: key,
     queryFn: async () => {
       if (!isValidQuery(queryParams)) {
         throw new Error("Invalid query");
@@ -200,7 +198,7 @@ export function useFetchQuery(
     staleTime: 300000,
     enabled: Boolean(queryLink),
     retry: false,
-    placeholderData: keepPreviousData
+    placeholderData: withoutPagination ? undefined : keepPreviousData
   });
 }
 

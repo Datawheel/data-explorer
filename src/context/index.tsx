@@ -16,7 +16,11 @@ function AppProviders({children}: AppProvidersProps) {
   return (
     <QueryClientProvider client={queryClient}>
       <TableRefreshProvider serverURL={serverURL}>
-        <LogicLayerProvider serverURL={serverURL} serverConfig={serverConfig}>
+        <LogicLayerProvider
+          serverURL={serverURL}
+          serverConfig={serverConfig}
+          defaultDataLocale={defaultDataLocale}
+        >
           <QueryProvider
             defaultCube={defaultCube}
             serverURL={serverURL}

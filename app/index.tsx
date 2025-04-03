@@ -131,6 +131,7 @@ function App() {
             idFormatters={idFormatters}
             height={"100%"}
             locale={settings.locale}
+            defaultDataLocale={settings.locale}
             panels={[
               {key: "table", label: "Data Table", component: TableView},
               {key: "matrix", label: "Pivot Table", component: PivotView},

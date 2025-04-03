@@ -63,11 +63,13 @@ import {
   type DrilldownItem,
   FilterItem,
   type MeasureItem,
+  QueryItem,
   buildCut,
   buildDrilldown,
   buildFilter,
   buildMeasure,
-  buildProperty
+  buildProperty,
+  buildQuery
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions, useTableRefresh} from "./TableView";
@@ -76,6 +78,7 @@ import {debounce} from "lodash";
 import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
 import {useidFormatters} from "../hooks/formatter";
 import {useUpdateUrl} from "../hooks/permalink";
+import _ from "lodash";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -550,6 +553,22 @@ function isNotValid(value) {
 
 export function NumberInputComponent({text, filter}: {text: string; filter: FilterItem}) {
   const actions = useActions();
+  const updateUrl = useUpdateUrl();
+  const queryItem = useSelector(selectCurrentQueryItem);
+
+  const debouncedUpdateUrl = useMemo(
+    () =>
+      debounce((query: QueryItem) => {
+        updateUrl(query);
+      }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdateUrl.cancel();
+    };
+  }, [debouncedUpdateUrl]);
 
   function getFilterValue(filter: FilterItem) {
     return isNotValid(filter.conditionOne[2]) || filter.conditionOne[2] === 0
@@ -561,7 +580,12 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
     const conditions =
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
     const active = !isEmpty;
-    actions.updateFilter(buildFilter({...filter, active, ...conditions}));
+    const newFilter = buildFilter({...filter, active, ...conditions});
+    actions.updateFilter(newFilter);
+
+    const newQuery = buildQuery(_.cloneDeep(queryItem));
+    newQuery.params.filters[filter.key] = newFilter;
+    debouncedUpdateUrl(newQuery);
   }
 
   return (

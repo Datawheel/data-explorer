@@ -4,11 +4,10 @@ import React, {useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectCurrentQueryParams, selectLocale} from "../state/queries";
-import {selectServerState} from "../state/server";
+import {selectLocale} from "../state/queries";
 import {SelectObject} from "./Select";
 import {IconLanguage} from "@tabler/icons-react";
-import {EMPTY_RESPONSE} from "./SelectCubes";
+import {useServerSchema} from "../hooks/useQueryApi";
 
 const localeSelectorStyle = (theme: MantineTheme) => ({
   input: {
@@ -43,10 +42,9 @@ type LocaleOptions = {label: string; value: LanguageCode};
 export function LocaleSelector() {
   const actions = useActions();
   const {translate: t, locale} = useTranslation();
-
   const {code: currentCode} = useSelector(selectLocale);
-  const {localeOptions} = useSelector(selectServerState);
-
+  const {data: schema} = useServerSchema();
+  const localeOptions = schema?.localeOptions || [];
   const theme = useMantineTheme();
 
   const options: LocaleOptions[] = useMemo(() => {
@@ -65,11 +63,11 @@ export function LocaleSelector() {
 
   const localeChangeHandler = async (l: LocaleOptions) => {
     if (currentCode !== l.value) {
-      actions.setLoadingState("FETCHING");
-      actions.updateResult(EMPTY_RESPONSE);
+      // actions.setLoadingState("FETCHING");
+      // actions.updateResult(EMPTY_RESPONSE);
       await actions.willReloadCubes({locale: {code: l.value}});
       await actions.willReloadCube({locale: {code: l.value}});
-      actions.setLoadingState("SUCCESS");
+      // actions.setLoadingState("SUCCESS");
     }
   };
 

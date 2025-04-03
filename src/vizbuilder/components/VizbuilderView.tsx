@@ -7,6 +7,7 @@ import type {QueryParams, QueryResult} from "../../utils/structs";
 import {buildColumn} from "../tooling/columns";
 import {Vizbuilder} from "./Vizbuilder";
 import {useVizbuilderData} from "../hooks/useVizbuilderData";
+import {LoadingOverlay} from "../../components/LoadingOverlay";
 
 const CHART_LIMITS: Partial<ChartLimits> = {
   BARCHART_MAX_BARS: 20,
@@ -26,6 +27,10 @@ export function VizbuilderView(props: {cube: TesseractCube; params: QueryParams}
   const {cube, params} = props;
 
   const query = useVizbuilderData();
+
+  if (query.isLoading) {
+    return <LoadingOverlay visible={true} />;
+  }
   const data = query.data;
   const types = query.data?.types;
   const columns = Object.keys(types || {});
