@@ -1,11 +1,11 @@
 /* eslint-disable comma-dangle */
-import React, {createContext, useCallback, useContext, useMemo} from "react";
+import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef} from "react";
 import {type ExplorerActionMap} from "../state";
 import {Formatter, PanelDescriptor} from "../utils/types";
 import type {Pagination} from "../components/Explorer";
 import type {ToolbarConfigType} from "../components/Toolbar";
 import {Translation, TranslationProvider} from "./translation";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
   [K in keyof ExplorerActionMap]: ExplorerActionMap[K] extends (
@@ -70,6 +70,17 @@ export function SettingsProvider(props: {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const locale = searchParams.get("locale");
+
+  const navigate = useNavigate();
+  const initialServerURL = useRef(props.serverURL);
+
+  useEffect(() => {
+    if (props.serverURL && props.serverURL !== initialServerURL.current) {
+      const nextLocation = window.location.pathname;
+      navigate(nextLocation, {replace: true});
+      initialServerURL.current = props.serverURL;
+    }
+  }, [props.serverURL, navigate]);
 
   const value: SettingsContextProps = useMemo(
     () => ({

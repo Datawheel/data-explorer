@@ -182,12 +182,6 @@ export function ExplorerComponent<Locale extends string>(props: {
     [props.panels]
   );
 
-  const navigate = useNavigate();
-  useEffect(() => {
-    const nextLocation = window.location.pathname;
-    navigate(nextLocation, {replace: true});
-  }, [props.serverURL]);
-
   const store: ExplorerStore = withinReduxProvider ? useMemo(storeFactory, []) : useStore();
 
   const boundActions = useMemo(

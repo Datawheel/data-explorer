@@ -28,17 +28,18 @@ interface QueryProviderProps {
   children: React.ReactNode;
   defaultCube?: string;
   serverURL: string;
-  defaultLocale: string;
 }
 
-export function QueryProvider({children, defaultCube, defaultLocale}: QueryProviderProps) {
+export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
-  const {paginationConfig, measuresActive, serverURL} = useSettings();
-  const {data: schema, isLoading: schemaLoading} = useServerSchema();
+  const {paginationConfig, measuresActive, serverURL, locale: defaultLocale} = useSettings();
+  const {data: schema, isLoading: schemaLoading, isError: schemaError} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
+
+  console.log(schemaError, "schemaError", "isError", schema);
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
@@ -61,7 +62,6 @@ export function QueryProvider({children, defaultCube, defaultLocale}: QueryProvi
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
     if (cube && cubeMap && serverURL && cubeMap[cube]) {
-      console.log(cubeMap, "cubeMap", cube, "cube", serverURL, "serverURL", location, "location");
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
       newQuery.params.locale = newQuery.params.locale || defaultLocale;
@@ -109,6 +109,7 @@ export function QueryProvider({children, defaultCube, defaultLocale}: QueryProvi
   const onChangeCube = (table: string, subtopic: string) => {
     const locale = queryItem.params.locale || defaultLocale;
     const cubeMap = schema?.cubeMap || {};
+    console.log(cubeMap, "onchange");
     const cubeArray = getValues(cubeMap);
     const cube = cubeArray.find(
       cube => cube.name === table && getAnnotation(cube, "subtopic", locale) === subtopic
@@ -153,6 +154,7 @@ export function QueryProvider({children, defaultCube, defaultLocale}: QueryProvi
       },
       panel: panel ?? "table"
     });
+    console.log(query, "query me llama");
 
     updateUrl(query);
   }
