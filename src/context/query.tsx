@@ -8,7 +8,7 @@ import {isValidQuery, hasProperty} from "../utils/validation";
 import {buildCut, buildDrilldown, buildMeasure, buildProperty, buildQuery} from "../utils/structs";
 import {useActions, useSettings} from "../hooks/settings";
 import {useLogicLayer} from "../api/context";
-import {useLocation} from "react-router-dom";
+import {useLocation, useNavigate} from "react-router-dom";
 import {pickDefaultDrilldowns} from "../state/utils";
 import {getValues} from "../utils/object";
 import {getAnnotation} from "../utils/string";
@@ -28,20 +28,14 @@ interface QueryProviderProps {
   children: React.ReactNode;
   defaultCube?: string;
   serverURL: string;
-  defaultDataLocale?: string;
-  locale: string;
+  defaultLocale: string;
 }
 
-export function QueryProvider({
-  children,
-  defaultCube,
-  locale,
-  defaultDataLocale
-}: QueryProviderProps) {
+export function QueryProvider({children, defaultCube, defaultLocale}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
-  const {paginationConfig, measuresActive} = useSettings();
+  const {paginationConfig, measuresActive, serverURL} = useSettings();
   const {data: schema, isLoading: schemaLoading} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
@@ -49,6 +43,7 @@ export function QueryProvider({
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
   }
+
   const {
     run: runFetchMembers,
     data: membersData,
@@ -65,10 +60,11 @@ export function QueryProvider({
     const searchParams = new URLSearchParams(location.search);
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
-    if (cube && cubeMap) {
+    if (cube && cubeMap && serverURL && cubeMap[cube]) {
+      console.log(cubeMap, "cubeMap", cube, "cube", serverURL, "serverURL", location, "location");
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
-      newQuery.params.locale = newQuery.params.locale || defaultDataLocale;
+      newQuery.params.locale = newQuery.params.locale || defaultLocale;
       if (newQuery) {
         const promises = Object.values(newQuery.params.drilldowns).map(dd => {
           return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
@@ -103,14 +99,15 @@ export function QueryProvider({
       }
     }
 
-    if (!cube && cubeMap) {
+    if (!cube && cubeMap && serverURL) {
       const cubeDefault =
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
     }
-  }, [location.search, runFetchMembers, schema]);
+  }, [location.search, runFetchMembers, schema, serverURL]);
 
   const onChangeCube = (table: string, subtopic: string) => {
+    const locale = queryItem.params.locale || defaultLocale;
     const cubeMap = schema?.cubeMap || {};
     const cubeArray = getValues(cubeMap);
     const cube = cubeArray.find(
@@ -145,13 +142,14 @@ export function QueryProvider({
     });
 
     const panel = queryItem.panel;
+    const locale = queryItem.params.locale || defaultLocale;
 
     const query = buildQuery({
       params: {
         cube: cube.name,
         measures: keyBy(measures, item => item.key),
         drilldowns: keyBy(drilldowns, item => item.key),
-        locale: defaultDataLocale
+        locale
       },
       panel: panel ?? "table"
     });

@@ -3,11 +3,12 @@ import ISO6391, {LanguageCode} from "iso-639-1";
 import React, {useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useTranslation} from "../hooks/translation";
-import {selectCurrentQueryParams} from "../state/queries";
+import {selectCurrentQueryItem, selectCurrentQueryParams} from "../state/queries";
 import {SelectObject} from "./Select";
 import {IconLanguage} from "@tabler/icons-react";
 import {useServerSchema} from "../hooks/useQueryApi";
-import {useLogicLayer} from "../api";
+import {useActions} from "../hooks/settings";
+import {useUpdateUrl} from "../hooks/permalink";
 
 const localeSelectorStyle = (theme: MantineTheme) => ({
   input: {
@@ -46,17 +47,16 @@ const getCurrentLocale = (params, server) => {
     nativeName: ISO6391.getNativeName(code)
   };
 };
-/** */
+
 export function LocaleSelector() {
-  const {dataLocale, setDataLocale} = useLogicLayer();
-  const {translate: t, locale} = useTranslation();
-
-  // const {code: currentCode} = useSelector(selectLocale);
-
+  const updateUrl = useUpdateUrl();
+  const actions = useActions();
+  const {translate: t, locale, setLocale} = useTranslation();
   const {data: schema} = useServerSchema();
   const localeOptions = schema?.localeOptions || [];
   const theme = useMantineTheme();
   const params = useSelector(selectCurrentQueryParams);
+  const queryItem = useSelector(selectCurrentQueryItem);
 
   const {code: currentCode} = getCurrentLocale(params, schema);
 
@@ -75,9 +75,9 @@ export function LocaleSelector() {
   }, [locale, localeOptions]);
 
   const localeChangeHandler = async (l: LocaleOptions) => {
-    console.log(l, "currentCode 1");
-
-    setDataLocale(l.value);
+    actions.updateLocale(l.value);
+    updateUrl({...queryItem, params: {...queryItem.params, locale: l.value}});
+    setLocale(l.value);
   };
 
   if (localeOptions.length < 2) {

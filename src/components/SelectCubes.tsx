@@ -10,7 +10,6 @@ import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import Results, {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
-import {useTableRefresh} from "./TableView";
 import {useQueryItem} from "../context/query";
 import {useCubeItems, useSelectedItem} from "../hooks/useQueryApi";
 
@@ -22,7 +21,7 @@ export const EMPTY_RESPONSE = {
   page: {offset: 0, limit: 0, total: 0}
 };
 
-export function SelectCube({locale}: {locale: string}) {
+export function SelectCubes({locale}: {locale: string}) {
   const items = useCubeItems();
   const selectedItem = useSelectedItem();
 

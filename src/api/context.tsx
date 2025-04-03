@@ -16,7 +16,7 @@ interface LogicLayerContextValue {
 }
 
 export const LogicLayerContext = createContext<LogicLayerContextValue | null>(null);
-
+// Data locale maybe not being used anymore here
 export function LogicLayerProvider(props: {
   children: React.ReactNode;
   defaultDataLocale?: string;

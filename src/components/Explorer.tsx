@@ -1,7 +1,7 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
 import {type CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
-import React, {useMemo} from "react";
+import React, {useEffect, useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import {type Translation, TranslationProvider} from "../hooks/translation";
@@ -15,7 +15,7 @@ import ExplorerTour from "./tour/ExplorerTour";
 import {TourConfig} from "./tour/types";
 import {ToolbarConfigType} from "./Toolbar";
 import {AppProviders} from "../context";
-import {BrowserRouter as Router} from "react-router-dom";
+import {BrowserRouter as Router, useNavigate} from "react-router-dom";
 
 export type Pagination = {
   rowsLimits: number[];
@@ -66,7 +66,7 @@ export function ExplorerComponent<Locale extends string>(props: {
    * keys in the object provided to the `translations` property.
    * @default "en"
    */
-  locale?: Locale;
+  defaultLocale?: Locale;
 
   /**
    * Specifies which property should be used to filter elements in the member
@@ -161,7 +161,7 @@ export function ExplorerComponent<Locale extends string>(props: {
   withPermalink?: boolean;
 }) {
   const {
-    locale = "en",
+    defaultLocale = "en",
     defaultOpenParams = "measures",
     height = "100vh",
     withinMantineProvider = true,
@@ -181,6 +181,12 @@ export function ExplorerComponent<Locale extends string>(props: {
       ],
     [props.panels]
   );
+
+  const navigate = useNavigate();
+  useEffect(() => {
+    const nextLocation = window.location.pathname;
+    navigate(nextLocation, {replace: true});
+  }, [props.serverURL]);
 
   const store: ExplorerStore = withinReduxProvider ? useMemo(storeFactory, []) : useStore();
 
@@ -203,27 +209,26 @@ export function ExplorerComponent<Locale extends string>(props: {
         toolbarConfig={props.toolbarConfig}
         serverConfig={props.serverConfig}
         serverURL={props.serverURL}
-        defaultDataLocale={props.defaultDataLocale}
-        defaultLocale={locale}
+        defaultLocale={defaultLocale}
+        translations={props.translations}
+        // defaultDataLocale={props.defaultDataLocale}
       >
-        <TranslationProvider defaultLocale={locale} translations={props.translations}>
+        {/* <TranslationProvider defaultLocale={defaultLocale} translations={props.translations}> */}
+        <AppProviders>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-            <AppProviders>
-              <ExplorerContent
-                defaultDataLocale={props.defaultDataLocale}
-                locale={locale}
-                defaultCube={props.defaultCube}
-                defaultOpenParams={defaultOpenParams}
-                height={height}
-                panels={panels}
-                serverConfig={props.serverConfig}
-                serverURL={props.serverURL}
-                splash={props.splash}
-                withMultiQuery={withMultiQuery}
-              />
-            </AppProviders>
+            <ExplorerContent
+              defaultCube={props.defaultCube}
+              defaultOpenParams={defaultOpenParams}
+              height={height}
+              panels={panels}
+              serverConfig={props.serverConfig}
+              serverURL={props.serverURL}
+              splash={props.splash}
+              withMultiQuery={withMultiQuery}
+            />
           </ExplorerTour>
-        </TranslationProvider>
+        </AppProviders>
+        {/* </TranslationProvider> */}
       </SettingsProvider>
     </Router>
   );

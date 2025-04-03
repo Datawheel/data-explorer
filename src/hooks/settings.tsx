@@ -2,9 +2,10 @@
 import React, {createContext, useCallback, useContext, useMemo} from "react";
 import {type ExplorerActionMap} from "../state";
 import {Formatter, PanelDescriptor} from "../utils/types";
-import {usePermalink} from "./permalink";
 import type {Pagination} from "../components/Explorer";
 import type {ToolbarConfigType} from "../components/Toolbar";
+import {Translation, TranslationProvider} from "./translation";
+import {useLocation} from "react-router-dom";
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
   [K in keyof ExplorerActionMap]: ExplorerActionMap[K] extends (
@@ -34,6 +35,7 @@ interface SettingsContextProps {
   defaultDataLocale?: string;
   defaultCube?: string;
   defaultLocale: string;
+  locale: string;
 }
 
 /**
@@ -63,7 +65,12 @@ export function SettingsProvider(props: {
   defaultDataLocale?: string;
   defaultCube?: string;
   defaultLocale: string;
+  translations?: Record<Locale, Translation>;
 }) {
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const locale = searchParams.get("locale");
+
   const value: SettingsContextProps = useMemo(
     () => ({
       actions: props.actions,
@@ -79,12 +86,20 @@ export function SettingsProvider(props: {
       serverURL: props.serverURL,
       defaultDataLocale: props.defaultDataLocale,
       defaultCube: props.defaultCube,
-      defaultLocale: props.defaultLocale
+      defaultLocale: props.defaultLocale,
+      locale: locale || props.defaultLocale
     }),
-    [props.formatters, props.previewLimit, props.toolbarConfig]
+    [props.formatters, props.previewLimit, props.toolbarConfig, locale, props.defaultLocale]
   );
 
-  return <ContextProvider value={value}>{props.children}</ContextProvider>;
+  return (
+    <TranslationProvider
+      defaultLocale={locale || props.defaultLocale}
+      translations={props.translations}
+    >
+      <ContextProvider value={value}>{props.children}</ContextProvider>
+    </TranslationProvider>
+  );
 }
 
 /**

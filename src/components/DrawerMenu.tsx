@@ -107,7 +107,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         opened={opened}
         position="right"
         onClose={() => {
-          // updateUrl();
+          updateUrl();
           close();
         }}
         closeButtonProps={{
@@ -131,7 +131,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
             fullWidth
             color="primary"
             onClick={() => {
-              // updateUrl();
+              updateUrl();
               close();
             }}
           >
@@ -252,17 +252,17 @@ function HierarchyItem({
 }) {
   const {translate: t} = useTranslation();
 
-  const label = useMemo(() => {
-    const captions = [getCaption(dimension, locale), getCaption(hierarchy, locale)];
-    if (isSubMenu) {
-      return captions[1];
-    }
-    return t("params.dimmenu_hierarchy", {
-      abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
-      dimension: captions[0],
-      hierarchy: captions[1]
-    });
-  }, [locale, dimension, hierarchy, isSubMenu, t]);
+  // const label = useMemo(() => {
+  //   const captions = [getCaption(dimension, locale), getCaption(hierarchy, locale)];
+  //   if (isSubMenu) {
+  //     return captions[1];
+  //   }
+  //   return t("params.dimmenu_hierarchy", {
+  //     abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
+  //     dimension: captions[0],
+  //     hierarchy: captions[1]
+  //   });
+  // }, [locale, dimension, hierarchy, isSubMenu, t]);
 
   const isChildSubMenu = hierarchy.levels.length !== 1;
 

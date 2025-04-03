@@ -1,12 +1,13 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
 import {type CSSObject, Center, createStyles} from "@mantine/core";
-import React, {useEffect, useMemo} from "react";
+import React, {useMemo} from "react";
 import {useTranslation} from "../hooks/translation";
 import type {PanelDescriptor} from "../utils/types";
 import {AnimatedCube} from "./AnimatedCube";
 import {ExplorerResults} from "./ExplorerResults";
-import ParamsExplorer from "./ParamsExplorer";
 import SideBar, {SideBarItem, SideBarProvider} from "./SideBar";
+import {SelectCubes} from "./SelectCubes";
+import {useSettings} from "../hooks/settings";
 
 const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) => ({
   container: {
@@ -23,8 +24,6 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
     height: "100%",
     [theme.fn.largerThan("md")]: {
       flexDirection: "row"
-      // height: params.height,
-      // width: "100%"
     }
   },
   flexCol: {
@@ -37,32 +36,20 @@ const useStyles = createStyles((theme, params: {height: CSSObject["height"]}) =>
   }
 }));
 
-/** */
 export function ExplorerContent(props: {
   defaultCube?: string;
-  defaultDataLocale?: string;
   defaultOpenParams: string;
   height: CSSObject["height"];
-  locale: string;
+
   panels: PanelDescriptor[];
   serverConfig?: RequestInit;
   serverURL: string;
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
   withMultiQuery: boolean;
 }) {
-  const translation = useTranslation();
   const {classes} = useStyles({height: props.height});
-
-  // const serverConfig = useMemo(() => {
-  //   return props.serverConfig !== undefined ? props.serverConfig : {};
-  // }, [props.serverConfig]);
-  // useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
-
-  // Monitor the uiLocale param to update the UI on change
-
-  useEffect(() => {
-    if (props.locale) translation.setLocale(props.locale);
-  }, [props.locale, translation]);
+  const {locale} = useSettings();
+  const translation = useTranslation();
 
   const splash = useMemo(() => {
     const SplashComponent = props.splash;
@@ -78,10 +65,10 @@ export function ExplorerContent(props: {
   return (
     <div className={classes.container}>
       <div className={classes.root}>
-        <SideBarProvider locale={props.locale}>
+        <SideBarProvider locale={locale}>
           <SideBar>
             <SideBarItem>
-              <ParamsExplorer locale={props.locale} />
+              <SelectCubes locale={locale} />
             </SideBarItem>
           </SideBar>
         </SideBarProvider>
@@ -90,9 +77,13 @@ export function ExplorerContent(props: {
           panels={props.panels}
           splash={splash}
           serverURL={props.serverURL}
-          defaultDataLocale={props.defaultDataLocale}
         />
       </div>
     </div>
   );
 }
+
+// const serverConfig = useMemo(() => {
+//   return props.serverConfig !== undefined ? props.serverConfig : {};
+// }, [props.serverConfig]);
+// useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);

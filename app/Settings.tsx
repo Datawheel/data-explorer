@@ -75,6 +75,7 @@ export function SettingsProvider({
     (value: string | null) => {
       const nextLocation = `${window.location.pathname}`;
       window.history.pushState({}, "", nextLocation);
+
       const server = servers.find(item => item.value === value);
       server && setSettings({server});
     },
