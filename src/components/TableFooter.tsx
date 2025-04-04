@@ -13,7 +13,7 @@ import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
 import {LocaleSelector} from "./LocaleSelector";
-import {useTableRefresh} from "./TableView";
+import {useDownloadQuery} from "../hooks/useQueryApi";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -126,18 +126,17 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 };
 
 const DownloadQuery = ({data}) => {
-  const actions = useActions();
   const {translate: t} = useTranslation();
   const formats = Object.values(TesseractFormat);
-  // const {isDirty, result} = useSelector(selectCurrentQueryItem);
   const components: ReactNode[] = [];
+  const {mutateAsync: downloadQuery} = useDownloadQuery();
 
   components.push(
     <ButtonDownload
       leftIcon={<IconDownload size={20} />}
       sx={{height: 30}}
       key="download_csv"
-      provider={() => actions.willDownloadQuery("csv")}
+      provider={() => downloadQuery({format: "csv"})}
     >
       {t("formats.csv")}
     </ButtonDownload>
@@ -171,29 +170,39 @@ function useDownload(props) {
 
   useEffect(() => {
     if (file) {
-      const blob =
-        typeof file.content !== "string"
-          ? file.content
-          : new window.Blob([file.content], {
-              type: mimeTypes[file.extension] || "application/octet-stream"
-            });
+      try {
+        const blob =
+          file.content instanceof Blob
+            ? file.content
+            : new Blob([file.content], {
+                type: mimeTypes[file.extension] || "application/octet-stream"
+              });
 
-      const blobURL = window.URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = blobURL;
-      anchor.download = `${file.name}.${file.extension}`;
-      anchor.addEventListener(
-        "click",
-        () => {
-          setTimeout(() => {
-            window.URL.revokeObjectURL(blobURL);
-          }, 5000);
-        },
-        false
-      );
-      anchor.click();
+        const blobURL = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = blobURL;
+        anchor.download = `${file.name}.${file.extension}`;
+        anchor.addEventListener(
+          "click",
+          () => {
+            setTimeout(() => {
+              window.URL.revokeObjectURL(blobURL);
+            }, 5000);
+          },
+          false
+        );
+        anchor.click();
+      } catch (err) {
+        console.error("Error creating download:", err);
+      }
     }
   }, [file]);
+
+  useEffect(() => {
+    if (error) {
+      console.error("Download error:", error);
+    }
+  }, [error]);
 
   const onClick = useCallback(
     evt => {
@@ -201,7 +210,7 @@ function useDownload(props) {
       evt.preventDefault();
       return run(provider());
     },
-    [run]
+    [run, provider]
   );
 
   return {onClick, isLoading, data: file, error};
@@ -226,9 +235,14 @@ const ItemDownload = props => {
       icon={icon(isLoading)}
       onClick={e => {
         e.preventDefault();
-        onClick(e).then(() => {
-          setOpened(false);
-        });
+        onClick(e)
+          .then(() => {
+            setOpened(false);
+          })
+          .catch(error => {
+            console.error("Download error:", error);
+            setOpened(false);
+          });
       }}
     >
       <Text fz="sm">{props.children}</Text>
@@ -240,10 +254,10 @@ type MenuOptsProps = {
   formats: TesseractFormat[];
 };
 function MenuOpts({formats}: MenuOptsProps) {
-  const actions = useActions();
   const {translate: t} = useTranslation();
   const [opened, setOpened] = useState(false);
-  const ref = useClickOutside(() => setOpened(false));
+
+  const {mutateAsync: downloadQuery} = useDownloadQuery();
 
   const buttons = useMemo(
     () =>
@@ -251,7 +265,7 @@ function MenuOpts({formats}: MenuOptsProps) {
         <ItemDownload
           component="a"
           key={format}
-          provider={() => actions.willDownloadQuery(format)}
+          provider={() => downloadQuery({format})}
           icon={loading => (loading ? <Loader size={15} /> : <IconDownload size={15} />)}
           setOpened={setOpened}
         >

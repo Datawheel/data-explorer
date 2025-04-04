@@ -116,15 +116,10 @@ export const useDimensionItems = () => {
 // Hook to download query data
 export function useDownloadQuery() {
   const {tesseract} = useLogicLayer();
+  const {params} = useSelector(selectCurrentQueryItem);
 
   return useMutation({
-    mutationFn: async ({
-      params,
-      format
-    }: {
-      params: any;
-      format: `${TesseractFormat}`;
-    }): Promise<FileDescriptor> => {
+    mutationFn: async ({format}: {format: `${TesseractFormat}`}): Promise<FileDescriptor> => {
       if (!isValidQuery(params)) {
         throw new Error("The current query is not valid.");
       }

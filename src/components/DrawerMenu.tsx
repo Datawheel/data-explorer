@@ -170,7 +170,6 @@ export function DrawerMenu() {
 }
 
 function DrillDownOptions() {
-  //TODO: agregar locale
   const locale = useSelector(selectLocale);
   const selectedDimensions = useSelector(selectDrilldownItems);
   const dimensions = useDimensionItems();
@@ -250,7 +249,7 @@ function HierarchyItem({
   locale: string;
   activeItems: DrilldownItem[];
 }) {
-  const {translate: t} = useTranslation();
+  // const {translate: t} = useTranslation();
 
   // const label = useMemo(() => {
   //   const captions = [getCaption(dimension, locale), getCaption(hierarchy, locale)];
