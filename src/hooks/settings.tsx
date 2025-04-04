@@ -6,6 +6,7 @@ import type {Pagination} from "../components/Explorer";
 import type {ToolbarConfigType} from "../components/Toolbar";
 import {Translation, TranslationProvider} from "./translation";
 import {useLocation, useNavigate} from "react-router-dom";
+
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
   [K in keyof ExplorerActionMap]: ExplorerActionMap[K] extends (
@@ -65,7 +66,7 @@ export function SettingsProvider(props: {
   defaultDataLocale?: string;
   defaultCube?: string;
   defaultLocale: string;
-  translations?: Record<Locale, Translation>;
+  translations?: Record<string, Translation>;
 }) {
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
