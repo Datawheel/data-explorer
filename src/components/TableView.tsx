@@ -32,7 +32,8 @@ import {
   MRT_ProgressBar as ProgressBar,
   type MRT_TableOptions as TableOptions,
   flexRender,
-  useMantineReactTable
+  useMantineReactTable,
+  type MRT_ColumnDef
 } from "mantine-react-table";
 import React, {
   useCallback,
@@ -93,7 +94,10 @@ export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData
 };
 
 type EntityTypes = "measure" | "level" | "property";
-export type TData = Record<string, any> & Record<string, string | number>;
+export type TData = {
+  [key: string]: string | number;
+  index: number;
+};
 
 function isColumnSorted(column: string, key: string) {
   return column == key;
@@ -489,6 +493,7 @@ export function useTable({
     const indexColumn = {
       id: "#",
       header: "#",
+      accessorFn: (row: TData) => row.index,
       Cell: ({row}) => row.index + 1 + offset,
       minWidth: 50,
       maxWidth: 50,
@@ -523,6 +528,7 @@ export function useTable({
         entityType,
         header,
         enableHiding: true,
+        accessorFn: (row: TData) => row[columnKey],
         sortingFn: (rowA, rowB, columnId) => {
           if (rowA.original[columnId] < rowB.original[columnId]) {
             return -1;
@@ -583,7 +589,6 @@ export function useTable({
         formatterKey,
         id: entity.name,
         dataType: valueType,
-        accessorFn: item => item[columnKey],
         Cell: isNumeric
           ? ({cell}) => {
               return (
@@ -704,9 +709,9 @@ export function useTable({
   // const isTransitionState = status !== "success" && !isError;
   // const isLoad = isLoading || data === undefined || isTransitionState;
   // isLoading: isLoading || data === undefined || isTransitionState,
-  const table = useMantineReactTable({
-    columns,
-    data: tableData,
+  const table = useMantineReactTable<TData>({
+    columns: columns as MRT_ColumnDef<TData>[],
+    data: tableData as TData[],
     onPaginationChange: handlePaginationChange,
     enableHiding: false,
     manualFiltering: true,
@@ -742,22 +747,23 @@ type TableView = {
 
 export function TableView({
   table,
-
   isError,
   isLoading = false,
   data,
   pagination,
-  setPagination
+  setPagination,
+  result
 }: TableView) {
   // This is not accurate because mantine adds fake rows when is loading.
   const isData = Boolean(table.getRowModel().rows.length);
   const viewport = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLTableRowElement>(null);
 
   useEffect(() => {
     viewport.current?.scrollTo({top: 0, behavior: "smooth"});
   }, [pagination?.pageIndex, pagination?.pageSize]);
   const {data: serverSchema} = useServerSchema();
-  const url = serverSchema?.url;
+  const url = serverSchema?.url ?? "";
 
   return (
     <Box sx={{height: "100%"}}>
@@ -855,14 +861,14 @@ export function TableView({
             {isData && (
               <Box component="tbody">
                 {table.getRowModel().rows.map(row => (
-                  <tr key={row.id}>
+                  <tr key={row.id} ref={rowRef}>
                     {row.getVisibleCells().map(cell => (
                       <MRT_TableBodyCell
                         key={cell.id}
                         cell={cell}
                         rowIndex={row.index}
                         table={table}
-                        rowRef={row.original.current}
+                        rowRef={rowRef}
                       />
                     ))}
                   </tr>

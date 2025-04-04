@@ -21,16 +21,17 @@ const formatter = new Intl.NumberFormat("en-US", {
 
 type TData = Record<string, any> & Record<string, string | number>;
 
-type Props = {table: MRT_TableInstance<TData>} & Pick<ViewProps, "result"> & {
-    data?: Record<string, string | number>[];
-    isLoading: boolean;
-    pagination?: MRT_PaginationState;
-    setPagination?: (pagination: MRT_PaginationState) => void;
-    url: string;
-  };
+type Props = {
+  table: MRT_TableInstance<TData>;
+  data?: Record<string, string | number>[];
+  isLoading: boolean;
+  pagination?: MRT_PaginationState;
+  setPagination?: (pagination: MRT_PaginationState) => void;
+  url: string;
+};
 
 type Item = {
-  value: number;
+  value: string;
   label: string;
 };
 
@@ -47,18 +48,32 @@ function TableFooter(props: Props) {
   } = table.getState();
   const showPagination = totalRowCount && Boolean(totalRowCount > pageSize);
 
-  // Handle page size change
-  const handlePageSizeChange = useCallback(
+  const items = useMemo(
+    () =>
+      paginationConfig?.rowsLimits.map(size => ({
+        value: String(size),
+        label: String(size)
+      })) ?? [],
+    [paginationConfig?.rowsLimits]
+  );
+
+  const selectedItem = useMemo(
+    () => items.find(item => Number(item.value) === pageSize),
+    [items, pageSize]
+  );
+
+  const onItemSelect = useCallback(
     (item: Item) => {
-      if (setPagination && pagination) {
-        // Reset to first page when changing page size and ensure offset is 0
+      const newPageSize = Number(item.value);
+      if (setPagination) {
         setPagination({
-          pageIndex: 0,
-          pageSize: item.value
+          ...pagination,
+          pageSize: newPageSize,
+          pageIndex: 0
         });
       }
     },
-    [setPagination] // Remove pagination from dependencies since we don't use it directly
+    [pagination, setPagination]
   );
 
   return (
@@ -78,9 +93,9 @@ function TableFooter(props: Props) {
               <SelectObject
                 getValue={(item: Item) => item.value}
                 getLabel={(item: Item) => item.label}
-                items={paginationConfig.rowsLimits.map(value => ({value, label: String(value)}))}
-                selectedItem={{value: pagination?.pageSize}}
-                onItemSelect={handlePageSizeChange}
+                items={items}
+                selectedItem={selectedItem}
+                onItemSelect={onItemSelect}
               />
             </Box>
             {totalRowCount && (
