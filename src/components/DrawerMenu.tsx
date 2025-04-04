@@ -135,7 +135,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
               close();
             }}
           >
-            Submit
+            {t("params.submit")}
           </Button>
         </Box>
       </Drawer>

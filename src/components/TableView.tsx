@@ -33,7 +33,8 @@ import {
   type MRT_TableOptions as TableOptions,
   flexRender,
   useMantineReactTable,
-  type MRT_ColumnDef
+  type MRT_ColumnDef,
+  type MRT_Cell
 } from "mantine-react-table";
 import React, {
   useCallback,
@@ -94,10 +95,7 @@ export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData
 };
 
 type EntityTypes = "measure" | "level" | "property";
-export type TData = {
-  [key: string]: string | number;
-  index: number;
-};
+export type TData = Record<string, string | number> & Record<string, any>;
 
 function isColumnSorted(column: string, key: string) {
   return column == key;
@@ -865,7 +863,9 @@ export function TableView({
                     {row.getVisibleCells().map(cell => (
                       <MRT_TableBodyCell
                         key={cell.id}
-                        cell={cell}
+                        cell={
+                          cell as MRT_Cell<Record<string, string | number> & Record<string, any>>
+                        }
                         rowIndex={row.index}
                         table={table}
                         rowRef={rowRef}
