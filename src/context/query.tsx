@@ -61,7 +61,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     const searchParams = new URLSearchParams(location.search);
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
-    if (cube && cubeMap && serverURL && cubeMap[cube]) {
+    if (cube && cubeMap && serverURL && cubeMap[cube] && schema?.online) {
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
       newQuery.params.locale = newQuery.params.locale || defaultLocale;
@@ -99,7 +99,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       }
     }
 
-    if (!cube && cubeMap && serverURL) {
+    if (!cube && cubeMap && serverURL && schema?.online) {
+      console.log("no cube");
       const cubeDefault =
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
@@ -154,7 +155,6 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       },
       panel: panel ?? "table"
     });
-    console.log(query, "query me llama");
 
     updateUrl(query);
   }

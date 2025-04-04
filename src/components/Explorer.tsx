@@ -207,7 +207,6 @@ export function ExplorerComponent<Locale extends string>(props: {
         translations={props.translations}
         // defaultDataLocale={props.defaultDataLocale}
       >
-        {/* <TranslationProvider defaultLocale={defaultLocale} translations={props.translations}> */}
         <AppProviders>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
             <ExplorerContent
@@ -222,7 +221,6 @@ export function ExplorerComponent<Locale extends string>(props: {
             />
           </ExplorerTour>
         </AppProviders>
-        {/* </TranslationProvider> */}
       </SettingsProvider>
     </Router>
   );

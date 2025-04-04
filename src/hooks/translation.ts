@@ -52,6 +52,7 @@ const explorerTranslation = {
     action_clear_description: "Clear all parameters from your current query",
     action_execute: "Execute query",
     add_columns: "Add Column",
+    submit: "Submit",
     column_title: "Parameters",
     current_endpoint: "Current endpoint: {{label}}",
     dimmenu_abbrjoint: ": ",
@@ -265,7 +266,7 @@ const explorerTranslation = {
     unselect_filtered: "Unselect filtered",
     selected_items: "Selected items",
     unselected_items: "Unselected items"
-  },
+  }
 };
 
 const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
@@ -279,24 +280,24 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
     average: "Average {{measure}}",
     max: "Max {{measure}}",
     min: "Min {{measure}}",
-    sum: "{{measure}}",
+    sum: "{{measure}}"
   },
   chart_labels: {
     ci: "Confidence Interval",
     moe: "Margin of Error",
     source: "Source",
-    collection: "Collection",
+    collection: "Collection"
   },
   error: {
     detail: "",
     message: 'Details: "{{message}}".',
-    title: "Error",
+    title: "Error"
   },
   list: {
     join: ", ",
     suffix: "{{rest}}, and {{item}}",
     prefix: "{{list}}",
-    n_more: "{{n}} more",
+    n_more: "{{n}} more"
   },
   title: {
     main_on_period: "{{values}} by {{series}} on {{time_period}}",
@@ -308,14 +309,14 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
     series_members: "{{series}} ({{members}})",
     series: "{{series}}",
     time_range: "in {{from}}-{{to}}",
-    total: "Total: {{value}}",
+    total: "Total: {{value}}"
   },
   transient: {
     title_loading: "Generating charts...",
     title_empty: "No results",
     description_empty:
-      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
-  },
+      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again."
+  }
 };
 
 type ExtendibleTranslation<T extends {}> = {
@@ -330,11 +331,10 @@ export type Translation = ExtendibleTranslation<
 
 export const defaultTranslation = {
   ...explorerTranslation,
-  vizbuilder: vizbuilderTranslation,
+  vizbuilder: vizbuilderTranslation
 };
 
-export const {useTranslation, TranslationConsumer, TranslationProvider} =
-  translationFactory({
-    defaultLocale: "en",
-    defaultTranslation,
-  });
+export const {useTranslation, TranslationConsumer, TranslationProvider} = translationFactory({
+  defaultLocale: "en",
+  defaultTranslation
+});

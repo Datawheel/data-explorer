@@ -50,6 +50,7 @@ export function ExplorerResults(props: {
   serverURL: string;
   defaultDataLocale?: string;
 }) {
+  console.log("llego aca");
   const {
     data: schema,
     isLoading: schemaLoading,

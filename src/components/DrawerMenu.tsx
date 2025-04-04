@@ -575,6 +575,7 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
       ? ""
       : filter.conditionOne[2];
   }
+
   function onInputChange({filter, value}: {filter: FilterItem; value: number | ""}) {
     const isEmpty = value === "";
     const conditions =

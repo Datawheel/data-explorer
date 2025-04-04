@@ -337,20 +337,11 @@ export function useTableData({pagination}: useTableDataType) {
   const actions = useActions();
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;
-
+  const updateURL = useUpdateUrl();
   const query = useFetchQuery(queryItem.params, queryLink, {
     limit: pageSize,
     offset: pageIndex * pageSize
   });
-
-  useEffect(() => {
-    if (pageSize && pageIndex !== undefined) {
-      actions.updatePagination({
-        limit: pageSize,
-        offset: pageIndex * pageSize
-      });
-    }
-  }, [pageSize, pageIndex, actions]);
 
   return query;
 }
@@ -390,7 +381,8 @@ export function useTable({
   const measures = useSelector(selectMeasureItems);
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
-
+  const queryItem = useSelector(selectCurrentQueryItem);
+  const updateURL = useUpdateUrl();
   // Initialize pagination state from Redux with correct page index calculation
   const [pagination, setPagination] = useState<MRT_PaginationState>({
     pageIndex: Math.floor(offset / (limit || 1)),
@@ -398,16 +390,22 @@ export function useTable({
   });
 
   // Custom pagination handler that updates both local state and enables query
-  const handlePaginationChange = useCallback(
-    (updatedPagination: MRT_PaginationState) => {
-      setPagination(updatedPagination);
-      actions.updatePagination({
-        limit: updatedPagination.pageSize,
-        offset: updatedPagination.pageIndex * updatedPagination.pageSize
-      });
-    },
-    [actions]
-  );
+  const handlePaginationChange = updatedPagination => {
+    const paginationUpdated = updatedPagination(pagination);
+    setPagination(updatedPagination);
+    actions.updatePagination({
+      limit: paginationUpdated.pageSize,
+      offset: paginationUpdated.pageIndex * paginationUpdated.pageSize
+    });
+    updateURL({
+      ...queryItem,
+      params: {
+        ...queryItem.params,
+        pagiOffset: paginationUpdated.pageIndex * paginationUpdated.pageSize,
+        pagiLimit: paginationUpdated.pageSize
+      }
+    });
+  };
 
   const finalUniqueKeys = useMemo(
     () =>
@@ -479,12 +477,7 @@ export function useTable({
   //   isFetching: isFetching || isLoading
   // });
 
-  useEffect(() => {
-    actions.updatePagination({
-      limit: pagination.pageSize,
-      offset: pagination.pageIndex * pagination.pageSize
-    });
-  }, [pagination]);
+  // }, [pagination]);
 
   const {translate: t} = useTranslation();
   const {getFormat, getFormatter} = useFormatter();
