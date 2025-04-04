@@ -1,11 +1,13 @@
 /* eslint-disable comma-dangle */
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef} from "react";
-import {type ExplorerActionMap} from "../state";
+import {useSelector, type ExplorerActionMap} from "../state";
 import {Formatter, PanelDescriptor} from "../utils/types";
 import type {Pagination} from "../components/Explorer";
 import type {ToolbarConfigType} from "../components/Toolbar";
 import {Translation, TranslationProvider} from "./translation";
 import {useLocation, useNavigate} from "react-router-dom";
+import {useUpdateUrl} from "./permalink";
+import {selectCurrentQueryItem} from "../state/queries";
 
 // These types are needed to `.then()` over the returned value of dispatched thunks
 export type ExplorerBoundActionMap = {
@@ -105,10 +107,7 @@ export function SettingsProvider(props: {
   );
 
   return (
-    <TranslationProvider
-      defaultLocale={locale || props.defaultLocale}
-      translations={props.translations}
-    >
+    <TranslationProvider defaultLocale={props.defaultLocale} translations={props.translations}>
       <ContextProvider value={value}>{props.children}</ContextProvider>
     </TranslationProvider>
   );
