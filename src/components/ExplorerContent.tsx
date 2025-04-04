@@ -48,7 +48,7 @@ export function ExplorerContent(props: {
   withMultiQuery: boolean;
 }) {
   const {classes} = useStyles({height: props.height});
-  const {locale} = useSettings();
+  const {defaultLocale} = useSettings();
   const translation = useTranslation();
 
   const splash = useMemo(() => {
@@ -65,10 +65,10 @@ export function ExplorerContent(props: {
   return (
     <div className={classes.container}>
       <div className={classes.root}>
-        <SideBarProvider locale={locale}>
+        <SideBarProvider locale={defaultLocale}>
           <SideBar>
             <SideBarItem>
-              <SelectCubes locale={locale} />
+              <SelectCubes locale={defaultLocale} />
             </SideBarItem>
           </SideBar>
         </SideBarProvider>

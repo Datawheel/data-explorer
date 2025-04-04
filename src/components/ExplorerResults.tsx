@@ -38,7 +38,6 @@ const useStyles = createStyles(() => ({
   }
 }));
 
-// const cube = useSelector(selectOlapCube);
 //const {error} = result;
 /**
  * Renders the result area in the UI.

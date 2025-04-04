@@ -34,7 +34,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
-  const {paginationConfig, measuresActive, serverURL, locale: defaultLocale} = useSettings();
+  const {paginationConfig, measuresActive, serverURL,  defaultLocale} = useSettings();
   const {data: schema, isLoading: schemaLoading, isError: schemaError} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
@@ -62,7 +62,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     if (cube && cubeMap && serverURL && cubeMap[cube] && schema?.online) {
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
-      newQuery.params.locale = newQuery.params.locale || defaultLocale;
+      newQuery.params.locale = defaultLocale || newQuery.params.locale;
       if (newQuery) {
         const promises = Object.values(newQuery.params.drilldowns).map(dd => {
           return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
@@ -105,7 +105,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   }, [location.search, runFetchMembers, schema, serverURL]);
 
   const onChangeCube = (table: string, subtopic: string) => {
-    const locale = queryItem.params.locale || defaultLocale;
+    const locale = defaultLocale || queryItem.params.locale;
     const cubeMap = schema?.cubeMap || {};
     const cubeArray = getValues(cubeMap);
     const cube = cubeArray.find(
@@ -140,7 +140,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     });
 
     const panel = queryItem.panel;
-    const locale = queryItem.params.locale || defaultLocale;
+    const locale = defaultLocale || queryItem.params.locale;
 
     const query = buildQuery({
       params: {
