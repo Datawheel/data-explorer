@@ -123,6 +123,7 @@ function App() {
           <Explorer
             // pagination={{defaultLimit: 100, rowsLimits: [100, 300, 500, 1000]}}
             // defaultCube="gastat_gdp"
+            defaultLocale={settings.locale}
             measuresActive={5}
             serverURL={settings.server.value}
             serverConfig={settings.server.config}
@@ -130,8 +131,8 @@ function App() {
             formatters={formatters}
             idFormatters={idFormatters}
             height={"100%"}
-            locale={settings.locale}
-            defaultDataLocale={settings.locale}
+            // locale={settings.locale}
+            // defaultDataLocale={settings.locale}
             panels={[
               {key: "table", label: "Data Table", component: TableView},
               {key: "matrix", label: "Pivot Table", component: PivotView},

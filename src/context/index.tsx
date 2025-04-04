@@ -4,7 +4,7 @@ import {TableRefreshProvider} from "../components/TableView";
 import {LogicLayerProvider} from "../api/context";
 import {QueryProvider} from "./query";
 import {useActions, useSettings} from "../hooks/settings";
-import {useEffect} from "react";
+import {useEffect, useRef} from "react";
 import {selectCurrentQueryItem} from "../state/queries";
 import {useSelector} from "react-redux";
 import {useUpdateUrl} from "../hooks/permalink";
@@ -21,10 +21,15 @@ function AppProviders({children}: AppProvidersProps) {
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
   const actions = useActions();
-  console.log(defaultLocale);
+  const isInitialMount = useRef(true);
   const {translate: t, locale, setLocale} = useTranslation();
 
   useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
     actions.updateLocale(defaultLocale);
     updateUrl({...queryItem, params: {...queryItem.params, locale: defaultLocale}});
     setLocale(defaultLocale);
@@ -38,12 +43,7 @@ function AppProviders({children}: AppProvidersProps) {
           serverConfig={serverConfig}
           defaultDataLocale={defaultDataLocale}
         >
-          <QueryProvider
-            defaultCube={defaultCube}
-            serverURL={serverURL}
-            locale={defaultLocale}
-            defaultDataLocale={defaultDataLocale}
-          >
+          <QueryProvider defaultCube={defaultCube} serverURL={serverURL}>
             {children}
           </QueryProvider>
         </LogicLayerProvider>
