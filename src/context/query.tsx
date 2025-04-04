@@ -39,8 +39,6 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
 
-  console.log(schemaError, "schemaError", "isError", schema);
-
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
   }
@@ -100,7 +98,6 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     }
 
     if (!cube && cubeMap && serverURL && schema?.online) {
-      console.log("no cube");
       const cubeDefault =
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
@@ -110,7 +107,6 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const onChangeCube = (table: string, subtopic: string) => {
     const locale = queryItem.params.locale || defaultLocale;
     const cubeMap = schema?.cubeMap || {};
-    console.log(cubeMap, "onchange");
     const cubeArray = getValues(cubeMap);
     const cube = cubeArray.find(
       cube => cube.name === table && getAnnotation(cube, "subtopic", locale) === subtopic

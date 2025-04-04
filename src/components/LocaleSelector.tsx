@@ -84,8 +84,6 @@ export function LocaleSelector() {
     return null;
   }
 
-  console.log(currentCode, "currentCode");
-
   return (
     <Box id="dex-select-locale">
       <Tooltip label={t("params.label_locale")}>
