@@ -7,6 +7,8 @@ import type {ViewProps} from "../utils/types";
 
 /** */
 export function DebugView(props: ViewProps) {
+  if (!props.result) return null;
+
   const {url} = props.result;
 
   const {translate: t} = useTranslation();
@@ -18,7 +20,7 @@ export function DebugView(props: ViewProps) {
   const openHandler = useCallback(() => window.open(url, "_blank"), [url]);
 
   const headers = useMemo(() => {
-    const headers = Object.entries(props.result.headers || {});
+    const headers = Object.entries(props.result?.headers || {});
     if (headers.length === 0) return null;
 
     return (
@@ -45,26 +47,12 @@ export function DebugView(props: ViewProps) {
         {url && (
           <Input.Wrapper label={t("debug_view.url_logiclayer")}>
             <Group noWrap spacing="xs">
-              <Input
-                icon={<IconWorld />}
-                readOnly
-                rightSectionWidth="auto"
-                value={url}
-                w="100%"
-              />
+              <Input icon={<IconWorld />} readOnly rightSectionWidth="auto" value={url} w="100%" />
               <Button.Group>
-                <Button
-                  leftIcon={<IconExternalLink />}
-                  onClick={openHandler}
-                  variant="default"
-                >
+                <Button leftIcon={<IconExternalLink />} onClick={openHandler} variant="default">
                   {t("action_open")}
                 </Button>
-                <Button
-                  leftIcon={<IconClipboard />}
-                  onClick={copyHandler}
-                  variant="default"
-                >
+                <Button leftIcon={<IconClipboard />} onClick={copyHandler} variant="default">
                   {copied ? t("action_copy_done") : t("action_copy")}
                 </Button>
               </Button.Group>
