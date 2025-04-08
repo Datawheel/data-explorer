@@ -217,7 +217,6 @@ function getSortIcon(value: SortDirection, entityType: EntityTypes) {
 
 type TableProps = {
   cube: TesseractCube;
-  result: QueryResult<Record<string, string | number>>;
   /**
    * Defines which columns will be rendered and which will be hidden.
    * The function will be used as parameter for Array#filter() over a list
@@ -336,10 +335,9 @@ export function useTableRefresh() {
 export function useTableData({pagination}: useTableDataType) {
   const queryItem = useSelector(selectCurrentQueryItem);
   const queryLink = queryItem.link;
-  const actions = useActions();
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;
-  const updateURL = useUpdateUrl();
+  
   const query = useFetchQuery(queryItem.params, queryLink, {
     limit: pageSize,
     offset: pageIndex * pageSize
@@ -369,7 +367,6 @@ const columnSrt = (a: AnyResultColumn, b: AnyResultColumn) => {
 
 export function useTable({
   cube,
-
   columnFilter = () => true,
   columnSorting = columnSrt,
   ...mantineTableProps
@@ -499,6 +496,7 @@ export function useTable({
       maxSize: 50,
       size: 50
     };
+    
 
     const columnsDef = finalKeys.map(column => {
       const {
@@ -538,7 +536,6 @@ export function useTable({
         },
         Header: ({column}) => {
           const isSorted = isColumnSorted(entity.name, sortKey);
-
           return (
             <Box mb={rem(5)} key="header">
               <Flex justify="center" align="center">
@@ -704,9 +701,6 @@ export function useTable({
     [isError, t]
   );
 
-  // const isTransitionState = status !== "success" && !isError;
-  // const isLoad = isLoading || data === undefined || isTransitionState;
-  // isLoading: isLoading || data === undefined || isTransitionState,
   const table = useMantineReactTable<TData>({
     columns: columns as MRT_ColumnDef<TData>[],
     data: tableData as TData[],
@@ -727,6 +721,7 @@ export function useTable({
   });
 
   return {
+    result: data,
     table,
     isError,
     isLoading,
@@ -800,6 +795,7 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
+                    
                     const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({

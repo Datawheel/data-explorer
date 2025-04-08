@@ -39,6 +39,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
 
+
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
   }
@@ -102,7 +103,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
     }
-  }, [location.search, runFetchMembers, schema, serverURL]);
+  }, [location.search, runFetchMembers, schema, serverURL, defaultLocale]);
 
   const onChangeCube = (table: string, subtopic: string) => {
     const locale = defaultLocale || queryItem.params.locale;

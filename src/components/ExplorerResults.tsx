@@ -12,7 +12,7 @@ import {
   createStyles
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
-import {IconAlertTriangle, IconWorld} from "@tabler/icons-react";
+import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
 import React, {Suspense, useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
 import type {TesseractCube} from "../api";
@@ -20,7 +20,7 @@ import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
 import type {QueryParams, QueryResult} from "../utils/structs";
-import type {PanelDescriptor} from "../utils/types";
+import type {PanelDescriptor, ViewProps} from "../utils/types";
 import AddColumnsDrawer from "./DrawerMenu";
 import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
@@ -29,6 +29,7 @@ import Toolbar from "./Toolbar";
 // import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useUpdateUrl} from "../hooks/permalink";
+import type {MRT_TableInstance, MRT_ColumnDef, MRT_PaginationState} from "mantine-react-table";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -38,7 +39,8 @@ const useStyles = createStyles(() => ({
   }
 }));
 
-//const {error} = result;
+type TData = Record<string, string | number>;
+
 /**
  * Renders the result area in the UI.
  */
@@ -58,9 +60,7 @@ export function ExplorerResults(props: {
   const {params} = useSelector(selectCurrentQueryItem);
   const cubeMap = schema?.cubeMap || {};
   const cube = cubeMap[params.cube];
-
   const {online: isServerOnline, url: serverUrl} = schema || {};
-
   const {translate: t} = useTranslation();
   const {classes, cx} = useStyles();
 
@@ -128,24 +128,13 @@ export function ExplorerResults(props: {
     );
   }
 
-  // Check if query executed but returned empty dataset
-  // if (data.length === 0) {
-  //   return (
-  //     <FailureResult
-  //       className={cx(classes.container, props.className)}
-  //       icon={<IconBox color="orange" size="5rem" />}
-  //       title={t("results.error_emptyresult_title")}
-  //       description={t("results.error_emptyresult_detail")}
-  //     />
-  //   );
-  // }
-
   return (
     <SuccessResult
       className={cx(classes.container, props.className)}
       cube={cube}
       panels={props.panels}
       params={params}
+      panelKey={null}
     >
       {props.splash}
     </SuccessResult>
@@ -183,26 +172,20 @@ function FailureResult(props: {
 /**
  * Handles the currently active tab and its contents.
  */
-function SuccessResult(props: {
-  children?: React.ReactNode;
-  className?: string;
-  cube: TesseractCube;
-  panels: PanelDescriptor[];
-  params: QueryParams;
-  result: QueryResult;
-}) {
+function SuccessResult(
+  props: ViewProps<TData> & {
+    children?: React.ReactNode;
+    panels: PanelDescriptor[];
+  }
+) {
   const updateUrl = useUpdateUrl();
-  const {cube, panels, params, result} = props;
+  const {cube, panels, params} = props;
   const {translate: t} = useTranslation();
   const {previewLimit, actions} = useSettings();
-
   const queryItem = useSelector(selectCurrentQueryItem);
   const isPreviewMode = useSelector(selectIsPreviewMode);
-  const {table, isError, isLoading, data, columns, pagination, setPagination} = useTable({
-    cube
-  });
-
   const fullscreen = useFullscreen();
+  const {classes, cx} = useStyles();
 
   const [CurrentComponent, panelKey, panelMeta] = useMemo(() => {
     const currentPanel = queryItem.panel || `${panels[0].key}-`;
@@ -215,6 +198,21 @@ function SuccessResult(props: {
     actions.switchPanel(newTab);
     updateUrl({...queryItem, panel: newTab});
   };
+
+  const {table, isError, isLoading, data, columns, result, pagination, setPagination} = useTable({
+    cube
+  });
+
+  if (data?.length === 0 && !isLoading && !isError) {
+    return (
+      <FailureResult
+        className={cx(classes.container, props.className)}
+        icon={<IconBox color="orange" size="5rem" />}
+        title={t("results.error_emptyresult_title")}
+        description={t("results.error_emptyresult_detail")}
+      />
+    );
+  }
 
   return (
     <Flex
@@ -241,10 +239,9 @@ function SuccessResult(props: {
           h="fit-content"
         >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
-          {/* need to update this logic */}
           {(!queryItem.panel || queryItem.panel === "table") && (
             <Group sx={{display: "flex", flex: "0 1 auto", gap: "0.5rem"}} mr="sm" noWrap>
-              <Toolbar table={table} fullscreen={fullscreen} />
+              {props.table && <Toolbar table={props.table} fullscreen={fullscreen} />}
               <AddColumnsDrawer />
             </Group>
           )}
@@ -274,11 +271,11 @@ function SuccessResult(props: {
                   panelKey={`${panelKey}-${panelMeta}`}
                   cube={cube}
                   params={params}
-                  result={result}
+                  result={result as QueryResult<TData>}
+                  data={data as TData[]}
                   table={table}
                   isError={isError}
                   isLoading={isLoading}
-                  data={data}
                   columns={columns}
                   pagination={pagination}
                   setPagination={setPagination}

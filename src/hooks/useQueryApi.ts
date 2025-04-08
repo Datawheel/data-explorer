@@ -176,10 +176,7 @@ export function useFetchQuery(
         if (!response.ok) {
           throw new Error(`Backend Error: ${content.detail}`);
         }
-
-        // Fetch the cube data (necessary for describeData ??)
-        const cubeData = await tesseract.fetchCube({cube: queryParams.cube});
-
+        const cubeData = await tesseract.fetchCube({cube: queryParams.cube, locale: queryParams.locale});
         return {
           data: content.data,
           page: content.page,

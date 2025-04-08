@@ -37,7 +37,7 @@ export interface ViewProps<TData extends Record<string, any> = Record<string, st
   cube: TesseractCube;
   panelKey: string | null;
   params: QueryParams;
-  result: QueryResult<TData>;
+  result?: QueryResult<TData>;
   table?: MRT_TableInstance<TData & Record<string, any>>;
   isError?: boolean;
   isLoading?: boolean;

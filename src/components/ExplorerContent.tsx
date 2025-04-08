@@ -40,7 +40,6 @@ export function ExplorerContent(props: {
   defaultCube?: string;
   defaultOpenParams: string;
   height: CSSObject["height"];
-
   panels: PanelDescriptor[];
   serverConfig?: RequestInit;
   serverURL: string;
