@@ -277,7 +277,7 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
   action_fileissue: "Report an issue",
   action_retry: "Retry",
   aggregator: {
-    average: "Average {{measure}}",
+    average: "Average walter {{measure}}",
     max: "Max {{measure}}",
     min: "Min {{measure}}",
     sum: "{{measure}}"

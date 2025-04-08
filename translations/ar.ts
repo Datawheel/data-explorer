@@ -12,7 +12,7 @@ export default {
     GTE: "مساوي أو أكبر من",
     LT: "أقل من",
     LTE: "مساوي أو أقل من",
-    NEQ: "غير مساوي لـ",
+    NEQ: "غير مساوي لـ"
   },
   debug_view: {
     tab_label: "أداة التصحيح",
@@ -20,24 +20,23 @@ export default {
     jssource_prefix: "مصدر جافا سكريبت لـ ",
     jssource_suffix: "",
     url_aggregate: "رابط API المجمع",
-    url_logiclayer: "رابط API لـ LogicLayer",
+    url_logiclayer: "رابط API لـ LogicLayer"
   },
   direction: {
     ASC: "تصاعدي",
-    DESC: "تنازلي",
+    DESC: "تنازلي"
   },
   formats: {
     csv: "CSV",
     json: "JSON",
     jsonarrays: "مصفوفات JSON",
     jsonrecords: "سجلات JSON",
-    xlsx: "XLSX",
+    xlsx: "XLSX"
   },
   loading: {
     title: "جارٍ التحميل...",
-    message_heavyquery:
-      "قد تحتوي الاستعلام الحالي على حد أقصى من {{rows}} صفوف.\nيرجى الانتظار...",
-    message_default: "يرجى الانتظار...",
+    message_heavyquery: "قد تحتوي الاستعلام الحالي على حد أقصى من {{rows}} صفوف.\nيرجى الانتظار...",
+    message_default: "يرجى الانتظار..."
   },
   params: {
     action_clear: "مسح الاستعلام",
@@ -107,7 +106,7 @@ export default {
     tooltip_area_drilldowns: "",
     tooltip_area_filters: "",
     tooltip_area_measures: "",
-    tooltip_area_options: "",
+    tooltip_area_options: ""
   },
   pivot_view: {
     tab_label: "محور البيانات",
@@ -132,22 +131,20 @@ export default {
       'الاستعلام الحالي يحتوي على أكثر من تفصيلين، ونوع التجميع للمقياس ليس "SUM". قد تكون القيم التي تحصل عليها غير ذات مغزى.',
     warning_propertypivot:
       "على عكس أعضاء التفصيل، لا تضمن خصائص التفصيل التفرد. في هذا العرض، يتم تجميع نقاط البيانات بناءً على تسميات الخصائص، لذا يرجى التأكد من أنك لا تفقد المعلومات.",
-    warning_sumdimensions:
-      "هناك أكثر من تفصيلين في هذا الاستعلام. سيتم جمع القيم المتبقية.",
+    warning_sumdimensions: "هناك أكثر من تفصيلين في هذا الاستعلام. سيتم جمع القيم المتبقية."
   },
   placeholders: {
     incomplete: "[معلمات غير مكتملة]",
     unselected: "[غير محدد]",
-    none: "[لا شيء]",
+    none: "[لا شيء]"
   },
   previewMode: {
     btn_get_all: "عرض كل الصفوف",
     btn_get_preview: "عرض المعاينة",
-    description_full:
-      "أنت تشاهد حاليًا جميع الصفوف المتاحة. قم بإيقافها للحصول على أداء أسرع.",
+    description_full: "أنت تشاهد حاليًا جميع الصفوف المتاحة. قم بإيقافها للحصول على أداء أسرع.",
     description_preview: "أنت تشاهد حاليًا استجابة معاينة لأول {{limit}} صفوف.",
     title_full: "جميع السجلات",
-    title_preview: "سجلات المعاينة",
+    title_preview: "سجلات المعاينة"
   },
   queries: {
     action_create: "استعلام جديد",
@@ -158,7 +155,7 @@ export default {
     error_one_hierarchy_per_dimension: "يجب تحديد تفاصيل لتسلسل هرمي واحد فقط.",
     error_one_cut_per_dimension: "يجب تطبيق قطع على مستويات تسلسل هرمي واحد فقط.",
     column_title: "الاستعلامات",
-    unset_parameters: "لم يتم تعيين المعلمات",
+    unset_parameters: "لم يتم تعيين المعلمات"
   },
   results: {
     error_execquery_detail: "كانت هناك مشكلة في الاستعلام الأخير:",
@@ -168,7 +165,7 @@ export default {
     error_emptyresult_title: "مجموعة بيانات فارغة",
     error_emptyresult_detail: "لم يُرجع الاستعلام أي عناصر. حاول مرة أخرى بمعلمات مختلفة.",
     count_rows: "{{n}} صف",
-    count_rows_plural: "{{n}} صفوف",
+    count_rows_plural: "{{n}} صفوف"
   },
   selectlevel_placeholder: "مستوى...",
   selectmeasure_placeholder: "مقياس...",
@@ -177,7 +174,7 @@ export default {
     tab_label: "جدول البيانات",
     numeral_format: "تنسيق الأرقام",
     sort_asc: "ترتيب تصاعدي",
-    sort_desc: "ترتيب تنازلي",
+    sort_desc: "ترتيب تنازلي"
   },
   transfer_input: {
     count_hidden: "{{n}} عنصر مخفي",
@@ -188,7 +185,56 @@ export default {
     select_filtered: "تحديد المصفاة",
     unselect_filtered: "إلغاء تحديد المصفاة",
     selected_items: "العناصر المحددة",
-    unselected_items: "العناصر غير المحددة",
+    unselected_items: "العناصر غير المحددة"
   },
-  vizbuilder: enTranslationDict.vizbuilder,
+  // vizbuilder: enTranslationDict.vizbuilder,
+  vizbuilder: {
+    action_close: "اغلاق",
+    action_share: "مشاركة",
+    share_copied: "تم النسخ",
+    action_enlarge: "تكبير",
+    action_fileissue: "إبلاغ عن مشكلة",
+    action_retry: "إعادة تنفيذ",
+    aggregator: {
+      average: "متوسط {{measure}}",
+      max: "أقصى {{measure}}",
+      min: "أدنى {{measure}}",
+      sum: "{{measure}}"
+    },
+    chart_labels: {
+      ci: "فترة الثقة",
+      moe: "الخطأ المتراكم",
+      source: "المصدر",
+      collection: "المجموعة"
+    },
+    error: {
+      detail: "",
+      message: 'Details: "{{message}}".',
+      title: "خطأ"
+    },
+    list: {
+      join: ", ",
+      suffix: "{{rest}}, و {{item}}",
+      prefix: "{{list}}",
+      n_more: "{{n}} أكثر"
+    },
+    title: {
+      main_on_period: "{{values}} بواسطة {{series}} خلال {{time_period}}",
+      main_over_period: "{{values}} بواسطة {{series}} خلال {{time}}",
+      main: "{{values}} بواسطة {{series}}",
+      measure_on_period: "{{measure}} خلال {{period}}",
+      measure_over_period: "{{values}} خلال {{time}}",
+      nonidealstate: "لا يوجد نتائج",
+      series_members: "{{series}} ({{members}})",
+      series: "{{series}}",
+      time_range: "في {{from}}-{{to}}",
+      total: "المجموع: {{value}}"
+    },
+    transient: {
+      title_loading: "يتم إنشاء الرسوم البيانية...",
+      title_empty: "لا يوجد نتائج",
+      description_empty:
+        "لا يمكن استخدام الاستعلام الحالي لإنشاء مجموعة من الرسوم البيانية. حاول تغيير بعض المعلمات (ربما بتطبيق بعض القيود على عمود) وإعادة إنشاء الرسوم البيانية."
+    }
+  }
 };

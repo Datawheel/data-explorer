@@ -449,7 +449,7 @@ export function useTable({
     handlerCreateMeasure
   ]);
 
-  const {isLoading, isFetching, isError, data, error} = useTableData({
+  const {isLoading, isFetching, isError, data} = useTableData({
     columns: finalUniqueKeys,
     pagination,
     cube: cube.name

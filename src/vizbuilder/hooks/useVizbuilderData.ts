@@ -1,6 +1,6 @@
 import {useSelector} from "react-redux";
 
-import {selectCurrentQueryItem, selectLocale} from "../../state/queries";
+import {selectCurrentQueryItem} from "../../state/queries";
 
 import {useFetchQuery} from "../../hooks/useQueryApi";
 

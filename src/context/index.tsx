@@ -22,18 +22,17 @@ function AppProviders({children}: AppProvidersProps) {
   const queryItem = useSelector(selectCurrentQueryItem);
   const actions = useActions();
   const isInitialMount = useRef(true);
-  const {translate: t, locale, setLocale} = useTranslation();
+  const {setLocale} = useTranslation();
 
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false;
       return;
     }
-
     actions.updateLocale(defaultLocale);
     updateUrl({...queryItem, params: {...queryItem.params, locale: defaultLocale}});
     setLocale(defaultLocale);
-  }, [defaultLocale, setLocale]);
+  }, [defaultLocale, setLocale, actions]);
 
   return (
     <QueryClientProvider client={queryClient}>

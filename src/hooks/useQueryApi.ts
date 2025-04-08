@@ -30,22 +30,22 @@ import {selectCurrentQueryItem} from "../state/queries";
 
 export function useServerSchema() {
   const {tesseract} = useLogicLayer();
-  const {serverURL, defaultDataLocale} = useSettings();
+  const {serverURL, defaultLocale} = useSettings();
 
   return useQuery({
-    queryKey: ["schema", serverURL, defaultDataLocale],
+    queryKey: ["schema", serverURL, defaultLocale],
     queryFn: async () => {
       const search = new URLSearchParams(location.search);
-      const locale = search.get("locale");
+      const locale = defaultLocale || search.get("locale") || undefined;
 
       try {
-        const schema = await tesseract.fetchSchema({locale: locale || defaultDataLocale});
+        const schema = await tesseract.fetchSchema({locale});
         const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
         const cubeMap = keyBy(cubes, "name");
 
         return {
           cubeMap,
-          locale: defaultDataLocale || schema.default_locale,
+          locale: defaultLocale || schema.default_locale,
           localeOptions: schema.locales,
           online: true,
           url: serverURL
@@ -53,7 +53,7 @@ export function useServerSchema() {
       } catch (error) {
         return {
           cubeMap: {},
-          locale: defaultDataLocale || "",
+          locale: defaultLocale || "",
           localeOptions: [],
           online: false,
           url: serverURL
@@ -170,13 +170,20 @@ export function useFetchQuery(
           request.limit = "0,0";
         }
 
-        const response = await tesseract.fetchData({request, format: "jsonrecords"});
+        const response = await tesseract.fetchData({
+          request,
+          format: "jsonrecords"
+        });
         const content: TesseractDataResponse = await response.json();
 
         if (!response.ok) {
           throw new Error(`Backend Error: ${content.detail}`);
         }
-        const cubeData = await tesseract.fetchCube({cube: queryParams.cube, locale: queryParams.locale});
+        const cubeData = await tesseract.fetchCube({
+          cube: queryParams.cube,
+          locale: queryParams.locale
+        });
+
         return {
           data: content.data,
           page: content.page,
