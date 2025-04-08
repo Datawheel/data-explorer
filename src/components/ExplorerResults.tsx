@@ -271,8 +271,8 @@ function SuccessResult(
                   panelKey={`${panelKey}-${panelMeta}`}
                   cube={cube}
                   params={params}
-                  result={result as QueryResult<TData>}
                   data={data as TData[]}
+                  result={result}
                   table={table}
                   isError={isError}
                   isLoading={isLoading}

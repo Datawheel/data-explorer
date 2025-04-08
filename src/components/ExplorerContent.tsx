@@ -81,8 +81,3 @@ export function ExplorerContent(props: {
     </div>
   );
 }
-
-// const serverConfig = useMemo(() => {
-//   return props.serverConfig !== undefined ? props.serverConfig : {};
-// }, [props.serverConfig]);
-// useSetup(props.serverURL, serverConfig, props.defaultDataLocale, props.defaultCube);
