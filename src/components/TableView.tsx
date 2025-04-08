@@ -337,7 +337,7 @@ export function useTableData({pagination}: useTableDataType) {
   const queryLink = queryItem.link;
   const pageSize = pagination.pageSize;
   const pageIndex = pagination.pageIndex;
-  
+
   const query = useFetchQuery(queryItem.params, queryLink, {
     limit: pageSize,
     offset: pageIndex * pageSize
@@ -496,7 +496,6 @@ export function useTable({
       maxSize: 50,
       size: 50
     };
-    
 
     const columnsDef = finalKeys.map(column => {
       const {
@@ -795,7 +794,7 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-                    
+
                     const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({
@@ -896,7 +895,6 @@ const ColumnFilterCell = ({
   table?: MRT_TableInstance<TData>;
   isNumeric: boolean;
 }) => {
-  header;
   const filterVariant = header.column.columnDef.filterVariant;
   const isMulti = filterVariant === "multi-select";
 
@@ -941,6 +939,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
   const label = header.column.id;
+  const localeLabel = header.column.columnDef.header;
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
   const {idFormatters} = useidFormatters();
@@ -991,7 +990,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
             newQuery.params.cuts[cut.key] = {...newCut, members: value};
             debouncedUpdateUrl(newQuery);
           }}
-          placeholder={t("params.filter_by", {name: label})}
+          placeholder={t("params.filter_by", {name: localeLabel})}
           value={cut.members || []}
           data={drilldown.members.map(m => {
             const idFormatter = idFormatters[`${label} ID`];
