@@ -523,10 +523,8 @@ export function useTable({
         header,
         enableHiding: true,
         accessorFn: (row: TData) => row[columnKey],
+        // This functions is not being used. Manual sorting is enabled.
         sortingFn: (rowA, rowB, columnId) => {
-          console.log("rowA", rowA);
-          console.log("rowB", rowB);
-          console.log("columnId", columnId);
           if (rowA.original[columnId] < rowB.original[columnId]) {
             return -1;
           }
@@ -549,7 +547,6 @@ export function useTable({
                       size={22}
                       ml={rem(5)}
                       onClick={() => {
-                        console.log("Sorting icon clicked for column:", entity.name);
                         if (!isSorted) {
                           actions.updateSorting({key: entity.name, dir: "desc"});
                           const newQuery = buildQuery(_.cloneDeep(queryItem));
