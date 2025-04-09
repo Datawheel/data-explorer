@@ -481,7 +481,6 @@ export function useTable({
   const {translate: t} = useTranslation();
   const {getFormat, getFormatter} = useFormatter();
   const {idFormatters} = useidFormatters();
-
   const {sortKey, sortDir} = useSelector(selectSortingParams);
 
   const columns = useMemo<CustomColumnDef<TData>[]>(() => {
@@ -525,6 +524,9 @@ export function useTable({
         enableHiding: true,
         accessorFn: (row: TData) => row[columnKey],
         sortingFn: (rowA, rowB, columnId) => {
+          console.log("rowA", rowA);
+          console.log("rowB", rowB);
+          console.log("columnId", columnId);
           if (rowA.original[columnId] < rowB.original[columnId]) {
             return -1;
           }
@@ -547,14 +549,41 @@ export function useTable({
                       size={22}
                       ml={rem(5)}
                       onClick={() => {
+                        console.log("Sorting icon clicked for column:", entity.name);
                         if (!isSorted) {
                           actions.updateSorting({key: entity.name, dir: "desc"});
+                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          updateURL({
+                            ...newQuery,
+                            params: {
+                              ...newQuery.params,
+                              sortKey: `${entity.name}`,
+                              sortDir: "desc"
+                            }
+                          });
                         }
                         if (isSorted && sortDir === "desc") {
                           actions.updateSorting({key: entity.name, dir: "asc"});
+                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          updateURL({
+                            ...newQuery,
+                            params: {
+                              ...newQuery.params,
+                              sortKey: `${entity.name}`,
+                              sortDir: "asc"
+                            }
+                          });
                         }
                         if (isSorted && sortDir === "asc") {
                           actions.clearSorting();
+                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          updateURL({
+                            ...newQuery,
+                            params: {
+                              ...newQuery.params,
+                              sortKey: undefined
+                            }
+                          });
                         }
                       }}
                     >
