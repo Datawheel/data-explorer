@@ -116,15 +116,39 @@ const removeColumn = (
   entity: TesseractMeasure | TesseractProperty | TesseractLevel,
   measures: MeasureItem[],
   drilldowns: DrilldownItem[],
-  type: EntityTypes
+  type: EntityTypes,
+  queryItem: QueryItem,
+  updateURL: (queryItem: QueryItem) => void
 ) => {
+  const newQuery = buildQuery(_.cloneDeep(queryItem));
+
   if ("aggregator" in entity) {
     const measure = measures.find(d => d.name === entity.name);
-    measure && actions.updateMeasure({...measure, active: false});
+    if (measure) {
+      const newMeasure = {...measure, active: false};
+      actions.updateMeasure(newMeasure);
+      newQuery.params.measures[newMeasure.name] = newMeasure;
+      updateURL({
+        ...newQuery,
+        params: {
+          ...newQuery.params
+        }
+      });
+    }
   }
   if ("depth" in entity) {
     const drilldown = drilldowns.find(d => d.level === entity.name);
-    drilldown && actions.updateDrilldown({...drilldown, active: false});
+    if (drilldown) {
+      const newDrilldown = {...drilldown, active: false};
+      actions.updateDrilldown(newDrilldown);
+      newQuery.params.drilldowns[newDrilldown.key] = newDrilldown;
+      updateURL({
+        ...newQuery,
+        params: {
+          ...newQuery.params
+        }
+      });
+    }
   }
 
   if (isProperty(type)) {
@@ -592,8 +616,18 @@ export function useTable({
                   <CustomActionIcon
                     label={`At least one ${getEntityText(entityType)} is required.`}
                     key={`remove-${column.columnDef.header}`}
-                    disabled={!showTrashIcon(finalKeys, entityType)}
-                    onClick={() => removeColumn(actions, entity, measures, drilldowns, entityType)}
+                    disabled={!showTrashIcon(finalKeys, entityType) || isLoading || isFetching}
+                    onClick={() => {
+                      removeColumn(
+                        actions,
+                        entity,
+                        measures,
+                        drilldowns,
+                        entityType,
+                        queryItem,
+                        updateURL
+                      );
+                    }}
                     showTooltip={!showTrashIcon(finalKeys, entityType)}
                     size={25}
                     ml={rem(5)}

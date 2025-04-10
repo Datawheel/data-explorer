@@ -34,11 +34,10 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
-  const {paginationConfig, measuresActive, serverURL,  defaultLocale} = useSettings();
+  const {paginationConfig, measuresActive, serverURL, defaultLocale} = useSettings();
   const {data: schema, isLoading: schemaLoading, isError: schemaError} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
-
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
@@ -64,18 +63,27 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
       newQuery.params.locale = defaultLocale || newQuery.params.locale;
+
       if (newQuery) {
         const promises = Object.values(newQuery.params.drilldowns).map(dd => {
-          return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
-            const cut = buildCut({...dd, active: false});
-            return {
-              drilldown: {
-                ...dd,
-                members: levelMeta.members
-              },
-              cut
-            };
-          });
+          const currentDrilldown = queryItem.params.drilldowns[dd.key];
+          if (currentDrilldown && currentDrilldown.members && currentDrilldown.members.length > 0) {
+            return Promise.resolve({
+              drilldown: currentDrilldown,
+              cut: buildCut({...currentDrilldown, active: false})
+            });
+          } else {
+            return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
+              const cut = buildCut({...dd, active: false});
+              return {
+                drilldown: {
+                  ...dd,
+                  members: levelMeta.members
+                },
+                cut
+              };
+            });
+          }
         });
 
         runFetchMembers(Promise.all(promises)).then(data => {
