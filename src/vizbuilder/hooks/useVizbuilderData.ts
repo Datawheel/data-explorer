@@ -1,7 +1,5 @@
 import {useSelector} from "react-redux";
-
 import {selectCurrentQueryItem} from "../../state/queries";
-
 import {useFetchQuery} from "../../hooks/useQueryApi";
 
 export function useVizbuilderData() {

@@ -11,8 +11,6 @@ import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {filterMap} from "../utils/array";
 import {describeData, getOrderValue, getValues} from "../utils/object";
 import {
-  type QueryResult,
-  buildCut,
   buildDrilldown,
   buildMeasure,
   buildProperty,

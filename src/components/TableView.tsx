@@ -653,7 +653,7 @@ export function useTable({
             }
           : ({cell, renderedCellValue, row}) => {
               const cellId = row.original[`${cell.column.id} ID`];
-              const idFormatter = idFormatters[`${cell.column.id} ID`];
+              const idFormatter = idFormatters[`${column.localeLabel} ID`];
 
               return (
                 <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
@@ -784,6 +784,7 @@ export function useTable({
     table,
     isError,
     isLoading,
+    isFetching,
     data: tableData,
     columns,
     pagination,
@@ -1053,7 +1054,7 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           placeholder={t("params.filter_by", {name: localeLabel})}
           value={cut.members || []}
           data={drilldown.members.map(m => {
-            const idFormatter = idFormatters[`${label} ID`];
+            const idFormatter = idFormatters[`${localeLabel} ID`];
             const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
             return {
               value: `${m.key}`,

@@ -1,6 +1,13 @@
 import React, {useMemo} from "react";
 import {createRoot} from "react-dom/client";
-import {Explorer, PivotView, TableView, TourStep, VizbuilderView} from "../src/main";
+import {
+  Explorer,
+  PivotView,
+  TableView,
+  TourStep,
+  VizbuilderView,
+  RawResponseView
+} from "../src/main";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
 import {Box, Center, Image} from "@mantine/core";
@@ -136,7 +143,8 @@ function App() {
             panels={[
               {key: "table", label: "Data Table", component: TableView},
               {key: "matrix", label: "Pivot Table", component: PivotView},
-              {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView}
+              {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView},
+              {key: "raw", label: "Raw Response", component: RawResponseView}
             ]}
             tourConfig={{
               introImage: (

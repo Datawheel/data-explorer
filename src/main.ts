@@ -8,12 +8,13 @@ export {
   TranslationConsumer,
   type Translation as TranslationDict,
   defaultTranslation as translationDict,
-  useTranslation,
+  useTranslation
 } from "./hooks/translation";
+
 export {
   type ExplorerState,
   reducer as explorerReducer,
-  thunkExtraArg as explorerThunkExtraArg,
+  thunkExtraArg as explorerThunkExtraArg
 } from "./state";
 export type {ViewProps} from "./utils/types";
 
@@ -23,3 +24,5 @@ export {VizbuilderView} from "./vizbuilder";
 // Tour
 export {default as TourStep} from "./components/tour/TourStep";
 export type {ExplorerStepType} from "./components/tour/types";
+
+export {RawResponseView} from "./components/RawResponseView";

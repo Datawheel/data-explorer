@@ -199,9 +199,10 @@ function SuccessResult(
     updateUrl({...queryItem, panel: newTab});
   };
 
-  const {table, isError, isLoading, data, columns, result, pagination, setPagination} = useTable({
-    cube
-  });
+  const {table, isError, isLoading, data, columns, result, pagination, isFetching, setPagination} =
+    useTable({
+      cube
+    });
 
   if (data?.length === 0 && !isLoading && !isError) {
     return (
@@ -279,6 +280,7 @@ function SuccessResult(
                   columns={columns}
                   pagination={pagination}
                   setPagination={setPagination}
+                  isFetching={isFetching}
                 />
               </Box>
             </Flex>

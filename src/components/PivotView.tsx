@@ -6,12 +6,10 @@ import {
   type MRT_TableOptions as TableOptions
 } from "mantine-react-table";
 import React, {forwardRef, useMemo, useState} from "react";
-import {useSelector} from "react-redux";
 import {Aggregator} from "../api";
 import {mapDimensionHierarchyLevels} from "../api/traverse";
 import {useFormatParams, usePivottedData} from "../hooks/pivot";
 import {useTranslation} from "../hooks/translation";
-import {selectOlapMeasureMap} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import {getCaption} from "../utils/string";
 import {keyBy} from "../utils/transform";
@@ -21,6 +19,7 @@ import {ButtonDownload} from "./ButtonDownload";
 import {NonIdealState} from "./NonIdealState";
 import {SelectObject} from "./Select";
 import type {SelectObjectProps} from "./Select";
+import {useServerSchema} from "../hooks/useQueryApi";
 
 type DrilldownType = "geo" | "standard" | "time" | "prop";
 type VoidFunction = (...args) => void;
@@ -65,14 +64,15 @@ export function PivotView<TData extends Record<string, unknown>>(
   props: {} & ViewProps<TData> & TableOptions<TData>
 ) {
   const {cube, params, result, isLoading, ...mantineReactTableProps} = props;
-  if (!result) return null;
+  console.log("PivotView", props);
 
   const locale = params.locale;
-
   const {translate: t} = useTranslation();
+  const {data: schema} = useServerSchema();
+  const measures = schema?.cubeMap[cube.name]?.measures;
+  if (!result || !measures) return null;
 
-  const measureMap = useSelector(selectOlapMeasureMap);
-
+  const measureMap = Object.fromEntries(measures.map(item => [item.name, item]));
   const {classes, cx} = useStyles();
 
   const measureOptions = useMemo(
