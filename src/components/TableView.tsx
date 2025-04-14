@@ -811,7 +811,7 @@ export function TableView({
   const isData = Boolean(table.getRowModel().rows.length);
   const viewport = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLTableRowElement>(null);
-  const url = result?.url;
+  const url = result?.url || "";
   useEffect(() => {
     viewport.current?.scrollTo({top: 0, behavior: "smooth"});
   }, [pagination?.pageIndex, pagination?.pageSize]);
