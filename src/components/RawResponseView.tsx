@@ -19,9 +19,6 @@ export function RawResponseView(props) {
   const {result, isLoading, isFetching} = props;
   //   const [user] = useUser();
   //   const {t} = useTranslation("explorer");
-
-  console.log(result);
-
   const theme = useMantineTheme();
   const token = "tokenValue";
 
