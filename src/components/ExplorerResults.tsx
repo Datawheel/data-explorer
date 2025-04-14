@@ -29,7 +29,6 @@ import Toolbar from "./Toolbar";
 // import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useUpdateUrl} from "../hooks/permalink";
-import type {MRT_TableInstance, MRT_ColumnDef, MRT_PaginationState} from "mantine-react-table";
 import {useQueryItem} from "../context/query";
 
 const useStyles = createStyles(() => ({
@@ -244,7 +243,7 @@ function SuccessResult(
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {(!queryItem.panel || queryItem.panel === "table") && (
             <Group sx={{display: "flex", flex: "0 1 auto", gap: "0.5rem"}} mr="sm" noWrap>
-              {props.table && <Toolbar table={props.table} fullscreen={fullscreen} />}
+              {table && <Toolbar table={table} fullscreen={fullscreen} />}
               <AddColumnsDrawer />
             </Group>
           )}
