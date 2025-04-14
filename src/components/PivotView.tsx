@@ -64,7 +64,6 @@ export function PivotView<TData extends Record<string, unknown>>(
   props: {} & ViewProps<TData> & TableOptions<TData>
 ) {
   const {cube, params, result, isLoading, ...mantineReactTableProps} = props;
-  console.log("PivotView", props);
 
   const locale = params.locale;
   const {translate: t} = useTranslation();

@@ -20,6 +20,7 @@ interface QueryContextProps {
   onChangeCube: (table: string, subtopic: string) => void;
   schemaLoading: boolean;
   membersLoading: boolean;
+  transintionLocaleLoading: boolean;
 }
 
 const QueryContext = createContext<QueryContextProps | undefined>(undefined);
@@ -38,6 +39,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const {data: schema, isLoading: schemaLoading, isError: schemaError} = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
+  const prevLocaleRef = useRef<string | undefined>();
 
   function fetchMembers(level: string, localeStr?: string, cubeName?: string) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
@@ -55,7 +57,12 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     }>
   >();
 
+  const [transintionLocaleLoading, setTransintionLocaleLoading] = React.useState(false);
+
   useEffect(() => {
+    if (schemaLoading) {
+      setTransintionLocaleLoading(true);
+    }
     const searchParams = new URLSearchParams(location.search);
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
@@ -67,7 +74,13 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       if (newQuery) {
         const promises = Object.values(newQuery.params.drilldowns).map(dd => {
           const currentDrilldown = queryItem.params.drilldowns[dd.key];
-          if (currentDrilldown && currentDrilldown.members && currentDrilldown.members.length > 0) {
+          const localeChanged = prevLocaleRef.current !== newQuery?.params.locale;
+          if (
+            currentDrilldown &&
+            currentDrilldown.members &&
+            currentDrilldown.members.length > 0 &&
+            !localeChanged
+          ) {
             return Promise.resolve({
               drilldown: currentDrilldown,
               cut: buildCut({...currentDrilldown, active: false})
@@ -87,6 +100,9 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         });
 
         runFetchMembers(Promise.all(promises)).then(data => {
+          setTransintionLocaleLoading(false);
+          prevLocaleRef.current = newQuery?.params.locale;
+
           const drilldowns = data.map(item => item.drilldown);
           const cuts = data.map(item => item.cut);
 
@@ -111,7 +127,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
     }
-  }, [location.search, runFetchMembers, schema, serverURL, defaultLocale]);
+  }, [location.search, runFetchMembers, schema, schemaLoading, serverURL, defaultLocale]);
 
   const onChangeCube = (table: string, subtopic: string) => {
     const locale = defaultLocale || queryItem.params.locale;
@@ -169,7 +185,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       value={{
         onChangeCube,
         schemaLoading,
-        membersLoading
+        membersLoading,
+        transintionLocaleLoading
       }}
     >
       {children}

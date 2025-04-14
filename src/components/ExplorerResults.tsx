@@ -30,6 +30,7 @@ import Toolbar from "./Toolbar";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useUpdateUrl} from "../hooks/permalink";
 import type {MRT_TableInstance, MRT_ColumnDef, MRT_PaginationState} from "mantine-react-table";
+import {useQueryItem} from "../context/query";
 
 const useStyles = createStyles(() => ({
   container: {
@@ -57,6 +58,7 @@ export function ExplorerResults(props: {
     isError: schemaError,
     error: schemaErrorDetail
   } = useServerSchema();
+  const {transintionLocaleLoading} = useQueryItem();
   const {params} = useSelector(selectCurrentQueryItem);
   const cubeMap = schema?.cubeMap || {};
   const cube = cubeMap[params.cube];
@@ -100,7 +102,7 @@ export function ExplorerResults(props: {
   // check is loading
   // use set loading when seraching members.
 
-  if (isServerOnline == null || !cube) {
+  if (isServerOnline == null || !cube || schemaLoading || transintionLocaleLoading) {
     return (
       <Paper
         className={cx(classes.container, props.className)}
