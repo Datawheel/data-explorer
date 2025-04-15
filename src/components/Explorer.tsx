@@ -205,12 +205,11 @@ export function ExplorerComponent<Locale extends string>(props: {
         serverURL={props.serverURL}
         defaultLocale={defaultLocale}
         translations={props.translations}
-        // defaultDataLocale={props.defaultDataLocale}
+        defaultCube={props.defaultCube}
       >
         <AppProviders>
           <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
             <ExplorerContent
-              defaultCube={props.defaultCube}
               defaultOpenParams={defaultOpenParams}
               height={height}
               panels={panels}

@@ -132,6 +132,7 @@ function App() {
             // defaultCube="gastat_gdp"
             // locale={settings.locale}
             // defaultDataLocale={settings.locale}
+            defaultCube="mot_number_of_overnight_stays_by_tourists_type"
             defaultLocale={settings.locale}
             measuresActive={5}
             serverURL={settings.server.value}

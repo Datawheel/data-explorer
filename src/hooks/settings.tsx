@@ -101,7 +101,14 @@ export function SettingsProvider(props: {
       defaultLocale: props.defaultLocale,
       locale: locale || props.defaultLocale
     }),
-    [props.formatters, props.previewLimit, props.toolbarConfig, locale, props.defaultLocale]
+    [
+      props.formatters,
+      props.previewLimit,
+      props.toolbarConfig,
+      locale,
+      props.defaultLocale,
+      props.defaultCube
+    ]
   );
 
   return (
