@@ -1054,9 +1054,10 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           data={drilldown.members.map(m => {
             const idFormatter = idFormatters[`${localeLabel} ID`];
             const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
+            const key = formattedKey ? `(${formattedKey})` : formattedKey;
             return {
               value: `${m.key}`,
-              label: m.caption ? `${m.caption} (${formattedKey})` : `${formattedKey}`
+              label: m.caption ? `${m.caption} ${key}` : `${key}`
             };
           })}
           clearButtonProps={{"aria-label": "Clear selection"}}
