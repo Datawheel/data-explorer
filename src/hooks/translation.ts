@@ -206,7 +206,7 @@ const explorerTranslation = {
       },
       locale: {
         title: "Multilingual",
-        text1: "The Data Explorer makes data available multiple languages.",
+        text1: "The Data Explorer makes data available in multiple languages.",
         text2: "Use the dropdown menu to change the output language of the data."
       },
       dataset: {

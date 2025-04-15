@@ -436,9 +436,10 @@ function LevelItem({
               data={currentDrilldown.members.map(m => {
                 const idFormatter = idFormatters[`${label} ID`];
                 const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
+                const key = formattedKey ? `(${formattedKey})` : formattedKey;
                 return {
                   value: `${m.key}`,
-                  label: m.caption ? `${m.caption} (${formattedKey})` : `${formattedKey}`
+                  label: m.caption ? `${m.caption} ${key}` : `${key}`
                 };
               })}
               clearable
