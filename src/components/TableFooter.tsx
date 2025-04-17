@@ -7,7 +7,7 @@ import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
 import {useClickOutside, useClipboard} from "@mantine/hooks";
 import {ActionIcon, Box, Button, Flex, Group, Loader, Menu, Text} from "@mantine/core";
-import {TesseractFormat} from "../api";
+import {Format} from "../api/enum";
 import {useAsync} from "../hooks/useAsync";
 import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
@@ -142,7 +142,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 
 const DownloadQuery = ({data}) => {
   const {translate: t} = useTranslation();
-  const formats = Object.values(TesseractFormat);
+  const formats = Object.values(Format);
   const components: ReactNode[] = [];
   const {mutateAsync: downloadQuery} = useDownloadQuery();
 
@@ -173,10 +173,10 @@ const DownloadQuery = ({data}) => {
 
 const mimeTypes = {
   csv: "text/csv",
-  json: "application/json",
+  jsonrecords: "application/json",
   tsv: "text/tab-separated-values",
-  txt: "text/plain",
-  xls: "application/vnd.ms-excel"
+  parquet: "application/octet-stream",
+  xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 };
 
 function useDownload(props) {
@@ -220,12 +220,12 @@ function useDownload(props) {
   }, [error]);
 
   const onClick = useCallback(
-    evt => {
+    (evt, cb = () => {}) => {
       evt.stopPropagation();
       evt.preventDefault();
-      return run(provider());
+      return run(provider()).then(cb);
     },
-    [run, provider]
+    [run]
   );
 
   return {onClick, isLoading, data: file, error};
@@ -248,16 +248,13 @@ const ItemDownload = props => {
     <Menu.Item
       {...itemProps}
       icon={icon(isLoading)}
-      onClick={e => {
-        e.preventDefault();
-        onClick(e)
-          .then(() => {
-            setOpened(false);
-          })
-          .catch(error => {
-            console.error("Download error:", error);
-            setOpened(false);
-          });
+      onClick={async e => {
+        try {
+          onClick(e, () => setOpened(false));
+        } catch (error) {
+          console.error("Download error:", error);
+          setOpened(false);
+        }
       }}
     >
       <Text fz="sm">{props.children}</Text>
@@ -266,31 +263,29 @@ const ItemDownload = props => {
 };
 
 type MenuOptsProps = {
-  formats: TesseractFormat[];
+  formats: Format[];
 };
+
 function MenuOpts({formats}: MenuOptsProps) {
   const {translate: t} = useTranslation();
   const [opened, setOpened] = useState(false);
 
   const {mutateAsync: downloadQuery} = useDownloadQuery();
 
-  const buttons = useMemo(
-    () =>
-      formats.map(format => (
-        <ItemDownload
-          component="a"
-          key={format}
-          provider={() => downloadQuery({format})}
-          icon={loading => (loading ? <Loader size={15} /> : <IconDownload size={15} />)}
-          setOpened={setOpened}
-        >
-          <Text size={"xs"}>{t(`formats.${format}`)}</Text>
-        </ItemDownload>
-      )),
-    [formats, t]
-  );
+  const buttons = formats.map(format => (
+    <ItemDownload
+      component="a"
+      key={format}
+      provider={() => downloadQuery({format})}
+      icon={loading => (loading ? <Loader size={15} /> : <IconDownload size={15} />)}
+      setOpened={setOpened}
+    >
+      <Text size={"xs"}>{t(`formats.${format}`)}</Text>
+    </ItemDownload>
+  ));
+
   return (
-    <Menu shadow="md" width={200} opened={opened} onClose={() => setOpened(false)}>
+    <Menu shadow="md" width={200} opened={opened}>
       <Menu.Target>
         <ActionIcon
           onClick={() => setOpened(o => !o)}
@@ -303,14 +298,6 @@ function MenuOpts({formats}: MenuOptsProps) {
         >
           <IconDotsVertical size="0.8rem" />
         </ActionIcon>
-        {/* <Button
-          onClick={() => setOpened(o => !o)}
-          variant="filled"
-          color="dark"
-          sx={{height: 30, backgroundColor: "#5A5A5A"}}
-        >
-          All
-        </Button> */}
       </Menu.Target>
       <Menu.Dropdown>
         <Menu.Label>{t("params.title_downloaddata")}</Menu.Label>
