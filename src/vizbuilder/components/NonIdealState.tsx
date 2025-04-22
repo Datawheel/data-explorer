@@ -3,9 +3,7 @@ import {IconCircleOff} from "@tabler/icons-react";
 import React, {useMemo} from "react";
 import {useTranslation} from "../../hooks/translation";
 
-export function NonIdealState(props: {
-  status: "loading" | "empty";
-}) {
+export function NonIdealState(props: {status: "loading" | "empty" | "one-row"}) {
   const {status} = props;
 
   const {translate: t} = useTranslation();
@@ -21,6 +19,18 @@ export function NonIdealState(props: {
         </Flex>
       );
     }
+
+    if (status === "one-row") {
+      return (
+        <Flex justify="center" align="center" direction="column" w="50%">
+          <IconCircleOff size={92} />
+          <Title mt="md" mb="md" order={4}>
+            {t("vizbuilder.transient.title_one_row")}
+          </Title>
+        </Flex>
+      );
+    }
+
     return (
       <Flex justify="center" align="center" direction="column" w="50%">
         <IconCircleOff size={92} />
