@@ -13,13 +13,11 @@ import {
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
 import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
-import React, {Suspense, useCallback, useMemo} from "react";
+import React, {Suspense, useMemo} from "react";
 import {useSelector} from "react-redux";
-import type {TesseractCube} from "../api";
 import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
-import type {QueryParams, QueryResult} from "../utils/structs";
 import type {PanelDescriptor, ViewProps} from "../utils/types";
 import AddColumnsDrawer from "./DrawerMenu";
 import {ExplorerTabs} from "./ExplorerTabs";
