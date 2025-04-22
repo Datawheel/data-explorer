@@ -4,7 +4,7 @@ import {
   type ChartType,
   type D3plusConfig,
   type Dataset,
-  generateCharts,
+  generateCharts
 } from "@datawheel/vizbuilder";
 import {Modal, SimpleGrid} from "@mantine/core";
 import cls from "clsx";
@@ -125,16 +125,19 @@ export function Vizbuilder(props: {
     nonIdealState,
     showConfidenceInt,
     topojsonConfig,
-    userConfig,
+    userConfig
   } = props;
 
   const queryItem = useSelector(selectCurrentQueryItem);
   const currentChart = queryItem?.chart || "";
   const {actions} = useSettings();
 
-  const setCurrentChart = useCallback((chart: string) => {
-    actions.updateChart(chart);
-  }, [actions]);
+  const setCurrentChart = useCallback(
+    (chart: string) => {
+      actions.updateChart(chart);
+    },
+    [actions]
+  );
 
   // Normalize measureConfig to function type
   const getMeasureConfig = useMemo(() => {
@@ -154,7 +157,7 @@ export function Vizbuilder(props: {
       chartLimits: chartLimits as ChartLimits | undefined,
       chartTypes,
       datacap,
-      getTopojsonConfig,
+      getTopojsonConfig
     });
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
@@ -163,18 +166,25 @@ export function Vizbuilder(props: {
     const Notice = nonIdealState || NonIdealState;
 
     const isLoading = castArray(datasets).some(
-      dataset => Object.keys(dataset.columns).length === 0,
+      dataset => Object.keys(dataset.columns).length === 0
     );
     if (isLoading) {
       console.debug("Loading datasets...", datasets);
       return <Notice status="loading" />;
     }
 
-    const chartList = Object.values(charts);
+    let chartList = Object.values(charts);
 
+    if (chartList.length === 0 && !Array.isArray(datasets) && datasets.data.length === 1)
+      return <Notice status="one-row" />;
     if (chartList.length === 0) return <Notice status="empty" />;
 
     const isSingleChart = chartList.length === 1;
+
+    // Limit the number of charts to 10. Short term fix for performance issues, foreing trade.
+    if (chartList.length > 10) {
+      chartList = chartList.slice(0, 10);
+    }
 
     return (
       <ErrorBoundary>
@@ -183,7 +193,7 @@ export function Vizbuilder(props: {
             {minWidth: "xs", cols: 1},
             {minWidth: "md", cols: 2},
             {minWidth: "lg", cols: 3},
-            {minWidth: "xl", cols: 4},
+            {minWidth: "xl", cols: 4}
           ]}
           className={cls({unique: isSingleChart})}
         >
@@ -208,7 +218,7 @@ export function Vizbuilder(props: {
     getMeasureConfig,
     nonIdealState,
     showConfidenceInt,
-    userConfig,
+    userConfig
   ]);
 
   const focusContent = useMemo(() => {
@@ -228,20 +238,14 @@ export function Vizbuilder(props: {
         isFullMode
       />
     );
-  }, [
-    charts,
-    currentChart,
-    downloadFormats,
-    getMeasureConfig,
-    showConfidenceInt,
-    userConfig,
-  ]);
+  }, [charts, currentChart, downloadFormats, getMeasureConfig, showConfidenceInt, userConfig]);
 
   return (
     <div style={{height: "100%"}} className={cls("vb-wrapper", props.className)}>
       {props.customHeader}
       {content}
       {props.customFooter}
+
       <Modal
         centered
         onClose={useCallback(() => setCurrentChart(""), [])}
@@ -250,7 +254,7 @@ export function Vizbuilder(props: {
         size="calc(100vw - 3rem)"
         styles={{
           content: {maxHeight: "none !important"},
-          inner: {padding: "0 !important"},
+          inner: {padding: "0 !important"}
         }}
         withCloseButton={false}
       >
