@@ -236,7 +236,6 @@ function Auto() {
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}
-      defaultValue={inputValue}
       value={inputValue}
       onInput={e => {
         setInputValue(e.currentTarget.value);
