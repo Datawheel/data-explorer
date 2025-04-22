@@ -312,6 +312,7 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
     total: "Total: {{value}}"
   },
   transient: {
+    title_one_row: "The dataset has only one row and can't be used to generate charts.",
     title_loading: "Generating charts...",
     title_empty: "No results",
     description_empty:

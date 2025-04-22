@@ -231,6 +231,7 @@ export default {
       total: "المجموع: {{value}}"
     },
     transient: {
+      title_one_row: "تحتوي مجموعة البيانات على صف واحد فقط ولا يمكن استخدامها لإنشاء رسوم بيانية.",
       title_loading: "يتم إنشاء الرسوم البيانية...",
       title_empty: "لا يوجد نتائج",
       description_empty:
