@@ -227,6 +227,7 @@ export function SideBarItem({children}: PropsWithChildren<SideBarItemProps>) {
 function Auto() {
   const {translate: t} = useTranslation();
   const {expanded, input, setInput} = useSideBar();
+  const [inputValue, setInputValue] = useState(input);
 
   return (
     <Input
@@ -235,8 +236,12 @@ function Auto() {
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}
-      defaultValue={input}
-      onInput={e => setInput(e.currentTarget.value)}
+      defaultValue={inputValue}
+      value={inputValue}
+      onInput={e => {
+        setInputValue(e.currentTarget.value);
+        setInput(e.currentTarget.value);
+      }}
       styles={{
         wrapper: {
           width: expanded ? "100%" : 0,
@@ -251,7 +256,10 @@ function Auto() {
       rightSection={
         <CloseButton
           aria-label="Clear input"
-          onClick={() => setInput("")}
+          onClick={() => {
+            setInput("");
+            setInputValue("");
+          }}
           style={{display: input ? undefined : "none"}}
         />
       }
