@@ -5,7 +5,7 @@ export function toPlainObject(obj): Record<string, string> {
     filterMap(Object.entries(obj), entry => {
       const value = stringify(entry[1]);
       return !value ? null : [entry[0], value];
-    }),
+    })
   );
 
   function stringify(obj: unknown): string {
@@ -30,7 +30,9 @@ export function httpFetch(url: string | URL, params: RequestInit): Promise<Respo
         if (response.status === 500) {
           throw new Error("");
         }
-        throw new Error(`Request failed with error code ${response.status}`);
+        throw new Error(
+          `${content.detail ?? `Request failed with error code ${response.status}`} `
+        );
       });
     }
     return response;

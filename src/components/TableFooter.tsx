@@ -1,12 +1,28 @@
 import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from "react";
-import {useActions, useSettings} from "../hooks/settings";
+import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {IconCopy, IconDotsVertical, IconDownload} from "@tabler/icons-react";
-import type {ViewProps} from "../main";
+import {
+  IconCopy,
+  IconDotsVertical,
+  IconDownload,
+  IconX,
+  IconAlertCircle
+} from "@tabler/icons-react";
 import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
-import {useClickOutside, useClipboard} from "@mantine/hooks";
-import {ActionIcon, Box, Button, Flex, Group, Loader, Menu, Text} from "@mantine/core";
+import {useClipboard} from "@mantine/hooks";
+import {
+  ActionIcon,
+  Box,
+  Button,
+  Flex,
+  Group,
+  Loader,
+  Menu,
+  Text,
+  Alert,
+  Paper
+} from "@mantine/core";
 import {Format} from "../api/enum";
 import {useAsync} from "../hooks/useAsync";
 import {SelectObject} from "./Select";
@@ -14,6 +30,7 @@ import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
 import {LocaleSelector} from "./LocaleSelector";
 import {useDownloadQuery} from "../hooks/useQueryApi";
+import {notifications} from "@mantine/notifications";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -144,12 +161,49 @@ const DownloadQuery = ({data}) => {
   const {translate: t} = useTranslation();
   const formats = Object.values(Format);
   const components: ReactNode[] = [];
-  const {mutateAsync: downloadQuery} = useDownloadQuery();
+  const {mutateAsync: downloadQuery, isError, error} = useDownloadQuery();
+  const [showError, setShowError] = useState(false);
+
+  useEffect(() => {
+    if (isError && error) {
+      setShowError(true);
+      const timer = setTimeout(() => {
+        setShowError(false);
+      }, 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [isError, error]);
+
+  const errorAlert =
+    isError && error && showError ? (
+      <Paper
+        sx={{
+          position: "absolute",
+          bottom: "calc(100% + 15px)",
+          right: 0,
+          minWidth: "400px",
+          maxWidth: "700px",
+          width: "fit-content",
+          zIndex: 1000
+        }}
+        shadow="md"
+      >
+        <Alert
+          icon={<IconAlertCircle size="1rem" />}
+          color="red"
+          p="xs"
+          withCloseButton
+          onClose={() => setShowError(false)}
+        >
+          {error.message}
+        </Alert>
+      </Paper>
+    ) : null;
 
   components.push(
     <ButtonDownload
       leftIcon={<IconDownload size={20} />}
-      sx={{height: 30}}
+      sx={{height: 30, position: "relative"}}
       key="download_csv"
       provider={() => downloadQuery({format: "csv"})}
     >
@@ -162,7 +216,8 @@ const DownloadQuery = ({data}) => {
   }
 
   return (
-    <Box id="dex-btn-group-download">
+    <Box id="dex-btn-group-download" sx={{position: "relative"}}>
+      {errorAlert}
       <Group spacing={"xs"}>
         {components}
         <MenuOpts formats={formats.filter(f => f !== "csv")} />
