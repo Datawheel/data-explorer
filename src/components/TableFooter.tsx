@@ -285,7 +285,13 @@ function MenuOpts({formats}: MenuOptsProps) {
   ));
 
   return (
-    <Menu shadow="md" width={200} opened={opened}>
+    <Menu
+      shadow="md"
+      width={200}
+      opened={opened}
+      onClose={() => setOpened(false)}
+      closeOnItemClick={false}
+    >
       <Menu.Target>
         <ActionIcon
           onClick={() => setOpened(o => !o)}
