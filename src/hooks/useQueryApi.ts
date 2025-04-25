@@ -123,8 +123,9 @@ export function useDownloadQuery() {
       }
 
       const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
+      const request = queryParamsToRequest(queryParams);
       const response = await tesseract.fetchData({
-        request: queryParamsToRequest(queryParams),
+        request,
         format
       });
 

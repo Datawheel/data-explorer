@@ -44,14 +44,12 @@ export function VizbuilderView(props: {cube: TesseractCube; params: QueryParams}
   };
 
   return (
-    !query.isLoading && (
-      <>
-        <Vizbuilder
-          datasets={dataset}
-          chartLimits={CHART_LIMITS}
-          downloadFormats={DOWNLOAD_FORMATS}
-        />
-      </>
-    )
+    <>
+      <Vizbuilder
+        datasets={dataset}
+        chartLimits={CHART_LIMITS}
+        downloadFormats={DOWNLOAD_FORMATS}
+      />
+    </>
   );
 }

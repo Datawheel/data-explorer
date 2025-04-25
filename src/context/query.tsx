@@ -8,7 +8,7 @@ import {isValidQuery, hasProperty} from "../utils/validation";
 import {buildCut, buildDrilldown, buildMeasure, buildProperty, buildQuery} from "../utils/structs";
 import {useActions, useSettings} from "../hooks/settings";
 import {useLogicLayer} from "../api/context";
-import {useLocation, useNavigate} from "react-router-dom";
+import {useLocation} from "react-router-dom";
 import {pickDefaultDrilldowns} from "../state/utils";
 import {getValues} from "../utils/object";
 import {getAnnotation} from "../utils/string";
@@ -71,33 +71,65 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
       newQuery.params.locale = defaultLocale || newQuery.params.locale;
 
-      if (newQuery) {
-        const promises = Object.values(newQuery.params.drilldowns).map(dd => {
-          const currentDrilldown = queryItem.params.drilldowns[dd.key];
-          const localeChanged = prevLocaleRef.current !== newQuery?.params.locale;
-          if (
-            currentDrilldown &&
-            currentDrilldown.members &&
-            currentDrilldown.members.length > 0 &&
-            !localeChanged
-          ) {
-            return Promise.resolve({
-              drilldown: currentDrilldown,
-              cut: buildCut({...currentDrilldown, active: false})
-            });
-          } else {
-            return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
-              const cut = buildCut({...dd, active: false});
-              return {
-                drilldown: {
-                  ...dd,
-                  members: levelMeta.members
-                },
-                cut
-              };
-            });
-          }
+      const dimensions: Record<string, string> = {};
+      const hierarchies: Record<string, string> = {};
+      // all levels
+      const levels = Object.fromEntries(
+        cubeMap[cube].dimensions.flatMap(dim =>
+          dim.hierarchies.flatMap(hie =>
+            hie.levels.map(lvl => {
+              dimensions[lvl.name] = dim.name;
+              hierarchies[lvl.name] = hie.name;
+              return [lvl.name, lvl];
+            })
+          )
+        )
+      );
+
+      const restDrilldownsKeys = Object.keys(levels).filter(
+        key => !newQuery.params.drilldowns[key]
+      );
+
+      const restDrilldowns = restDrilldownsKeys.map(name => {
+        const lvl = levels[name];
+        return buildDrilldown({
+          active: false,
+          key: lvl.name,
+          dimension: dimensions[name],
+          hierarchy: hierarchies[name],
+          level: name
         });
+      });
+
+      if (newQuery) {
+        const promises = [...restDrilldowns, ...Object.values(newQuery.params.drilldowns)].map(
+          dd => {
+            const currentDrilldown = queryItem.params.drilldowns[dd.key];
+            const localeChanged = prevLocaleRef.current !== newQuery?.params.locale;
+            if (
+              currentDrilldown &&
+              currentDrilldown.members &&
+              currentDrilldown.members.length > 0 &&
+              !localeChanged
+            ) {
+              return Promise.resolve({
+                drilldown: currentDrilldown,
+                cut: buildCut({...currentDrilldown, active: false})
+              });
+            } else {
+              return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
+                const cut = buildCut({...dd, active: false});
+                return {
+                  drilldown: {
+                    ...dd,
+                    members: levelMeta.members
+                  },
+                  cut
+                };
+              });
+            }
+          }
+        );
 
         runFetchMembers(Promise.all(promises)).then(data => {
           setTransintionLocaleLoading(false);
