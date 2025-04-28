@@ -274,7 +274,11 @@ function useDownload(props) {
     (evt, cb = () => {}) => {
       evt.stopPropagation();
       evt.preventDefault();
-      return run(provider()).then(cb);
+      return run(provider())
+        .then(cb)
+        .catch(err => {
+          console.error("Error creating download:", err);
+        });
     },
     [run]
   );
@@ -320,7 +324,6 @@ type MenuOptsProps = {
 function MenuOpts({formats}: MenuOptsProps) {
   const {translate: t} = useTranslation();
   const [opened, setOpened] = useState(false);
-
   const {mutateAsync: downloadQuery} = useDownloadQuery();
 
   const buttons = formats.map(format => (
