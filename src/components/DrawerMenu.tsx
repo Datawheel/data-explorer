@@ -213,9 +213,7 @@ function DimensionItem({
       activeItems={activeItems}
     />
   ));
-  // if (!isChildSubMenu) {
-  //   return options[0];
-  // }
+
   return (
     <div
       key={dimension.name}
@@ -249,20 +247,6 @@ function HierarchyItem({
   locale: string;
   activeItems: DrilldownItem[];
 }) {
-  // const {translate: t} = useTranslation();
-
-  // const label = useMemo(() => {
-  //   const captions = [getCaption(dimension, locale), getCaption(hierarchy, locale)];
-  //   if (isSubMenu) {
-  //     return captions[1];
-  //   }
-  //   return t("params.dimmenu_hierarchy", {
-  //     abbr: abbreviateFullName(captions, t("params.dimmenu_abbrjoint")),
-  //     dimension: captions[0],
-  //     hierarchy: captions[1]
-  //   });
-  // }, [locale, dimension, hierarchy, isSubMenu, t]);
-
   const isChildSubMenu = hierarchy.levels.length !== 1;
 
   const options = hierarchy.levels.map((lvl, index) => (
@@ -328,41 +312,26 @@ function LevelItem({
     });
   }, [locale, dimension, hierarchy, level, isSubMenu, t]);
 
-  const createCutHandler = useCallback((level: TesseractLevel) => {
-    const cutItem = buildCut({...level, members: [], active: false});
-    actions.updateCut(cutItem);
-  }, []);
-
-  function createDrilldown(level: TesseractLevel, cuts: CutItem[]) {
-    const drilldown = buildDrilldown({...level, key: level.name, active: false});
-    actions.updateDrilldown(drilldown);
-
-    const cut = cuts.find(cut => cut.level === drilldown.level);
-    if (!cut) {
-      createCutHandler(level);
-    }
-
-    return drilldown;
-  }
   const currentDrilldown = drilldowns[level.name];
   // Check if another hierarchy from the same dimension is already selected
   const isOtherHierarchySelected = activeItems.some(
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
 
-  useLayoutEffect(() => {
-    if (!drilldowns[level.name] && !ditems.find(d => d.level === level.name)) {
-      createDrilldown(level, cutItems);
-    }
-  }, [level, ditems]);
-
   const cut = cutItems.find(cut => {
     return cut.level === currentDrilldown?.level;
   });
 
-  const updatecutHandler = React.useCallback((item: CutItem, members: string[]) => {
+  const updatecutHandler = (item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
-  }, []);
+  };
+
+  // console.log(activeItems, "activeItems");
+  // console.log(level.name, "level.name");
+  // console.log(dimension, "dimension");
+  // console.log(hierarchy, "hierarchy");
+
+  console.log(isOtherHierarchySelected, "isOtherHierarchySelected");
 
   const checked = activeItems.map(i => i.level).includes(level.name);
   const disableUncheck = activeItems.length === 1 && checked;
@@ -374,18 +343,14 @@ function LevelItem({
 
   const paddingLeft = `${5 * depth + 5}px`;
 
-  const properities = currentDrilldown.properties.length ? currentDrilldown.properties : null;
+  const properties = currentDrilldown.properties.length ? currentDrilldown.properties : null;
   return (
     currentDrilldown && (
       <>
         <Group className="dex-level-control" mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
-            sx={{cursor: "pointer", paddingLeft}}
+            sx={{cursor: "pointer", paddingLeft, border: "1px solid red"}}
             onChange={() => {
-              if (cut) {
-                const active = checked ? false : !!cut.members.length;
-                actions.updateCut({...cut, active});
-              }
               actions.updateDrilldown({
                 ...currentDrilldown,
                 active: !currentDrilldown.active
@@ -405,7 +370,7 @@ function LevelItem({
             >
               {activeFilter ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
-            {properities && (
+            {properties && (
               <Tooltip label={t("params.add_metadata")}>
                 <ActionIcon onClick={() => setActiveProperties(value => !value)}>
                   <IconAdjustments />

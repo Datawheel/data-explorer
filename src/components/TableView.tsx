@@ -84,7 +84,7 @@ import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
 import _ from "lodash";
-import {useFetchQuery, useMeasureItems, useServerSchema} from "../hooks/useQueryApi";
+import {useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
 import {selectCurrentQueryItem} from "../state/queries";
 import {debounce} from "lodash";
 import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
@@ -788,7 +788,7 @@ export function useTable({
     data: tableData,
     columns,
     pagination,
-    setPagination: handlePaginationChange
+    setPagination
   };
 }
 

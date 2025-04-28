@@ -21,7 +21,8 @@ import {
   Menu,
   Text,
   Alert,
-  Paper
+  Paper,
+  Select
 } from "@mantine/core";
 import {Format} from "../api/enum";
 import {useAsync} from "../hooks/useAsync";
@@ -30,7 +31,9 @@ import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
 import {LocaleSelector} from "./LocaleSelector";
 import {useDownloadQuery} from "../hooks/useQueryApi";
-import {notifications} from "@mantine/notifications";
+import {useSelector} from "../state";
+import {selectCurrentQueryItem} from "../state/queries";
+import {useUpdateUrl} from "../hooks/permalink";
 
 const formatter = new Intl.NumberFormat("en-US", {
   maximumFractionDigits: 0
@@ -43,7 +46,7 @@ type Props = {
   data?: Record<string, string | number>[];
   isLoading: boolean;
   pagination?: MRT_PaginationState;
-  setPagination?: (pagination: MRT_PaginationState) => void;
+  setPagination: (pagination: MRT_PaginationState) => void;
   url: string;
 };
 
@@ -55,9 +58,12 @@ type Item = {
 function TableFooter(props: Props) {
   const {paginationConfig} = useSettings();
   const {table, data = [], isLoading, pagination, setPagination, url} = props;
+
   const {translate: t} = useTranslation();
   const {copy, copied} = useClipboard({timeout: 1000});
   const copyHandler = useCallback(() => copy(url), [url]);
+  const updateURL = useUpdateUrl();
+  const queryItem = useSelector(selectCurrentQueryItem);
 
   const totalRowCount = table.options.rowCount;
   const {
@@ -74,21 +80,24 @@ function TableFooter(props: Props) {
     [paginationConfig?.rowsLimits]
   );
 
-  const selectedItem = useMemo(
-    () => items.find(item => Number(item.value) === pageSize),
-    [items, pageSize]
-  );
-
   const onItemSelect = useCallback(
     (item: Item) => {
       const newPageSize = Number(item.value);
-      if (setPagination) {
-        setPagination({
-          ...pagination,
-          pageSize: newPageSize,
-          pageIndex: 0
-        });
-      }
+
+      setPagination({
+        ...pagination,
+        pageSize: newPageSize,
+        pageIndex: 0
+      });
+
+      updateURL({
+        ...queryItem,
+        params: {
+          ...queryItem.params,
+          pagiOffset: 0,
+          pagiLimit: newPageSize
+        }
+      });
     },
     [pagination, setPagination]
   );
@@ -107,12 +116,14 @@ function TableFooter(props: Props) {
           <Group position="right" spacing="sm">
             <LocaleSelector />
             <Box maw="7rem" miw={"fit"}>
-              <SelectObject
-                getValue={(item: Item) => item.value}
-                getLabel={(item: Item) => item.label}
-                items={items}
-                selectedItem={selectedItem}
-                onItemSelect={onItemSelect}
+              <Select
+                data={items}
+                defaultValue={String(queryItem.params.pagiLimit)}
+                // value={selectedItem?.value}
+                onChange={value => {
+                  const item = items.find(i => i.value === value);
+                  if (item) onItemSelect(item);
+                }}
               />
             </Box>
             {totalRowCount && (

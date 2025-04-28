@@ -36,7 +36,12 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
   const {paginationConfig, measuresActive, serverURL, defaultLocale} = useSettings();
-  const {data: schema, isLoading: schemaLoading, isError: schemaError} = useServerSchema();
+  const {
+    data: schema,
+    isLoading: schemaLoading,
+    isFetching: schemaFetching,
+    isError: schemaError
+  } = useServerSchema();
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
   const prevLocaleRef = useRef<string | undefined>();
@@ -66,7 +71,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     const searchParams = new URLSearchParams(location.search);
     const cube = searchParams.get("cube");
     const cubeMap = schema?.cubeMap || undefined;
-    if (cube && cubeMap && serverURL && cubeMap[cube] && schema?.online) {
+    if (cube && cubeMap && serverURL && cubeMap[cube] && schema?.online && !schemaFetching) {
       let newQuery: QueryItem | undefined = parsePermalink(cubeMap[cube], searchParams);
       newQuery = isValidQuery(newQuery?.params) ? newQuery : buildQuery({params: {cube}});
       newQuery.params.locale = defaultLocale || newQuery.params.locale;
@@ -97,7 +102,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
           key: lvl.name,
           dimension: dimensions[name],
           hierarchy: hierarchies[name],
-          level: name
+          level: name,
+          properties: lvl.properties.map(prop => buildProperty({level: lvl.name, name: prop.name}))
         });
       });
 
@@ -110,7 +116,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
               currentDrilldown &&
               currentDrilldown.members &&
               currentDrilldown.members.length > 0 &&
-              !localeChanged
+              !localeChanged &&
+              cube === queryItem.params.cube
             ) {
               return Promise.resolve({
                 drilldown: currentDrilldown,
@@ -134,7 +141,6 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         runFetchMembers(Promise.all(promises)).then(data => {
           setTransintionLocaleLoading(false);
           prevLocaleRef.current = newQuery?.params.locale;
-
           const drilldowns = data.map(item => item.drilldown);
           const cuts = data.map(item => item.cut);
 
@@ -159,7 +165,15 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         defaultCube && hasProperty(cubeMap, defaultCube) ? defaultCube : Object.keys(cubeMap)[0];
       setDefaultValues(cubeMap[cubeDefault]);
     }
-  }, [location.search, runFetchMembers, schema, schemaLoading, serverURL, defaultLocale]);
+  }, [
+    location.search,
+    runFetchMembers,
+    schema,
+    schemaLoading,
+    schemaFetching,
+    serverURL,
+    defaultLocale
+  ]);
 
   const onChangeCube = (table: string, subtopic: string) => {
     const locale = defaultLocale || queryItem.params.locale;

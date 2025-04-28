@@ -37,41 +37,17 @@ export function parsePermalink(cube: TesseractCube, value: string | URLSearchPar
 export function useUpdateUrl() {
   const navigate = useNavigate();
   const queryItem = useSelector(selectCurrentQueryItem);
-
   return useCallback(
     (query?: QueryItem) => {
       const currPermalink = window.location.search.slice(1);
-      const nextPermalink = serializePermalink(query || queryItem);
+      const q = query ?? queryItem;
+      const nextPermalink = serializePermalink(q);
       if (currPermalink !== nextPermalink) {
         navigate(`?${nextPermalink}`, {replace: true});
       }
     },
     [navigate, queryItem]
   );
-}
-
-export function useUpdatePermaLink({
-  isFetched,
-  cube,
-  enabled,
-  isLoading
-}: {
-  isFetched: boolean;
-  cube: string;
-  enabled: boolean;
-  isLoading: boolean;
-}) {
-  const queryItem = useSelector(selectCurrentQueryItem);
-  const navigate = useNavigate();
-  useEffect(() => {
-    if (cube && enabled && !isLoading) {
-      const currPermalink = window.location.search.slice(1);
-      const nextPermalink = serializePermalink(queryItem);
-      if (currPermalink !== nextPermalink) {
-        navigate(`?${nextPermalink}`, {replace: true});
-      }
-    }
-  }, [cube, queryItem, enabled, isLoading, navigate]);
 }
 
 export function useKey(params: Partial<QueryParams> = {}) {
