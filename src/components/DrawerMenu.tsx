@@ -325,7 +325,6 @@ function LevelItem({
   const updatecutHandler = (item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   };
-  console.log(isOtherHierarchySelected, "isOtherHierarchySelected");
 
   const checked = activeItems.map(i => i.level).includes(level.name);
   const disableUncheck = activeItems.length === 1 && checked;

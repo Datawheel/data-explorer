@@ -135,7 +135,8 @@ export function useDownloadQuery() {
         extension: format.replace(/json\w+/, "json"),
         name: `${params.cube}_${new Date().toISOString()}`
       };
-    }
+    },
+    throwOnError: false
   });
 }
 

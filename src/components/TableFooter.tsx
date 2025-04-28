@@ -270,12 +270,6 @@ function useDownload(props) {
     }
   }, [file]);
 
-  useEffect(() => {
-    if (error) {
-      console.error("Download error:", error);
-    }
-  }, [error]);
-
   const onClick = useCallback(
     (evt, cb = () => {}) => {
       evt.stopPropagation();
