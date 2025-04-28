@@ -226,18 +226,17 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     updateUrl(query);
   }
 
-  return (
-    <QueryContext.Provider
-      value={{
-        onChangeCube,
-        schemaLoading,
-        membersLoading,
-        transintionLocaleLoading
-      }}
-    >
-      {children}
-    </QueryContext.Provider>
+  const contextValue = React.useMemo(
+    () => ({
+      onChangeCube,
+      schemaLoading,
+      membersLoading,
+      transintionLocaleLoading
+    }),
+    [onChangeCube, schemaLoading, membersLoading, transintionLocaleLoading]
   );
+
+  return <QueryContext.Provider value={contextValue}>{children}</QueryContext.Provider>;
 }
 
 export function useQueryItem() {
