@@ -35,7 +35,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   const {tesseract} = useLogicLayer();
   const location = useLocation();
   const {updateCurrentQuery} = useActions();
-  const {paginationConfig, measuresActive, serverURL, defaultLocale} = useSettings();
+  const {measuresActive, serverURL, defaultLocale} = useSettings();
   const {
     data: schema,
     isLoading: schemaLoading,

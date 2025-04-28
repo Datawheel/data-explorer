@@ -7,7 +7,6 @@ import {useSelector} from "../state/store";
 import {type QueryItem, type QueryParams, buildQuery} from "../utils/structs";
 import {isValidQuery} from "../utils/validation";
 import {useNavigate} from "react-router-dom";
-import {useQueryItem} from "../context/query";
 
 /** */
 export function serializePermalink(item: QueryItem): string {

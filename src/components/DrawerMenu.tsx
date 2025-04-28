@@ -325,12 +325,6 @@ function LevelItem({
   const updatecutHandler = (item: CutItem, members: string[]) => {
     actions.updateCut({...item, members});
   };
-
-  // console.log(activeItems, "activeItems");
-  // console.log(level.name, "level.name");
-  // console.log(dimension, "dimension");
-  // console.log(hierarchy, "hierarchy");
-
   console.log(isOtherHierarchySelected, "isOtherHierarchySelected");
 
   const checked = activeItems.map(i => i.level).includes(level.name);
@@ -349,7 +343,7 @@ function LevelItem({
       <>
         <Group className="dex-level-control" mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
-            sx={{cursor: "pointer", paddingLeft, border: "1px solid red"}}
+            sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               actions.updateDrilldown({
                 ...currentDrilldown,

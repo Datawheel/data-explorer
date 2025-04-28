@@ -407,15 +407,16 @@ export function useTable({
   const queryItem = useSelector(selectCurrentQueryItem);
   const updateURL = useUpdateUrl();
   // Initialize pagination state from Redux with correct page index calculation
-  const [pagination, setPagination] = useState<MRT_PaginationState>({
+  //derived pagination state from redux state
+  const pagination = {
     pageIndex: Math.floor(offset / (limit || 1)),
     pageSize: limit
-  });
+  };
 
   // Custom pagination handler that updates both local state and enables query
   const handlePaginationChange = updatedPagination => {
     const paginationUpdated = updatedPagination(pagination);
-    setPagination(updatedPagination);
+
     actions.updatePagination({
       limit: paginationUpdated.pageSize,
       offset: paginationUpdated.pageIndex * paginationUpdated.pageSize
@@ -698,7 +699,6 @@ export function useTable({
           showRowsPerPage: false
         },
         paginationDisplayMode: "pages",
-        enableRowVirtualization: false,
         globalFilterFn: "contains",
         initialState: {
           density: "xs"
@@ -787,8 +787,7 @@ export function useTable({
     isFetching,
     data: tableData,
     columns,
-    pagination,
-    setPagination
+    pagination
   };
 }
 
@@ -796,6 +795,7 @@ type TableView = {
   table: MRT_TableInstance<TData>;
   getColumn(id: string): AnyResultColumn | undefined;
   columns: AnyResultColumn[];
+  setPagination: (pagination: MRT_PaginationState) => void;
 } & ViewProps;
 
 export function TableView({

@@ -26,7 +26,6 @@ import {
 } from "@mantine/core";
 import {Format} from "../api/enum";
 import {useAsync} from "../hooks/useAsync";
-import {SelectObject} from "./Select";
 import type {FileDescriptor} from "../utils/types";
 import CubeSource from "./CubeSource";
 import {LocaleSelector} from "./LocaleSelector";
@@ -57,7 +56,7 @@ type Item = {
 
 function TableFooter(props: Props) {
   const {paginationConfig} = useSettings();
-  const {table, data = [], isLoading, pagination, setPagination, url} = props;
+  const {table, data = [], isLoading, pagination, url} = props;
 
   const {translate: t} = useTranslation();
   const {copy, copied} = useClipboard({timeout: 1000});
@@ -83,13 +82,6 @@ function TableFooter(props: Props) {
   const onItemSelect = useCallback(
     (item: Item) => {
       const newPageSize = Number(item.value);
-
-      setPagination({
-        ...pagination,
-        pageSize: newPageSize,
-        pageIndex: 0
-      });
-
       updateURL({
         ...queryItem,
         params: {
@@ -99,7 +91,7 @@ function TableFooter(props: Props) {
         }
       });
     },
-    [pagination, setPagination]
+    [pagination]
   );
 
   return (
@@ -119,7 +111,6 @@ function TableFooter(props: Props) {
               <Select
                 data={items}
                 defaultValue={String(queryItem.params.pagiLimit)}
-                // value={selectedItem?.value}
                 onChange={value => {
                   const item = items.find(i => i.value === value);
                   if (item) onItemSelect(item);

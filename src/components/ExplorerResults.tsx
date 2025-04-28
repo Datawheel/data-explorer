@@ -198,10 +198,9 @@ function SuccessResult(
     updateUrl({...queryItem, panel: newTab});
   };
 
-  const {table, isError, isLoading, data, columns, result, pagination, isFetching, setPagination} =
-    useTable({
-      cube
-    });
+  const {table, isError, isLoading, data, columns, result, pagination, isFetching} = useTable({
+    cube
+  });
 
   if (data?.length === 0 && !isLoading && !isError) {
     return (
@@ -278,7 +277,6 @@ function SuccessResult(
                   isLoading={isLoading}
                   columns={columns}
                   pagination={pagination}
-                  setPagination={setPagination}
                   isFetching={isFetching}
                 />
               </Box>
