@@ -18,11 +18,10 @@ type Props = {
     locale: string
   ) => AnnotatedCube | undefined;
   isSelected: (selectedItem?: TesseractCube, currentItem?: AnnotatedCube) => boolean | undefined;
-  isSelectionInProgress: boolean;
 };
 
 function Results(props: Props) {
-  const {graph, selectedItem, locale, getCube, isSelected, isSelectionInProgress} = props;
+  const {graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
   const {onChangeCube} = useQueryItem();
@@ -42,12 +41,9 @@ function Results(props: Props) {
             const isItemSelected = isSelected(selectedItem, cube);
 
             const handleClick = () => {
-              // Only process the click if no selection is in progress
-              if (!isSelectionInProgress) {
-                onChangeCube(item, subtopic);
-                setExpanded(false);
-                setInput("");
-              }
+              onChangeCube(item, subtopic);
+              setExpanded(false);
+              setInput("");
             };
 
             return (
@@ -57,10 +53,10 @@ function Results(props: Props) {
                 fz="xs"
                 className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
                 sx={theme => ({
-                  opacity: isSelectionInProgress ? 0.5 : 1,
-                  cursor: isSelectionInProgress ? "not-allowed" : "pointer",
+                  opacity: 1,
+                  cursor: "pointer",
                   transition: "opacity 0.2s ease",
-                  pointerEvents: isSelectionInProgress ? "none" : "auto"
+                  pointerEvents: "auto"
                 })}
                 onClick={handleClick}
               >
@@ -85,7 +81,6 @@ export const useStyles = createStyles(t => ({
     textDecoration: "none",
     // color: t.colorScheme === "dark" ? t.white : t.colors.dark[6],
     color: t.colorScheme === "dark" ? t.colors.dark[1] : t.colors.gray[7],
-
     padding: t.spacing.xs,
     minHeight: rem(20),
     fontSize: t.fontSizes.sm,

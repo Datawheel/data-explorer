@@ -24,7 +24,7 @@ import {ExplorerTabs} from "./ExplorerTabs";
 import {PreviewModeSwitch} from "./PreviewModeSwitch";
 import {useTable} from "./TableView";
 import Toolbar from "./Toolbar";
-// import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
+import {ReactQueryDevtools} from "@tanstack/react-query-devtools";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useUpdateUrl} from "../hooks/permalink";
 import {useQueryItem} from "../context/query";
@@ -284,7 +284,7 @@ function SuccessResult(
           </Suspense>
         </Box>
       </Paper>
-      {/* <ReactQueryDevtools initialIsOpen /> */}
+      <ReactQueryDevtools initialIsOpen />
     </Flex>
   );
 }

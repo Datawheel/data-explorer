@@ -21,7 +21,6 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-
 import {
   type MRT_ColumnDef as ColumnDef,
   type MRT_Header,
@@ -36,15 +35,7 @@ import {
   type MRT_ColumnDef,
   type MRT_Cell
 } from "mantine-react-table";
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState,
-  useRef,
-  useContext
-} from "react";
+import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRef} from "react";
 import {useSelector} from "react-redux";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
@@ -90,6 +81,7 @@ import {debounce} from "lodash";
 import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {useNavigate} from "react-router-dom";
 import type {QueryItem} from "../utils/structs";
+
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
 };
@@ -306,56 +298,6 @@ type useTableDataType = {
   cube: string;
 };
 
-type ApiResponse = {
-  data: any;
-  types: any;
-  page: {
-    total: number;
-  };
-};
-
-// Create a context to manage table refresh state
-interface TableRefreshContextType {
-  setQueryEnabled: (enabled: boolean) => void;
-  isQueryEnabled: boolean;
-}
-
-const TableRefreshContext = React.createContext<TableRefreshContextType | undefined>(undefined);
-
-export function TableRefreshProvider({
-  children,
-  serverURL
-}: {
-  children: React.ReactNode;
-  serverURL: string;
-}) {
-  const [isQueryEnabled, setQueryEnabled] = useState(true);
-
-  // Add effect to set isQueryEnabled to true when serverURL changes
-  useEffect(() => {
-    setQueryEnabled(true);
-  }, [serverURL]);
-
-  const value = useMemo(
-    () => ({
-      isQueryEnabled,
-      setQueryEnabled
-    }),
-    [isQueryEnabled]
-  );
-
-  return <TableRefreshContext.Provider value={value}>{children}</TableRefreshContext.Provider>;
-}
-
-// Hook to use the context
-export function useTableRefresh() {
-  const context = useContext(TableRefreshContext);
-  if (context === undefined) {
-    throw new Error("useTableRefresh must be used within a TableRefreshProvider");
-  }
-  return context;
-}
-
 export function useTableData({pagination}: useTableDataType) {
   const queryItem = useSelector(selectCurrentQueryItem);
   const queryLink = queryItem.link;
@@ -406,8 +348,7 @@ export function useTable({
   const {limit, offset} = useSelector(selectPaginationParams);
   const queryItem = useSelector(selectCurrentQueryItem);
   const updateURL = useUpdateUrl();
-  // Initialize pagination state from Redux with correct page index calculation
-  //derived pagination state from redux state
+
   const pagination = {
     pageIndex: Math.floor(offset / (limit || 1)),
     pageSize: limit

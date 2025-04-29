@@ -1,6 +1,5 @@
 import * as React from "react";
 import {QueryClient, QueryClientProvider} from "@tanstack/react-query";
-import {TableRefreshProvider} from "../components/TableView";
 import {LogicLayerProvider} from "../api/context";
 import {QueryProvider} from "./query";
 import {useActions, useSettings} from "../hooks/settings";
@@ -36,17 +35,15 @@ function AppProviders({children}: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TableRefreshProvider serverURL={serverURL}>
-        <LogicLayerProvider
-          serverURL={serverURL}
-          serverConfig={serverConfig}
-          defaultDataLocale={defaultDataLocale}
-        >
-          <QueryProvider defaultCube={defaultCube} serverURL={serverURL}>
-            {children}
-          </QueryProvider>
-        </LogicLayerProvider>
-      </TableRefreshProvider>
+      <LogicLayerProvider
+        serverURL={serverURL}
+        serverConfig={serverConfig}
+        defaultDataLocale={defaultDataLocale}
+      >
+        <QueryProvider defaultCube={defaultCube} serverURL={serverURL}>
+          {children}
+        </QueryProvider>
+      </LogicLayerProvider>
     </QueryClientProvider>
   );
 }

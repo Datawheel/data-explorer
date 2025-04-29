@@ -29,7 +29,6 @@ import {selectCurrentQueryItem} from "../state/queries";
 export function useServerSchema() {
   const {tesseract} = useLogicLayer();
   const {serverURL, defaultLocale} = useSettings();
-
   return useQuery({
     queryKey: ["schema", serverURL, defaultLocale],
     queryFn: async () => {
@@ -57,7 +56,8 @@ export function useServerSchema() {
           url: serverURL
         };
       }
-    }
+    },
+    staleTime: 300000
   });
 }
 
@@ -65,7 +65,6 @@ export const useMeasureItems = () => {
   const {data: schema} = useServerSchema();
   const {params} = useSelector(selectCurrentQueryItem);
   const measures = schema?.cubeMap[params.cube]?.measures || [];
-
   return measures;
 };
 
@@ -154,7 +153,7 @@ export function useFetchQuery(
   const {limit = 0, offset = 0, withoutPagination = false} = options || {};
 
   const key = withoutPagination ? ["table", queryLink, "withoutPagination"] : ["table", queryLink];
-
+  const {data: schema} = useServerSchema();
   return useQuery({
     queryKey: key,
     queryFn: async () => {
@@ -179,10 +178,11 @@ export function useFetchQuery(
         if (!response.ok) {
           throw new Error(`Backend Error: ${content.detail}`);
         }
-        const cubeData = await tesseract.fetchCube({
-          cube: queryParams.cube,
-          locale: queryParams.locale
-        });
+
+        if (!schema?.cubeMap[queryParams.cube]) {
+          throw new Error("Cube not found");
+        }
+        const cubeData = schema?.cubeMap[queryParams.cube];
 
         return {
           data: content.data,

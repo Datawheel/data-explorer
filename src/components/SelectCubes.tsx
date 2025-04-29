@@ -1,11 +1,7 @@
-import {Accordion, type AccordionControlProps, Box, Stack, Text} from "@mantine/core";
-import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
-import {useSelector} from "react-redux";
+import {Accordion, type AccordionControlProps, Box, Skeleton, Stack, Text} from "@mantine/core";
+import React, {type PropsWithChildren, useEffect, useMemo, useState} from "react";
 import type {TesseractCube} from "../api/tesseract/schema";
-import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {selectCurrentQueryParams} from "../state/queries";
-
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import Results, {useStyles as useLinkStyles} from "./Results";
@@ -21,9 +17,18 @@ export const EMPTY_RESPONSE = {
   page: {offset: 0, limit: 0, total: 0}
 };
 
+const loadingCubes = Array.from({length: 10}, (v, index) => ({
+  id: `loading-cube-${index}`
+}));
+
 export function SelectCubes({locale}: {locale: string}) {
   const items = useCubeItems();
   const selectedItem = useSelectedItem();
+  const {schemaLoading} = useQueryItem();
+
+  if (schemaLoading) {
+    return loadingCubes.map(cube => <Skeleton m={15} h={40} w={"100%"} animate key={cube.id} />);
+  }
 
   if (items.length === 1) {
     return null;
@@ -95,7 +100,6 @@ function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale
 }
 
 function CubeTree({
-  items,
   locale,
   selectedItem
 }: {
@@ -105,7 +109,6 @@ function CubeTree({
 }) {
   const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
-  const [isSelectionInProgress, setIsSelectionInProgress] = useState(false);
 
   let topics = useMemo(
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
@@ -128,17 +131,10 @@ function CubeTree({
       isSelected={isSelected}
       graph={graph}
       locale={locale}
-      isSelectionInProgress={isSelectionInProgress}
     />
   ) : (
     graph.items.length > 0 && (
-      <RootAccordions
-        items={topics}
-        graph={graph}
-        selectedItem={selectedItem}
-        locale={locale}
-        isSelectionInProgress={isSelectionInProgress}
-      />
+      <RootAccordions items={topics} graph={graph} selectedItem={selectedItem} locale={locale} />
     )
   );
 }
@@ -157,7 +153,7 @@ function useAccordionValue(key: Keys, locale) {
   return {value, setValue};
 }
 
-function RootAccordions({items, graph, locale, selectedItem, isSelectionInProgress}) {
+function RootAccordions({items, graph, locale, selectedItem}) {
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -202,7 +198,6 @@ function RootAccordions({items, graph, locale, selectedItem, isSelectionInProgre
                   key={item}
                   locale={locale}
                   selectedItem={selectedItem}
-                  isSelectionInProgress={isSelectionInProgress}
                 />
               </Accordion.Panel>
             </Accordion.Item>
@@ -271,7 +266,6 @@ type NestedAccordionType = {
   parent?: string;
   selectedItem?: TesseractCube;
   locale: string;
-  isSelectionInProgress: boolean;
 };
 
 function SubtopicAccordion({
@@ -279,8 +273,7 @@ function SubtopicAccordion({
   graph,
   parent,
   selectedItem,
-  locale,
-  isSelectionInProgress
+  locale
 }: PropsWithChildren<NestedAccordionType>) {
   const {value, setValue} = useAccordionValue("subtopic", locale);
 
@@ -326,7 +319,6 @@ function SubtopicAccordion({
                     locale={locale}
                     selectedItem={selectedItem}
                     parent={item}
-                    isSelectionInProgress={isSelectionInProgress}
                   />
                 ))}
               </Accordion.Panel>

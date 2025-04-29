@@ -31,14 +31,7 @@ import {
   IconStack3,
   IconWorld
 } from "@tabler/icons-react";
-import React, {
-  PropsWithChildren,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useState
-} from "react";
+import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison, DimensionType} from "../api";
 import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
@@ -64,15 +57,13 @@ import {
   FilterItem,
   type MeasureItem,
   QueryItem,
-  buildCut,
-  buildDrilldown,
   buildFilter,
   buildMeasure,
   buildProperty,
   buildQuery
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
-import {getFiltersConditions, useTableRefresh} from "./TableView";
+import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
 import {debounce} from "lodash";
 import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
@@ -567,15 +558,6 @@ interface MinMaxProps {
 
 export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) => {
   const actions = useActions();
-  const {setQueryEnabled} = useTableRefresh();
-
-  // Create a debounced function to enable the query
-  // const debouncedEnableQuery = useCallback(
-  //   debounce(() => {
-  //     setQueryEnabled(true);
-  //   }, 1200),
-  //   [setQueryEnabled]
-  // );
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
