@@ -22,7 +22,6 @@ import {
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
 import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
-import debounce from "lodash.debounce";
 import {
   type MRT_ColumnDef as ColumnDef,
   type MRT_Header,
@@ -79,7 +78,6 @@ import {
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
-import _ from "lodash";
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;

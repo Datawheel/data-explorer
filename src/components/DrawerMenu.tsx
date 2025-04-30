@@ -68,8 +68,7 @@ import {
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions, useTableRefresh} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
-import {keyBy} from "../utils/transform";
-import {debounce} from "lodash";
+import {debounce} from "lodash-es";
 
 const styles = (t: MantineTheme) => ({
   header: {

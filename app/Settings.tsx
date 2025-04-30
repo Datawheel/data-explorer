@@ -6,6 +6,7 @@ import {
   Flex,
   Group,
   Header,
+  LoadingOverlay,
   MantineProvider,
   type MantineThemeOverride,
   Select,
@@ -25,6 +26,7 @@ import {
 import React, {forwardRef, useCallback, useEffect, useMemo, useReducer, useState} from "react";
 import rtlPlugin from "stylis-plugin-rtl";
 import {HomeSVG} from "../src/components/icons";
+import type {TesseractSchema} from "../src/api";
 
 export type ServerOption = {
   value: string;
@@ -42,7 +44,7 @@ interface SettingsParams {
   direction: "rtl" | "ltr";
   colorScheme: "light" | "dark";
   locale: string;
-  server: ServerOption;
+  server: ServerOption | null;
 }
 
 const rtlCache = createEmotionCache({
@@ -66,10 +68,33 @@ export function SettingsProvider({
       direction: "ltr",
       colorScheme: "light",
       locale: "en",
-      server: servers[0]
+      server: null
     }
   );
   const {primaryColor, colorScheme, direction, server} = settings;
+
+  useEffect(() => {
+    const location = new URL(window.location.href);
+    const cubeName = location.searchParams.get("cube");
+    if (!cubeName) {
+      setSettings({server: servers[0]});
+      return;
+    }
+    Promise.all(
+      servers.map(server => {
+        const url = new URL("cubes", server.value);
+        return fetch(url)
+          .then((response): Promise<TesseractSchema> => response.json())
+          .then(schema =>
+            schema.cubes.filter(cube => cube.name === cubeName).map(() => server.value)
+          );
+      })
+    ).then(sources => {
+      const source = sources.flat()[0];
+      const server = servers.find(item => item.value === source);
+      server && setSettings({server});
+    });
+  }, [servers]);
 
   const selectServer = useCallback(
     (value: string | null) => {
@@ -139,13 +164,13 @@ export function SettingsProvider({
         >
           <HomeSVG />
           <Group>
-            <Select data={servers} value={server.value} onChange={selectServer} />
+            <Select data={servers} value={server?.value} onChange={selectServer} />
             <SiteSettings locales={locales} settings={settings} setSettings={setSettings} />
           </Group>
         </Flex>
       </Header>
 
-      {children(settings)}
+      {server ? children(settings) : <LoadingOverlay visible={true} />}
     </MantineProvider>
   );
 }

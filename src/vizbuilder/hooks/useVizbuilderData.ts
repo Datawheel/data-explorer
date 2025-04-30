@@ -1,4 +1,4 @@
-import debounce from "lodash.debounce";
+import {debounce} from "lodash-es";
 import {useState, useEffect, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useQuery} from "@tanstack/react-query";
@@ -17,7 +17,7 @@ type ApiResponse = {
     total: number;
   };
 };
-  
+
 export function useFinalUniqueKeys() {
     const drilldowns = useSelector(selectDrilldownItems);
     const measures = useSelector(selectMeasureItems);
@@ -40,11 +40,11 @@ export function useVizbuilderData() {
     const actions = useActions();
     const enabled = Boolean(columns.length);
     const initialKey = permaKey ? [permaKey] : permaKey;
-  
+
     const [filterKeydebouced, setDebouncedTerm] = useState<
       string | boolean | (string | boolean | number)[]
     >(initialKey);
-  
+
     useEffect(() => {
       if (!enabled && permaKey) return;
       const handler = debounce(
@@ -57,7 +57,7 @@ export function useVizbuilderData() {
       handler();
       return () => handler.cancel();
     }, [enabled, locale, loadingState.loading, permaKey]);
-  
+
     const query = useQuery<ApiResponse>({
       queryKey: ["table", filterKeydebouced],
       queryFn: () =>
