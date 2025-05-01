@@ -1,6 +1,5 @@
-import React, {useMemo} from "react";
+import {useMemo} from "react";
 import yn from "yn";
-
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import {useServerSchema} from "./useQueryApi";

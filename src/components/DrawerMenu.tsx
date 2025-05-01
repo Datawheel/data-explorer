@@ -65,11 +65,12 @@ import {
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
-import {debounce} from "lodash";
+// import {debounce} from "lodash";
 import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
 import {useidFormatters} from "../hooks/formatter";
 import {useUpdateUrl} from "../hooks/permalink";
 import _ from "lodash";
+import {debounce} from "lodash-es";
 
 const styles = (t: MantineTheme) => ({
   header: {

@@ -4,7 +4,12 @@ import type {TesseractCube} from "../api/tesseract/schema";
 import {useTranslation} from "../hooks/translation";
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
+<<<<<<< HEAD
 import Results, {useStyles as useLinkStyles} from "./Results";
+=======
+import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
+import {Results, useStyles as useLinkStyles} from "./Results";
+>>>>>>> develop
 import {useSideBar} from "./SideBar";
 import {useQueryItem} from "../context/query";
 import {useCubeItems, useSelectedItem} from "../hooks/useQueryApi";
@@ -60,8 +65,9 @@ function AccordionControl(props: AccordionControlProps) {
 }
 
 type Keys = "subtopic" | "topic" | "table";
-export type AnnotatedCube = TesseractCube &
-  {annotations: {subtopic: string; topic: string; table: string}}[];
+export type AnnotatedCube = TesseractCube & {
+  annotations: {subtopic: string; topic: string; table: string};
+};
 
 export function getKeys(
   items: AnnotatedCube[],
@@ -92,9 +98,9 @@ function isSelected(selectedItem, currentItem) {
   }
 }
 
-function getCube(items: AnnotatedCube[], table: string, subtopic: string, locale: string) {
+function getCube(items: AnnotatedCube[], name: string, subtopic: string, locale: string) {
   const cube = items.find(
-    item => item.name === table && getAnnotation(item, "subtopic", locale) === subtopic
+    item => item.name === name && getAnnotation(item, "subtopic", locale) === subtopic
   );
   return cube;
 }

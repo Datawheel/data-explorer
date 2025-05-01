@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "main": "./dist/main.mjs",
   "types": "./dist/main.d.mts",
   "files": [
@@ -8,11 +8,13 @@
     "README.md"
   ],
   "scripts": {
-    "prepublishOnly": "npm run build",
-    "build": "tsup",
-    "dev": "vite serve",
-    "preview": "vite preview",
-    "static": "vite build --mode staging"
+    "build:app": "vite build --mode staging",
+    "build:lib": "tsup",
+    "build": "npm run build:lib && npm run build:app",
+    "prepublishOnly": "npm run build:lib",
+    "pretest": "npm run build:lib",
+    "start": "vite serve",
+    "test": "echo 'no tests defined yet'"
   },
   "dependencies": {
     "@datawheel/use-translation": "^0.2.0",
@@ -30,6 +32,7 @@
     "iso-639-1": "^2.1.0",
     "lodash": "^4.17.21",
     "lodash.debounce": "^4.0.8",
+    "lodash-es": "^4.17.21",
     "mantine-react-table": "^1.3.0",
     "match-sorter": "^6.3.4",
     "postcss-modules": "^6.0.0",
