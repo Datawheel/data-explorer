@@ -8,11 +8,13 @@
     "README.md"
   ],
   "scripts": {
-    "prepublishOnly": "npm run build",
-    "build": "tsup",
-    "dev": "vite serve",
-    "preview": "vite preview",
-    "static": "vite build --mode staging"
+    "build:app": "vite build --mode staging",
+    "build:lib": "tsup",
+    "build": "npm run build:lib && npm run build:app",
+    "prepublishOnly": "npm run build:lib",
+    "pretest": "npm run build:lib",
+    "start": "vite serve",
+    "test": "echo 'no tests defined yet'"
   },
   "dependencies": {
     "@datawheel/use-translation": "^0.2.0",
