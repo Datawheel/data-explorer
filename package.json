@@ -8,6 +8,7 @@
     "README.md"
   ],
   "scripts": {
+    "dev": "vite",
     "build:app": "vite build --mode staging",
     "build:lib": "tsup",
     "build": "npm run build:lib && npm run build:app",
