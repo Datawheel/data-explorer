@@ -21,10 +21,6 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
-<<<<<<< HEAD
-=======
-import {keepPreviousData, useQuery, useQueryClient} from "@tanstack/react-query";
->>>>>>> develop
 import {
   type MRT_ColumnDef as ColumnDef,
   type MRT_Header,
@@ -78,7 +74,6 @@ import {
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
 import type {TesseractCube} from "../api/tesseract/schema";
-<<<<<<< HEAD
 import _ from "lodash";
 import {useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
 import {selectCurrentQueryItem} from "../state/queries";
@@ -86,8 +81,6 @@ import {debounce} from "lodash";
 import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {useNavigate} from "react-router-dom";
 import type {QueryItem} from "../utils/structs";
-=======
->>>>>>> develop
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;

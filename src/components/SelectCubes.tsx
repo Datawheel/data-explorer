@@ -4,15 +4,12 @@ import type {TesseractCube} from "../api/tesseract/schema";
 import {useTranslation} from "../hooks/translation";
 import Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
-<<<<<<< HEAD
-import Results, {useStyles as useLinkStyles} from "./Results";
-=======
-import {type CutItem, buildCut, buildDrilldown} from "../utils/structs";
-import {Results, useStyles as useLinkStyles} from "./Results";
->>>>>>> develop
+import {useStyles as useLinkStyles} from "./Results";
 import {useSideBar} from "./SideBar";
 import {useQueryItem} from "../context/query";
 import {useCubeItems, useSelectedItem} from "../hooks/useQueryApi";
+
+import Results from "./Results";
 
 export const EMPTY_RESPONSE = {
   data: [],

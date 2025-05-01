@@ -5,16 +5,9 @@ import type Graph from "../utils/graph";
 import {getAnnotation} from "../utils/string";
 import type {AnnotatedCube} from "./SelectCubes";
 import {useSideBar} from "./SideBar";
-<<<<<<< HEAD
 import {useQueryItem} from "../context/query";
 
 type Props = {
-=======
-import {filterMap} from "../utils/array";
-
-export function Results(props: {
-  onSelectCube: (name: string, subtopic: string) => void;
->>>>>>> develop
   selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
@@ -25,97 +18,52 @@ export function Results(props: {
     locale: string
   ) => AnnotatedCube | undefined;
   isSelected: (selectedItem?: TesseractCube, currentItem?: AnnotatedCube) => boolean | undefined;
-<<<<<<< HEAD
 };
 
-function Results(props: Props) {
+export default function Results(props: Props) {
   const {graph, selectedItem, locale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
   const {onChangeCube} = useQueryItem();
   const result: React.ReactElement[] = [];
-=======
-  isSelectionInProgress: boolean;
-}) {
-  const {onSelectCube, graph, selectedItem, locale, getCube, isSelected, isSelectionInProgress} =
-    props;
-  const {classes} = useStyles();
-  const {map, setExpanded, setInput} = useSideBar();
->>>>>>> develop
 
   const results = [...map].flatMap(entry => {
     const [key, items] = entry as [string, string[]];
     const [topic, subtopic] = key.split(" - ");
 
-<<<<<<< HEAD
-      const component = (
-        <div key={key}>
-          <Divider my="xs" label={key} />
-          {items.map(item => {
-            const cube = getCube(graph.items, item, subtopic, locale);
-            if (!cube) return null;
-            const table = getAnnotation(cube, "table", locale);
-            const isItemSelected = isSelected(selectedItem, cube);
+    // For each topic-subtopic, collect the cubes
+    const topicResults = items
+      .map(item => {
+        const cube = getCube(graph.items, item, subtopic, locale);
+        if (!cube) return null;
+        const table = getAnnotation(cube, "table", locale);
+        const isItemSelected = isSelected(selectedItem, cube);
 
-            const handleClick = () => {
-              onChangeCube(item, subtopic);
-              setExpanded(false);
-              setInput("");
-            };
-
-            return (
-              <Text
-                key={cube.name}
-                component="a"
-                fz="xs"
-                className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
-                sx={theme => ({
-                  opacity: 1,
-                  cursor: "pointer",
-                  transition: "opacity 0.2s ease",
-                  pointerEvents: "auto"
-                })}
-                onClick={handleClick}
-              >
-                {table}
-              </Text>
-            );
-=======
-    // We need to filter out the cases where the cube can't be found
-    const topicResults = filterMap(items, item => {
-      const cube = getCube(graph.items, item, subtopic, locale);
-      if (!cube) return null;
-      const table = getAnnotation(cube, "table", locale);
-      const isItemSelected = isSelected(selectedItem, cube);
-
-      const handleClick = () => {
-        // Only process the click if no selection is in progress
-        if (!isSelectionInProgress) {
-          onSelectCube(item, subtopic);
+        const handleClick = () => {
+          onChangeCube(item, subtopic);
           setExpanded(false);
           setInput("");
-        }
-      };
+        };
 
-      return (
-        <Text
-          key={cube.name}
-          component="a"
-          fz="xs"
-          className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
-          sx={t => ({
-            opacity: isSelectionInProgress ? 0.5 : 1,
-            cursor: isSelectionInProgress ? "not-allowed" : "pointer",
-            transition: "opacity 0.2s ease",
-            pointerEvents: isSelectionInProgress ? "none" : "auto"
->>>>>>> develop
-          })}
-          onClick={handleClick}
-        >
-          {table}
-        </Text>
-      );
-    });
+        return (
+          <Text
+            key={cube.name}
+            component="a"
+            fz="xs"
+            className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
+            sx={theme => ({
+              opacity: 1,
+              cursor: "pointer",
+              transition: "opacity 0.2s ease",
+              pointerEvents: "auto"
+            })}
+            onClick={handleClick}
+          >
+            {table}
+          </Text>
+        );
+      })
+      .filter(Boolean); // Remove nulls
 
     // Skip topic divider if there's no results on it
     if (topicResults.length === 0) return [];
