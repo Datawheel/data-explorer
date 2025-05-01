@@ -247,11 +247,6 @@ type TableProps = {
   columnSorting?: (a: AnyResultColumn, b: AnyResultColumn) => number;
 };
 
-function getLastWord(str) {
-  const words = str.trim().split(" ");
-  return words[words.length - 1];
-}
-
 interface Condition {
   conditionOne: [string, string, number];
   conditionTwo?: [string, string, number];
@@ -349,38 +344,6 @@ export function useTable({
   const queryItem = useSelector(selectCurrentQueryItem);
   const updateURL = useUpdateUrl();
 
-  const pagination = {
-    pageIndex: Math.floor(offset / (limit || 1)),
-    pageSize: limit
-  };
-
-  // Custom pagination handler that updates both local state and enables query
-  const handlePaginationChange = updatedPagination => {
-    const paginationUpdated = updatedPagination(pagination);
-
-    actions.updatePagination({
-      limit: paginationUpdated.pageSize,
-      offset: paginationUpdated.pageIndex * paginationUpdated.pageSize
-    });
-    updateURL({
-      ...queryItem,
-      params: {
-        ...queryItem.params,
-        pagiOffset: paginationUpdated.pageIndex * paginationUpdated.pageSize,
-        pagiLimit: paginationUpdated.pageSize
-      }
-    });
-  };
-
-  const finalUniqueKeys = useMemo(
-    () =>
-      [
-        ...measures.map(m => (m.active ? m.name : null)),
-        ...drilldowns.map(d => (d.active ? d.level : null))
-      ].filter(a => a !== null),
-    [measures, drilldowns]
-  );
-
   const handlerCreateMeasure = useCallback((data: Partial<MeasureItem>) => {
     const measure = buildMeasure(data);
     actions.updateMeasure(measure);
@@ -414,6 +377,38 @@ export function useTable({
     handlerCreateFilter,
     handlerCreateMeasure
   ]);
+
+  const pagination = {
+    pageIndex: Math.floor(offset / (limit || 1)),
+    pageSize: limit
+  };
+
+  // Custom pagination handler that updates both local state and enables query
+  const handlePaginationChange = updatedPagination => {
+    const paginationUpdated = updatedPagination(pagination);
+
+    actions.updatePagination({
+      limit: paginationUpdated.pageSize,
+      offset: paginationUpdated.pageIndex * paginationUpdated.pageSize
+    });
+    updateURL({
+      ...queryItem,
+      params: {
+        ...queryItem.params,
+        pagiOffset: paginationUpdated.pageIndex * paginationUpdated.pageSize,
+        pagiLimit: paginationUpdated.pageSize
+      }
+    });
+  };
+
+  const finalUniqueKeys = useMemo(
+    () =>
+      [
+        ...measures.map(m => (m.active ? m.name : null)),
+        ...drilldowns.map(d => (d.active ? d.level : null))
+      ].filter(a => a !== null),
+    [measures, drilldowns]
+  );
 
   const {isLoading, isFetching, isError, data} = useTableData({
     columns: finalUniqueKeys,
@@ -540,6 +535,7 @@ export function useTable({
                         if (isSorted && sortDir === "asc") {
                           actions.clearSorting();
                           const newQuery = buildQuery(_.cloneDeep(queryItem));
+
                           updateURL({
                             ...newQuery,
                             params: {
@@ -709,6 +705,7 @@ export function useTable({
     manualFiltering: true,
     manualPagination: true,
     manualSorting: true,
+    enableRowVirtualization: false,
     rowCount: totalRowCount,
     state: {
       isLoading,
@@ -887,98 +884,113 @@ export function TableView({
   );
 }
 
-const ColumnFilterCell = ({
-  header,
-  isNumeric
-}: {
-  header: MRT_Header<TData>;
-  table?: MRT_TableInstance<TData>;
-  isNumeric: boolean;
-}) => {
-  const filterVariant = header.column.columnDef.filterVariant;
-  const isMulti = filterVariant === "multi-select";
+const ColumnFilterCell = React.memo(
+  ({
+    header,
+    isNumeric
+  }: {
+    header: MRT_Header<TData>;
+    table?: MRT_TableInstance<TData>;
+    isNumeric: boolean;
+  }) => {
+    const filterVariant = header.column.columnDef.filterVariant;
+    const isMulti = filterVariant === "multi-select";
 
-  if (isMulti) {
-    return <MultiFilter header={header} />;
-  }
+    if (isMulti) {
+      return <MultiFilter header={header} />;
+    }
 
-  if (isNumeric) {
-    return <NumericFilter header={header} />;
-  }
-};
-
-function NumericFilter({header}: {header: MRT_Header<TData>}) {
-  const filters = useSelector(selectFilterItems);
-  const {translate: t} = useTranslation();
-  const filter = filters.find(f => f.measure === header.column.id);
-
-  if (filter) {
-    const filterFn = getFilterFn(filter);
-    const text = t(`comparison.${getFilterfnKey(filterFn)}`);
-    const isBetween = filterFn === "between";
-
+    if (isNumeric) {
+      return <NumericFilter header={header} />;
+    }
+    return null;
+  },
+  (prevProps, nextProps) => {
     return (
-      <Flex gap="xs" style={{fontWeight: "normal"}}>
-        <Box sx={{flex: "1 1 auto"}}>
-          {isBetween ? (
-            <MinMax filter={filter} hideControls />
-          ) : (
-            <NumberInputComponent text={text} filter={filter} />
-          )}
-        </Box>
-        <Box sx={{alignSelf: "flex-end"}}>
-          <FilterFnsMenu filter={filter} />
-        </Box>
-      </Flex>
+      prevProps.header.id === nextProps.header.id && prevProps.isNumeric === nextProps.isNumeric
     );
   }
-}
+);
 
-function MultiFilter({header}: {header: MRT_Header<TData>}) {
-  const {translate: t} = useTranslation();
-  const cutItems = useSelector(selectCutItems);
-  const drilldownItems = useSelector(selectDrilldownItems);
-  const label = header.column.id;
-  const localeLabel = header.column.columnDef.header;
-  const drilldown = drilldownItems.find(d => d.level === header.column.id);
-  const actions = useActions();
-  const {idFormatters} = useidFormatters();
-  const navigate = useNavigate();
+const NumericFilter = React.memo(
+  ({header}: {header: MRT_Header<TData>}) => {
+    const filters = useSelector(selectFilterItems);
+    const {translate: t} = useTranslation();
+    const filter = filters.find(f => f.measure === header.column.id);
 
-  const debouncedUpdateUrl = useMemo(
-    () =>
-      debounce((query: QueryItem) => {
-        const currPermalink = window.location.search.slice(1);
-        const nextPermalink = serializePermalink(query);
-        if (currPermalink !== nextPermalink) {
-          navigate(`?${nextPermalink}`, {replace: true});
-        }
-      }, 1000),
-    [navigate]
-  );
+    if (filter) {
+      const filterFn = getFilterFn(filter);
+      const text = t(`comparison.${getFilterfnKey(filterFn)}`);
+      const isBetween = filterFn === "between";
 
-  useEffect(() => {
-    return () => {
-      debouncedUpdateUrl.cancel();
-    };
-  }, [debouncedUpdateUrl]);
+      return (
+        <Flex gap="xs" style={{fontWeight: "normal"}}>
+          <Box sx={{flex: "1 1 auto"}}>
+            {isBetween ? (
+              <MinMax filter={filter} hideControls />
+            ) : (
+              <NumberInputComponent text={text} filter={filter} />
+            )}
+          </Box>
+          <Box sx={{alignSelf: "flex-end"}}>
+            <FilterFnsMenu filter={filter} />
+          </Box>
+        </Flex>
+      );
+    }
+    return null;
+  },
+  (prevProps, nextProps) => {
+    return prevProps.header.id === nextProps.header.id;
+  }
+);
 
-  const cut = cutItems.find(cut => {
-    return cut.level === drilldown?.level;
-  });
+const MultiFilter = React.memo(
+  ({header}: {header: MRT_Header<TData>}) => {
+    const {translate: t} = useTranslation();
+    const cutItems = useSelector(selectCutItems);
+    const drilldownItems = useSelector(selectDrilldownItems);
+    const label = header.column.id;
+    const localeLabel = header.column.columnDef.header;
+    const drilldown = drilldownItems.find(d => d.level === header.column.id);
+    const actions = useActions();
+    const {idFormatters} = useidFormatters();
+    const navigate = useNavigate();
 
-  const updatecutHandler = useCallback(
-    (item: CutItem, members: string[]) => {
-      actions.updateCut({...item, members});
-    },
-    [actions]
-  );
+    const debouncedUpdateUrl = useMemo(
+      () =>
+        debounce((query: QueryItem) => {
+          const currPermalink = window.location.search.slice(1);
+          const nextPermalink = serializePermalink(query);
+          if (currPermalink !== nextPermalink) {
+            navigate(`?${nextPermalink}`, {replace: true});
+          }
+        }, 1000),
+      [navigate]
+    );
 
-  const query = useSelector(selectCurrentQueryItem);
+    useEffect(() => {
+      return () => {
+        debouncedUpdateUrl.cancel();
+      };
+    }, [debouncedUpdateUrl]);
 
-  return (
-    drilldown &&
-    cut && (
+    const cut = cutItems.find(cut => {
+      return cut.level === drilldown?.level;
+    });
+
+    const updatecutHandler = useCallback(
+      (item: CutItem, members: string[]) => {
+        actions.updateCut({...item, members});
+      },
+      [actions]
+    );
+
+    const query = useSelector(selectCurrentQueryItem);
+
+    if (!drilldown || !cut) return null;
+
+    return (
       <Box pt="md" style={{fontWeight: "normal"}}>
         <MultiSelect
           sx={{flex: "1 1 100%"}}
@@ -1007,11 +1019,14 @@ function MultiFilter({header}: {header: MRT_Header<TData>}) {
           size="xs"
         />
       </Box>
-    )
-  );
-}
+    );
+  },
+  (prevProps, nextProps) => {
+    return prevProps.header.id === nextProps.header.id;
+  }
+);
 
-const NoRecords = () => {
+const NoRecords = React.memo(() => {
   return (
     <Center style={{height: "calc(100% - 210px)"}}>
       <Text size="xl" color="gray" italic>
@@ -1019,7 +1034,7 @@ const NoRecords = () => {
       </Text>
     </Center>
   );
-};
+});
 
 export default TableView;
 
