@@ -750,6 +750,8 @@ export function TableView({
   const viewport = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLTableRowElement>(null);
   const url = result?.url || "";
+  const locale = useSelector(selectLocale);
+
   useEffect(() => {
     viewport.current?.scrollTo({top: 0, behavior: "smooth"});
   }, [pagination?.pageIndex, pagination?.pageSize]);
@@ -884,147 +886,131 @@ export function TableView({
   );
 }
 
-const ColumnFilterCell = React.memo(
-  ({
-    header,
-    isNumeric
-  }: {
-    header: MRT_Header<TData>;
-    table?: MRT_TableInstance<TData>;
-    isNumeric: boolean;
-  }) => {
-    const filterVariant = header.column.columnDef.filterVariant;
-    const isMulti = filterVariant === "multi-select";
+const ColumnFilterCell = ({
+  header,
+  isNumeric
+}: {
+  header: MRT_Header<TData>;
+  table?: MRT_TableInstance<TData>;
+  isNumeric: boolean;
+}) => {
+  const filterVariant = header.column.columnDef.filterVariant;
+  const isMulti = filterVariant === "multi-select";
 
-    if (isMulti) {
-      return <MultiFilter header={header} />;
-    }
-
-    if (isNumeric) {
-      return <NumericFilter header={header} />;
-    }
-    return null;
-  },
-  (prevProps, nextProps) => {
-    return (
-      prevProps.header.id === nextProps.header.id && prevProps.isNumeric === nextProps.isNumeric
-    );
+  if (isMulti) {
+    return <MultiFilter header={header} />;
   }
-);
 
-const NumericFilter = React.memo(
-  ({header}: {header: MRT_Header<TData>}) => {
-    const filters = useSelector(selectFilterItems);
-    const {translate: t} = useTranslation();
-    const filter = filters.find(f => f.measure === header.column.id);
-
-    if (filter) {
-      const filterFn = getFilterFn(filter);
-      const text = t(`comparison.${getFilterfnKey(filterFn)}`);
-      const isBetween = filterFn === "between";
-
-      return (
-        <Flex gap="xs" style={{fontWeight: "normal"}}>
-          <Box sx={{flex: "1 1 auto"}}>
-            {isBetween ? (
-              <MinMax filter={filter} hideControls />
-            ) : (
-              <NumberInputComponent text={text} filter={filter} />
-            )}
-          </Box>
-          <Box sx={{alignSelf: "flex-end"}}>
-            <FilterFnsMenu filter={filter} />
-          </Box>
-        </Flex>
-      );
-    }
-    return null;
-  },
-  (prevProps, nextProps) => {
-    return prevProps.header.id === nextProps.header.id;
+  if (isNumeric) {
+    return <NumericFilter header={header} />;
   }
-);
+  return null;
+};
 
-const MultiFilter = React.memo(
-  ({header}: {header: MRT_Header<TData>}) => {
-    const {translate: t} = useTranslation();
-    const cutItems = useSelector(selectCutItems);
-    const drilldownItems = useSelector(selectDrilldownItems);
-    const label = header.column.id;
-    const localeLabel = header.column.columnDef.header;
-    const drilldown = drilldownItems.find(d => d.level === header.column.id);
-    const actions = useActions();
-    const {idFormatters} = useidFormatters();
-    const navigate = useNavigate();
+const NumericFilter = ({header}: {header: MRT_Header<TData>}) => {
+  const filters = useSelector(selectFilterItems);
+  const {translate: t} = useTranslation();
+  const filter = filters.find(f => f.measure === header.column.id);
 
-    const debouncedUpdateUrl = useMemo(
-      () =>
-        debounce((query: QueryItem) => {
-          const currPermalink = window.location.search.slice(1);
-          const nextPermalink = serializePermalink(query);
-          if (currPermalink !== nextPermalink) {
-            navigate(`?${nextPermalink}`, {replace: true});
-          }
-        }, 1000),
-      [navigate]
-    );
-
-    useEffect(() => {
-      return () => {
-        debouncedUpdateUrl.cancel();
-      };
-    }, [debouncedUpdateUrl]);
-
-    const cut = cutItems.find(cut => {
-      return cut.level === drilldown?.level;
-    });
-
-    const updatecutHandler = useCallback(
-      (item: CutItem, members: string[]) => {
-        actions.updateCut({...item, members});
-      },
-      [actions]
-    );
-
-    const query = useSelector(selectCurrentQueryItem);
-
-    if (!drilldown || !cut) return null;
+  if (filter) {
+    const filterFn = getFilterFn(filter);
+    const text = t(`comparison.${getFilterfnKey(filterFn)}`);
+    const isBetween = filterFn === "between";
 
     return (
-      <Box pt="md" style={{fontWeight: "normal"}}>
-        <MultiSelect
-          sx={{flex: "1 1 100%"}}
-          searchable
-          onChange={value => {
-            const newCut = {...cut, active: true};
-            updatecutHandler(newCut, value);
-            const newQuery = buildQuery(_.cloneDeep(query));
-            newQuery.params.cuts[cut.key] = {...newCut, members: value};
-            debouncedUpdateUrl(newQuery);
-          }}
-          placeholder={t("params.filter_by", {name: localeLabel})}
-          value={cut.members || []}
-          data={drilldown.members.map(m => {
-            const idFormatter = idFormatters[`${localeLabel} ID`];
-            const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
-            const key = formattedKey ? `(${formattedKey})` : formattedKey;
-            return {
-              value: `${m.key}`,
-              label: m.caption ? `${m.caption} ${key}` : `${key}`
-            };
-          })}
-          clearButtonProps={{"aria-label": "Clear selection"}}
-          clearable
-          nothingFound="Nothing found"
-          size="xs"
-        />
-      </Box>
+      <Flex gap="xs" style={{fontWeight: "normal"}}>
+        <Box sx={{flex: "1 1 auto"}}>
+          {isBetween ? (
+            <MinMax filter={filter} hideControls />
+          ) : (
+            <NumberInputComponent text={text} filter={filter} />
+          )}
+        </Box>
+        <Box sx={{alignSelf: "flex-end"}}>
+          <FilterFnsMenu filter={filter} />
+        </Box>
+      </Flex>
     );
-  },
-  (prevProps, nextProps) => {
-    return prevProps.header.id === nextProps.header.id;
   }
-);
+  return null;
+};
+
+const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
+  const {translate: t} = useTranslation();
+  const cutItems = useSelector(selectCutItems);
+  const drilldownItems = useSelector(selectDrilldownItems);
+  const locale = useSelector(selectLocale);
+  const label = header.column.id;
+  const localeLabel = header.column.columnDef.header;
+  const drilldown = drilldownItems.find(d => d.level === header.column.id);
+  const actions = useActions();
+  const {idFormatters} = useidFormatters();
+  const navigate = useNavigate();
+
+  const debouncedUpdateUrl = useMemo(
+    () =>
+      debounce((query: QueryItem) => {
+        const currPermalink = window.location.search.slice(1);
+        const nextPermalink = serializePermalink(query);
+        if (currPermalink !== nextPermalink) {
+          navigate(`?${nextPermalink}`, {replace: true});
+        }
+      }, 1000),
+    [navigate]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdateUrl.cancel();
+    };
+  }, [debouncedUpdateUrl]);
+
+  const cut = cutItems.find(cut => {
+    return cut.level === drilldown?.level;
+  });
+
+  const updatecutHandler = useCallback(
+    (item: CutItem, members: string[]) => {
+      actions.updateCut({...item, members});
+    },
+    [actions]
+  );
+
+  const query = useSelector(selectCurrentQueryItem);
+
+  if (!drilldown || !cut) return null;
+
+  return (
+    <Box pt="md" style={{fontWeight: "normal"}}>
+      <MultiSelect
+        sx={{flex: "1 1 100%"}}
+        searchable
+        onChange={value => {
+          const newCut = {...cut, active: true};
+          updatecutHandler(newCut, value);
+          const newQuery = buildQuery(_.cloneDeep(query));
+          newQuery.params.cuts[cut.key] = {...newCut, members: value};
+          debouncedUpdateUrl(newQuery);
+        }}
+        placeholder={t("params.filter_by", {name: localeLabel})}
+        value={cut.members || []}
+        data={drilldown.members.map(m => {
+          const idFormatter = idFormatters[`${localeLabel} ID`];
+          const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
+          const key = formattedKey ? `(${formattedKey})` : formattedKey;
+          return {
+            value: `${m.key}`,
+            label: m.caption ? `${m.caption} ${key}` : `${key}`
+          };
+        })}
+        clearButtonProps={{"aria-label": "Clear selection"}}
+        clearable
+        nothingFound="Nothing found"
+        size="xs"
+      />
+    </Box>
+  );
+};
 
 const NoRecords = React.memo(() => {
   return (

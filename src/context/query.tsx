@@ -50,12 +50,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     return tesseract.fetchMembers({request: {cube: cubeName || "", level, locale: localeStr}});
   }
 
-  const {
-    run: runFetchMembers,
-    data: membersData,
-    isSuccess: isMembersSuccess,
-    isLoading: membersLoading
-  } = useAsync<
+  const {run: runFetchMembers, isLoading: membersLoading} = useAsync<
     Array<{
       drilldown: DrilldownItem;
       cut: CutItem;
