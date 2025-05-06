@@ -510,6 +510,7 @@ export function useTable({
                       onClick={() => {
                         if (!isSorted) {
                           actions.updateSorting({key: entity.name, dir: "desc"});
+
                           const newQuery = buildQuery(_.cloneDeep(queryItem));
                           updateURL({
                             ...newQuery,
@@ -640,6 +641,7 @@ export function useTable({
         initialState: {
           density: "xs"
         },
+
         mantineBottomToolbarProps: {
           id: "query-results-table-view-footer"
         },
@@ -653,6 +655,7 @@ export function useTable({
           },
           withColumnBorders: true
         },
+
         mantinePaperProps: {
           id: "query-results-table-view",
           withBorder: false,
@@ -780,6 +783,11 @@ export function TableView({
             verticalSpacing="xs"
             withBorder
             withColumnBorders
+            sx={{
+              "thead > tr > th": {
+                padding: "0.5rem 1rem"
+              }
+            }}
           >
             <Box
               component="thead"
@@ -800,8 +808,6 @@ export function TableView({
                       backgroundColor:
                         theme.colorScheme === "dark" ? theme.colors.dark[7] : theme.colors.gray[0],
                       textAlign: isNumeric ? ("right" as const) : ("left" as const),
-                      height: 60,
-                      paddingBottom: 10,
                       minWidth: 210,
                       width: 300,
                       maxWidth: 450,
