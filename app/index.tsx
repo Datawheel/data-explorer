@@ -117,8 +117,8 @@ function App() {
     () => [
       {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
       {value: "https://pytesseract-dev.oec.world/tesseract/", label: "OEC"},
-      {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"}
-      // {value: "https://api-ts-dev.datausa.io/tesseract/", label: "DATA USA"}
+      {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"},
+      {value: "https://api-ts-dev.datausa.io/tesseract/", label: "DATA USA"}
     ],
     []
   );
