@@ -35,11 +35,14 @@ export function VizbuilderView(props: {cube: TesseractCube; params: QueryParams}
   const types = query.data?.types;
   const columns = Object.keys(types || {});
 
+  const filteredData = (data?.data || []).filter(row =>
+    Object.values(row).every(value => value !== null)
+  );
   const dataset = {
     columns: Object.fromEntries(
       columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
     ),
-    data: data?.data || [],
+    data: filteredData,
     locale: params.locale || "en"
   };
 
