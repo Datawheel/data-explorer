@@ -5,12 +5,12 @@ import {
   Center,
   Flex,
   LoadingOverlay,
+  type MantineTheme,
   MultiSelect,
   ScrollArea,
   Table,
   Text,
-  rem,
-  type MantineTheme
+  rem
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -21,8 +21,11 @@ import {
   IconSortAscendingNumbers as SortNAsc,
   IconSortDescendingNumbers as SortNDesc
 } from "@tabler/icons-react";
+import {cloneDeep, debounce} from "lodash-es";
 import {
   type MRT_ColumnDef as ColumnDef,
+  type MRT_Cell,
+  type MRT_ColumnDef,
   type MRT_Header,
   type MRT_PaginationState,
   MRT_TableBodyCell,
@@ -31,17 +34,19 @@ import {
   MRT_ProgressBar as ProgressBar,
   type MRT_TableOptions as TableOptions,
   flexRender,
-  useMantineReactTable,
-  type MRT_ColumnDef,
-  type MRT_Cell
+  useMantineReactTable
 } from "mantine-react-table";
 import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRef} from "react";
 import {useSelector} from "react-redux";
+import {useNavigate} from "react-router-dom";
 import {Comparison} from "../api";
 import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
+import type {TesseractCube} from "../api/tesseract/schema";
 import {useFormatter, useidFormatters} from "../hooks/formatter";
+import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
+import {useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -53,6 +58,7 @@ import {
   selectPaginationParams,
   selectSortingParams
 } from "../state/queries";
+import {selectCurrentQueryItem} from "../state/queries";
 import {filterMap} from "../utils/array";
 import type {CutItem, DrilldownItem, FilterItem, MeasureItem, QueryResult} from "../utils/structs";
 import {
@@ -62,6 +68,7 @@ import {
   buildProperty,
   buildQuery
 } from "../utils/structs";
+import type {QueryItem} from "../utils/structs";
 import type {ViewProps} from "../utils/types";
 import CustomActionIcon from "./CustomActionIcon";
 import {
@@ -73,14 +80,6 @@ import {
 } from "./DrawerMenu";
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
-import type {TesseractCube} from "../api/tesseract/schema";
-import _ from "lodash";
-import {useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
-import {selectCurrentQueryItem} from "../state/queries";
-import {debounce} from "lodash";
-import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
-import {useNavigate} from "react-router-dom";
-import type {QueryItem} from "../utils/structs";
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
@@ -112,7 +111,7 @@ const removeColumn = (
   queryItem: QueryItem,
   updateURL: (queryItem: QueryItem) => void
 ) => {
-  const newQuery = buildQuery(_.cloneDeep(queryItem));
+  const newQuery = buildQuery(cloneDeep(queryItem));
 
   if ("aggregator" in entity) {
     const measure = measures.find(d => d.name === entity.name);
@@ -511,7 +510,7 @@ export function useTable({
                         if (!isSorted) {
                           actions.updateSorting({key: entity.name, dir: "desc"});
 
-                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          const newQuery = buildQuery(cloneDeep(queryItem));
                           updateURL({
                             ...newQuery,
                             params: {
@@ -523,7 +522,7 @@ export function useTable({
                         }
                         if (isSorted && sortDir === "desc") {
                           actions.updateSorting({key: entity.name, dir: "asc"});
-                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          const newQuery = buildQuery(cloneDeep(queryItem));
                           updateURL({
                             ...newQuery,
                             params: {
@@ -535,7 +534,7 @@ export function useTable({
                         }
                         if (isSorted && sortDir === "asc") {
                           actions.clearSorting();
-                          const newQuery = buildQuery(_.cloneDeep(queryItem));
+                          const newQuery = buildQuery(cloneDeep(queryItem));
 
                           updateURL({
                             ...newQuery,
@@ -994,7 +993,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
         onChange={value => {
           const newCut = {...cut, active: true};
           updatecutHandler(newCut, value);
-          const newQuery = buildQuery(_.cloneDeep(query));
+          const newQuery = buildQuery(cloneDeep(query));
           newQuery.params.cuts[cut.key] = {...newCut, members: value};
           debouncedUpdateUrl(newQuery);
         }}

@@ -7,14 +7,14 @@ import {
   Drawer,
   Flex,
   Group,
+  type MantineTheme,
   Menu,
   MultiSelect,
   NumberInput,
   Text,
   ThemeIcon,
+  Tooltip,
   useMantineTheme,
-  MantineTheme,
-  Tooltip
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
@@ -29,14 +29,28 @@ import {
   IconPlus,
   IconSettings,
   IconStack3,
-  IconWorld
+  IconWorld,
 } from "@tabler/icons-react";
-import React, {PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
+import {cloneDeep, debounce} from "lodash-es";
+import React, {
+  type PropsWithChildren,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {useSelector} from "react-redux";
 import {Comparison, DimensionType} from "../api";
-import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
+import type {
+  TesseractDimension,
+  TesseractHierarchy,
+  TesseractLevel,
+} from "../api/tesseract/schema";
+import {useidFormatters} from "../hooks/formatter";
+import {useUpdateUrl} from "../hooks/permalink";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
+import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -44,10 +58,10 @@ import {
   selectFilterItems,
   selectFilterMap,
   selectLocale,
-  selectMeasureMap
+  selectMeasureMap,
 } from "../state/queries";
-import {selectLevelTriadMap} from "../state/selectors";
 import {selectCurrentQueryItem} from "../state/queries";
+import {selectLevelTriadMap} from "../state/selectors";
 import {filterMap} from "../utils/array";
 import {abbreviateFullName} from "../utils/format";
 import {getCaption} from "../utils/string";
@@ -56,21 +70,15 @@ import {
   type DrilldownItem,
   FilterItem,
   type MeasureItem,
-  QueryItem,
+  type QueryItem,
   buildFilter,
   buildMeasure,
   buildProperty,
-  buildQuery
+  buildQuery,
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
-// import {debounce} from "lodash";
-import {useDimensionItems, useMeasureItems} from "../hooks/useQueryApi";
-import {useidFormatters} from "../hooks/formatter";
-import {useUpdateUrl} from "../hooks/permalink";
-import _ from "lodash";
-import {debounce} from "lodash-es";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -534,7 +542,7 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
     const newFilter = buildFilter({...filter, active, ...conditions});
     actions.updateFilter(newFilter);
 
-    const newQuery = buildQuery(_.cloneDeep(queryItem));
+    const newQuery = buildQuery(cloneDeep(queryItem));
     newQuery.params.filters[filter.key] = newFilter;
     debouncedUpdateUrl(newQuery);
   }
