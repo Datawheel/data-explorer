@@ -183,7 +183,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   };
 
   function setDefaultValues(cube: TesseractCube) {
-    const drilldowns = pickDefaultDrilldowns(cube.dimensions).map(level =>
+    const drilldowns = pickDefaultDrilldowns(cube.dimensions, cube).map(level =>
       buildDrilldown({
         ...level,
         key: level.name,
