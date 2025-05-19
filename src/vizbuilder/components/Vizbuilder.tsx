@@ -6,7 +6,7 @@ import {
   type Dataset,
   generateCharts
 } from "@datawheel/vizbuilder";
-import {Modal, SimpleGrid} from "@mantine/core";
+import {createStyles, Modal} from "@mantine/core";
 import cls from "clsx";
 import React, {useCallback, useMemo} from "react";
 import type {TesseractLevel, TesseractMeasure} from "../../api/tesseract/schema";
@@ -132,6 +132,21 @@ export function Vizbuilder(props: {
   const currentChart = queryItem?.chart || "";
   const {actions} = useSettings();
 
+  const useStyles = createStyles(theme => ({
+    grid: {
+      display: "grid",
+      gridTemplateColumns: "1fr",
+      gap: theme.spacing.md,
+      rowGap: theme.spacing.xl,
+      [theme.fn.largerThan("md")]: {
+        gridTemplateColumns: "1fr 1fr"
+      }
+    },
+    unique: {}
+  }));
+
+  const {classes, cx} = useStyles();
+
   const setCurrentChart = useCallback(
     (chart: string) => {
       actions.updateChart(chart);
@@ -188,15 +203,7 @@ export function Vizbuilder(props: {
 
     return (
       <ErrorBoundary>
-        <SimpleGrid
-          breakpoints={[
-            {minWidth: "xs", cols: 1},
-            {minWidth: "md", cols: 2},
-            {minWidth: "lg", cols: 3},
-            {minWidth: "xl", cols: 4}
-          ]}
-          className={cls({unique: isSingleChart})}
-        >
+        <div className={cx(classes.grid, {[classes.unique]: isSingleChart})}>
           {chartList.map(chart => (
             <ChartCard
               key={chart.key}
@@ -208,7 +215,7 @@ export function Vizbuilder(props: {
               userConfig={userConfig}
             />
           ))}
-        </SimpleGrid>
+        </div>
       </ErrorBoundary>
     );
   }, [
@@ -218,7 +225,9 @@ export function Vizbuilder(props: {
     getMeasureConfig,
     nonIdealState,
     showConfidenceInt,
-    userConfig
+    userConfig,
+    classes,
+    cx
   ]);
 
   const focusContent = useMemo(() => {

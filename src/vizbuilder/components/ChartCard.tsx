@@ -7,7 +7,7 @@ import {
   IconDownload,
   IconPhotoDown,
   IconShare,
-  IconVectorTriangle,
+  IconVectorTriangle
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef, useState} from "react";
@@ -16,12 +16,13 @@ import {useTranslation} from "../../hooks/translation";
 import {asArray as castArray} from "../../utils/array";
 import {useD3plusConfig} from "../hooks/useD3plusConfig";
 import {ErrorBoundary} from "./ErrorBoundary";
-import {useClipboard} from '@mantine/hooks';
+import {useClipboard} from "@mantine/hooks";
+import {useInView} from "react-intersection-observer";
 
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,
-  svg: IconVectorTriangle,
+  svg: IconVectorTriangle
 };
 
 export function ChartCard(props: {
@@ -61,12 +62,25 @@ export function ChartCard(props: {
   const {translate} = useTranslation();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
+  const {ref: inViewRef, inView} = useInView({triggerOnce: false, threshold: 0});
+  const [hasBeenInView, setHasBeenInView] = useState(false);
+
+  React.useEffect(() => {
+    if (inView && !hasBeenInView) {
+      setHasBeenInView(true);
+    }
+  }, [inView, hasBeenInView]);
+
+  const setRefs = (el: HTMLDivElement | null) => {
+    nodeRef.current = el;
+    inViewRef(el);
+  };
 
   const [ChartComponent, config] = useD3plusConfig(chart, {
     fullMode: !!isFullMode,
     showConfidenceInt: !!showConfidenceInt,
     getMeasureConfig: props.measureConfig,
-    t: translate,
+    t: translate
   });
 
   const clipboard = useClipboard();
@@ -75,9 +89,7 @@ export function ChartCard(props: {
 
   const downloadButtons = useMemo(() => {
     // Sanitize filename for Windows and Unix
-    const filename = (
-      typeof config.title === "function" ? config.title() : config.title || ""
-    )
+    const filename = (typeof config.title === "function" ? config.title() : config.title || "")
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
 
@@ -96,7 +108,7 @@ export function ChartCard(props: {
               saveElement(
                 svgElement,
                 {filename, type: formatLower},
-                {background: getBackground(svgElement)},
+                {background: getBackground(svgElement)}
               );
             }
           }}
@@ -119,9 +131,7 @@ export function ChartCard(props: {
         size="sm"
         variant={isFullMode ? "filled" : "light"}
       >
-        {isFullMode
-          ? translate("vizbuilder.action_close")
-          : translate("vizbuilder.action_enlarge")}
+        {isFullMode ? translate("vizbuilder.action_close") : translate("vizbuilder.action_enlarge")}
       </Button>
     );
   }, [isFullMode, translate, onFocus]);
@@ -139,14 +149,12 @@ export function ChartCard(props: {
         size="sm"
         variant={isShared ? "filled" : "light"}
       >
-        {isShared 
-          ? translate("vizbuilder.share_copied") 
-          : translate("vizbuilder.action_share")}
+        {isShared ? translate("vizbuilder.share_copied") : translate("vizbuilder.action_share")}
       </Button>
     );
   }, [clipboard, translate, isShared]);
 
-  const height = isFullMode ? "calc(100vh - 3rem)" : 300;
+  const height = isFullMode ? "calc(100vh - 3rem)" : 400;
 
   if (!ChartComponent) return null;
 
@@ -154,13 +162,17 @@ export function ChartCard(props: {
     <Paper h={height} w="100%" style={{overflow: "hidden"}}>
       <ErrorBoundary>
         <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
-          <Group position="right" p="xs" spacing="xs" align="center">
+          <Group position="center" p="xs" spacing="xs" align="center">
             {isFullMode && shareButton}
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
-          <Box style={{flex: "1 1 auto"}} ref={nodeRef} pb="xs" px="xs">
-            <ChartComponent config={config} />
+          <Box style={{flex: "1 1 auto"}} ref={setRefs} pb="xs" px="xs">
+            {ChartComponent && (inView || hasBeenInView) ? (
+              <ChartComponent config={config} />
+            ) : (
+              <div style={{height: "100%", width: "100%"}} />
+            )}
           </Box>
         </Stack>
       </ErrorBoundary>
