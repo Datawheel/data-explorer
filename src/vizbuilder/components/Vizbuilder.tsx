@@ -135,14 +135,30 @@ export function Vizbuilder(props: {
   const useStyles = createStyles(theme => ({
     grid: {
       display: "grid",
-      gridTemplateColumns: "1fr",
+      gridTemplateColumns: "1fr 1fr",
       gap: theme.spacing.md,
       rowGap: theme.spacing.xl,
-      [theme.fn.largerThan("md")]: {
-        gridTemplateColumns: "1fr 1fr"
-      }
+      gridAutoRows: "minmax(200px, auto)"
     },
-    unique: {}
+    itemLarge: {
+      gridRow: "span 2",
+      gridColumn: 1
+    },
+    itemSmallTop: {
+      gridRow: 1,
+      gridColumn: 2
+    },
+    itemSmallBottom: {
+      gridRow: 2,
+      gridColumn: 2
+    },
+    // for single chart
+    fill: {
+      gridColumn: "1 / span 2",
+      gridRow: "1 / span 2",
+      height: "100%",
+      width: "100%"
+    }
   }));
 
   const {classes, cx} = useStyles();
@@ -203,18 +219,44 @@ export function Vizbuilder(props: {
 
     return (
       <ErrorBoundary>
-        <div className={cx(classes.grid, {[classes.unique]: isSingleChart})}>
-          {chartList.map(chart => (
-            <ChartCard
-              key={chart.key}
-              chart={chart}
-              downloadFormats={downloadFormats as string[] | undefined}
-              measureConfig={getMeasureConfig}
-              onFocus={() => setCurrentChart(chart.key)}
-              showConfidenceInt={showConfidenceInt}
-              userConfig={userConfig}
-            />
-          ))}
+        <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
+          {chartList.map((chart, idx) => {
+            // For each group of 3 charts, assign grid positions
+            const group = Math.floor(idx / 3);
+            const pos = idx % 3;
+            let style = {};
+            let className = "";
+            let height;
+            if (isSingleChart) {
+              className = classes.fill;
+              height = 800;
+            } else {
+              if (pos === 0) {
+                style = {gridRow: `${group * 2 + 1} / span 2`, gridColumn: 1};
+                className = classes.itemLarge;
+                height = 800;
+              } else if (pos === 1) {
+                style = {gridRow: `${group * 2 + 1}`, gridColumn: 2};
+                className = classes.itemSmallTop;
+              } else if (pos === 2) {
+                style = {gridRow: `${group * 2 + 2}`, gridColumn: 2};
+                className = classes.itemSmallBottom;
+              }
+            }
+            return (
+              <div key={chart.key} className={className} style={style}>
+                <ChartCard
+                  chart={chart}
+                  downloadFormats={downloadFormats as string[] | undefined}
+                  measureConfig={getMeasureConfig}
+                  onFocus={() => setCurrentChart(chart.key)}
+                  showConfidenceInt={showConfidenceInt}
+                  userConfig={userConfig}
+                  {...(height ? {height} : {})}
+                />
+              </div>
+            );
+          })}
         </div>
       </ErrorBoundary>
     );

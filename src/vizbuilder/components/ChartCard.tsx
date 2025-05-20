@@ -56,8 +56,11 @@ export function ChartCard(props: {
    * but can be overridden by internal working configurations.
    */
   userConfig?: (chart: Chart) => Partial<D3plusConfig>;
+
+  /** Optional height override for the card. */
+  height?: number;
 }) {
-  const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt} = props;
+  const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt, height} = props;
 
   const {translate} = useTranslation();
 
@@ -154,14 +157,14 @@ export function ChartCard(props: {
     );
   }, [clipboard, translate, isShared]);
 
-  const height = isFullMode ? "calc(100vh - 3rem)" : 400;
+  const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : 400;
 
   if (!ChartComponent) return null;
 
   return (
-    <Paper h={height} w="100%" style={{overflow: "hidden"}}>
+    <Paper h={resolvedHeight} w="100%" style={{overflow: "hidden"}}>
       <ErrorBoundary>
-        <Stack spacing={0} h={height} style={{position: "relative"}} w="100%">
+        <Stack spacing={0} h={resolvedHeight} style={{position: "relative"}} w="100%">
           <Group position="center" p="xs" spacing="xs" align="center">
             {isFullMode && shareButton}
             {downloadButtons}
