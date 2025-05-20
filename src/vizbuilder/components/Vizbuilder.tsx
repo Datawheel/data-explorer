@@ -135,29 +135,49 @@ export function Vizbuilder(props: {
   const useStyles = createStyles(theme => ({
     grid: {
       display: "grid",
-      gridTemplateColumns: "1fr 1fr",
+      gridTemplateColumns: "1fr",
+      gridAutoRows: "minmax(200px, auto)",
       gap: theme.spacing.md,
-      rowGap: theme.spacing.xl,
-      gridAutoRows: "minmax(200px, auto)"
+      rowGap: theme.spacing.md,
+
+      [theme.fn.largerThan("md")]: {
+        gridTemplateColumns: "1fr 1fr",
+        rowGap: theme.spacing.xl
+      }
     },
     itemLarge: {
-      gridRow: "span 2",
-      gridColumn: 1
+      gridRow: "auto",
+      gridColumn: "auto",
+      [theme.fn.largerThan("md")]: {
+        gridRow: "span 2"
+      }
     },
     itemSmallTop: {
-      gridRow: 1,
-      gridColumn: 2
+      gridRow: "auto",
+      gridColumn: "auto",
+      [theme.fn.largerThan("md")]: {
+        // gridRow: 1,
+        // gridColumn: 2
+      }
     },
     itemSmallBottom: {
-      gridRow: 2,
-      gridColumn: 2
+      gridRow: "auto",
+      gridColumn: "auto",
+      [theme.fn.largerThan("md")]: {
+        // gridRow: 2,
+        // gridColumn: 2
+      }
     },
     // for single chart
     fill: {
-      gridColumn: "1 / span 2",
-      gridRow: "1 / span 2",
+      gridColumn: "1",
+      gridRow: "1",
       height: "100%",
-      width: "100%"
+      width: "100%",
+      [theme.fn.largerThan("md")]: {
+        gridColumn: "1 / span 2",
+        gridRow: "1 / span 2"
+      }
     }
   }));
 
@@ -232,14 +252,14 @@ export function Vizbuilder(props: {
               height = 800;
             } else {
               if (pos === 0) {
-                style = {gridRow: `${group * 2 + 1} / span 2`, gridColumn: 1};
+                // style = {gridRow: `${group * 2 + 1} / span 2`, gridColumn: 1};
                 className = classes.itemLarge;
                 height = 800;
               } else if (pos === 1) {
-                style = {gridRow: `${group * 2 + 1}`, gridColumn: 2};
+                // style = {gridRow: `${group * 2 + 1}`, gridColumn: 2};
                 className = classes.itemSmallTop;
               } else if (pos === 2) {
-                style = {gridRow: `${group * 2 + 2}`, gridColumn: 2};
+                // style = {gridRow: `${group * 2 + 2}`, gridColumn: 2};
                 className = classes.itemSmallBottom;
               }
             }
