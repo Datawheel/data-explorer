@@ -134,6 +134,7 @@ export function Vizbuilder(props: {
 
   const useStyles = createStyles(theme => ({
     grid: {
+      padding: theme.spacing.md,
       display: "grid",
       gridTemplateColumns: "1fr",
       gridAutoRows: "minmax(200px, auto)",
@@ -242,24 +243,20 @@ export function Vizbuilder(props: {
         <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
           {chartList.map((chart, idx) => {
             // For each group of 3 charts, assign grid positions
-            const group = Math.floor(idx / 3);
             const pos = idx % 3;
             let style = {};
             let className = "";
             let height;
             if (isSingleChart) {
               className = classes.fill;
-              height = 800;
+              height = 600;
             } else {
               if (pos === 0) {
-                // style = {gridRow: `${group * 2 + 1} / span 2`, gridColumn: 1};
                 className = classes.itemLarge;
                 height = 800;
               } else if (pos === 1) {
-                // style = {gridRow: `${group * 2 + 1}`, gridColumn: 2};
                 className = classes.itemSmallTop;
               } else if (pos === 2) {
-                // style = {gridRow: `${group * 2 + 2}`, gridColumn: 2};
                 className = classes.itemSmallBottom;
               }
             }
