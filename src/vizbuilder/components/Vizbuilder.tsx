@@ -134,40 +134,26 @@ export function Vizbuilder(props: {
 
   const useStyles = createStyles(theme => ({
     grid: {
-      padding: theme.spacing.md,
+      padding: theme.spacing.xl,
       display: "grid",
-      gridTemplateColumns: "1fr",
       gridAutoRows: "minmax(200px, auto)",
-      gap: theme.spacing.md,
-      rowGap: theme.spacing.md,
-
-      [theme.fn.largerThan("md")]: {
-        gridTemplateColumns: "1fr 1fr",
-        rowGap: theme.spacing.xl
+      gap: theme.spacing.xl,
+      gridTemplateColumns: "1fr 1fr",
+      [theme.fn.smallerThan("md")]: {
+        gridTemplateColumns: "1fr"
       }
     },
     itemLarge: {
       gridRow: "auto",
-      gridColumn: "auto",
-      [theme.fn.largerThan("md")]: {
-        gridRow: "span 2"
-      }
+      gridColumn: "auto"
     },
     itemSmallTop: {
       gridRow: "auto",
-      gridColumn: "auto",
-      [theme.fn.largerThan("md")]: {
-        // gridRow: 1,
-        // gridColumn: 2
-      }
+      gridColumn: "auto"
     },
     itemSmallBottom: {
       gridRow: "auto",
-      gridColumn: "auto",
-      [theme.fn.largerThan("md")]: {
-        // gridRow: 2,
-        // gridColumn: 2
-      }
+      gridColumn: "auto"
     },
     // for single chart
     fill: {
@@ -231,12 +217,12 @@ export function Vizbuilder(props: {
       return <Notice status="one-row" />;
     if (chartList.length === 0) return <Notice status="empty" />;
 
-    const isSingleChart = chartList.length === 1;
-
     // Limit the number of charts to 10. Short term fix for performance issues, foreing trade.
     if (chartList.length > 10) {
       chartList = chartList.slice(0, 10);
     }
+
+    const isSingleChart = chartList.length === 1;
 
     return (
       <ErrorBoundary>
@@ -253,7 +239,7 @@ export function Vizbuilder(props: {
             } else {
               if (pos === 0) {
                 className = classes.itemLarge;
-                height = 800;
+                // height = 800;
               } else if (pos === 1) {
                 className = classes.itemSmallTop;
               } else if (pos === 2) {
