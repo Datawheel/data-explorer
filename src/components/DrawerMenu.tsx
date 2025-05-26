@@ -14,7 +14,7 @@ import {
   Text,
   ThemeIcon,
   Tooltip,
-  useMantineTheme,
+  useMantineTheme
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
@@ -29,23 +29,13 @@ import {
   IconPlus,
   IconSettings,
   IconStack3,
-  IconWorld,
+  IconWorld
 } from "@tabler/icons-react";
 import {cloneDeep, debounce} from "lodash-es";
-import React, {
-  type PropsWithChildren,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
 import {Comparison, DimensionType} from "../api";
-import type {
-  TesseractDimension,
-  TesseractHierarchy,
-  TesseractLevel,
-} from "../api/tesseract/schema";
+import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
 import {useidFormatters} from "../hooks/formatter";
 import {useUpdateUrl} from "../hooks/permalink";
 import {useActions} from "../hooks/settings";
@@ -58,7 +48,7 @@ import {
   selectFilterItems,
   selectFilterMap,
   selectLocale,
-  selectMeasureMap,
+  selectMeasureMap
 } from "../state/queries";
 import {selectCurrentQueryItem} from "../state/queries";
 import {selectLevelTriadMap} from "../state/selectors";
@@ -74,7 +64,7 @@ import {
   buildFilter,
   buildMeasure,
   buildProperty,
-  buildQuery,
+  buildQuery
 } from "../utils/structs";
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
@@ -567,17 +557,34 @@ interface MinMaxProps {
 
 export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) => {
   const actions = useActions();
+  const updateUrl = useUpdateUrl();
+  const queryItem = useSelector(selectCurrentQueryItem);
+
+  const debouncedUpdateUrl = useMemo(
+    () =>
+      debounce((query: QueryItem) => {
+        updateUrl(query);
+      }, 1000),
+    []
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedUpdateUrl.cancel();
+    };
+  }, [debouncedUpdateUrl]);
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
     const conditions =
       getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(min), Number(max)]) || {};
     const active = Boolean(min) && Boolean(max);
+    const newFilter = buildFilter({...filter, active, ...conditions});
+    actions.updateFilter(newFilter);
 
-    actions.updateFilter(buildFilter({...filter, active, ...conditions}));
-
-    // Trigger the debounced query enable
-    // debouncedEnableQuery();
+    const newQuery = buildQuery(cloneDeep(queryItem));
+    newQuery.params.filters[filter.key] = newFilter;
+    debouncedUpdateUrl(newQuery);
   }
 
   function getFilterValue(condition?: [`${Comparison}`, string, number]) {
