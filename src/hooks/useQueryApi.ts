@@ -110,10 +110,58 @@ export const useDimensionItems = () => {
     .map(i => i.item);
 };
 
+// include to download query ISO 3 by default for drilldowns that has that property.
+
+function getISO3Drilldowns({cube, search}: {cube?: TesseractCube; search: URLSearchParams}) {
+  const ISO_3_CODE = "ISO 3";
+  if (!cube) return false;
+  function getList(search: URLSearchParams, key: string, separator: string): string[] {
+    return search
+      .getAll(key)
+      .join(separator)
+      .split(separator)
+      .filter(token => token);
+  }
+
+  const dimensions: Record<string, string> = {};
+  const hierarchies: Record<string, string> = {};
+  const levels = Object.fromEntries(
+    cube.dimensions.flatMap(dim =>
+      dim.hierarchies.flatMap(hie =>
+        hie.levels.map(lvl => {
+          dimensions[lvl.name] = dim.name;
+          hierarchies[lvl.name] = hie.name;
+          return [lvl.name, lvl];
+        })
+      )
+    )
+  );
+
+  const properties = [ISO_3_CODE];
+  const drilldowns = getList(search, "drilldowns", ",").map(name => {
+    const lvl = levels[name];
+    return buildDrilldown({
+      active: true,
+      key: lvl.name,
+      dimension: dimensions[name],
+      hierarchy: hierarchies[name],
+      level: name,
+      properties: filterMap(lvl.properties, prop =>
+        properties.includes(prop.name)
+          ? buildProperty({name: prop.name, level: name, active: true})
+          : null
+      )
+    });
+  });
+
+  return keyBy(drilldowns, "key");
+}
+
 // Hook to download query data
 export function useDownloadQuery() {
   const {tesseract} = useLogicLayer();
   const {params} = useSelector(selectCurrentQueryItem);
+  const {data: schema} = useServerSchema();
 
   return useMutation({
     mutationFn: async ({format}: {format: `${TesseractFormat}`}): Promise<FileDescriptor> => {
@@ -122,7 +170,14 @@ export function useDownloadQuery() {
       }
 
       const queryParams = {...params, pagiLimit: 0, pagiOffset: 0};
-      const request = queryParamsToRequest(queryParams);
+
+      const drilldowns = getISO3Drilldowns({
+        cube: schema?.cubeMap[params.cube],
+        search: new URLSearchParams(location.search)
+      });
+
+      const paramsUpdated = drilldowns ? {...queryParams, drilldowns} : queryParams;
+      const request = queryParamsToRequest(paramsUpdated);
       const response = await tesseract.fetchData({
         request,
         format
