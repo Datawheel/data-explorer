@@ -89,7 +89,11 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
 
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
-  const smallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
+  const smallerThanMd = useMediaQuery(
+    `(max-width: ${theme.breakpoints.md}${
+      /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
+    })`
+  );
   return (
     <>
       <Drawer

@@ -446,7 +446,11 @@ export function useTable({
   const {idFormatters} = useidFormatters();
   const {sortKey, sortDir} = useSelector(selectSortingParams);
   const theme = useMantineTheme();
-  const isSmallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
+  const isSmallerThanMd = useMediaQuery(
+    `(max-width: ${theme.breakpoints.md}${
+      /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
+    })`
+  );
   const columns = useMemo<CustomColumnDef<TData>[]>(() => {
     const indexColumn = {
       id: "#",
@@ -499,7 +503,11 @@ export function useTable({
         },
         Header: ({column}) => {
           const isSorted = isColumnSorted(entity.name, sortKey);
-          const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+          const isMobile = useMediaQuery(
+            `(max-width: ${theme.breakpoints.sm}${
+              /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
+            })`
+          );
           const actionSort = (
             <ActionIcon
               key={`sort-${header}`}
