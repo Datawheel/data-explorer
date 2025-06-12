@@ -10,7 +10,8 @@ import {
   ScrollArea,
   Table,
   Text,
-  rem
+  rem,
+  useMantineTheme
 } from "@mantine/core";
 import {
   IconAlertCircle,
@@ -80,6 +81,7 @@ import {
 } from "./DrawerMenu";
 import TableFooter from "./TableFooter";
 import {BarsSVG, StackSVG} from "./icons";
+import {useMediaQuery} from "@mantine/hooks";
 
 export type CustomColumnDef<TData extends Record<string, any>> = ColumnDef<TData> & {
   dataType?: string;
@@ -442,7 +444,8 @@ export function useTable({
   const {getFormat, getFormatter} = useFormatter();
   const {idFormatters} = useidFormatters();
   const {sortKey, sortDir} = useSelector(selectSortingParams);
-
+  const theme = useMantineTheme();
+  const isSmallerThanMd = useMediaQuery(`(max-width: ${theme.breakpoints.md})`);
   const columns = useMemo<CustomColumnDef<TData>[]>(() => {
     const indexColumn = {
       id: "#",
@@ -633,9 +636,10 @@ export function useTable({
         enableFilterMatchHighlighting: true,
         enableGlobalFilter: true,
         mantinePaginationProps: {
+          rowsPerPageOptions: [10, 25, 50, 100],
           showRowsPerPage: false
         },
-        paginationDisplayMode: "pages",
+        paginationDisplayMode: isSmallerThanMd ? "default" : "pages",
         globalFilterFn: "contains",
         initialState: {
           density: "xs"
@@ -696,7 +700,7 @@ export function useTable({
           );
         }
       } as const),
-    [isError, t]
+    [isError, t, isSmallerThanMd]
   );
 
   const table = useMantineReactTable<TData>({

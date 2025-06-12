@@ -70,13 +70,14 @@ export function ExplorerContent(props: {
               <SelectCubes locale={defaultLocale} />
             </SideBarItem>
           </SideBar>
+
+          <ExplorerResults
+            className={classes.flexCol}
+            panels={props.panels}
+            splash={splash}
+            serverURL={props.serverURL}
+          />
         </SideBarProvider>
-        <ExplorerResults
-          className={classes.flexCol}
-          panels={props.panels}
-          splash={splash}
-          serverURL={props.serverURL}
-        />
       </div>
     </div>
   );
