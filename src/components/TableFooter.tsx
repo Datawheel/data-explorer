@@ -95,36 +95,76 @@ function TableFooter(props: Props) {
   );
 
   return (
-    <Box w="100%" sx={{flex: "0 0 70px"}}>
+    <Box
+      w="100%"
+      sx={t => ({
+        flex: "0 0 70px",
+        maxWidth: "100vw",
+        [t.fn.smallerThan("md")]: {
+          flex: "0 0 180px"
+        },
+        [t.fn.smallerThan("xs")]: {
+          flex: "0 0 200px"
+        },
+        [t.fn.smallerThan(345)]: {
+          flex: "0 0 240px"
+        }
+      })}
+    >
       <Flex
-        p="md"
+        id="dex-table-footer"
+        px="sm"
+        pt={{base: 0, xs: "sm"}}
         justify="space-between"
-        align="center"
-        direction={{base: "column-reverse", md: "row"}}
-        gap="sm"
+        align="flex-start"
+        direction={{base: "column-reverse", xs: "row"}}
+        gap="xs"
       >
         <CubeSource />
         {!isLoading && (
-          <Group position="right" spacing="sm">
-            <LocaleSelector />
-            <Box maw="7rem" miw={"fit"}>
-              <Select
-                data={items}
-                defaultValue={String(queryItem.params.pagiLimit)}
-                onChange={value => {
-                  const item = items.find(i => i.value === value);
-                  if (item) onItemSelect(item);
-                }}
-              />
+          <Flex
+            justify={{base: "space-between", md: "flex-end"}}
+            gap="xs"
+            w="100%"
+            direction={{base: "column", md: "row"}}
+            align={{base: "flex-end", md: "flex-start", lg: "center"}}
+          >
+            <Box display={{base: "none", md: "block"}}>
+              <LocaleSelector />
             </Box>
-            {totalRowCount && (
-              <Text c="dimmed">
-                {t("results.count_rows_plural", {n: formatter.format(totalRowCount)})}
-              </Text>
-            )}
-            {showPagination && <MRT_TablePagination table={table} />}
-            <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} data={data} />
-          </Group>
+
+            <Flex align="center" direction={{base: "column", lg: "row"}} gap="xs">
+              <Group display={{base: "none", md: "flex"}} noWrap>
+                <Box maw="7rem" miw={"fit"} display={{base: "none", md: "block"}}>
+                  <Select
+                    data={items}
+                    defaultValue={String(queryItem.params.pagiLimit)}
+                    size="xs"
+                    onChange={value => {
+                      const item = items.find(i => i.value === value);
+                      if (item) onItemSelect(item);
+                    }}
+                  />
+                </Box>
+                {totalRowCount && (
+                  <Text
+                    c="dimmed"
+                    display={{base: "none", md: "block"}}
+                    sx={{whiteSpace: "nowrap"}}
+                  >
+                    {t("results.count_rows_plural", {n: formatter.format(totalRowCount)})}
+                  </Text>
+                )}
+              </Group>
+              {showPagination && <MRT_TablePagination table={table} />}
+            </Flex>
+            <Group spacing={"xs"} position="right">
+              <Box display={{base: "block", md: "none"}}>
+                <LocaleSelector />
+              </Box>
+              <ApiAndCsvButtons copied={copied} copyHandler={copyHandler} url={url} data={data} />
+            </Group>
+          </Flex>
         )}
       </Flex>
     </Box>
@@ -142,12 +182,12 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
   const {translate: t} = useTranslation();
   return (
     <Box id="query-results-debug-view">
-      <Group spacing="xs">
+      <Group spacing="xs" noWrap>
         {url && (
           <Button
             id="dex-api-btn"
             leftIcon={<IconCopy size={20} />}
-            sx={{height: 30}}
+            sx={{height: 28}}
             onClick={copyHandler}
           >
             {copied ? t("action_copy_done") : t("action_copy")} API
@@ -205,7 +245,7 @@ const DownloadQuery = ({data}) => {
   components.push(
     <ButtonDownload
       leftIcon={<IconDownload size={20} />}
-      sx={{height: 30, position: "relative"}}
+      sx={{height: 28, position: "relative"}}
       key="download_csv"
       provider={() => downloadQuery({format: "csv"})}
     >
@@ -220,7 +260,7 @@ const DownloadQuery = ({data}) => {
   return (
     <Box id="dex-btn-group-download" sx={{position: "relative"}}>
       {errorAlert}
-      <Group spacing={"xs"}>
+      <Group spacing={"xs"} noWrap>
         {components}
         <MenuOpts formats={formats.filter(f => f !== "csv")} />
       </Group>

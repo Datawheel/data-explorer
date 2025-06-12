@@ -15,14 +15,17 @@ import {ClearSVG, FullScreenSVG, SearchSVG} from "./icons";
 import {MRT_TableInstance} from "mantine-react-table";
 import {useDebouncedValue, useMediaQuery} from "@mantine/hooks";
 import {useTranslation} from "../hooks/translation";
-import {useSettings} from "../hooks/settings"
+import {useSettings} from "../hooks/settings";
 import {IconHelpCircle, IconQuestionMark, IconSettings} from "@tabler/icons-react";
-import { useTour } from "@reactour/tour";
+import {useTour} from "@reactour/tour";
 
 const toolbarSx: Sx = t => ({
   background: t.colorScheme === "dark" ? t.black : t.white,
   borderRadius: t.radius.xl,
-  height: "fit-content"
+  height: "fit-content",
+  svg: {
+    height: 15
+  }
 });
 
 interface ToolBarButtonProps {
@@ -46,7 +49,11 @@ export function ToolbarButton({icon, label, onClick = () => undefined}: ToolBarB
     >
       <Group spacing={"xs"} noWrap>
         {icon}
-        {(toolbarConfig?.showLabels && label) && <Text size="sm">{label}</Text>}
+        {toolbarConfig?.showLabels && label && (
+          <Text size="sm" sx={{whiteSpace: "nowrap"}} color="dimmed">
+            {label}
+          </Text>
+        )}
       </Group>
     </UnstyledButton>
   );
@@ -111,14 +118,14 @@ function TourButton() {
   const startTour = () => {
     setCurrentStep(0);
     setIsOpen(true);
-  }
+  };
   return (
     <ToolbarButton
       icon={<IconHelpCircle strokeWidth={1.5} />}
       label={t("tour.controls.help")}
       onClick={startTour}
     ></ToolbarButton>
-  )
+  );
 }
 export default function Toolbar({
   table,
@@ -129,21 +136,27 @@ export default function Toolbar({
 }) {
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
-  const smallerThanLg = useMediaQuery(`(max-width: ${theme.breakpoints.lg}${/(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.lg) ? '' : 'px'})`);
+  const smallerThanLg = useMediaQuery(
+    `(max-width: ${theme.breakpoints.xs}${
+      /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
+    })`
+  );
 
   const {toolbarConfig} = useSettings();
-  
+
   const settings = (
     <Flex
-      direction={{base: "column", lg: "row"}}
+      direction={{base: "column", xs: "row"}}
       justify={"flex-start"}
       sx={toolbarSx}
-      p="0.325rem"
+      p="0.25rem"
       px="md"
       wrap="nowrap"
       gap="xs"
     >
-      {toolbarConfig?.buttons.map(b => <ToolbarButton key={b.label} {...b}/>)}
+      {toolbarConfig?.buttons.map(b => (
+        <ToolbarButton key={b.label} {...b} />
+      ))}
       <TourButton />
       <ToolbarButton
         icon={<FullScreenSVG />}
@@ -155,7 +168,7 @@ export default function Toolbar({
   return smallerThanLg ? (
     <Menu>
       <Menu.Target>
-        <ActionIcon>
+        <ActionIcon size="md">
           <IconSettings />
         </ActionIcon>
       </Menu.Target>

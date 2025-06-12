@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
-import {IconSearch, IconChevronLeft, IconChevronRight} from "@tabler/icons-react";
+import {IconSearch, IconChevronLeft, IconChevronRight, IconX} from "@tabler/icons-react";
 import {DataSetSVG} from "./icons";
 import type Graph from "../utils/graph";
 import {useTranslation} from "../hooks/translation";
@@ -66,7 +66,9 @@ function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<Ac
     alignSelf: "center",
     color: t.colorScheme === "dark" ? t.white : t.colors.gray[7]
   });
+
   if (expanded) return null;
+
   return (
     <ActionIcon
       onClick={() => setExpanded(!expanded)}
@@ -79,25 +81,6 @@ function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<Ac
   );
 }
 
-function SideBarControlBtnFixed() {
-  const actionIconProps: Partial<ActionIconProps> = {
-    sx: t => ({
-      backgroundColor: `${
-        t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
-      } !important`,
-      padding: `calc(${t.spacing.xs} / 2)`,
-      borderRadius: t.radius.xl,
-      width: 50,
-      height: 50
-    })
-  };
-  return (
-    <Affix position={{left: "1rem", bottom: 150}}>
-      <SideBarControlBtn actionIconProps={actionIconProps} />
-    </Affix>
-  );
-}
-
 function SideBar(props: PropsWithChildren<{}>) {
   const {expanded, input, setExpanded, setInput} = useSideBar();
   const {translate: t} = useTranslation();
@@ -106,7 +89,6 @@ function SideBar(props: PropsWithChildren<{}>) {
 
   return (
     <>
-      {smallerThanMd && <SideBarControlBtnFixed />}
       <Box
         id="dex-sidebar"
         py="md"
@@ -138,6 +120,7 @@ function SideBar(props: PropsWithChildren<{}>) {
                 <SideBarControlBtn />
                 <Group
                   position="apart"
+                  align="center"
                   noWrap
                   sx={{
                     overflow: "hidden",
@@ -150,6 +133,23 @@ function SideBar(props: PropsWithChildren<{}>) {
                   <Text sx={t => ({color: t.colorScheme === "dark" ? t.white : t.black})} ml={"sm"}>
                     {t("params.label_dataset")}
                   </Text>
+                  <ActionIcon
+                    onClick={() => setExpanded(!expanded)}
+                    variant="subtle"
+                    mt="auto"
+                    color="primaryColor"
+                    sx={t => ({alignSelf: "flex-end"})}
+                  >
+                    {expanded ? (
+                      smallerThanMd ? (
+                        <IconX size="1.5rem" />
+                      ) : (
+                        <IconChevronLeft size="1.5rem" />
+                      )
+                    ) : (
+                      <IconChevronRight size="1.5rem" />
+                    )}
+                  </ActionIcon>
                 </Group>
               </Flex>
               <Box
@@ -178,7 +178,7 @@ function SideBar(props: PropsWithChildren<{}>) {
           >
             <Box h={expanded ? "auto" : "0px"}>{props.children}</Box>
           </ScrollArea>
-          <Group
+          {/* <Group
             align="center"
             position={expanded ? "right" : "center"}
             w="100%"
@@ -195,7 +195,7 @@ function SideBar(props: PropsWithChildren<{}>) {
             >
               {expanded ? <IconChevronLeft size="1.5rem" /> : <IconChevronRight size="1.5rem" />}
             </ActionIcon>
-          </Group>
+          </Group> */}
         </Flex>
       </Box>
     </>
