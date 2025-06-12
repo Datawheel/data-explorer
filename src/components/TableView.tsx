@@ -604,7 +604,9 @@ export function useTable({
                 </span>
               );
             }
-          : ({cell, renderedCellValue, row}) => {
+          : ({cell}) => {
+              const cellValue = cell.getValue();
+              const row = cell.row;
               const cellId = row.original[`${cell.column.id} ID`];
               const idFormatter = idFormatters[`${column.localeLabel} ID`];
 
@@ -618,7 +620,7 @@ export function useTable({
                       textOverflow: "ellipsis"
                     }}
                   >
-                    {renderedCellValue}
+                    {cellValue}
                   </Text>
                   <Box>
                     {cellId && (
@@ -648,7 +650,7 @@ export function useTable({
         enableFilterMatchHighlighting: true,
         enableGlobalFilter: true,
         mantinePaginationProps: {
-          rowsPerPageOptions: [10, 25, 50, 100],
+          rowsPerPageOptions: ["10", "25", "50", "100"] as string[],
           showRowsPerPage: false
         },
         paginationDisplayMode: isSmallerThanMd ? "default" : "pages",
@@ -885,16 +887,17 @@ export function TableView({
             {isData && (
               <Box
                 component="tbody"
-                sx={{
+                sx={t => ({
                   td: {
-                    padding: "0.5rem 1rem !important"
+                    padding: "0.5rem 1rem !important",
+                    fontSize: `${t.fontSizes.sm} !important`
                   },
                   "td:first-of-type": {
                     paddingLeft: "0.5rem !important",
                     paddingRight: "0.5rem !important",
                     minWidth: "0px !important"
                   }
-                }}
+                })}
               >
                 {table.getRowModel().rows.map(row => (
                   <tr key={row.id} ref={rowRef}>
