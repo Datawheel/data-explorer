@@ -26,7 +26,11 @@ export function ExplorerTabs({panels, onChange, value}) {
   const {translate: t} = useTranslation();
   const [menuOpened, setMenuOpened] = useState(false);
   const theme = useMantineTheme();
-  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.xs})`);
+  const isMobile = useMediaQuery(
+    `(max-width: ${theme.breakpoints.xs}${
+      /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
+    })`
+  );
 
   // When screen is smaller than md, only show the first 2 tabs
   const visiblePanels = isMobile ? panels.slice(0, 2) : panels;
