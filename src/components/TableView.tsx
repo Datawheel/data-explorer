@@ -4,6 +4,7 @@ import {
   Box,
   Center,
   Flex,
+  Group,
   LoadingOverlay,
   type MantineTheme,
   MultiSelect,
@@ -498,84 +499,95 @@ export function useTable({
         },
         Header: ({column}) => {
           const isSorted = isColumnSorted(entity.name, sortKey);
+          const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
+          const actionSort = (
+            <ActionIcon
+              key={`sort-${header}`}
+              size={22}
+              ml={rem(5)}
+              onClick={() => {
+                if (!isSorted) {
+                  actions.updateSorting({key: entity.name, dir: "desc"});
+
+                  const newQuery = buildQuery(cloneDeep(queryItem));
+                  updateURL({
+                    ...newQuery,
+                    params: {
+                      ...newQuery.params,
+                      sortKey: `${entity.name}`,
+                      sortDir: "desc"
+                    }
+                  });
+                }
+                if (isSorted && sortDir === "desc") {
+                  actions.updateSorting({key: entity.name, dir: "asc"});
+                  const newQuery = buildQuery(cloneDeep(queryItem));
+                  updateURL({
+                    ...newQuery,
+                    params: {
+                      ...newQuery.params,
+                      sortKey: `${entity.name}`,
+                      sortDir: "asc"
+                    }
+                  });
+                }
+                if (isSorted && sortDir === "asc") {
+                  actions.clearSorting();
+                  const newQuery = buildQuery(cloneDeep(queryItem));
+
+                  updateURL({
+                    ...newQuery,
+                    params: {
+                      ...newQuery.params,
+                      sortKey: undefined
+                    }
+                  });
+                }
+              }}
+            >
+              {getSortIcon(isSorted ? sortDir : false, entityType)}
+            </ActionIcon>
+          );
           return (
             <Box mb={rem(5)} key="header">
-              <Flex justify="center" align="center">
-                <Box sx={{flexGrow: 1}}>
-                  <Flex gap="xs" align="center">
+              <Flex
+                justify="center"
+                align={{base: "flex-start", sm: "center"}}
+                direction={{base: "column", sm: "row"}}
+              >
+                <Box sx={{flexGrow: 1}} w={{base: "100%", sm: "auto"}}>
+                  <Flex gap={{base: 0, sm: "xs"}} align="center">
                     {getActionIcon(entityType)}
                     <Text size="sm">{header}</Text>
-                    <ActionIcon
-                      key={`sort-${header}`}
-                      size={22}
-                      ml={rem(5)}
-                      onClick={() => {
-                        if (!isSorted) {
-                          actions.updateSorting({key: entity.name, dir: "desc"});
-
-                          const newQuery = buildQuery(cloneDeep(queryItem));
-                          updateURL({
-                            ...newQuery,
-                            params: {
-                              ...newQuery.params,
-                              sortKey: `${entity.name}`,
-                              sortDir: "desc"
-                            }
-                          });
-                        }
-                        if (isSorted && sortDir === "desc") {
-                          actions.updateSorting({key: entity.name, dir: "asc"});
-                          const newQuery = buildQuery(cloneDeep(queryItem));
-                          updateURL({
-                            ...newQuery,
-                            params: {
-                              ...newQuery.params,
-                              sortKey: `${entity.name}`,
-                              sortDir: "asc"
-                            }
-                          });
-                        }
-                        if (isSorted && sortDir === "asc") {
-                          actions.clearSorting();
-                          const newQuery = buildQuery(cloneDeep(queryItem));
-
-                          updateURL({
-                            ...newQuery,
-                            params: {
-                              ...newQuery.params,
-                              sortKey: undefined
-                            }
-                          });
-                        }
-                      }}
-                    >
-                      {getSortIcon(isSorted ? sortDir : false, entityType)}
-                    </ActionIcon>
+                    {!isMobile && actionSort}
                   </Flex>
                 </Box>
-                {showTrashIcon(finalKeys, entityType) && (
-                  <CustomActionIcon
-                    label={`At least one ${getEntityText(entityType)} is required.`}
-                    key={`remove-${column.columnDef.header}`}
-                    disabled={!showTrashIcon(finalKeys, entityType) || isLoading || isFetching}
-                    onClick={() => {
-                      removeColumn(
-                        actions,
-                        entity,
-                        measures,
-                        drilldowns,
-                        entityType,
-                        queryItem,
-                        updateURL
-                      );
-                    }}
-                    showTooltip={!showTrashIcon(finalKeys, entityType)}
-                    size={25}
-                    ml={rem(5)}
-                  >
-                    <IconTrash />
-                  </CustomActionIcon>
-                )}
+                <Group position="apart" w={"100%"}>
+                  {isMobile && actionSort}
+                  {showTrashIcon(finalKeys, entityType) && (
+                    <CustomActionIcon
+                      label={`At least one ${getEntityText(entityType)} is required.`}
+                      key={`remove-${column.columnDef.header}`}
+                      disabled={!showTrashIcon(finalKeys, entityType) || isLoading || isFetching}
+                      onClick={() => {
+                        removeColumn(
+                          actions,
+                          entity,
+                          measures,
+                          drilldowns,
+                          entityType,
+                          queryItem,
+                          updateURL
+                        );
+                      }}
+                      showTooltip={!showTrashIcon(finalKeys, entityType)}
+                      size={25}
+                      ml={rem(5)}
+                    >
+                      <IconTrash />
+                    </CustomActionIcon>
+                  )}
+                </Group>
               </Flex>
             </Box>
           );
@@ -786,11 +798,14 @@ export function TableView({
             verticalSpacing="xs"
             withBorder
             withColumnBorders
-            sx={{
+            sx={t => ({
               "thead > tr > th": {
-                padding: "0.5rem 1rem"
+                padding: "0.5rem 1rem",
+                [t.fn.smallerThan("sm")]: {
+                  padding: "0.25rem 0.6rem"
+                }
               }
-            }}
+            })}
           >
             <Box
               component="thead"
@@ -817,7 +832,11 @@ export function TableView({
                       position: "sticky" as const,
                       fontSize: theme.fontSizes.sm,
                       top: 0,
-                      display: "table-cell" as const
+                      display: "table-cell" as const,
+                      [theme.fn.smallerThan("sm")]: {
+                        minWidth: 180,
+                        width: 180
+                      }
                     });
 
                     const index = (theme: MantineTheme) => ({
@@ -825,7 +844,11 @@ export function TableView({
                       minWidth: 10,
                       width: 10,
                       maxWidth: 10,
-                      size: 10
+                      size: 10,
+                      [theme.fn.smallerThan("sm")]: {
+                        minWidth: 5,
+                        width: 5
+                      }
                     });
 
                     return (
@@ -860,7 +883,19 @@ export function TableView({
               ))}
             </Box>
             {isData && (
-              <Box component="tbody">
+              <Box
+                component="tbody"
+                sx={{
+                  td: {
+                    padding: "0.5rem 1rem !important"
+                  },
+                  "td:first-of-type": {
+                    paddingLeft: "0.5rem !important",
+                    paddingRight: "0.5rem !important",
+                    minWidth: "0px !important"
+                  }
+                }}
+              >
                 {table.getRowModel().rows.map(row => (
                   <tr key={row.id} ref={rowRef}>
                     {row.getVisibleCells().map(cell => (
