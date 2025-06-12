@@ -1,4 +1,6 @@
 import {
+  ActionIcon,
+  type ActionIconProps,
   Alert,
   Anchor,
   Box,
@@ -9,7 +11,10 @@ import {
   type TabsValue,
   Text,
   Title,
-  createStyles
+  createStyles,
+  type MantineTheme,
+  packSx,
+  type Sx
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
 import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
@@ -28,6 +33,30 @@ import Toolbar from "./Toolbar";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useUpdateUrl} from "../hooks/permalink";
 import {useQueryItem} from "../context/query";
+import {useSideBar} from "./SideBar";
+import {DataSetSVG} from "./icons";
+
+function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<ActionIconProps>}) {
+  const {expanded, setExpanded} = useSideBar();
+
+  const sx: Sx = (t: MantineTheme) => ({
+    alignSelf: "center",
+    color: t.colorScheme === "dark" ? t.white : t.colors.gray[7]
+  });
+  return (
+    <Group spacing="xs" display={{base: "flex", md: "none"}} align="center">
+      <ActionIcon
+        onClick={() => setExpanded(!expanded)}
+        variant="subtle"
+        {...actionIconProps}
+        sx={[sx, ...packSx(actionIconProps.sx)]}
+      >
+        <DataSetSVG />
+      </ActionIcon>
+      <Text size="sm">Select Dataset</Text>
+    </Group>
+  );
+}
 
 const useStyles = createStyles(() => ({
   container: {
@@ -232,16 +261,38 @@ function SuccessResult(
           sx={t => ({
             alignItems: "center",
             background: t.colorScheme === "dark" ? t.colors.dark[7] : t.colors.gray[1],
-            justifyContent: "space-between"
+            justifyContent: "space-between",
+            [t.fn.smallerThan("md")]: {
+              flexDirection: "column",
+              justifyContent: "flex-start",
+              alignItems: "flex-start"
+            }
           })}
           w="100%"
           h="fit-content"
         >
           <ExplorerTabs panels={panels} onChange={tabHandler} value={panelKey} />
           {(!queryItem.panel || queryItem.panel === "table") && (
-            <Group sx={{display: "flex", flex: "0 1 auto", gap: "0.5rem"}} mr="sm" noWrap>
-              {table && <Toolbar table={table} fullscreen={fullscreen} />}
-              <AddColumnsDrawer />
+            <Group
+              sx={t => ({
+                display: "flex",
+                flex: "0 1 auto",
+                gap: "0.5rem",
+                [t.fn.smallerThan("md")]: {
+                  width: "100%",
+                  order: -1,
+                  padding: t.spacing.sm,
+                  justifyContent: "space-between"
+                }
+              })}
+              mr="sm"
+              noWrap
+            >
+              <SideBarControlBtn />
+              <Flex direction={"row"} gap="xs" align="center">
+                {table && <Toolbar table={table} fullscreen={fullscreen} />}
+                <AddColumnsDrawer />
+              </Flex>
             </Group>
           )}
         </Flex>

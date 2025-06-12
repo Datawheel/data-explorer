@@ -139,8 +139,8 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
             id="dex-column-btn"
             leftIcon={<IconPlus size="1.2rem" />}
             onClick={open}
-            m="md"
-            size="sm"
+            m="xs"
+            size="xs"
           >
             {t("params.add_columns")}
           </Button>

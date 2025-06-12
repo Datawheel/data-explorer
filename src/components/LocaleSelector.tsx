@@ -24,7 +24,7 @@ const localeSelectorStyle = (theme: MantineTheme) => ({
         : theme.fn.primaryColor(),
     fontSize: 12,
     fontWeight: 700,
-    width: 94,
+    width: 84,
     textTransform: "uppercase" as const
   },
   item: {
@@ -94,6 +94,7 @@ export function LocaleSelector() {
           onItemSelect={localeChangeHandler}
           selectedItem={currentCode}
           selectProps={{
+            size: "xs",
             styles: localeSelectorStyle,
             icon: (
               <IconLanguage
