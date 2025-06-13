@@ -287,7 +287,7 @@ function SubtopicAccordion({
       onChange={setValue}
       key={`subtopic-${parent}`}
       chevronPosition="left"
-      w={300}
+      w={{base: "100vw", sm: 300}}
       ml={0}
       styles={t => ({
         control: {
