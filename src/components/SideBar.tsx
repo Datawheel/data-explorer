@@ -1,4 +1,4 @@
-import React, {type PropsWithChildren, useState, useMemo, useRef, useCallback} from "react";
+import React, {type PropsWithChildren, useState, useEffect} from "react";
 import {
   Box,
   Flex,
@@ -38,7 +38,23 @@ export const [useSideBar, Provider] = createContext<SidebarContextProps>("SideBa
 
 export function SideBarProvider(props: PropsWithChildren<{locale: string}>) {
   const [input, setInput] = useDebouncedState<string>("", 150, {leading: true});
-  const [expanded, setExpanded] = useState<boolean>(true);
+  const theme = useMantineTheme();
+
+  // Set a more specific small screen breakpoint
+  const isSmallScreen = useMediaQuery(
+    `(max-width: ${theme.breakpoints.md}${
+      /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.md) ? "" : "px"
+    })`,
+    true // Default to 'true' when undefined (assuming small screen to be safe)
+  );
+
+  // Initialize expanded state and update it when screen size changes
+  const [expanded, setExpanded] = useState<boolean>(false); // Start collapsed by default
+
+  useEffect(() => {
+    // Update expanded state when screen size changes
+    setExpanded(!isSmallScreen);
+  }, [isSmallScreen]);
 
   const graph = useBuildGraph(props.locale);
   const {results, map} = useCubeSearch(graph, input, props.locale);
@@ -114,6 +130,10 @@ function SideBar(props: PropsWithChildren<{}>) {
             paddingTop: expanded ? t.spacing.md : 0,
             paddingBottom: expanded ? t.spacing.md : 0,
             borderRadius: expanded ? 0 : "100%"
+          },
+          [t.fn.smallerThan("sm")]: {
+            width: expanded ? "100vw" : 0,
+            maxWidth: expanded ? "100vw" : 0
           }
         })}
       >
@@ -126,13 +146,17 @@ function SideBar(props: PropsWithChildren<{}>) {
                   position="apart"
                   align="center"
                   noWrap
-                  sx={{
+                  sx={t => ({
                     overflow: "hidden",
                     whiteSpace: "nowrap",
                     transition:
                       "width 0.2s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    width: expanded ? 300 : 0
-                  }}
+                    width: expanded ? 300 : 0,
+                    [t.fn.smallerThan("sm")]: {
+                      width: expanded ? "100vw" : 0,
+                      maxWidth: expanded ? "100vw" : 0
+                    }
+                  })}
                 >
                   <Text sx={t => ({color: t.colorScheme === "dark" ? t.white : t.black})} ml={"sm"}>
                     {t("params.label_dataset")}
@@ -213,12 +237,16 @@ export function SideBarItem(props: PropsWithChildren<{}>) {
 
   return (
     <Box
-      sx={{
+      sx={t => ({
         overflow: "hidden",
         whiteSpace: "nowrap",
         width: expanded ? 300 : 0,
-        transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
-      }}
+        transition: "width 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+        [t.fn.smallerThan("sm")]: {
+          width: expanded ? "100vw" : 0,
+          maxWidth: expanded ? "100vw" : 0
+        }
+      })}
     >
       {props.children}
     </Box>

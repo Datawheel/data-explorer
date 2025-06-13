@@ -97,6 +97,7 @@ function TableFooter(props: Props) {
   return (
     <Box
       w="100%"
+      id="dex-table-footer-container"
       sx={t => ({
         flex: "0 0 70px",
         maxWidth: "100vw",

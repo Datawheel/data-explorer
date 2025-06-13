@@ -1,6 +1,4 @@
 import {
-  ActionIcon,
-  type ActionIconProps,
   Alert,
   Anchor,
   Box,
@@ -12,9 +10,8 @@ import {
   Text,
   Title,
   createStyles,
-  type MantineTheme,
-  packSx,
-  type Sx
+  ThemeIcon,
+  UnstyledButton
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
 import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
@@ -36,25 +33,18 @@ import {useQueryItem} from "../context/query";
 import {useSideBar} from "./SideBar";
 import {DataSetSVG} from "./icons";
 
-function SideBarControlBtn({actionIconProps = {}}: {actionIconProps?: Partial<ActionIconProps>}) {
+function SideBarControlBtn() {
   const {expanded, setExpanded} = useSideBar();
-
-  const sx: Sx = (t: MantineTheme) => ({
-    alignSelf: "center",
-    color: t.colorScheme === "dark" ? t.white : t.colors.gray[7]
-  });
+  const {translate: t} = useTranslation();
   return (
-    <Group spacing="xs" display={{base: "flex", md: "none"}} align="center">
-      <ActionIcon
-        onClick={() => setExpanded(!expanded)}
-        variant="subtle"
-        {...actionIconProps}
-        sx={[sx, ...packSx(actionIconProps.sx)]}
-      >
-        <DataSetSVG />
-      </ActionIcon>
-      <Text size="sm">Select Dataset</Text>
-    </Group>
+    <UnstyledButton display={{base: "block", md: "none"}} onClick={() => setExpanded(!expanded)}>
+      <Group align="center" spacing="xs" noWrap>
+        <ThemeIcon variant="subtle">
+          <DataSetSVG />
+        </ThemeIcon>
+        <Text size="sm">{t("params.label_dataset")}</Text>
+      </Group>
+    </UnstyledButton>
   );
 }
 
