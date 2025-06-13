@@ -1,5 +1,6 @@
-import type {Chart, D3plusConfig} from "@datawheel/vizbuilder";
-import {Box, Button, Group, Paper, Stack} from "@mantine/core";
+import type {Chart} from "@datawheel/vizbuilder";
+import {useVizbuilderContext} from "@datawheel/vizbuilder/react";
+import {Box, Button, CopyButton, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
@@ -7,36 +8,29 @@ import {
   IconDownload,
   IconPhotoDown,
   IconShare,
-  IconVectorTriangle
+  IconVectorTriangle,
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef, useState} from "react";
-import type {TesseractMeasure} from "../../api/tesseract/schema";
-import {useTranslation} from "../../hooks/translation";
-import {asArray as castArray} from "../../utils/array";
-import {useD3plusConfig} from "../hooks/useD3plusConfig";
-import {ErrorBoundary} from "./ErrorBoundary";
-import {useClipboard} from "@mantine/hooks";
 import {useInView} from "react-intersection-observer";
+import {useVizbuilderTranslation} from "../../hooks/translation";
+import {useD3plusConfig} from "../hooks/useD3plusConfig";
 
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,
-  svg: IconVectorTriangle
+  svg: IconVectorTriangle,
 };
 
 export function ChartCard(props: {
   /** The information needed to build a specific chart configuration. */
   chart: Chart;
 
-  /**
-   * An accessor that generates custom defined d3plus configs by measure name.
-   * Has priority over all other configs.
-   */
-  measureConfig: (measure: TesseractMeasure) => Partial<D3plusConfig>;
+  /** Class attribute for the wrapper div. */
+  className?: string;
 
-  /** A list of the currently enabled formats to download. Options are "PNG" and "SVG". */
-  downloadFormats?: string[];
+  /** Optional height override for the card. */
+  height?: number;
 
   /** Flag to render the card in full feature mode. */
   isFullMode?: boolean;
@@ -47,22 +41,15 @@ export function ChartCard(props: {
    */
   onFocus?: () => void;
 
-  /** Toggles confidence intervals/margins of error when available. */
-  showConfidenceInt?: boolean;
-
-  /**
-   * A global d3plus config that gets applied on all charts.
-   * Has priority over the individually generated configs per chart,
-   * but can be overridden by internal working configurations.
-   */
-  userConfig?: (chart: Chart) => Partial<D3plusConfig>;
-
-  /** Optional height override for the card. */
-  height?: number;
+  /** Style attribute for the wrapper div. */
+  style?: React.CSSProperties;
 }) {
-  const {chart, downloadFormats, isFullMode, onFocus, showConfidenceInt, height} = props;
+  const {chart, isFullMode, onFocus, height} = props;
+  const {dataset} = chart.datagroup;
 
-  const {translate} = useTranslation();
+  const {translate} = useVizbuilderTranslation();
+
+  const {downloadFormats, ErrorBoundary, showConfidenceInt} = useVizbuilderContext();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const {ref: inViewRef, inView} = useInView({triggerOnce: false, threshold: 0});
@@ -81,22 +68,19 @@ export function ChartCard(props: {
 
   const [ChartComponent, config] = useD3plusConfig(chart, {
     fullMode: !!isFullMode,
-    showConfidenceInt: !!showConfidenceInt,
-    getMeasureConfig: props.measureConfig,
-    t: translate
+    showConfidenceInt,
+    t: translate,
   });
-
-  const clipboard = useClipboard();
-
-  const [isShared, setIsShared] = useState(false);
 
   const downloadButtons = useMemo(() => {
     // Sanitize filename for Windows and Unix
-    const filename = (typeof config.title === "function" ? config.title() : config.title || "")
+    const filename = (
+      typeof config.title === "function" ? config.title(dataset) : config.title || ""
+    )
       .replace(/[^\w]/g, "_")
       .replace(/[_]+/g, "_");
 
-    return castArray(downloadFormats).map(format => {
+    return downloadFormats.map(format => {
       const formatLower = format.toLowerCase();
       const Icon = iconByFormat[formatLower] || IconDownload;
       return (
@@ -111,7 +95,7 @@ export function ChartCard(props: {
               saveElement(
                 svgElement,
                 {filename, type: formatLower},
-                {background: getBackground(svgElement)}
+                {background: getBackground(svgElement)},
               );
             }
           }}
@@ -122,7 +106,7 @@ export function ChartCard(props: {
         </Button>
       );
     });
-  }, [config, downloadFormats]);
+  }, [config, dataset, downloadFormats]);
 
   const focusButton = useMemo(() => {
     const Icon = isFullMode ? IconArrowsMinimize : IconArrowsMaximize;
@@ -134,43 +118,51 @@ export function ChartCard(props: {
         size="sm"
         variant={isFullMode ? "filled" : "light"}
       >
-        {isFullMode ? translate("vizbuilder.action_close") : translate("vizbuilder.action_enlarge")}
+        {isFullMode ? translate("action_close") : translate("action_enlarge")}
       </Button>
     );
   }, [isFullMode, translate, onFocus]);
 
   const shareButton = useMemo(() => {
     return (
-      <Button
-        compact
-        leftIcon={isShared ? <IconCheck size={16} /> : <IconShare size={16} />}
-        onClick={() => {
-          clipboard.copy(window.location.href);
-          setIsShared(true);
-          setTimeout(() => setIsShared(false), 1500);
-        }}
-        size="sm"
-        variant={isShared ? "filled" : "light"}
-      >
-        {isShared ? translate("vizbuilder.share_copied") : translate("vizbuilder.action_share")}
-      </Button>
+      <CopyButton value={window.location.href} timeout={1500}>
+        {({copied, copy}) => (
+          <Button
+            compact
+            leftIcon={copied ? <IconCheck size={16} /> : <IconShare size={16} />}
+            onClick={copy}
+            size="sm"
+            variant={copied ? "filled" : "light"}
+          >
+            {copied ? translate("share_copied") : translate("action_share")}
+          </Button>
+        )}
+      </CopyButton>
     );
-  }, [clipboard, translate, isShared]);
+  }, [translate]);
 
   const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : 400;
 
   if (!ChartComponent) return null;
 
   return (
-    <Paper h={resolvedHeight} w="100%" style={{overflow: "hidden"}}>
+    <Paper
+      className={props.className}
+      w="100%"
+      style={{overflow: "hidden", height: resolvedHeight, ...props.style}}
+    >
       <ErrorBoundary>
-        <Stack spacing={0} h={resolvedHeight} style={{position: "relative"}} w="100%">
-          <Group position="center" p="xs" spacing="xs" align="center">
+        <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
+          <Group position="center" spacing="xs" align="center">
             {isFullMode && shareButton}
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
-          <Box style={{flex: "1 1 auto"}} ref={setRefs} pb="xs" px="xs">
+          <Box
+            style={{flex: "1 1 auto"}}
+            ref={setRefs}
+            sx={{"& > .viz": {height: "100%"}}}
+          >
             {ChartComponent && (inView || hasBeenInView) ? (
               <ChartComponent config={config} />
             ) : (

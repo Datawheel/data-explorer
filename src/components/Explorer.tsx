@@ -1,21 +1,51 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
+import {VizbuilderProvider} from "@datawheel/vizbuilder/react";
 import {type CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
-import React, {useEffect, useMemo} from "react";
+import {assign} from "d3plus-common";
+import identity from "lodash-es/identity";
+import React, {useCallback, useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
+import {BrowserRouter as Router} from "react-router-dom";
+import {AppProviders} from "../context";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
-import {type Translation, TranslationProvider} from "../hooks/translation";
-import {type ExplorerActionMap, type ExplorerStore, actions, storeFactory} from "../state";
+import type {Translation} from "../hooks/translation";
+import {
+  type ExplorerActionMap,
+  type ExplorerStore,
+  actions,
+  storeFactory,
+} from "../state";
 import type {Formatter, PanelDescriptor} from "../utils/types";
+import {VizbuilderErrorBoundary, VizbuilderTransient} from "../vizbuilder";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
 import {TableView} from "./TableView";
+import type {ToolbarConfigType} from "./Toolbar";
 import ExplorerTour from "./tour/ExplorerTour";
-import {TourConfig} from "./tour/types";
-import {ToolbarConfigType} from "./Toolbar";
-import {AppProviders} from "../context";
-import {BrowserRouter as Router, useNavigate} from "react-router-dom";
+import type {TourConfig} from "./tour/types";
+
+type VizbuilderProviderProps = React.ComponentProps<typeof VizbuilderProvider>;
+
+const defaultVizbuilderConfig: VizbuilderProviderProps = {
+  chartLimits: {
+    BARCHART_MAX_BARS: 20,
+    BARCHART_MAX_STACKED_BARS: 10,
+    BARCHART_VERTICAL_MAX_GROUPS: 12,
+    BARCHART_VERTICAL_TOTAL_BARS: 240,
+    BARCHART_YEAR_MAX_BARS: 20,
+    DONUT_SHAPE_MAX: 30,
+    LINEPLOT_LINE_MAX: 20,
+    LINEPLOT_LINE_POINT_MIN: 2,
+    STACKED_SHAPE_MAX: 200,
+    STACKED_TIME_MEMBER_MIN: 2,
+    TREE_MAP_SHAPE_MAX: 1000,
+  },
+  downloadFormats: ["SVG", "PNG"],
+  ErrorBoundary: VizbuilderErrorBoundary,
+  NonIdealState: VizbuilderTransient,
+};
 
 export type Pagination = {
   rowsLimits: number[];
@@ -134,6 +164,11 @@ export function ExplorerComponent<Locale extends string>(props: {
   translations?: Record<Locale, Translation>;
 
   /**
+   * Set of settings to pass to the VizbuilderProvider.
+   */
+  vizbuilderSettings?: VizbuilderProviderProps;
+
+  /**
    * Determines whether Explorer should be rendered within a MantineProvider
    * @default true
    */
@@ -189,6 +224,20 @@ export function ExplorerComponent<Locale extends string>(props: {
     []
   );
 
+  const vizbuilderSettings: VizbuilderProviderProps = assign(
+    {},
+    defaultVizbuilderConfig,
+    props.vizbuilderSettings,
+  );
+  const vbPostprocessConfig = props.vizbuilderSettings?.postprocessConfig || identity;
+  vizbuilderSettings.postprocessConfig = useCallback(
+    (config, chart, params) => {
+      config.scrollContainer = ".vb-wrapper";
+      return vbPostprocessConfig(config, chart, params);
+    },
+    [vbPostprocessConfig],
+  );
+
   let content = (
     <Router>
       <SettingsProvider
@@ -207,19 +256,21 @@ export function ExplorerComponent<Locale extends string>(props: {
         translations={props.translations}
         defaultCube={props.defaultCube}
       >
-        <AppProviders>
-          <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-            <ExplorerContent
-              defaultOpenParams={defaultOpenParams}
-              height={height}
-              panels={panels}
-              serverConfig={props.serverConfig}
-              serverURL={props.serverURL}
-              splash={props.splash}
-              withMultiQuery={withMultiQuery}
-            />
-          </ExplorerTour>
-        </AppProviders>
+        <VizbuilderProvider {...vizbuilderSettings}>
+          <AppProviders>
+            <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
+              <ExplorerContent
+                defaultOpenParams={defaultOpenParams}
+                height={height}
+                panels={panels}
+                serverConfig={props.serverConfig}
+                serverURL={props.serverURL}
+                splash={props.splash}
+                withMultiQuery={withMultiQuery}
+              />
+            </ExplorerTour>
+          </AppProviders>
+        </VizbuilderProvider>
       </SettingsProvider>
     </Router>
   );
