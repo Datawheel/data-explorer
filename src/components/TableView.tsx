@@ -564,13 +564,17 @@ export function useTable({
                 direction={{base: "column", sm: "row"}}
               >
                 <Box sx={{flexGrow: 1}} w={{base: "100%", sm: "auto"}}>
-                  <Flex gap={{base: 0, sm: "xs"}} align="center">
+                  <Flex
+                    gap={{base: 0, sm: "xs"}}
+                    align="center"
+                    justify={{base: "flex-start", sm: "space-between"}}
+                  >
                     {getActionIcon(entityType)}
                     <Text size="sm">{header}</Text>
-                    {!isMobile && actionSort}
+                    {!isMobile && <Box ml={"auto"}>{actionSort}</Box>}
                   </Flex>
                 </Box>
-                <Group position="apart" w={"100%"}>
+                <Group position="apart" w={{base: "100%", sm: "auto"}}>
                   {isMobile && actionSort}
                   {showTrashIcon(finalKeys, entityType) && (
                     <CustomActionIcon
@@ -1036,7 +1040,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   if (!drilldown || !cut) return null;
 
   return (
-    <Box pt="md" style={{fontWeight: "normal"}}>
+    <Box pt="sm" style={{fontWeight: "normal"}}>
       <MultiSelect
         sx={{flex: "1 1 100%"}}
         searchable
