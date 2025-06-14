@@ -1,17 +1,17 @@
+import {Box, Center, Image} from "@mantine/core";
+import {IconDatabase} from "@tabler/icons-react";
 import React, {useMemo} from "react";
 import {createRoot} from "react-dom/client";
 import {
   Explorer,
   PivotView,
+  RawResponseView,
   TableView,
   TourStep,
   VizbuilderView,
-  RawResponseView
 } from "../src/main";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
-import {Box, Center, Image} from "@mantine/core";
-import {IconDatabase} from "@tabler/icons-react";
 
 /**
  * Harmonized System (HS) Code Formatter
@@ -117,7 +117,7 @@ function App() {
     () => [
       {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
       {value: "https://api-v2.oec.world/tesseract/", label: "OEC"},
-      {value: "https://idj.api.dev.datawheel.us/tesseract/", label: "IDJ"},
+      {value: "https://idj-api-prod.datawheel.us/tesseract/", label: "IDJ"},
       {value: "https://api-ts-dev.datausa.io/tesseract/", label: "DATA USA"}
     ],
     []

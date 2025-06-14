@@ -85,8 +85,13 @@ export function SettingsProvider({
         const url = new URL("cubes", server.value);
         return fetch(url)
           .then((response): Promise<TesseractSchema> => response.json())
-          .then(schema =>
-            schema.cubes.filter(cube => cube.name === cubeName).map(() => server.value)
+          .then(
+            schema =>
+              schema.cubes.filter(cube => cube.name === cubeName).map(() => server.value),
+            () => {
+              console.warn(`No cubes retrieved from server '${server.label}'`);
+              return [];
+            },
           );
       })
     ).then(sources => {
