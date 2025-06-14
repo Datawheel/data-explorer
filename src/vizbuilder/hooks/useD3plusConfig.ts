@@ -1,15 +1,10 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
-import type {
-  BarChart,
-  Chart,
-  ChoroplethMap,
-  D3plusConfig,
-  DonutChart,
-  LinePlot,
-  StackedArea,
-  TreeMap,
-} from "@datawheel/vizbuilder";
-import {type Formatter, d3plusConfigBuilder} from "@datawheel/vizbuilder/react";
+import type {Chart, D3plusConfig} from "@datawheel/vizbuilder";
+import {
+  type Formatter,
+  d3plusConfigBuilder,
+  useVizbuilderContext,
+} from "@datawheel/vizbuilder/react";
 import type {TesseractMeasure} from "@datawheel/vizbuilder/schema";
 import {assign} from "d3plus-common";
 import {
@@ -21,7 +16,6 @@ import {
   Treemap as TreeMapComponent,
 } from "d3plus-react";
 import {useMemo} from "react";
-import {useFormatter} from "../../hooks/formatter";
 
 interface ChartBuilderParams {
   fullMode: boolean;
@@ -31,87 +25,66 @@ interface ChartBuilderParams {
   t: TranslateFunction;
 }
 
-const buildCommon = d3plusConfigBuilder.common;
-const buildBarchart = d3plusConfigBuilder.barchart;
-const buildChoropleth = d3plusConfigBuilder.choropleth;
-const buildDonut = d3plusConfigBuilder.donut;
-const buildLineplot = d3plusConfigBuilder.lineplot;
-const buildStackedarea = d3plusConfigBuilder.stackedarea;
-const buildTreemap = d3plusConfigBuilder.treemap;
-
-d3plusConfigBuilder.common = (chart: Chart, params: ChartBuilderParams) => {
-  const config = buildCommon(chart, params);
-  return config;
-};
-
 export function useD3plusConfig(
-  chart: Chart | undefined,
-  params: Omit<ChartBuilderParams, "getFormatter">,
+  chart: Chart,
+  params: Pick<ChartBuilderParams, "fullMode" | "showConfidenceInt" | "t">,
 ) {
-  const {fullMode, getMeasureConfig, showConfidenceInt, t} = params;
-  const {getFormatter} = useFormatter();
+  const {fullMode, showConfidenceInt, t} = params;
 
-  return useMemo(() => {
-    if (!chart) return [null, {data: [], locale: ""}];
+  const {getMeasureConfig, getFormatter, translationNamespace, postprocessConfig} =
+    useVizbuilderContext();
+
+  return useMemo((): [
+    React.ComponentType<{config: D3plusConfig}> | null,
+    D3plusConfig,
+  ] => {
+    // if (!chart) return [null, {data: [], locale: ""}];
 
     const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
       getMeasureConfig,
       showConfidenceInt,
-      t: (template, data) => t(`vizbuilder.${template}`, data),
+      t: translationNamespace
+        ? (template, data) => t(`${translationNamespace}.${template}`, data)
+        : t,
     };
 
     if (chart.type === "barchart") {
-      return [BarChartComponent, buildBarchartConfig(chart, params)];
+      const config = d3plusConfigBuilder.barchart(chart, params);
+      return [BarChartComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "choropleth") {
-      const config = buildChoroplethConfig(chart, params);
+      const config = d3plusConfigBuilder.choropleth(chart, params);
       if (chart.extraConfig.d3plus) assign(config, chart.extraConfig.d3plus);
-      return [ChoroplethComponent, config];
+      return [ChoroplethComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "donut") {
-      return [DonutComponent, buildDonutConfig(chart, params)];
+      const config = d3plusConfigBuilder.donut(chart, params);
+      return [DonutComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "lineplot") {
-      return [LinePlotComponent, buildLineplotConfig(chart, params)];
+      const config = d3plusConfigBuilder.lineplot(chart, params);
+      return [LinePlotComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "stackedarea") {
-      return [StackedAreaComponent, buildStackedareaConfig(chart, params)];
+      const config = d3plusConfigBuilder.stackedarea(chart, params);
+      return [StackedAreaComponent, postprocessConfig(config, chart, params)];
     }
     if (chart.type === "treemap") {
-      return [TreeMapComponent, buildTreemapConfig(chart, params)];
+      const config = d3plusConfigBuilder.treemap(chart, params);
+      return [TreeMapComponent, postprocessConfig(config, chart, params)];
     }
+
     return [null, {data: [], locale: ""}];
-  }, [chart, fullMode, getFormatter, getMeasureConfig, showConfidenceInt, t]);
-}
-
-function buildBarchartConfig(chart: BarChart, params: ChartBuilderParams) {
-  const config = buildBarchart(chart, params);
-  return config;
-}
-
-function buildChoroplethConfig(chart: ChoroplethMap, params: ChartBuilderParams) {
-  const config = buildChoropleth(chart, params);
-  return config;
-}
-
-function buildDonutConfig(chart: DonutChart, params: ChartBuilderParams) {
-  const config = buildDonut(chart, params);
-  return config;
-}
-
-function buildLineplotConfig(chart: LinePlot, params: ChartBuilderParams) {
-  const config = buildLineplot(chart, params);
-  return config;
-}
-
-function buildStackedareaConfig(chart: StackedArea, params: ChartBuilderParams) {
-  const config = buildStackedarea(chart, params);
-  return config;
-}
-
-function buildTreemapConfig(chart: TreeMap, params: ChartBuilderParams) {
-  const config = buildTreemap(chart, params);
-  return config;
+  }, [
+    chart,
+    fullMode,
+    getFormatter,
+    getMeasureConfig,
+    postprocessConfig,
+    showConfidenceInt,
+    t,
+    translationNamespace,
+  ]);
 }

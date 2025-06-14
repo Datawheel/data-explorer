@@ -1,22 +1,54 @@
-import {
-  type Chart,
-  type ChartLimits,
-  type ChartType,
-  type D3plusConfig,
-  type Dataset,
-  generateCharts
-} from "@datawheel/vizbuilder";
-import {createStyles, Modal} from "@mantine/core";
+import {type Dataset, generateCharts} from "@datawheel/vizbuilder";
+import {useVizbuilderContext} from "@datawheel/vizbuilder/react";
+import {Flex, Loader, Modal, Text, Title, createStyles} from "@mantine/core";
+import {IconCircleOff} from "@tabler/icons-react";
 import cls from "clsx";
 import React, {useCallback, useMemo} from "react";
-import type {TesseractLevel, TesseractMeasure} from "../../api/tesseract/schema";
-import {asArray as castArray} from "../../utils/array";
-import {ChartCard} from "./ChartCard";
-import {ErrorBoundary} from "./ErrorBoundary";
-import {NonIdealState} from "./NonIdealState";
 import {useSelector} from "react-redux";
-import {selectCurrentQueryItem} from "../../state/queries";
 import {useSettings} from "../../hooks/settings";
+import {useVizbuilderTranslation} from "../../hooks/translation";
+import {selectCurrentQueryItem} from "../../state/queries";
+import {asArray} from "../../utils/array";
+import {ChartCard} from "./ChartCard";
+
+const useStyles = createStyles(theme => ({
+  wrapper: {
+    height: "100%",
+  },
+  grid: {
+    padding: theme.spacing.xl,
+    display: "grid",
+    gridAutoRows: "minmax(200px, auto)",
+    gap: theme.spacing.xl,
+    gridTemplateColumns: "1fr 1fr",
+    [theme.fn.smallerThan("md")]: {
+      gridTemplateColumns: "1fr",
+    },
+  },
+  itemLarge: {
+    gridRow: "auto",
+    gridColumn: "auto",
+  },
+  itemSmallTop: {
+    gridRow: "auto",
+    gridColumn: "auto",
+  },
+  itemSmallBottom: {
+    gridRow: "auto",
+    gridColumn: "auto",
+  },
+  // for single chart
+  fill: {
+    gridColumn: "1",
+    gridRow: "1",
+    height: "100%",
+    width: "100%",
+    [theme.fn.largerThan("md")]: {
+      gridColumn: "1 / span 2",
+      gridRow: "1 / span 2",
+    },
+  },
+}));
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
 
@@ -26,21 +58,6 @@ export function Vizbuilder(props: {
    * The datasets to extract the charts from.
    */
   datasets: Dataset | Dataset[];
-
-  /**
-   * Defines a set of rules about the validity/usefulness of the generated charts.
-   * Charts which not comply with them are discarded.
-   *
-   * @see {@link ChartLimits} for details on its properties.
-   */
-  chartLimits?: Partial<ChartLimits>;
-
-  /**
-   * A list of the chart types the algorithm will generate.
-   *
-   * @default ["barchart", "choropleth", "donut", "lineplot", "stackedarea", "treemap"]
-   */
-  chartTypes?: ChartType[];
 
   /**
    * Custom className to apply to the component wrapper.
@@ -62,164 +79,76 @@ export function Vizbuilder(props: {
    * @default undefined
    */
   customFooter?: React.ReactNode;
-
-  /**
-   * Defines a maximum amount of records to consider when analyzing the data.
-   *
-   * @default 20000
-   */
-  datacap?: number;
-
-  /**
-   * A list of extension formats to make available to download charts as.
-   *
-   * @default ["SVG", "PNG"]
-   */
-  downloadFormats?: readonly ("PNG" | "SVG" | "JPG")[];
-
-  /**
-   * Custom d3plus configuration to apply when a chart value references a
-   * specified measures.
-   */
-  measureConfig?:
-    | {[K: string]: Partial<D3plusConfig>}
-    | ((measure: TesseractMeasure) => Partial<D3plusConfig>);
-
-  /**
-   * A component to show in case no valid/useful charts can be generated from the datasets.
-   */
-  nonIdealState?: React.ComponentType<{status: string}>;
-
-  /**
-   * Determines if the charts will use associated measures to show confidence
-   * intervals or margins of error.
-   *
-   * @default false
-   */
-  showConfidenceInt?: boolean;
-
-  /**
-   * Custom d3plus configuration to apply when a chart series references a
-   * specified Geographic dimension level.
-   * Use this to provide the [`topojson`](https://d3plus.org/?path=/docs/charts-choropleth-map--documentation) field to these charts, otherwise they
-   * will be discarded.
-   */
-  topojsonConfig?:
-    | {[K: string]: Partial<D3plusConfig>}
-    | ((level: TesseractLevel) => Partial<D3plusConfig>);
-
-  /**
-   * Custom d3plus configuration to apply to all generated charts.
-   * Unlike measureConfig and topojsonConfig, this is applied after all other
-   * chart configs have been resolved, so is able to overwrite everything.
-   */
-  userConfig?: (chart: Chart) => Partial<D3plusConfig>;
 }) {
+  const datasets = useMemo(() => asArray(props.datasets), [props.datasets]);
+
+  const {t} = useVizbuilderTranslation();
+
   const {
-    datasets,
     chartLimits,
     chartTypes,
     datacap,
-    downloadFormats,
-    measureConfig,
-    nonIdealState,
-    showConfidenceInt,
-    topojsonConfig,
-    userConfig
-  } = props;
+    getTopojsonConfig,
+    ErrorBoundary,
+    NonIdealState,
+  } = useVizbuilderContext();
 
-  const queryItem = useSelector(selectCurrentQueryItem);
-  const currentChart = queryItem?.chart || "";
   const {actions} = useSettings();
 
-  const useStyles = createStyles(theme => ({
-    grid: {
-      padding: theme.spacing.xl,
-      display: "grid",
-      gridAutoRows: "minmax(200px, auto)",
-      gap: theme.spacing.xl,
-      gridTemplateColumns: "1fr 1fr",
-      [theme.fn.smallerThan("md")]: {
-        gridTemplateColumns: "1fr"
-      }
-    },
-    itemLarge: {
-      gridRow: "auto",
-      gridColumn: "auto"
-    },
-    itemSmallTop: {
-      gridRow: "auto",
-      gridColumn: "auto"
-    },
-    itemSmallBottom: {
-      gridRow: "auto",
-      gridColumn: "auto"
-    },
-    // for single chart
-    fill: {
-      gridColumn: "1",
-      gridRow: "1",
-      height: "100%",
-      width: "100%",
-      [theme.fn.largerThan("md")]: {
-        gridColumn: "1 / span 2",
-        gridRow: "1 / span 2"
-      }
-    }
-  }));
+  const queryItem = useSelector(selectCurrentQueryItem);
 
   const {classes, cx} = useStyles();
 
-  const setCurrentChart = useCallback(
-    (chart: string) => {
-      actions.updateChart(chart);
-    },
-    [actions]
-  );
-
-  // Normalize measureConfig to function type
-  const getMeasureConfig = useMemo(() => {
-    const config = measureConfig || {};
-    return typeof config === "function" ? config : item => config[item.name];
-  }, [measureConfig]);
-
-  // Normalize topojsonConfig to function type
-  const getTopojsonConfig = useMemo(() => {
-    const config = topojsonConfig || {};
-    return typeof config === "function" ? config : item => config[item.name];
-  }, [topojsonConfig]);
+  const closeModal = useCallback(() => actions.updateChart(""), []);
 
   // Compute possible charts
   const charts = useMemo(() => {
-    const charts = generateCharts(castArray(datasets), {
-      chartLimits: chartLimits as ChartLimits | undefined,
+    const charts = generateCharts(datasets, {
+      chartLimits,
       chartTypes,
       datacap,
-      getTopojsonConfig
+      getTopojsonConfig,
     });
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
   const content = useMemo(() => {
-    const Notice = nonIdealState || NonIdealState;
-
-    const isLoading = castArray(datasets).some(
-      dataset => Object.keys(dataset.columns).length === 0
-    );
+    const isLoading = datasets.some(dataset => Object.keys(dataset.columns).length === 0);
     if (isLoading) {
       console.debug("Loading datasets...", datasets);
-      return <Notice status="loading" />;
+      return (
+        <Flex justify="center" align="center" direction="column">
+          <Loader size="xl" />
+          <Title mt="md" order={4}>
+            {t("transient.title_loading")}
+          </Title>
+        </Flex>
+      );
     }
 
-    let chartList = Object.values(charts);
+    const chartList = Object.values(charts).slice(0, 10);
 
-    if (chartList.length === 0 && !Array.isArray(datasets) && datasets.data.length === 1)
-      return <Notice status="one-row" />;
-    if (chartList.length === 0) return <Notice status="empty" />;
+    if (chartList.length === 0) {
+      if (datasets.length === 1 && datasets[0].data.length === 1) {
+        return (
+          <Flex justify="center" align="center" direction="column" w="50%">
+            <IconCircleOff size={92} />
+            <Title mt="md" mb="md" order={4}>
+              {t("transient.title_one_row")}
+            </Title>
+          </Flex>
+        );
+      }
 
-    // Limit the number of charts to 10. Short term fix for performance issues, foreing trade.
-    if (chartList.length > 10) {
-      chartList = chartList.slice(0, 10);
+      return (
+        <Flex justify="center" align="center" direction="column" w="50%">
+          <IconCircleOff size={92} />
+          <Title mt="md" mb="md" order={4}>
+            {t("vizbuilder.transient.title_empty")}
+          </Title>
+          <Text>{t("transient.description_empty")}</Text>
+        </Flex>
+      );
     }
 
     const isSingleChart = chartList.length === 1;
@@ -228,91 +157,52 @@ export function Vizbuilder(props: {
       <ErrorBoundary>
         <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
           {chartList.map((chart, idx) => {
-            // For each group of 3 charts, assign grid positions
-            const pos = idx % 3;
-            let style = {};
-            let className = "";
-            let height;
-            if (isSingleChart) {
-              className = classes.fill;
-              height = 600;
-            } else {
-              if (pos === 0) {
-                className = classes.itemLarge;
-                // height = 800;
-              } else if (pos === 1) {
-                className = classes.itemSmallTop;
-              } else if (pos === 2) {
-                className = classes.itemSmallBottom;
-              }
+            let className = classes.fill;
+            if (!isSingleChart) {
+              // For each group of 3 charts, assign grid positions
+              const names = [
+                classes.itemLarge,
+                classes.itemSmallTop,
+                classes.itemSmallBottom,
+              ];
+              className = names[idx % 3];
             }
             return (
-              <div key={chart.key} className={className} style={style}>
-                <ChartCard
-                  chart={chart}
-                  downloadFormats={downloadFormats as string[] | undefined}
-                  measureConfig={getMeasureConfig}
-                  onFocus={() => setCurrentChart(chart.key)}
-                  showConfidenceInt={showConfidenceInt}
-                  userConfig={userConfig}
-                  {...(height ? {height} : {})}
-                />
-              </div>
+              <ChartCard
+                key={chart.key}
+                chart={chart}
+                onFocus={() => actions.updateChart(chart.key)}
+                height={isSingleChart ? 600 : undefined}
+                className={className}
+              />
             );
           })}
         </div>
       </ErrorBoundary>
     );
-  }, [
-    charts,
-    datasets,
-    downloadFormats,
-    getMeasureConfig,
-    nonIdealState,
-    showConfidenceInt,
-    userConfig,
-    classes,
-    cx
-  ]);
+  }, [charts, classes, datasets, t, cx, ErrorBoundary]);
 
-  const focusContent = useMemo(() => {
-    const chart = charts[currentChart];
-
-    if (!chart) return null;
-
-    return (
-      <ChartCard
-        key={`${chart.key}-focus`}
-        chart={chart}
-        downloadFormats={downloadFormats as string[] | undefined}
-        measureConfig={getMeasureConfig}
-        onFocus={() => setCurrentChart("")}
-        showConfidenceInt={showConfidenceInt}
-        userConfig={userConfig}
-        isFullMode
-      />
-    );
-  }, [charts, currentChart, downloadFormats, getMeasureConfig, showConfidenceInt, userConfig]);
+  const currentChart = queryItem?.chart || "";
+  const chart = charts[currentChart];
 
   return (
-    <div style={{height: "100%"}} className={cls("vb-wrapper", props.className)}>
+    <div className={cls("vb-wrapper", classes.wrapper, props.className)}>
       {props.customHeader}
       {content}
       {props.customFooter}
-
       <Modal
         centered
-        onClose={useCallback(() => setCurrentChart(""), [])}
+        onClose={closeModal}
         opened={currentChart !== ""}
         padding={0}
         size="calc(100vw - 3rem)"
         styles={{
           content: {maxHeight: "none !important"},
-          inner: {padding: "0 !important"}
+          inner: {padding: "0 !important"},
         }}
         withCloseButton={false}
       >
-        {focusContent}
+        {chart && <ChartCard chart={chart} onFocus={closeModal} isFullMode />}
       </Modal>
     </div>
   );
