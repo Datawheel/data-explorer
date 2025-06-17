@@ -1,5 +1,10 @@
-import {type TranslationDict, translationFactory} from "@datawheel/use-translation";
+import {
+  type TranslateFunction,
+  type TranslationDict,
+  translationFactory,
+} from "@datawheel/use-translation";
 import type {Translation as VizbuilderTranslation} from "@datawheel/vizbuilder/react";
+import {useCallback} from "react";
 
 const explorerTranslation = {
   action_copy: "Copy",
@@ -339,3 +344,13 @@ export const {useTranslation, TranslationConsumer, TranslationProvider} = transl
   defaultLocale: "en",
   defaultTranslation
 });
+
+export function useVizbuilderTranslation() {
+  const ctx = useTranslation();
+  const t = ctx.t;
+  const nsT = useCallback<TranslateFunction>(
+    (key, data) => t(`vizbuilder.${key}`, data),
+    [t],
+  );
+  return {...ctx, translate: nsT, t: nsT};
+}
