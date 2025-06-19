@@ -8,7 +8,7 @@ import {
   RawResponseView,
   TableView,
   TourStep,
-  VizbuilderView,
+  VizbuilderView
 } from "../src/main";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
@@ -147,6 +147,7 @@ function App() {
               {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView},
               {key: "raw", label: "Raw Response", component: RawResponseView}
             ]}
+            sortLocale="en"
             tourConfig={{
               introImage: (
                 <Center p="xl" bg="dark.1">

@@ -97,6 +97,14 @@ export function ExplorerComponent<Locale extends string>(props: {
    * @default "en"
    */
   defaultLocale?: Locale;
+  
+  /**
+   * The locale to use for sorting cube items within the SelectCubes component.
+   * This controls the sorting of subtopics and cube buttons.
+   * If not set, the defaultLocale will be used.
+   * @default undefined
+   */
+  sortLocale?: string;
 
   /**
    * Specifies which property should be used to filter elements in the member
@@ -197,6 +205,7 @@ export function ExplorerComponent<Locale extends string>(props: {
 }) {
   const {
     defaultLocale = "en",
+    sortLocale,
     defaultOpenParams = "measures",
     height = "100vh",
     withinMantineProvider = true,
@@ -267,6 +276,7 @@ export function ExplorerComponent<Locale extends string>(props: {
                 serverURL={props.serverURL}
                 splash={props.splash}
                 withMultiQuery={withMultiQuery}
+                sortLocale={sortLocale}
               />
             </ExplorerTour>
           </AppProviders>

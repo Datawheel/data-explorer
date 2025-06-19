@@ -45,6 +45,7 @@ export function ExplorerContent(props: {
   serverURL: string;
   splash?: React.ComponentType<{translation: TranslationContextProps}>;
   withMultiQuery: boolean;
+  sortLocale?: string;
 }) {
   const {classes} = useStyles({height: props.height});
   const {defaultLocale} = useSettings();
@@ -67,7 +68,7 @@ export function ExplorerContent(props: {
         <SideBarProvider locale={defaultLocale}>
           <SideBar>
             <SideBarItem>
-              <SelectCubes locale={defaultLocale} />
+              <SelectCubes locale={defaultLocale} sortLocale={props.sortLocale || defaultLocale} />
             </SideBarItem>
           </SideBar>
 

@@ -23,7 +23,7 @@ const loadingCubes = Array.from({length: 10}, (v, index) => ({
   id: `loading-cube-${index}`
 }));
 
-export function SelectCubes({locale}: {locale: string}) {
+export function SelectCubes({locale, sortLocale}: {locale: string; sortLocale?: string}) {
   const items = useCubeItems();
   const selectedItem = useSelectedItem();
   const {schemaLoading} = useQueryItem();
@@ -36,19 +36,32 @@ export function SelectCubes({locale}: {locale: string}) {
     return null;
   }
 
-  return <SelectCubeInternal items={items} selectedItem={selectedItem} locale={locale} />;
+  return (
+    <SelectCubeInternal
+      items={items}
+      selectedItem={selectedItem}
+      locale={locale}
+      sortLocale={sortLocale || locale}
+    />
+  );
 }
 
 function SelectCubeInternal(props: {
   items: TesseractCube[];
   selectedItem: TesseractCube | undefined;
   locale: string;
+  sortLocale: string;
 }) {
-  const {items, selectedItem, locale} = props;
+  const {items, selectedItem, locale, sortLocale} = props;
 
   return (
     <Stack id="dex-select-cube" spacing={"xs"} w={"100%"}>
-      <CubeTree items={items as AnnotatedCube[]} locale={locale} selectedItem={selectedItem} />
+      <CubeTree
+        items={items as AnnotatedCube[]}
+        locale={locale}
+        selectedItem={selectedItem}
+        sortLocale={sortLocale}
+      />
     </Stack>
   );
 }
@@ -90,32 +103,45 @@ export function getKeys(
 }
 
 function isSelected(selectedItem, currentItem) {
-  if (selectedItem && currentItem) {
+  if (selectedItem && currentItem && selectedItem.name && currentItem.name) {
     return selectedItem.name === currentItem.name;
   }
+  return false;
 }
 
 function getCube(items: AnnotatedCube[], name: string, subtopic: string, locale: string) {
+  // Make sure items is an array before trying to find
+  if (!Array.isArray(items)) return undefined;
+  
   const cube = items.find(
-    item => item.name === name && getAnnotation(item, "subtopic", locale) === subtopic
+    item => item && item.name === name && getAnnotation(item, "subtopic", locale) === subtopic
   );
   return cube;
 }
 
 function CubeTree({
   locale,
-  selectedItem
+  selectedItem,
+  sortLocale
 }: {
   items: AnnotatedCube[];
   locale: string;
   selectedItem?: TesseractCube;
+  sortLocale: string;
 }) {
   const {map, input, graph} = useSideBar();
   const {translate: t} = useTranslation();
 
+  // We need both sets of topics - one for UI display (locale) and one for sorting (sortLocale)
   let topics = useMemo(
     () => getKeys(graph.items as AnnotatedCube[], "topic", locale),
     [graph.items, locale]
+  );
+  
+  // Get topics in the sort locale for proper sorting
+  const sortTopics = useMemo(
+    () => getKeys(graph.items as AnnotatedCube[], "topic", sortLocale),
+    [graph.items, sortLocale]
   );
 
   if (input.length > 0 && map && !(map.size > 0)) {
@@ -134,10 +160,18 @@ function CubeTree({
       isSelected={isSelected}
       graph={graph}
       locale={locale}
+      sortLocale={sortLocale}
     />
   ) : (
     graph.items.length > 0 && (
-      <RootAccordions items={topics} graph={graph} selectedItem={selectedItem} locale={locale} />
+      <RootAccordions
+        items={topics}
+        sortItems={sortTopics}
+        graph={graph}
+        selectedItem={selectedItem}
+        locale={locale}
+        sortLocale={sortLocale}
+      />
     )
   );
 }
@@ -156,7 +190,7 @@ function useAccordionValue(key: Keys, locale) {
   return {value, setValue};
 }
 
-function RootAccordions({items, graph, locale, selectedItem}) {
+function RootAccordions({items, sortItems, graph, locale, selectedItem, sortLocale}) {
   const {value, setValue} = useAccordionValue("topic", locale);
   return (
     <Accordion
@@ -190,6 +224,10 @@ function RootAccordions({items, graph, locale, selectedItem}) {
       {items
         .sort((a, b) => graph.topicOrder[a] - graph.topicOrder[b])
         .map(item => {
+          // Find the corresponding item in sortLocale for sorting subtopics
+          const sortItem = sortItems.find(topic => 
+            graph.topicOrder[topic] === graph.topicOrder[item]
+          ) || item;
           return (
             <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
               <AccordionControl>{item}</AccordionControl>
@@ -197,9 +235,11 @@ function RootAccordions({items, graph, locale, selectedItem}) {
                 <SubtopicAccordion
                   graph={graph}
                   parent={item}
+                  sortParent={sortItem}
                   items={graph.adjList[item]}
                   key={item}
                   locale={locale}
+                  sortLocale={sortLocale}
                   selectedItem={selectedItem}
                 />
               </Accordion.Panel>
@@ -215,18 +255,21 @@ function CubeButton({
   selectedItem,
   graph,
   locale,
+  sortLocale,
   parent
 }: {
   item: string;
   selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
+  sortLocale: string;
   parent?: string;
 }) {
   const {onChangeCube, membersLoading, schemaLoading} = useQueryItem();
   const {classes} = useLinkStyles();
   const isSelectionInProgress = membersLoading || schemaLoading;
-  const table = graph.getName(item, locale);
+  // Make sure we handle the case where getName might return undefined
+  const table = graph.getName ? graph.getName(item, locale) : item;
   const subtopic = parent ?? "";
 
   const handleClick = () => {
@@ -267,19 +310,23 @@ type NestedAccordionType = {
   items: string[];
   graph: any;
   parent?: string;
+  sortParent?: string;
   selectedItem?: TesseractCube;
   locale: string;
+  sortLocale: string;
 };
 
 function SubtopicAccordion({
   items,
   graph,
   parent,
+  sortParent,
   selectedItem,
-  locale
+  locale,
+  sortLocale
 }: PropsWithChildren<NestedAccordionType>) {
   const {value, setValue} = useAccordionValue("subtopic", locale);
-
+  // Use sortParent for accessing the adjList when available, otherwise fall back to parent
   return (
     <Accordion
       id="data-accordion-topic"
@@ -306,9 +353,71 @@ function SubtopicAccordion({
       })}
     >
       {[...items]
-        .sort((a, b) => a.localeCompare(b, locale, {sensitivity: "base"}))
+        .sort((a, b) => {
+          // Get the localized subtopic labels from the graph for sorting
+          const aLabel = graph.items.find(cube => 
+            getAnnotation(cube, "topic", locale) === parent && 
+            getAnnotation(cube, "subtopic", locale) === a
+          );
+          
+          const bLabel = graph.items.find(cube => 
+            getAnnotation(cube, "topic", locale) === parent && 
+            getAnnotation(cube, "subtopic", locale) === b
+          );
+          
+          const aSort = aLabel ? getAnnotation(aLabel, "subtopic", sortLocale) || a : a;
+          const bSort = bLabel ? getAnnotation(bLabel, "subtopic", sortLocale) || b : b;
+          
+          return aSort.localeCompare(bSort, sortLocale, {sensitivity: "base"});
+        })
         .map((item, index) => {
-          const filtered = [...graph.adjList[item]].filter(value => value !== parent);
+          // If we have a sortParent, we need to find the corresponding item in the sort locale
+          // to properly access graph.adjList
+          let sortSubtopic = item; // Default to the original item
+          
+          if (sortParent && item) {
+            // First check if we can find a cube with this subtopic in the current locale
+            const hasCubeInLocale = graph.items
+              .some(cube => 
+                getAnnotation(cube, "topic", locale) === parent && 
+                getAnnotation(cube, "subtopic", locale) === item
+              );
+              
+            if (hasCubeInLocale) {
+              // Find the corresponding cube in the sort locale
+              const matchingCube = graph.items
+                .find(cube => 
+                  getAnnotation(cube, "topic", sortLocale) === sortParent && 
+                  getAnnotation(cube, "subtopic", locale) === item
+                );
+                
+              // Only get the annotation if we found a matching cube
+              if (matchingCube) {
+                const annotatedSubtopic = getAnnotation(matchingCube, "subtopic", sortLocale);
+                if (annotatedSubtopic) {
+                  sortSubtopic = annotatedSubtopic;
+                }
+              }
+            }
+          }
+
+          // Make sure the item exists in the adjList to avoid errors
+          const adjListItem = graph.adjList[sortSubtopic];
+          const filtered = adjListItem ? 
+            [...adjListItem]
+              .filter(value => value !== parent)
+              .sort((a, b) => {
+                // Get the localized cube names from the graph for sorting
+                const aLabel = graph.items.find(cube => cube && cube.name === a);
+                const bLabel = graph.items.find(cube => cube && cube.name === b);
+                
+                // Use table annotation for cubes
+                const aSort = aLabel ? getAnnotation(aLabel, "table", sortLocale) || a : a;
+                const bSort = bLabel ? getAnnotation(bLabel, "table", sortLocale) || b : b;
+                
+                return aSort.localeCompare(bSort, sortLocale, {sensitivity: "base"});
+              })
+            : [];
 
           return (
             <Accordion.Item value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
@@ -320,6 +429,7 @@ function SubtopicAccordion({
                     graph={graph}
                     item={table}
                     locale={locale}
+                    sortLocale={sortLocale}
                     selectedItem={selectedItem}
                     parent={item}
                   />

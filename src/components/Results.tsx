@@ -11,6 +11,7 @@ type Props = {
   selectedItem?: TesseractCube;
   graph: Graph;
   locale: string;
+  sortLocale: string;
   getCube: (
     items: AnnotatedCube[],
     table: string,
@@ -21,7 +22,7 @@ type Props = {
 };
 
 export default function Results(props: Props) {
-  const {graph, selectedItem, locale, getCube, isSelected} = props;
+  const {graph, selectedItem, locale, sortLocale, getCube, isSelected} = props;
   const {classes} = useStyles();
   const {setExpanded, setInput, map} = useSideBar();
   const {onChangeCube} = useQueryItem();
@@ -32,7 +33,18 @@ export default function Results(props: Props) {
     const [topic, subtopic] = key.split(" - ");
 
     // For each topic-subtopic, collect the cubes
-    const topicResults = items
+    const topicResults = [...items]
+      .sort((a, b) => {
+        // Get the localized cube names from the graph for sorting
+        const cubeA = getCube(graph.items, a, subtopic, locale);
+        const cubeB = getCube(graph.items, b, subtopic, locale);
+        
+        // Use table annotation for cubes
+        const aSort = cubeA ? getAnnotation(cubeA, "table", sortLocale) || a : a;
+        const bSort = cubeB ? getAnnotation(cubeB, "table", sortLocale) || b : b;
+        
+        return aSort.localeCompare(bSort, sortLocale, {sensitivity: "base"});
+      })
       .map(item => {
         const cube = getCube(graph.items, item, subtopic, locale);
         if (!cube) return null;
