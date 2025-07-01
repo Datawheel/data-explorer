@@ -116,11 +116,11 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
             ) {
               return Promise.resolve({
                 drilldown: currentDrilldown,
-                cut: buildCut({...currentDrilldown, active: false})
+                cut: buildCut({...currentDrilldown, active: false, members: []})
               });
             } else {
               return fetchMembers(dd.level, newQuery?.params.locale, cube).then(levelMeta => {
-                const cut = buildCut({...dd, active: false});
+                const cut = buildCut({...dd, active: false, members: []});
                 return {
                   drilldown: {
                     ...dd,
