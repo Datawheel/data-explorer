@@ -61,6 +61,7 @@ import {
   FilterItem,
   type MeasureItem,
   type QueryItem,
+  buildCut,
   buildFilter,
   buildMeasure,
   buildProperty,
@@ -280,12 +281,13 @@ function LevelItem({
   activeItems: DrilldownItem[];
   depth?: number;
 }) {
-  const [activeFilter, setActiveFilter] = useState(false);
   const [activePropertiesFilter, setActiveProperties] = useState(false);
   const {translate: t} = useTranslation();
+
   const actions = useActions();
+
   const cutItems = useSelector(selectCutItems);
-  let drilldowns = useSelector(selectDrilldownMap);
+  const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
   const {idFormatters} = useidFormatters();
 
@@ -312,13 +314,7 @@ function LevelItem({
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
 
-  const cut = cutItems.find(cut => {
-    return cut.level === currentDrilldown?.level;
-  });
-
-  const updatecutHandler = (item: CutItem, members: string[]) => {
-    actions.updateCut({...item, members});
-  };
+  const cut = cutItems.find(cut => cut.level === level.name);
 
   const checked = activeItems.map(i => i.level).includes(level.name);
   const disableUncheck = activeItems.length === 1 && checked;
@@ -340,8 +336,10 @@ function LevelItem({
             onChange={() => {
               actions.updateDrilldown({
                 ...currentDrilldown,
-                active: !currentDrilldown.active
+                active: !currentDrilldown.active,
               });
+              if (cut && cut.members.length > 0)
+                actions.updateCut({...cut, active: !cut.active});
             }}
             checked={checked}
             label={label}
@@ -352,10 +350,20 @@ function LevelItem({
             <ActionIcon
               className="dex-level-filter"
               size="sm"
-              onClick={() => setActiveFilter(value => !value)}
+              onClick={() => {
+                const nextCut = buildCut(cut || level);
+                if (cut?.active) {
+                  nextCut.active = false;
+                  actions.updateCut(nextCut);
+                } else {
+                  actions.updateDrilldown({...currentDrilldown, active: true});
+                  nextCut.active = true;
+                  actions.updateCut(nextCut);
+                }
+              }}
               disabled={isDisabled}
             >
-              {activeFilter ? <IconFilterOff /> : <IconFilter />}
+              {cut?.active ? <IconFilterOff /> : <IconFilter />}
             </ActionIcon>
             {properties && (
               <Tooltip label={t("params.add_metadata")}>
@@ -369,18 +377,14 @@ function LevelItem({
             </ThemeIcon>
           </Group>
         </Group>
-        {activeFilter && (
+        {cut?.active && (
           <Box pt="md">
             <MultiSelect
               sx={{flex: "1 1 100%"}}
               searchable
-              onChange={value => {
+              onChange={members => {
                 if (cut) {
-                  if (currentDrilldown.active && !cut.active) {
-                    updatecutHandler({...cut, active: true}, value);
-                  } else {
-                    updatecutHandler(cut, value);
-                  }
+                  actions.updateCut({...cut, active: currentDrilldown.active, members});
                 }
               }}
               placeholder={`Filter by ${label}`}

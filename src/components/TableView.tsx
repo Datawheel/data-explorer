@@ -95,70 +95,44 @@ function isColumnSorted(column: string, key: string) {
   return column == key;
 }
 
-const propertiesUpdateHandler = (actions, item: DrilldownItem, activeProps: string[]) => {
-  const properties = item.properties.map(prop =>
-    buildProperty({
-      ...prop,
-      active: activeProps.includes(prop.key)
-    })
-  );
-  actions.updateDrilldown({...item, properties});
-};
-
 const removeColumn = (
-  actions: ExplorerBoundActionMap,
-  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
-  measures: MeasureItem[],
-  drilldowns: DrilldownItem[],
-  type: EntityTypes,
   queryItem: QueryItem,
-  updateURL: (queryItem: QueryItem) => void
+  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
 ) => {
   const newQuery = buildQuery(cloneDeep(queryItem));
+  const params = newQuery.params;
 
   if ("aggregator" in entity) {
-    const measure = measures.find(d => d.name === entity.name);
+    const measure = params.measures[entity.name];
     if (measure) {
-      const newMeasure = {...measure, active: false};
-      actions.updateMeasure(newMeasure);
-      newQuery.params.measures[newMeasure.name] = newMeasure;
-      updateURL({
-        ...newQuery,
-        params: {
-          ...newQuery.params
-        }
-      });
+      params.measures[entity.name] = {...measure, active: false};
+      return newQuery;
     }
-  }
-  if ("depth" in entity) {
-    const drilldown = drilldowns.find(d => d.level === entity.name);
+  } else if ("depth" in entity) {
+    const cut = params.cuts[entity.name];
+    if (cut) {
+      params.cuts[cut.key] = {...cut, active: false};
+    }
+    const drilldown = params.drilldowns[entity.name];
     if (drilldown) {
-      const newDrilldown = {...drilldown, active: false};
-      actions.updateDrilldown(newDrilldown);
-      newQuery.params.drilldowns[newDrilldown.key] = newDrilldown;
-      updateURL({
-        ...newQuery,
-        params: {
-          ...newQuery.params
-        }
-      });
+      params.drilldowns[drilldown.key] = {...drilldown, active: false};
+      return newQuery;
     }
-  }
-
-  if (isProperty(type)) {
-    const activeDrilldowns = drilldowns.filter(d => d.active);
-    const drilldown = activeDrilldowns.find(dd =>
-      dd.properties.some(property => property.name === entity.name)
+  } else if ("level" in entity) {
+    const mapPropertyToDrilldown = Object.fromEntries(
+      Object.values(params.drilldowns)
+        .filter(drilldown => drilldown.active)
+        .flatMap(drilldown => drilldown.properties.map(prop => [prop.name, drilldown])),
     );
-
-    const activeProperties = drilldown?.properties
-      .filter(p => p.active)
-      .filter(p => p.name !== entity.name)
-      .filter(p => p.active)
-      .map(p => p.name);
-
-    if (drilldown && activeProperties) {
-      propertiesUpdateHandler(actions, drilldown, activeProperties);
+    const drilldown = mapPropertyToDrilldown[entity.name];
+    if (drilldown) {
+      params.drilldowns[drilldown.key] = {
+        ...drilldown,
+        properties: drilldown.properties.map(prop =>
+          prop.name === entity.name ? {...prop, active: false} : prop,
+        ),
+      };
+      return newQuery;
     }
   }
 };
@@ -582,15 +556,11 @@ export function useTable({
                       key={`remove-${column.columnDef.header}`}
                       disabled={!showTrashIcon(finalKeys, entityType) || isLoading || isFetching}
                       onClick={() => {
-                        removeColumn(
-                          actions,
-                          entity,
-                          measures,
-                          drilldowns,
-                          entityType,
-                          queryItem,
-                          updateURL
-                        );
+                        const nextQueryItem = removeColumn(queryItem, entity);
+                        if (nextQueryItem) {
+                          actions.resetAllParams(nextQueryItem.params);
+                          updateURL(nextQueryItem);
+                        }
                       }}
                       showTooltip={!showTrashIcon(finalKeys, entityType)}
                       size={25}
