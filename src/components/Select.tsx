@@ -2,9 +2,7 @@ import {Button, Group, Input, Select, SelectItem, SelectProps} from "@mantine/co
 import React, {useMemo, forwardRef} from "react";
 import {accesorFactory, identity, keyBy} from "../utils/transform";
 
-type PropertyAccesor<T> =
-  | (T extends string | number ? never : keyof T)
-  | ((item: T) => string);
+type PropertyAccesor<T> = (T extends string | number ? never : keyof T) | ((item: T) => string);
 
 export type SelectObjectProps<T> = {
   disabled?: boolean;
@@ -20,10 +18,9 @@ export type SelectObjectProps<T> = {
   selectProps?: Partial<SelectProps>;
 };
 
-
 /** */
 export const SelectObject = forwardRef(function <T extends SelectItem>(
-  props: SelectObjectProps<T> & { ref?: React.Ref<any> },
+  props: SelectObjectProps<T> & {ref?: React.Ref<any>},
   ref: React.Ref<any>
 ) {
   const {

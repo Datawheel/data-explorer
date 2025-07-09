@@ -11,16 +11,21 @@ import {
   Menu,
   MultiSelect,
   NumberInput,
+  Radio,
+  Select,
+  Stack,
   Text,
   ThemeIcon,
   Tooltip,
   useMantineTheme
 } from "@mantine/core";
+import {SelectObject} from "./Select";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
 import {
   IconAdjustments,
   IconArrowsLeftRight,
   IconBox,
+  IconChartHistogram,
   IconClock,
   IconFilter,
   IconFilterOff,
@@ -70,6 +75,8 @@ import {
 import {isActiveItem} from "../utils/validation";
 import {getFiltersConditions} from "./TableView";
 import {BarsSVG, StackSVG} from "./icons";
+import type {TesseractMeasure} from "../api/tesseract/schema";
+import {current} from "@reduxjs/toolkit";
 
 const styles = (t: MantineTheme) => ({
   header: {
@@ -83,6 +90,147 @@ const styles = (t: MantineTheme) => ({
 type AddColumnsDrawerProps = {
   children?: React.ReactNode;
 };
+
+const GROWTH_METHODS = {
+  LAG1: "LAG1",
+  LAGN: "LAGN",
+  CUSTOM: "CUSTOM"
+} as const;
+
+type GrowthMethodsType = (typeof GROWTH_METHODS)[keyof typeof GROWTH_METHODS];
+
+const DEFAULT_LAGS = {
+  Month: {
+    Quarter: 4, // same month of previous quarter
+    Year: 12 // same month of previous year
+  },
+  Quarter: {
+    Year: 4 // same quarter of previous year
+  }
+};
+
+const SUPPORTED_TIME_DIMENSIONS = ["Month", "Quarter", "Year"];
+
+const findLevel = (dim: string) => SUPPORTED_TIME_DIMENSIONS.findIndex(d => d === dim);
+
+function CalculationsOptions() {
+  const measures = useMeasureItems();
+  const measureItems = measures.map(m => ({...m, value: m.name}));
+  const selectedDimensions = useSelector(selectDrilldownItems);
+  const dimensions = useDimensionItems();
+  const drilldowns = useSelector(selectDrilldownMap);
+
+  const selectedTimeDimensions = selectedDimensions.filter(
+    dimension =>
+      dimension.active &&
+      dimensions.find(d => d.name === dimension.dimension)?.type === DimensionType.TIME
+  );
+
+  const sortedTimeDimensions = selectedTimeDimensions.sort(
+    (a, b) => findLevel(a.level) - findLevel(b.level)
+  );
+
+  console.log(selectedTimeDimensions, sortedTimeDimensions);
+
+  const currentDrilldown = drilldowns[sortedTimeDimensions[0]?.level];
+  const [growthSelected, setGrowthSelected] = useState<boolean>(false);
+  const [selectedMeasure, setSelectedMeasure] = useState<TesseractMeasure>(measures[0]);
+  const [selectedMethod, setSelectedMethod] = useState<GrowthMethodsType>(GROWTH_METHODS.LAG1);
+  const [selectedCustomMethod, setSelectedCustomMethod] = useState<string>("Time Gap");
+
+  const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setGrowthSelected(e.currentTarget.checked);
+  }, []);
+
+  const handleMeasureSelect = useCallback(
+    item => setSelectedMeasure(measures.find(m => m.name === item.value) || measures[0]),
+    []
+  );
+
+  const currentTimeMembers = currentDrilldown.members.map(m => `${m.caption} (${m.key})`);
+  console.log(currentTimeMembers);
+  return (
+    <Box>
+      <Divider
+        my="md"
+        label={
+          <Group>
+            <IconChartHistogram size="1.2rem" />
+            <Text italic>Calculations</Text>
+          </Group>
+        }
+      />
+      <Box id="dex-growth-config">
+        <Group position="apart" mt="md">
+          <Checkbox label="Growth" size="xs" onChange={handleCheckboxChange}></Checkbox>
+          <SelectObject
+            getLabel="caption"
+            getValue="name"
+            items={measureItems}
+            onItemSelect={handleMeasureSelect}
+            selectedItem={selectedMeasure.name}
+            selectProps={{size: "xs"}}
+          />
+        </Group>
+        {growthSelected && (
+          <>
+            <Radio.Group
+              ml="md"
+              mt="xs"
+              value={selectedMethod}
+              onChange={value => setSelectedMethod(value as GrowthMethodsType)}
+            >
+              <Stack spacing="xs">
+                <Radio
+                  size="xs"
+                  value={GROWTH_METHODS.LAG1}
+                  label={`Compare with previous ${sortedTimeDimensions[0].level}`}
+                ></Radio>
+                {sortedTimeDimensions.length > 1 && (
+                  <Radio
+                    size="xs"
+                    value={GROWTH_METHODS.LAGN}
+                    label={`Compare with same ${sortedTimeDimensions[0].level} of previous ${sortedTimeDimensions[1].level}`}
+                  ></Radio>
+                )}
+                <Radio size="xs" value={GROWTH_METHODS.CUSTOM} label="Custom"></Radio>
+              </Stack>
+            </Radio.Group>
+            {selectedMethod === GROWTH_METHODS.CUSTOM && (
+              <Box mt="xs" ml="xl">
+                <Flex gap="xs" align="flex-end">
+                  <Select
+                    label="Method"
+                    data={["Time Gap", "Base Period"]}
+                    value={selectedCustomMethod}
+                    onChange={value => setSelectedCustomMethod(value || "Time Gap")}
+                    defaultValue={"Time Gap"}
+                    variant="unstyled"
+                    size="xs"
+                  />
+                  {selectedCustomMethod === "Time Gap" && (
+                    <NumberInput
+                      size="xs"
+                      defaultValue={1}
+                      min={1}
+                      max={1000}
+                      label={`${sortedTimeDimensions[0].level}(s)`}
+                      step={1}
+                      style={{flex: 1}}
+                    />
+                  )}
+                  {selectedCustomMethod === "Base Period" && (
+                    <Select data={currentTimeMembers} defaultValue={currentTimeMembers[0]} />
+                  )}
+                </Flex>
+              </Box>
+            )}
+          </>
+        )}
+      </Box>
+    </Box>
+  );
+}
 
 const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   const [opened, {open, close}] = useDisclosure(false);
@@ -120,6 +268,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         }}
       >
         <MeasuresOptions />
+        <CalculationsOptions />
         <DrillDownOptions />
         <Box mt="3rem" pb="md">
           <Button
@@ -155,14 +304,14 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   );
 };
 
-export function DrawerMenu() {
-  return (
-    <Drawer opened={true} position="right" onClose={close} title="Columns">
-      <MeasuresOptions />
-      <DrillDownOptions />
-    </Drawer>
-  );
-}
+// export function DrawerMenu() {
+//   return (
+//     <Drawer opened={true} position="right" onClose={close} title="Columns">
+//       <MeasuresOptions />
+//       <DrillDownOptions />
+//     </Drawer>
+//   );
+// }
 
 function DrillDownOptions() {
   const locale = useSelector(selectLocale);
@@ -336,10 +485,9 @@ function LevelItem({
             onChange={() => {
               actions.updateDrilldown({
                 ...currentDrilldown,
-                active: !currentDrilldown.active,
+                active: !currentDrilldown.active
               });
-              if (cut && cut.members.length > 0)
-                actions.updateCut({...cut, active: !cut.active});
+              if (cut && cut.members.length > 0) actions.updateCut({...cut, active: !cut.active});
             }}
             checked={checked}
             label={label}
