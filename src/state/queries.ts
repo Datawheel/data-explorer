@@ -6,6 +6,7 @@ import {
   CutItem,
   DrilldownItem,
   FilterItem,
+  GrowthParam,
   MeasureItem,
   QueryItem,
   QueryParams,
@@ -241,6 +242,17 @@ export const queriesSlice = createSlice({
       query.params.filters[payload.key] = payload;
     },
 
+    /**
+     * Updates the growth parameter
+     */
+    updateGrowth(state, {payload}: Action<GrowthParam>) {
+      const query = taintCurrentQuery(state);
+      if (payload) {
+        query.params.growth = payload;
+      } else {
+        query.params.growth = undefined;
+      }
+    },
     /**
      * Replaces the locale setting in the current QueryItem.
      */

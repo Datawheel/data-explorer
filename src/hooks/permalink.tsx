@@ -10,6 +10,8 @@ import {useNavigate} from "react-router-dom";
 
 /** */
 export function serializePermalink(item: QueryItem): string {
+  console.log("serializing permalink", item);
+
   const request = queryParamsToRequest(item.params);
   const search = new URLSearchParams(
     Object.entries(request).filter(entry => entry[1] != null && entry[1] !== "")

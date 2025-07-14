@@ -130,8 +130,6 @@ function CalculationsOptions() {
     (a, b) => findLevel(a.level) - findLevel(b.level)
   );
 
-  console.log(selectedTimeDimensions, sortedTimeDimensions);
-
   const currentDrilldown = drilldowns[sortedTimeDimensions[0]?.level];
   const [growthSelected, setGrowthSelected] = useState<boolean>(false);
   const [selectedMeasure, setSelectedMeasure] = useState<TesseractMeasure>(measures[0]);
@@ -148,7 +146,7 @@ function CalculationsOptions() {
   );
 
   const currentTimeMembers = currentDrilldown.members.map(m => `${m.caption} (${m.key})`);
-  console.log(currentTimeMembers);
+
   return (
     <Box>
       <Divider
@@ -220,7 +218,11 @@ function CalculationsOptions() {
                     />
                   )}
                   {selectedCustomMethod === "Base Period" && (
-                    <Select data={currentTimeMembers} defaultValue={currentTimeMembers[0]} />
+                    <Select
+                      size="xs"
+                      data={currentTimeMembers}
+                      defaultValue={currentTimeMembers[0]}
+                    />
                   )}
                 </Flex>
               </Box>
@@ -270,7 +272,18 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         <MeasuresOptions />
         <CalculationsOptions />
         <DrillDownOptions />
-        <Box mt="3rem" pb="md">
+        <Box
+          px="xl"
+          mt="3rem"
+          py="md"
+          pos="sticky"
+          bottom={0}
+          left={0}
+          right={0}
+          sx={t => ({
+            backgroundColor: t.colorScheme === "dark" ? t.colors.dark[8] : t.colors.gray[1]
+          })}
+        >
           <Button
             fullWidth
             color="primary"

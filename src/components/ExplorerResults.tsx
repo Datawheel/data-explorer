@@ -76,6 +76,7 @@ export function ExplorerResults(props: {
   } = useServerSchema();
   const {transintionLocaleLoading} = useQueryItem();
   const {params} = useSelector(selectCurrentQueryItem);
+  console.log({params});
   const cubeMap = schema?.cubeMap || {};
   const cube = cubeMap[params.cube];
   const {online: isServerOnline, url: serverUrl} = schema || {};
@@ -117,7 +118,7 @@ export function ExplorerResults(props: {
   // or the user changed parameters since last query
   // check is loading
   // use set loading when seraching members.
-
+  console.log({isServerOnline, cube, schemaLoading, transintionLocaleLoading});
   if (isServerOnline == null || !cube || schemaLoading || transintionLocaleLoading) {
     return (
       <Paper

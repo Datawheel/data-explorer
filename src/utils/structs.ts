@@ -28,6 +28,7 @@ export interface QueryParams {
   pagiOffset: number;
   sortDir: "asc" | "desc";
   sortKey: string | undefined;
+  growth: GrowthParam | undefined;
 }
 
 export interface QueryResult<D = Record<string, unknown>> {
@@ -110,6 +111,13 @@ export interface PropertyItem extends QueryParamsItem {
   name: string;
 }
 
+export interface GrowthParam extends QueryParamsItem {
+  time: string;
+  measure: string;
+  method: "fixed" | "period";
+  period: string;
+}
+
 type RecursivePartial<T> = {
   [K in keyof T]?: T[K] extends string | boolean | number | bigint | symbol
     ? T[K]
@@ -159,7 +167,8 @@ export function buildQueryParams(props): QueryParams {
     pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
     sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
-    sortKey: props.sortKey || props.sortProperty || ""
+    sortKey: props.sortKey || props.sortProperty || "",
+    growth: props.growth || ""
   };
 }
 
