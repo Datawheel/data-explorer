@@ -1,8 +1,8 @@
 import type {TranslateFunction} from "@datawheel/use-translation";
 import type {Chart, D3plusConfig} from "@datawheel/vizbuilder";
 import {
-  type Formatter,
   d3plusConfigBuilder,
+  type Formatter,
   useVizbuilderContext,
 } from "@datawheel/vizbuilder/react";
 import type {TesseractMeasure} from "@datawheel/vizbuilder/schema";
@@ -36,10 +36,8 @@ export function useD3plusConfig(
 
   return useMemo((): [
     React.ComponentType<{config: D3plusConfig}> | null,
-    D3plusConfig,
+    D3plusConfig | false,
   ] => {
-    // if (!chart) return [null, {data: [], locale: ""}];
-
     const params: ChartBuilderParams = {
       fullMode,
       getFormatter,
