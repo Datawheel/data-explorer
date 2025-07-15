@@ -362,13 +362,19 @@ function LevelItem({
                 const timeCompleteLevel = availableLevels.find(
                   l => l.depth === Math.min(...availableLevels.map(level => level.depth))
                 );
-                const highestDepthLevel = hierarchyLevels.find(
+                const deepestLevel = hierarchyLevels.find(
                   l => l.depth === Math.max(...hierarchyLevels.map(level => level.depth))
                 );
+
+                const deepestLevelAvailable = availableLevels.find(
+                  l => l.depth === deepestLevel?.depth
+                );
+
                 if (
                   timeCompleteLevel &&
-                  highestDepthLevel &&
-                  timeCompleteLevel.depth < highestDepthLevel.depth
+                  deepestLevel &&
+                  timeCompleteLevel.depth < deepestLevel.depth &&
+                  !deepestLevelAvailable
                 ) {
                   actions.updateTimeComplete(timeCompleteLevel.name);
                 } else {
