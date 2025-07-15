@@ -332,14 +332,7 @@ function LevelItem({
   return (
     currentDrilldown && (
       <>
-        <Group
-          bg={dimensionIsTimeComplete ? "red" : "transparent"}
-          className="dex-level-control"
-          mt="sm"
-          position="apart"
-          key={level.name}
-          noWrap
-        >
+        <Group className="dex-level-control" mt="sm" position="apart" key={level.name} noWrap>
           <Checkbox
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
