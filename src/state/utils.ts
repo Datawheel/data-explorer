@@ -9,6 +9,7 @@ function calcMaxMemberCount(lengths) {
  */
 export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: TesseractCube) {
   const levels: TesseractLevel[] = [];
+  let timeComplete;
   let suggestedLevels: string[] = [];
   for (const key in cube.annotations) {
     if (key === "suggested_levels") {
@@ -22,9 +23,18 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
   for (const dimension of dimensions) {
     if (dimension.type === "time" || levels.length < 4) {
       const hierarchy = findDefaultHierarchy(dimension);
+      const hierarchyDepth = Math.max(...hierarchy.levels.map(l => l.depth));
       // uses deepest level for geo dimensions
       const levelIndex = dimension.type === "geo" ? hierarchy.levels.length - 1 : 0;
-      levels.push({...hierarchy.levels[levelIndex], type: dimension.type});
+      const defaultLevel = hierarchy.levels[levelIndex];
+      if (
+        dimension.type === "time" &&
+        dimension.annotations.de_time_complete === "true" &&
+        defaultLevel.depth < hierarchyDepth
+      ) {
+        timeComplete = defaultLevel.name;
+      }
+      levels.push({...defaultLevel, type: dimension.type});
     }
   }
 
@@ -67,5 +77,5 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
     totalCount = calcMaxMemberCount(levels.map(l => l.count)); // Recalculate totalCount
   }
 
-  return levels;
+  return {levels, timeComplete};
 }

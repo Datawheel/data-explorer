@@ -127,6 +127,10 @@ export const queriesSlice = createSlice({
       delete query.params.filters[action.payload];
     },
 
+    removeTimeComplete(state) {
+      const query = taintCurrentQuery(state);
+      delete query.params.timeComplete;
+    },
     /**
      * Replaces multiple QueryParams for the current QueryItem at once.
      */
@@ -234,6 +238,15 @@ export const queriesSlice = createSlice({
     },
 
     /**
+     * Replaces the timeComplete value in the current QueryItem.
+     */
+    updateTimeComplete(state, {payload}: Action<string>) {
+      const query = taintCurrentQuery(state);
+      if (payload !== query.params.timeComplete) {
+        query.params.timeComplete = payload;
+      }
+    },
+    /**
      * Replaces a single FilterItem in the current QueryItem.
      */
     updateFilter(state, {payload}: Action<FilterItem>) {
@@ -247,7 +260,6 @@ export const queriesSlice = createSlice({
     updateLocale(state, {payload}: Action<string>) {
       const query = state.itemMap[state.current];
       if (payload !== query.params.locale) {
-        // query.isDirty = true;
         query.params.locale = payload;
       }
     },
