@@ -28,6 +28,7 @@ export interface QueryParams {
   pagiOffset: number;
   sortDir: "asc" | "desc";
   sortKey: string | undefined;
+  timeComplete: string | undefined;
 }
 
 export interface QueryResult<D = Record<string, unknown>> {
@@ -159,7 +160,8 @@ export function buildQueryParams(props): QueryParams {
     pagiLimit: props.pagiLimit || props.limitAmount || props.limit || 100,
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
     sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
-    sortKey: props.sortKey || props.sortProperty || ""
+    sortKey: props.sortKey || props.sortProperty || "",
+    timeComplete: props.timeComplete || undefined
   };
 }
 
