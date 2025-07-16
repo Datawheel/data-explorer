@@ -1,5 +1,9 @@
 import type {Chart} from "@datawheel/vizbuilder";
-import {useVizbuilderContext} from "@datawheel/vizbuilder/react";
+import {
+  ErrorBoundary,
+  useD3plusConfig,
+  useVizbuilderContext,
+} from "@datawheel/vizbuilder/react";
 import {Box, Button, CopyButton, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
@@ -13,8 +17,6 @@ import {
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef, useState} from "react";
 import {useInView} from "react-intersection-observer";
-import {useVizbuilderTranslation} from "../../hooks/translation";
-import {useD3plusConfig} from "../hooks/useD3plusConfig";
 
 const iconByFormat = {
   jpg: IconPhotoDown,
@@ -47,9 +49,7 @@ export function ChartCard(props: {
   const {chart, isFullMode, onFocus, height} = props;
   const {dataset} = chart.datagroup;
 
-  const {translate} = useVizbuilderTranslation();
-
-  const {downloadFormats, ErrorBoundary, showConfidenceInt} = useVizbuilderContext();
+  const {CardErrorComponent, downloadFormats, translate} = useVizbuilderContext();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const {ref: inViewRef, inView} = useInView({triggerOnce: false, threshold: 0});
@@ -66,11 +66,7 @@ export function ChartCard(props: {
     inViewRef(el);
   };
 
-  const [ChartComponent, config] = useD3plusConfig(chart, {
-    fullMode: !!isFullMode,
-    showConfidenceInt,
-    t: translate,
-  });
+  const [ChartComponent, config] = useD3plusConfig(chart, {fullMode: !!isFullMode});
 
   const downloadButtons = useMemo(() => {
     if (!config) return null;
@@ -148,7 +144,7 @@ export function ChartCard(props: {
   const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : 400;
 
   return (
-    <ErrorBoundary>
+    <ErrorBoundary ErrorContent={CardErrorComponent}>
       <Paper
         className={props.className}
         w="100%"
