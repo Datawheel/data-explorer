@@ -13,7 +13,7 @@ import {ChartCard} from "./ChartCard";
 
 const useStyles = createStyles(theme => ({
   wrapper: {
-    height: "100%",
+    height: "100%"
   },
   grid: {
     padding: theme.spacing.xl,
@@ -22,20 +22,20 @@ const useStyles = createStyles(theme => ({
     gap: theme.spacing.xl,
     gridTemplateColumns: "1fr 1fr",
     [theme.fn.smallerThan("md")]: {
-      gridTemplateColumns: "1fr",
-    },
+      gridTemplateColumns: "1fr"
+    }
   },
   itemLarge: {
     gridRow: "auto",
-    gridColumn: "auto",
+    gridColumn: "auto"
   },
   itemSmallTop: {
     gridRow: "auto",
-    gridColumn: "auto",
+    gridColumn: "auto"
   },
   itemSmallBottom: {
     gridRow: "auto",
-    gridColumn: "auto",
+    gridColumn: "auto"
   },
   // for single chart
   fill: {
@@ -45,9 +45,9 @@ const useStyles = createStyles(theme => ({
     width: "100%",
     [theme.fn.largerThan("md")]: {
       gridColumn: "1 / span 2",
-      gridRow: "1 / span 2",
-    },
-  },
+      gridRow: "1 / span 2"
+    }
+  }
 }));
 
 export type VizbuilderProps = React.ComponentProps<typeof Vizbuilder>;
@@ -84,14 +84,8 @@ export function Vizbuilder(props: {
 
   const {t} = useVizbuilderTranslation();
 
-  const {
-    chartLimits,
-    chartTypes,
-    datacap,
-    getTopojsonConfig,
-    ErrorBoundary,
-    NonIdealState,
-  } = useVizbuilderContext();
+  const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState} =
+    useVizbuilderContext();
 
   const {actions} = useSettings();
 
@@ -107,7 +101,7 @@ export function Vizbuilder(props: {
       chartLimits,
       chartTypes,
       datacap,
-      getTopojsonConfig,
+      getTopojsonConfig
     });
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
@@ -154,33 +148,27 @@ export function Vizbuilder(props: {
     const isSingleChart = chartList.length === 1;
 
     return (
-      <ErrorBoundary>
-        <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
-          {chartList.map((chart, idx) => {
-            let className = classes.fill;
-            if (!isSingleChart) {
-              // For each group of 3 charts, assign grid positions
-              const names = [
-                classes.itemLarge,
-                classes.itemSmallTop,
-                classes.itemSmallBottom,
-              ];
-              className = names[idx % 3];
-            }
-            return (
-              <ChartCard
-                key={chart.key}
-                chart={chart}
-                onFocus={() => actions.updateChart(chart.key)}
-                height={isSingleChart ? 600 : undefined}
-                className={className}
-              />
-            );
-          })}
-        </div>
-      </ErrorBoundary>
+      <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
+        {chartList.map((chart, idx) => {
+          let className = classes.fill;
+          if (!isSingleChart) {
+            // For each group of 3 charts, assign grid positions
+            const names = [classes.itemLarge, classes.itemSmallTop, classes.itemSmallBottom];
+            className = names[idx % 3];
+          }
+          return (
+            <ChartCard
+              key={chart.key}
+              chart={chart}
+              onFocus={() => actions.updateChart(chart.key)}
+              height={isSingleChart ? 600 : undefined}
+              className={className}
+            />
+          );
+        })}
+      </div>
     );
-  }, [charts, classes, datasets, t, cx, ErrorBoundary]);
+  }, [charts, classes, datasets, t, cx]);
 
   const currentChart = queryItem?.chart || "";
   const chart = charts[currentChart];
@@ -198,7 +186,7 @@ export function Vizbuilder(props: {
         size="calc(100vw - 3rem)"
         styles={{
           content: {maxHeight: "none !important"},
-          inner: {padding: "0 !important"},
+          inner: {padding: "0 !important"}
         }}
         withCloseButton={false}
       >

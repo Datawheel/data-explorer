@@ -1,6 +1,6 @@
 {
   "name": "@datawheel/data-explorer",
-  "version": "1.1.15",
+  "version": "1.2.0-rc.1",
   "main": "./dist/main.mjs",
   "types": "./dist/main.d.mts",
   "files": [
@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@datawheel/use-translation": "^0.2.0",
-    "@datawheel/vizbuilder": "^0.7.0",
+    "@datawheel/vizbuilder": "^0.7.4",
     "@reactour/tour": "^3.7.0",
     "@reduxjs/toolkit": "^1.9.3",
     "@tabler/icons-react": "^2.7.0",

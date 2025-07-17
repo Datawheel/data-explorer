@@ -1,5 +1,5 @@
 import type {Chart} from "@datawheel/vizbuilder";
-import {useVizbuilderContext} from "@datawheel/vizbuilder/react";
+import {useVizbuilderContext, ErrorBoundary} from "@datawheel/vizbuilder/react";
 import {Box, Button, CopyButton, Group, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
@@ -8,18 +8,19 @@ import {
   IconDownload,
   IconPhotoDown,
   IconShare,
-  IconVectorTriangle,
+  IconVectorTriangle
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
 import React, {useMemo, useRef, useState} from "react";
 import {useInView} from "react-intersection-observer";
 import {useVizbuilderTranslation} from "../../hooks/translation";
 import {useD3plusConfig} from "../hooks/useD3plusConfig";
+// import {ErrorBoundary} from "./ErrorBoundary";
 
 const iconByFormat = {
   jpg: IconPhotoDown,
   png: IconPhotoDown,
-  svg: IconVectorTriangle,
+  svg: IconVectorTriangle
 };
 
 export function ChartCard(props: {
@@ -49,7 +50,7 @@ export function ChartCard(props: {
 
   const {translate} = useVizbuilderTranslation();
 
-  const {downloadFormats, ErrorBoundary, showConfidenceInt} = useVizbuilderContext();
+  const {downloadFormats, showConfidenceInt, CardErrorComponent} = useVizbuilderContext();
 
   const nodeRef = useRef<HTMLDivElement | null>(null);
   const {ref: inViewRef, inView} = useInView({triggerOnce: false, threshold: 0});
@@ -69,10 +70,11 @@ export function ChartCard(props: {
   const [ChartComponent, config] = useD3plusConfig(chart, {
     fullMode: !!isFullMode,
     showConfidenceInt,
-    t: translate,
+    t: translate
   });
 
   const downloadButtons = useMemo(() => {
+    if (!config) return null;
     // Sanitize filename for Windows and Unix
     const filename = (
       typeof config.title === "function" ? config.title(dataset) : config.title || ""
@@ -95,7 +97,7 @@ export function ChartCard(props: {
               saveElement(
                 svgElement,
                 {filename, type: formatLower},
-                {background: getBackground(svgElement)},
+                {background: getBackground(svgElement)}
               );
             }
           }}
@@ -143,26 +145,22 @@ export function ChartCard(props: {
 
   const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : 400;
 
-  if (!ChartComponent) return null;
+  if (!ChartComponent || !config) return null;
 
   return (
-    <Paper
-      className={props.className}
-      w="100%"
-      style={{overflow: "hidden", height: resolvedHeight, ...props.style}}
-    >
-      <ErrorBoundary>
+    <ErrorBoundary ErrorContent={CardErrorComponent}>
+      <Paper
+        className={props.className}
+        w="100%"
+        style={{overflow: "hidden", height: resolvedHeight, ...props.style}}
+      >
         <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
           <Group position="center" spacing="xs" align="center">
             {isFullMode && shareButton}
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
-          <Box
-            style={{flex: "1 1 auto"}}
-            ref={setRefs}
-            sx={{"& > .viz": {height: "100%"}}}
-          >
+          <Box style={{flex: "1 1 auto"}} ref={setRefs} sx={{"& > .viz": {height: "100%"}}}>
             {ChartComponent && (inView || hasBeenInView) ? (
               <ChartComponent config={config} />
             ) : (
@@ -170,8 +168,8 @@ export function ChartCard(props: {
             )}
           </Box>
         </Stack>
-      </ErrorBoundary>
-    </Paper>
+      </Paper>
+    </ErrorBoundary>
   );
 }
 
