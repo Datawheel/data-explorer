@@ -42,7 +42,13 @@ export function CubeSourceAnchor(
   return (
     <Text component="p" {...textProps}>
       {`${t("params.label_source")}: `}
-      {srcLink ? <Anchor href={srcLink}>{srcName}</Anchor> : <Text span>{srcName}</Text>}
+      {srcLink ? (
+        <Anchor href={srcLink} target="_blank">
+          {srcName}
+        </Anchor>
+      ) : (
+        <Text span>{srcName}</Text>
+      )}
     </Text>
   );
 }
