@@ -489,6 +489,8 @@ function LevelItem({
   const paddingLeft = `${5 * depth + 5}px`;
 
   const properties = currentDrilldown.properties.length ? currentDrilldown.properties : null;
+
+  const dimensionIsTimeComplete = dimension.annotations.de_time_complete === "true";
   return (
     currentDrilldown && (
       <>

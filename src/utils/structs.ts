@@ -29,6 +29,7 @@ export interface QueryParams {
   sortDir: "asc" | "desc";
   sortKey: string | undefined;
   growth: GrowthParam | undefined;
+  timeComplete: string | undefined;
 }
 
 export interface QueryResult<D = Record<string, unknown>> {
@@ -168,7 +169,8 @@ export function buildQueryParams(props): QueryParams {
     pagiOffset: props.pagiOffset || props.limitOffset || props.offset || 0,
     sortDir: props.sortDir || props.sortDirection || props.sortOrder || props.order || "desc",
     sortKey: props.sortKey || props.sortProperty || "",
-    growth: props.growth || ""
+    growth: props.growth || "",
+    timeComplete: props.timeComplete || undefined
   };
 }
 

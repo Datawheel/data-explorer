@@ -1,4 +1,4 @@
-import {useCallback, useEffect} from "react";
+import {useCallback} from "react";
 import type {TesseractCube} from "../api";
 import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
 import {selectCurrentQueryItem} from "../state/queries";

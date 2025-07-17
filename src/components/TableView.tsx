@@ -97,7 +97,7 @@ function isColumnSorted(column: string, key: string) {
 
 const removeColumn = (
   queryItem: QueryItem,
-  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
+  entity: TesseractMeasure | TesseractProperty | TesseractLevel
 ) => {
   const newQuery = buildQuery(cloneDeep(queryItem));
   const params = newQuery.params;
@@ -122,15 +122,15 @@ const removeColumn = (
     const mapPropertyToDrilldown = Object.fromEntries(
       Object.values(params.drilldowns)
         .filter(drilldown => drilldown.active)
-        .flatMap(drilldown => drilldown.properties.map(prop => [prop.name, drilldown])),
+        .flatMap(drilldown => drilldown.properties.map(prop => [prop.name, drilldown]))
     );
     const drilldown = mapPropertyToDrilldown[entity.name];
     if (drilldown) {
       params.drilldowns[drilldown.key] = {
         ...drilldown,
         properties: drilldown.properties.map(prop =>
-          prop.name === entity.name ? {...prop, active: false} : prop,
-        ),
+          prop.name === entity.name ? {...prop, active: false} : prop
+        )
       };
       return newQuery;
     }

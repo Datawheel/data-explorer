@@ -183,7 +183,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
   };
 
   function setDefaultValues(cube: TesseractCube) {
-    const drilldowns = pickDefaultDrilldowns(cube.dimensions, cube).map(level =>
+    const {levels, timeComplete} = pickDefaultDrilldowns(cube.dimensions, cube);
+    const drilldowns = levels.map(level =>
       buildDrilldown({
         ...level,
         key: level.name,
@@ -213,7 +214,8 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
         cube: cube.name,
         measures: keyBy(measures, item => item.key),
         drilldowns: keyBy(drilldowns, item => item.key),
-        locale
+        locale,
+        timeComplete
       },
       panel: panel ?? "table"
     });

@@ -1,10 +1,5 @@
-import {
-  type TranslateFunction,
-  type TranslationDict,
-  translationFactory,
-} from "@datawheel/use-translation";
+import {type TranslationDict, translationFactory} from "@datawheel/use-translation";
 import type {Translation as VizbuilderTranslation} from "@datawheel/vizbuilder/react";
-import {useCallback} from "react";
 
 const explorerTranslation = {
   action_copy: "Copy",
@@ -13,7 +8,7 @@ const explorerTranslation = {
   action_open: "Open",
   action_reload: "Reload",
   sidebar: {
-    dataset: "Select Dataset"
+    dataset: "Select Dataset",
   },
   comparison: {
     BT: "Between",
@@ -22,7 +17,7 @@ const explorerTranslation = {
     GTE: "Equal or greater than",
     LT: "Lower than",
     LTE: "Equal or lower than",
-    NEQ: "Not equal to"
+    NEQ: "Not equal to",
   },
   debug_view: {
     tab_label: "Debugger",
@@ -30,11 +25,11 @@ const explorerTranslation = {
     jssource_prefix: "Javascript source for ",
     jssource_suffix: "",
     url_aggregate: "Aggregate API URL",
-    url_logiclayer: "LogicLayer API URL"
+    url_logiclayer: "LogicLayer API URL",
   },
   direction: {
     ASC: "Ascending",
-    DESC: "Descending"
+    DESC: "Descending",
   },
   formats: {
     csv: "CSV",
@@ -43,13 +38,13 @@ const explorerTranslation = {
     parquet: "Parquet",
     // jsonarrays: "JSON Arrays",
     jsonrecords: "JSON Records",
-    xlsx: "XLSX"
+    xlsx: "XLSX",
   },
   loading: {
     title: "Loading...",
     message_heavyquery:
       "The current query might contain a maximum of {{rows}} rows.\nPlease wait...",
-    message_default: "Please wait..."
+    message_default: "Please wait...",
   },
   params: {
     add_metadata: "Add metadata",
@@ -66,7 +61,8 @@ const explorerTranslation = {
     dimmenu_level: "{{abbr}}",
     filter_mode: "Filter Mode",
     filter_by: "Filter by {{name}}",
-    error_no_cut_selected_detail: "You can add data filters based on selected drilldowns.",
+    error_no_cut_selected_detail:
+      "You can add data filters based on selected drilldowns.",
     error_no_cut_selected_title: "No cuts added",
     error_no_dimension_selected_detail: "You must add at least one drilldown.",
     error_no_dimension_selected_title: "No drilldowns selected",
@@ -121,13 +117,14 @@ const explorerTranslation = {
     tooltip_area_drilldowns: "",
     tooltip_area_filters: "",
     tooltip_area_measures: "",
-    tooltip_area_options: ""
+    tooltip_area_options: "",
   },
   pivot_view: {
     tab_label: "Pivot Data",
     error_missingparams:
       "The current query doesn't have enough parameters. Two different drilldowns and a measure are needed.",
-    error_onedimension: "The rows and columns in a pivotted table need 2 different drilldowns.",
+    error_onedimension:
+      "The rows and columns in a pivotted table need 2 different drilldowns.",
     error_internal:
       "An internal error ocurred in the pivotting tool. We will fix it as soon as possible.",
     error_internal_detail:
@@ -148,12 +145,12 @@ const explorerTranslation = {
     warning_propertypivot:
       "Unlike Drilldown Members, Drilldown Properties are not guaranteed to be unique. In this view, data points are aggregated based on the property labels, so please ensure you're not missing information.",
     warning_sumdimensions:
-      "There's more than 2 drilldowns in this query. Remaining values will be summed."
+      "There's more than 2 drilldowns in this query. Remaining values will be summed.",
   },
   placeholders: {
     incomplete: "[Incomplete parameters]",
     unselected: "[Unselected]",
-    none: "[None]"
+    none: "[None]",
   },
   previewMode: {
     btn_get_all: "Show all rows",
@@ -163,7 +160,7 @@ const explorerTranslation = {
     description_preview:
       "You are currently viewing a preview response of the first {{limit}} rows.",
     title_full: "All records",
-    title_preview: "Preview records"
+    title_preview: "Preview records",
   },
   queries: {
     action_create: "New query",
@@ -171,10 +168,12 @@ const explorerTranslation = {
     error_not_query: "Please construct a valid query",
     error_no_drilldowns: "You must add at least one drilldown.",
     error_no_measures: "You must add at least one measure.",
-    error_one_hierarchy_per_dimension: "You must only select drilldowns of a single hierarchy.",
-    error_one_cut_per_dimension: "You must only apply cuts over levels of a single hierarchy.",
+    error_one_hierarchy_per_dimension:
+      "You must only select drilldowns of a single hierarchy.",
+    error_one_cut_per_dimension:
+      "You must only apply cuts over levels of a single hierarchy.",
     column_title: "Queries",
-    unset_parameters: "No parameters set"
+    unset_parameters: "No parameters set",
   },
   results: {
     error_execquery_detail: "There was a problem with the last query:",
@@ -185,7 +184,7 @@ const explorerTranslation = {
     error_emptyresult_detail:
       "The query didn't return elements. Try again with different parameters.",
     count_rows: "{{n}} row",
-    count_rows_plural: "{{n}} rows"
+    count_rows_plural: "{{n}} rows",
   },
   selectlevel_placeholder: "Level...",
   selectmeasure_placeholder: "Measure...",
@@ -194,72 +193,75 @@ const explorerTranslation = {
     tab_label: "Data Table",
     numeral_format: "Numeral format",
     sort_asc: "Sort Asc",
-    sort_desc: "Sort Desc"
+    sort_desc: "Sort Desc",
   },
   tour: {
     controls: {
       prev: "Previous",
       next: "Next",
-      help: "Help"
+      help: "Help",
     },
     steps: {
       welcome: {
         title: "Welcome to the Data Explorer",
-        text1: "This tutorial will guide you through the steps on how to use the Data Explorer",
+        text1:
+          "This tutorial will guide you through the steps on how to use the Data Explorer",
         text2:
-          "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations."
+          "By following this tutorial, you will be able to find data of interest and generate your own data tables and visualizations.",
       },
       locale: {
         title: "Multilingual",
         text1: "The Data Explorer makes data available in multiple languages.",
-        text2: "Use the dropdown menu to change the output language of the data."
+        text2: "Use the dropdown menu to change the output language of the data.",
       },
       dataset: {
         title: "Selecting a Dataset",
         text1: "Begin by selecting a topic of interest.",
-        text2: "Then, select a specific data table within that topic grouping."
+        text2: "Then, select a specific data table within that topic grouping.",
       },
       search: {
         title: "Searching for a Dataset",
         text1: "You can also explore the list of topics and datasets.",
-        text2: "Start typing to filter the list of datasets with your search"
+        text2: "Start typing to filter the list of datasets with your search",
       },
       table: {
         title: "Data Table",
         text1: "Results are initially displayed as a data table.",
-        text2: "Each column header allows live sorting and filtering options."
+        text2: "Each column header allows live sorting and filtering options.",
       },
       columns: {
         title: "Columns",
         text1: "Select the columns that you are interested in viewing.",
         text2:
-          "When you toggle any column checkbox, the data table will automatically update to reflect your selection."
+          "When you toggle any column checkbox, the data table will automatically update to reflect your selection.",
       },
       filters: {
         title: "Filters",
         text1:
           "You can filter the elements of each column that you want to display in the data table and visualization.",
         text2:
-          "If you want all available elements to be displayed, you don't need to apply filters."
+          "If you want all available elements to be displayed, you don't need to apply filters.",
       },
       download: {
         title: "Downloading the Data",
-        text1: "You are able to download the information in CSV and JSON formats."
+        text1: "You are able to download the information in CSV and JSON formats.",
       },
       api: {
         title: "API",
-        text1: "You can access the raw data programmatically using the Data Explorer JSON REST API."
+        text1:
+          "You can access the raw data programmatically using the Data Explorer JSON REST API.",
       },
       vizbuilderTab: {
         title: "Vizbuilder",
-        text1: "You can see the results of your query in different types of visualizations."
+        text1:
+          "You can see the results of your query in different types of visualizations.",
       },
       last: {
         title: "Let's get started!",
         text: "You are ready to start exploring the Data Explorer database and generate your own tables and visualizations.",
-        button: "Begin"
-      }
-    }
+        button: "Begin",
+      },
+    },
   },
   transfer_input: {
     count_hidden: "{{n}} item hidden",
@@ -270,8 +272,8 @@ const explorerTranslation = {
     select_filtered: "Select filtered",
     unselect_filtered: "Unselect filtered",
     selected_items: "Selected items",
-    unselected_items: "Unselected items"
-  }
+    unselected_items: "Unselected items",
+  },
 };
 
 const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
@@ -285,24 +287,24 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
     average: "Average {{measure}}",
     max: "Max {{measure}}",
     min: "Min {{measure}}",
-    sum: "{{measure}}"
+    sum: "{{measure}}",
   },
   chart_labels: {
     ci: "Confidence Interval",
     moe: "Margin of Error",
     source: "Source",
-    collection: "Collection"
+    collection: "Collection",
   },
   error: {
     detail: "",
     message: 'Details: "{{message}}".',
-    title: "Error"
+    title: "Error",
   },
   list: {
     join: ", ",
     suffix: "{{rest}}, and {{item}}",
     prefix: "{{list}}",
-    n_more: "{{n}} more"
+    n_more: "{{n}} more",
   },
   title: {
     main_on_period: "{{values}} by {{series}} on {{time_period}}",
@@ -314,15 +316,15 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
     series_members: "{{series}} ({{members}})",
     series: "{{series}}",
     time_range: "in {{from}}-{{to}}",
-    total: "Total: {{value}}"
+    total: "Total: {{value}}",
   },
   transient: {
     title_one_row: "The dataset has only one row and can't be used to generate charts.",
     title_loading: "Generating charts...",
     title_empty: "No results",
     description_empty:
-      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again."
-  }
+      "The selected combination of parameters can't be used to generate a meaningful set of charts. Try changing some parameters (maybe applying some restriction in a column) and generating charts again.",
+  },
 };
 
 type ExtendibleTranslation<T extends {}> = {
@@ -337,20 +339,8 @@ export type Translation = ExtendibleTranslation<
 
 export const defaultTranslation = {
   ...explorerTranslation,
-  vizbuilder: vizbuilderTranslation
+  vizbuilder: vizbuilderTranslation,
 };
 
-export const {useTranslation, TranslationConsumer, TranslationProvider} = translationFactory({
-  defaultLocale: "en",
-  defaultTranslation
-});
-
-export function useVizbuilderTranslation() {
-  const ctx = useTranslation();
-  const t = ctx.t;
-  const nsT = useCallback<TranslateFunction>(
-    (key, data) => t(`vizbuilder.${key}`, data),
-    [t],
-  );
-  return {...ctx, translate: nsT, t: nsT};
-}
+export const {useTranslation, TranslationConsumer, TranslationProvider} =
+  translationFactory({defaultLocale: "en", defaultTranslation});

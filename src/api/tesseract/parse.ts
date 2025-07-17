@@ -36,7 +36,8 @@ export function queryParamsToRequest(params: QueryParams): TesseractDataRequest 
       item.active ? filterSerialize(item) : null
     ).join(","),
     limit: `${params.pagiLimit || 0},${params.pagiOffset || 0}`,
-    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined
+    sort: params.sortKey ? `${params.sortKey}.${params.sortDir}` : undefined,
+    time: params.timeComplete ? `${params.timeComplete}.complete` : undefined
     // sparse: params.sparse,
     // ranking:
     //   typeof params.ranking === "boolean"
@@ -108,6 +109,8 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
   const [limit = "0", offset = "0"] = (search.get("limit") || "0").split(",");
   const [sortKey, sortDir] = (search.get("sort") || "").split(".");
 
+  const timeComplete = search.get("time")?.split(".")[0] || undefined;
+
   return {
     cube: cube.name,
     locale: search.get("locale") || undefined,
@@ -120,6 +123,7 @@ export function requestToQueryParams(cube: TesseractCube, search: URLSearchParam
     sortDir: sortDir === "asc" ? "asc" : "desc",
     sortKey: sortKey || undefined,
     isPreview: false,
+    timeComplete: timeComplete || undefined,
     booleans: {
       // parents: search.get("parents") || undefined,
     }
