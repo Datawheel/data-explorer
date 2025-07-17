@@ -1,5 +1,5 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
-import {VizbuilderProvider} from "@datawheel/vizbuilder/react";
+import {VizbuilderProvider, ErrorBoundary} from "@datawheel/vizbuilder/react";
 import {type CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
 import {assign} from "d3plus-common";
@@ -10,14 +10,9 @@ import {BrowserRouter as Router} from "react-router-dom";
 import {AppProviders} from "../context";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import type {Translation} from "../hooks/translation";
-import {
-  type ExplorerActionMap,
-  type ExplorerStore,
-  actions,
-  storeFactory,
-} from "../state";
+import {type ExplorerActionMap, type ExplorerStore, actions, storeFactory} from "../state";
 import type {Formatter, PanelDescriptor} from "../utils/types";
-import {VizbuilderErrorBoundary, VizbuilderTransient} from "../vizbuilder";
+import {VizbuilderTransient} from "../vizbuilder";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
@@ -25,6 +20,7 @@ import {TableView} from "./TableView";
 import type {ToolbarConfigType} from "./Toolbar";
 import ExplorerTour from "./tour/ExplorerTour";
 import type {TourConfig} from "./tour/types";
+import {ReportIssueCard} from "../vizbuilder/components/ReportIssue";
 
 type VizbuilderProviderProps = React.ComponentProps<typeof VizbuilderProvider>;
 
@@ -40,11 +36,11 @@ const defaultVizbuilderConfig: VizbuilderProviderProps = {
     LINEPLOT_LINE_POINT_MIN: 2,
     STACKED_SHAPE_MAX: 200,
     STACKED_TIME_MEMBER_MIN: 2,
-    TREE_MAP_SHAPE_MAX: 1000,
+    TREE_MAP_SHAPE_MAX: 1000
   },
   downloadFormats: ["SVG", "PNG"],
-  ErrorBoundary: VizbuilderErrorBoundary,
-  NonIdealState: VizbuilderTransient,
+  CardErrorComponent: ReportIssueCard,
+  NonIdealState: VizbuilderTransient
 };
 
 export type Pagination = {
@@ -97,7 +93,7 @@ export function ExplorerComponent<Locale extends string>(props: {
    * @default "en"
    */
   defaultLocale?: Locale;
-  
+
   /**
    * The locale to use for sorting cube items within the SelectCubes component.
    * This controls the sorting of subtopics and cube buttons.
@@ -236,7 +232,7 @@ export function ExplorerComponent<Locale extends string>(props: {
   const vizbuilderSettings: VizbuilderProviderProps = assign(
     {},
     defaultVizbuilderConfig,
-    props.vizbuilderSettings,
+    props.vizbuilderSettings
   );
   const vbPostprocessConfig = props.vizbuilderSettings?.postprocessConfig || identity;
   vizbuilderSettings.postprocessConfig = useCallback(
@@ -244,7 +240,7 @@ export function ExplorerComponent<Locale extends string>(props: {
       config.scrollContainer = ".vb-wrapper";
       return vbPostprocessConfig(config, chart, params);
     },
-    [vbPostprocessConfig],
+    [vbPostprocessConfig]
   );
 
   let content = (
