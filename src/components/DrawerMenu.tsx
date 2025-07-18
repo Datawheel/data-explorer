@@ -309,18 +309,20 @@ function LevelItem({
   }, [locale, dimension, hierarchy, level, isSubMenu, t]);
 
   const currentDrilldown = drilldowns[level.name];
+
   // Check if another hierarchy from the same dimension is already selected
-  const isOtherHierarchySelected = activeItems.some(
+  const otherHierarchyItems = activeItems.filter(
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
+  const isOtherHierarchySelected = otherHierarchyItems.length > 0;
 
   const cut = cutItems.find(cut => cut.level === level.name);
 
   const checked = activeItems.map(i => i.level).includes(level.name);
-  const disableUncheck = activeItems.length === 1 && checked;
+  const disableUncheck = activeItems.length === 1 && checked && !otherHierarchyItems.length;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
-  const isDisabled = isOtherHierarchySelected && !checked;
+  const isDisabled = !checked;
 
   if (!currentDrilldown) return;
 
@@ -329,6 +331,7 @@ function LevelItem({
   const properties = currentDrilldown.properties.length ? currentDrilldown.properties : null;
 
   const dimensionIsTimeComplete = dimension.annotations.de_time_complete === "true";
+
   return (
     currentDrilldown && (
       <>
@@ -336,6 +339,14 @@ function LevelItem({
           <Checkbox
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
+              if (isOtherHierarchySelected) {
+                otherHierarchyItems.forEach(item => {
+                  actions.updateDrilldown({
+                    ...item,
+                    active: false
+                  });
+                });
+              }
               actions.updateDrilldown({
                 ...currentDrilldown,
                 active: !currentDrilldown.active
@@ -385,7 +396,7 @@ function LevelItem({
             checked={checked}
             label={label}
             size="xs"
-            disabled={isDisabled || disableUncheck}
+            disabled={disableUncheck}
           />
           <Group sx={{flexWrap: "nowrap"}}>
             <ActionIcon
