@@ -322,7 +322,7 @@ function LevelItem({
   const disableUncheck = activeItems.length === 1 && checked && !otherHierarchyItems.length;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
-  const isDisabled = !checked;
+  const isDisabled = otherHierarchyItems.length || !checked;
 
   if (!currentDrilldown) return;
 
