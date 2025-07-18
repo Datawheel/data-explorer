@@ -327,6 +327,8 @@ function LevelItem({
   const paddingLeft = `${5 * depth + 5}px`;
 
   const properties = currentDrilldown.properties.length ? currentDrilldown.properties : null;
+
+  const dimensionIsTimeComplete = dimension.annotations.de_time_complete === "true";
   return (
     currentDrilldown && (
       <>
@@ -336,10 +338,49 @@ function LevelItem({
             onChange={() => {
               actions.updateDrilldown({
                 ...currentDrilldown,
-                active: !currentDrilldown.active,
+                active: !currentDrilldown.active
               });
-              if (cut && cut.members.length > 0)
-                actions.updateCut({...cut, active: !cut.active});
+              if (cut && cut.members.length > 0) actions.updateCut({...cut, active: !cut.active});
+
+              // if current dimension has time complete annotation
+              if (dimensionIsTimeComplete) {
+                const hierarchyLevels =
+                  dimension.hierarchies.find(h => h.name === hierarchy.name)?.levels || [];
+
+                // select all levels that are either active or match the current drilldown level to be added
+                const availableLevels = hierarchyLevels.filter(
+                  l =>
+                    l.name &&
+                    activeItems.some(item =>
+                      !currentDrilldown.active
+                        ? item.level === l.name || l.name === currentDrilldown.level
+                        : item.level === l.name && item.level !== currentDrilldown.level
+                    )
+                );
+
+                // take the higher order level
+                const timeCompleteLevel = availableLevels.find(
+                  l => l.depth === Math.min(...availableLevels.map(level => level.depth))
+                );
+                const deepestLevel = hierarchyLevels.find(
+                  l => l.depth === Math.max(...hierarchyLevels.map(level => level.depth))
+                );
+
+                const deepestLevelAvailable = availableLevels.find(
+                  l => l.depth === deepestLevel?.depth
+                );
+
+                if (
+                  timeCompleteLevel &&
+                  deepestLevel &&
+                  timeCompleteLevel.depth < deepestLevel.depth &&
+                  !deepestLevelAvailable
+                ) {
+                  actions.updateTimeComplete(timeCompleteLevel.name);
+                } else {
+                  actions.removeTimeComplete();
+                }
+              }
             }}
             checked={checked}
             label={label}

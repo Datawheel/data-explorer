@@ -10,6 +10,7 @@ import {
   TourStep,
   VizbuilderView
 } from "../src/main";
+import {VizdebuggerView} from "../src/vizbuilder";
 import * as translations from "../translations";
 import {type ServerOption, SettingsProvider} from "./Settings";
 
@@ -145,6 +146,7 @@ function App() {
               {key: "table", label: "Data Table", component: TableView},
               {key: "matrix", label: "Pivot Table", component: PivotView},
               {key: "vizbuilder", label: "Vizbuilder", component: VizbuilderView},
+              {key: "vizdebug", label: "Vizdebugger", component: VizdebuggerView},
               {key: "raw", label: "Raw Response", component: RawResponseView}
             ]}
             sortLocale="en"

@@ -1,12 +1,10 @@
 import {type Dataset, generateCharts} from "@datawheel/vizbuilder";
-import {useVizbuilderContext} from "@datawheel/vizbuilder/react";
-import {Flex, Loader, Modal, Text, Title, createStyles} from "@mantine/core";
-import {IconCircleOff} from "@tabler/icons-react";
+import {ErrorBoundary, useVizbuilderContext} from "@datawheel/vizbuilder/react";
+import {createStyles, Modal} from "@mantine/core";
 import cls from "clsx";
 import React, {useCallback, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSettings} from "../../hooks/settings";
-import {useVizbuilderTranslation} from "../../hooks/translation";
 import {selectCurrentQueryItem} from "../../state/queries";
 import {asArray} from "../../utils/array";
 import {ChartCard} from "./ChartCard";
@@ -82,10 +80,14 @@ export function Vizbuilder(props: {
 }) {
   const datasets = useMemo(() => asArray(props.datasets), [props.datasets]);
 
-  const {t} = useVizbuilderTranslation();
-
-  const {chartLimits, chartTypes, datacap, getTopojsonConfig, NonIdealState} =
-    useVizbuilderContext();
+  const {
+    chartLimits,
+    chartTypes,
+    datacap,
+    getTopojsonConfig,
+    NonIdealState,
+    ViewErrorComponent,
+  } = useVizbuilderContext();
 
   const {actions} = useSettings();
 
@@ -110,50 +112,35 @@ export function Vizbuilder(props: {
     const isLoading = datasets.some(dataset => Object.keys(dataset.columns).length === 0);
     if (isLoading) {
       console.debug("Loading datasets...", datasets);
-      return (
-        <Flex justify="center" align="center" direction="column">
-          <Loader size="xl" />
-          <Title mt="md" order={4}>
-            {t("transient.title_loading")}
-          </Title>
-        </Flex>
-      );
+      return <NonIdealState status="loading" />;
     }
 
     const chartList = Object.values(charts).slice(0, 10);
 
     if (chartList.length === 0) {
       if (datasets.length === 1 && datasets[0].data.length === 1) {
-        return (
-          <Flex justify="center" align="center" direction="column" w="50%">
-            <IconCircleOff size={92} />
-            <Title mt="md" mb="md" order={4}>
-              {t("transient.title_one_row")}
-            </Title>
-          </Flex>
-        );
+        return <NonIdealState status="one-row" />;
       }
-
-      return (
-        <Flex justify="center" align="center" direction="column" w="50%">
-          <IconCircleOff size={92} />
-          <Title mt="md" mb="md" order={4}>
-            {t("vizbuilder.transient.title_empty")}
-          </Title>
-          <Text>{t("transient.description_empty")}</Text>
-        </Flex>
-      );
+      return <NonIdealState status="empty" />;
     }
 
     const isSingleChart = chartList.length === 1;
 
     return (
-      <div className={cx(classes.grid, {[classes.fill]: isSingleChart})}>
+      <div
+        className={cx("vb-scrollcontainer", classes.grid, {
+          [classes.fill]: isSingleChart,
+        })}
+      >
         {chartList.map((chart, idx) => {
           let className = classes.fill;
           if (!isSingleChart) {
             // For each group of 3 charts, assign grid positions
-            const names = [classes.itemLarge, classes.itemSmallTop, classes.itemSmallBottom];
+            const names = [
+              classes.itemLarge,
+              classes.itemSmallTop,
+              classes.itemSmallBottom,
+            ];
             className = names[idx % 3];
           }
           return (
@@ -168,7 +155,7 @@ export function Vizbuilder(props: {
         })}
       </div>
     );
-  }, [charts, classes, datasets, t, cx]);
+  }, [charts, classes, cx, datasets, NonIdealState]);
 
   const currentChart = queryItem?.chart || "";
   const chart = charts[currentChart];
@@ -176,7 +163,7 @@ export function Vizbuilder(props: {
   return (
     <div className={cls("vb-wrapper", classes.wrapper, props.className)}>
       {props.customHeader}
-      {content}
+      <ErrorBoundary ErrorContent={ViewErrorComponent}>{content}</ErrorBoundary>
       {props.customFooter}
       <Modal
         centered
