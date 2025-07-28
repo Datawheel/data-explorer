@@ -9,7 +9,7 @@ function calcMaxMemberCount(lengths) {
  */
 export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: TesseractCube) {
   const levels: TesseractLevel[] = [];
-  let timeComplete;
+  let timeComplete: string | undefined = undefined;
   let suggestedLevels: string[] = [];
   for (const key in cube.annotations) {
     if (key === "suggested_levels") {
@@ -27,10 +27,18 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
       // uses deepest level for geo dimensions
       const levelIndex = dimension.type === "geo" ? hierarchy.levels.length - 1 : 0;
       const defaultLevel = hierarchy.levels[levelIndex];
+
+      // Check if any level from this hierarchy is in suggested levels and if it's the deepest level
+      const suggestedLevelInHierarchy = hierarchy.levels.find(level =>
+        suggestedLevels.includes(level.name)
+      );
+      const isSuggestedLevelDeepest = suggestedLevelInHierarchy?.depth === hierarchyDepth;
+
       if (
         dimension.type === "time" &&
         dimension.annotations.de_time_complete === "true" &&
-        defaultLevel.depth < hierarchyDepth
+        defaultLevel.depth < hierarchyDepth &&
+        !isSuggestedLevelDeepest
       ) {
         timeComplete = defaultLevel.name;
       }
