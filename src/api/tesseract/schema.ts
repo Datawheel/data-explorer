@@ -183,6 +183,7 @@ export interface TesseractDimension {
   type: DimensionType;
   hierarchies: TesseractHierarchy[];
   default_hierarchy: string;
+  required?: boolean;
 }
 
 export interface TesseractHierarchy {
