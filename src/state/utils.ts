@@ -11,9 +11,14 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
   const levels: TesseractLevel[] = [];
   let timeComplete;
   let suggestedLevels: string[] = [];
+  let requiredDimensions: string[] = [];
+
   for (const key in cube.annotations) {
     if (key === "suggested_levels") {
       suggestedLevels = cube.annotations[key]?.split(",") || [];
+    }
+    if (key === "required_dimensions") {
+      requiredDimensions = cube.annotations[key]?.split(",") || [];
     }
   }
 
@@ -21,7 +26,11 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
     dim.hierarchies.find(h => h.name === dim.default_hierarchy) || dim.hierarchies[0];
 
   for (const dimension of dimensions) {
-    if (dimension.type === "time" || levels.length < 4) {
+    if (
+      dimension.type === "time" ||
+      requiredDimensions.includes(dimension.name) ||
+      levels.length < 4
+    ) {
       const hierarchy = findDefaultHierarchy(dimension);
       const hierarchyDepth = Math.max(...hierarchy.levels.map(l => l.depth));
       // uses deepest level for geo dimensions

@@ -1,5 +1,6 @@
 import {buildColumn} from "@datawheel/vizbuilder";
 import {Vizdebugger} from "@datawheel/vizbuilder/react";
+// @ts-ignore
 import type {TesseractCube} from "@datawheel/vizbuilder/schema";
 import {LoadingOverlay} from "@mantine/core";
 import React, {useMemo} from "react";
@@ -31,11 +32,11 @@ export function VizdebuggerView(props: {cube: TesseractCube; params: QueryParams
     return [
       {
         columns: Object.fromEntries(
-          columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)]),
+          columns.map(columnName => [columnName, buildColumn(cube, columnName, columns)])
         ),
         data: data.filter(row => measureNames.every(measure => row[measure] !== null)),
-        locale: params.locale || "en",
-      },
+        locale: params.locale || "en"
+      }
     ];
   }, [cube, result, params.locale, params.measures]);
 

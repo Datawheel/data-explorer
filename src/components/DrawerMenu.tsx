@@ -314,13 +314,17 @@ function LevelItem({
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
 
+  const isLastLevelInRequiredDimension =
+    dimension.required &&
+    activeItems.filter(item => item.dimension === dimension.name).length === 1;
+
   const cut = cutItems.find(cut => cut.level === level.name);
 
   const checked = activeItems.map(i => i.level).includes(level.name);
   const disableUncheck = activeItems.length === 1 && checked;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
-  const isDisabled = isOtherHierarchySelected && !checked;
+  const isDisabled = isLastLevelInRequiredDimension && checked;
 
   if (!currentDrilldown) return;
 
@@ -336,6 +340,15 @@ function LevelItem({
           <Checkbox
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
+              if (isOtherHierarchySelected && !checked) {
+                activeItems
+                  .filter(
+                    item => item.dimension === dimension.name && item.hierarchy !== hierarchy.name
+                  )
+                  .forEach(item => {
+                    actions.updateDrilldown({...item, active: false});
+                  });
+              }
               actions.updateDrilldown({
                 ...currentDrilldown,
                 active: !currentDrilldown.active

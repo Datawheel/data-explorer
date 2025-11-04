@@ -45,7 +45,7 @@ export interface QueryResult<D = Record<string, unknown>> {
 }
 
 interface ResultEntityType {
-  level: TesseractLevel;
+  level: TesseractLevel & {dimension?: string};
   property: TesseractProperty;
   measure: TesseractMeasure;
 }

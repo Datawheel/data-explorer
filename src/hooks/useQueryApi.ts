@@ -1,17 +1,9 @@
 import {useQuery, useMutation, keepPreviousData} from "@tanstack/react-query";
-import type {
-  TesseractCube,
-  TesseractDataResponse,
-  TesseractFormat,
-} from "../api";
+import type {TesseractCube, TesseractDataResponse, TesseractFormat} from "../api";
 import {queryParamsToRequest} from "../api/tesseract/parse";
 import {filterMap} from "../utils/array";
 import {describeData, getOrderValue, getValues} from "../utils/object";
-import {
-  buildDrilldown,
-  buildProperty,
-  QueryParams
-} from "../utils/structs";
+import {buildDrilldown, buildProperty, QueryParams} from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import type {FileDescriptor} from "../utils/types";
 import {isValidQuery} from "../utils/validation";
@@ -79,6 +71,8 @@ export const useDimensionItems = () => {
   const {data: schema} = useServerSchema();
   const {params} = useSelector(selectCurrentQueryItem);
   const dimensions = schema?.cubeMap[params.cube]?.dimensions || [];
+  const requiredDimensions =
+    schema?.cubeMap[params.cube]?.annotations.required_dimensions || ([] as string[]);
 
   return dimensions
     .map(dim => ({
@@ -90,7 +84,8 @@ export const useDimensionItems = () => {
             hierarchy.levels.slice().sort((a, b) => getOrderValue(a) - getOrderValue(b));
             return hierarchy;
           })
-          .sort((a, b) => getOrderValue(a) - getOrderValue(b))
+          .sort((a, b) => getOrderValue(a) - getOrderValue(b)),
+        required: requiredDimensions.includes(dim.name)
       },
       count: dim.hierarchies.reduce((acc, hie) => acc + hie.levels.length, 0),
       alpha: dim.hierarchies.reduce((acc, hie) => acc.concat(hie.name, "-"), "")
@@ -102,6 +97,11 @@ export const useDimensionItems = () => {
         a.alpha.localeCompare(b.alpha)
     )
     .map(i => i.item);
+};
+
+export const useRequiredDimensions = () => {
+  const dimensions = useDimensionItems();
+  return dimensions.filter(dim => dim.required);
 };
 
 // include to download query ISO 3 by default for drilldowns that has that property.
