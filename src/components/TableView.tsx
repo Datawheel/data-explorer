@@ -482,7 +482,7 @@ export function useTable({
         isId
       } = keyCol;
 
-      const isNumeric = valueType === "number" && columnKey !== "Year";
+      const isNumeric = valueType === "number" && !/Year/i.test(columnKey);
 
       const formatterKey = getFormat(
         "aggregator" in entity ? entity : columnKey,
@@ -838,7 +838,7 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-
+                    console.log(column.id);
                     const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({
@@ -892,7 +892,12 @@ export function TableView({
                               )}
 
                           {!isRowIndex && (
-                            <ColumnFilterCell isNumeric={isNumeric} header={header} table={table} />
+                            <ColumnFilterCell
+                              isNumeric={isNumeric}
+                              header={header}
+                              table={table}
+                              columnId={column.id}
+                            />
                           )}
                         </Box>
                       </Box>
@@ -952,17 +957,19 @@ export function TableView({
 
 const ColumnFilterCell = ({
   header,
-  isNumeric
+  isNumeric,
+  columnId
 }: {
   header: MRT_Header<TData>;
   table?: MRT_TableInstance<TData>;
+  columnId: string;
   isNumeric: boolean;
 }) => {
   const filterVariant = header.column.columnDef.filterVariant;
   const isMulti = filterVariant === "multi-select";
 
   if (isMulti) {
-    return <MultiFilter header={header} />;
+    return <MultiFilter header={header} columnId={columnId} />;
   }
 
   if (isNumeric) {
@@ -999,7 +1006,7 @@ const NumericFilter = ({header}: {header: MRT_Header<TData>}) => {
   return null;
 };
 
-const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
+const MultiFilter = ({header, columnId}: {header: MRT_Header<TData>; columnId: string}) => {
   const {translate: t} = useTranslation();
   const cutItems = useSelector(selectCutItems);
   const drilldownItems = useSelector(selectDrilldownItems);
@@ -1010,7 +1017,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   const actions = useActions();
   const {idFormatters} = useidFormatters();
   const navigate = useNavigate();
-
+  console.log({cutItems});
   const debouncedUpdateUrl = useMemo(
     () =>
       debounce((query: QueryItem) => {
@@ -1041,7 +1048,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   );
 
   const query = useSelector(selectCurrentQueryItem);
-
+  console.log({cut, drilldown});
   if (!drilldown || !cut) return null;
 
   return (
