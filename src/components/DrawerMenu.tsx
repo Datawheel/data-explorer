@@ -314,19 +314,25 @@ function LevelItem({
     activeItem => activeItem.dimension === dimension.name && activeItem.hierarchy !== hierarchy.name
   );
 
+  const isLastLevelInRequiredDimension =
+    dimension.required &&
+    activeItems.filter(item => item.dimension === dimension.name).length === 1;
+
   const cut = cutItems.find(cut => cut.level === level.name);
 
   const checked = activeItems.map(i => i.level).includes(level.name);
   const disableUncheck = activeItems.length === 1 && checked;
 
   // If another hierarchy in the same dimension is selected, this level is disabled
-  const isDisabled = isOtherHierarchySelected && !checked;
+  const isDisabled = isLastLevelInRequiredDimension && checked;
 
   if (!currentDrilldown) return;
 
   const paddingLeft = `${5 * depth + 5}px`;
 
   const properties = currentDrilldown.properties.length ? currentDrilldown.properties : null;
+
+  const dimensionIsTimeComplete = dimension.annotations.de_time_complete === "true";
   return (
     currentDrilldown && (
       <>
@@ -334,12 +340,60 @@ function LevelItem({
           <Checkbox
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
+              if (isOtherHierarchySelected && !checked) {
+                activeItems
+                  .filter(
+                    item => item.dimension === dimension.name && item.hierarchy !== hierarchy.name
+                  )
+                  .forEach(item => {
+                    actions.updateDrilldown({...item, active: false});
+                  });
+              }
               actions.updateDrilldown({
                 ...currentDrilldown,
-                active: !currentDrilldown.active,
+                active: !currentDrilldown.active
               });
-              if (cut && cut.members.length > 0)
-                actions.updateCut({...cut, active: !cut.active});
+              if (cut && cut.members.length > 0) actions.updateCut({...cut, active: !cut.active});
+
+              // if current dimension has time complete annotation
+              if (dimensionIsTimeComplete) {
+                const hierarchyLevels =
+                  dimension.hierarchies.find(h => h.name === hierarchy.name)?.levels || [];
+
+                // select all levels that are either active or match the current drilldown level to be added
+                const availableLevels = hierarchyLevels.filter(
+                  l =>
+                    l.name &&
+                    activeItems.some(item =>
+                      !currentDrilldown.active
+                        ? item.level === l.name || l.name === currentDrilldown.level
+                        : item.level === l.name && item.level !== currentDrilldown.level
+                    )
+                );
+
+                // take the higher order level
+                const timeCompleteLevel = availableLevels.find(
+                  l => l.depth === Math.min(...availableLevels.map(level => level.depth))
+                );
+                const deepestLevel = hierarchyLevels.find(
+                  l => l.depth === Math.max(...hierarchyLevels.map(level => level.depth))
+                );
+
+                const deepestLevelAvailable = availableLevels.find(
+                  l => l.depth === deepestLevel?.depth
+                );
+
+                if (
+                  timeCompleteLevel &&
+                  deepestLevel &&
+                  timeCompleteLevel.depth < deepestLevel.depth &&
+                  !deepestLevelAvailable
+                ) {
+                  actions.updateTimeComplete(timeCompleteLevel.name);
+                } else {
+                  actions.removeTimeComplete();
+                }
+              }
             }}
             checked={checked}
             label={label}

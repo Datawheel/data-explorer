@@ -2,11 +2,10 @@ import {Anchor, Text, TextProps} from "@mantine/core";
 import React from "react";
 import {useSelector} from "react-redux";
 import {useTranslation} from "../hooks/translation";
-import {selectOlapCube} from "../state/selectors";
 import {getAnnotation} from "../utils/string";
-import {selectCurrentQueryItem, selectLocale} from "../state/queries";
+import {selectLocale} from "../state/queries";
 import type {Annotated} from "../utils/types";
-import {useSelectedItem, useServerSchema} from "../hooks/useQueryApi";
+import {useSelectedItem} from "../hooks/useQueryApi";
 
 export function CubeAnnotation(
   props: TextProps & {
@@ -42,14 +41,13 @@ export function CubeSourceAnchor(
   return (
     <Text component="p" {...textProps}>
       {`${t("params.label_source")}: `}
-      {srcLink ? <Anchor href={srcLink}>{srcName}</Anchor> : <Text span>{srcName}</Text>}
+      {srcLink ? <Anchor href={srcLink} target="_blank">{srcName}</Anchor> : <Text span>{srcName}</Text>}
     </Text>
   );
 }
 
 export default function CubeSource() {
   const selectedItem = useSelectedItem();
-  // TODO: agregar locale
   const {code: locale} = useSelector(selectLocale);
   return (
     selectedItem && (

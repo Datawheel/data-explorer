@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@datawheel/use-translation": "^0.2.0",
-    "@datawheel/vizbuilder": "^0.7.0",
+    "@datawheel/vizbuilder": "^0.7.5",
     "@reactour/tour": "^3.7.0",
     "@reduxjs/toolkit": "^1.9.3",
     "@tabler/icons-react": "^2.7.0",
@@ -48,7 +48,7 @@
     "yn": "^5.0.0"
   },
   "peerDependencies": {
-    "@datawheel/vizbuilder": "^0.6.0",
+    "@datawheel/vizbuilder": "^0.7.0",
     "@emotion/react": "^11.0.0",
     "@mantine/core": "^6.0.0",
     "@mantine/dates": "^6.0.0",

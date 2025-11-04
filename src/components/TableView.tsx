@@ -42,13 +42,18 @@ import React, {useCallback, useEffect, useLayoutEffect, useMemo, useState, useRe
 import {useSelector} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import {Comparison} from "../api";
-import type {TesseractLevel, TesseractMeasure, TesseractProperty} from "../api/tesseract/schema";
+import type {
+  TesseractLevel,
+  TesseractMeasure,
+  TesseractProperty,
+  TesseractDimension
+} from "../api/tesseract/schema";
 import type {TesseractCube} from "../api/tesseract/schema";
 import {useFormatter, useidFormatters} from "../hooks/formatter";
 import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
+import {useDimensionItems, useFetchQuery, useMeasureItems} from "../hooks/useQueryApi";
 import {
   selectCutItems,
   selectDrilldownItems,
@@ -95,9 +100,23 @@ function isColumnSorted(column: string, key: string) {
   return column == key;
 }
 
+function isRequiredColumn(
+  column: AnyResultColumn,
+  finalKeys: AnyResultColumn[],
+  dimensions: TesseractDimension[]
+) {
+  if (column.entityType !== "level") return false;
+  const dimCount = finalKeys.filter(
+    c => c.entityType === "level" && c.entity.dimension === column.entity.dimension
+  ).length;
+  const dimension = dimensions.find(dim => dim.name === column.entity.dimension);
+  const isRequired = dimension ? dimension.required && dimCount <= 1 : false;
+  return isRequired;
+}
+
 const removeColumn = (
   queryItem: QueryItem,
-  entity: TesseractMeasure | TesseractProperty | TesseractLevel,
+  entity: TesseractMeasure | TesseractProperty | TesseractLevel
 ) => {
   const newQuery = buildQuery(cloneDeep(queryItem));
   const params = newQuery.params;
@@ -122,15 +141,15 @@ const removeColumn = (
     const mapPropertyToDrilldown = Object.fromEntries(
       Object.values(params.drilldowns)
         .filter(drilldown => drilldown.active)
-        .flatMap(drilldown => drilldown.properties.map(prop => [prop.name, drilldown])),
+        .flatMap(drilldown => drilldown.properties.map(prop => [prop.name, drilldown]))
     );
     const drilldown = mapPropertyToDrilldown[entity.name];
     if (drilldown) {
       params.drilldowns[drilldown.key] = {
         ...drilldown,
         properties: drilldown.properties.map(prop =>
-          prop.name === entity.name ? {...prop, active: false} : prop,
-        ),
+          prop.name === entity.name ? {...prop, active: false} : prop
+        )
       };
       return newQuery;
     }
@@ -139,9 +158,9 @@ const removeColumn = (
 
 const isProperty = (entity: EntityTypes) => entity === "property";
 
-function showTrashIcon(columns: AnyResultColumn[], type: EntityTypes) {
-  const result = columns.filter(c => c.entityType === type);
-  return result.length > 1 || isProperty(type);
+function showTrashIcon(entity: AnyResultColumn, columns: AnyResultColumn[]) {
+  const result = columns.filter(c => c.entityType === entity.entityType);
+  return result.length > 1 || isProperty(entity.entityType);
 }
 
 const getActionIcon = (entityType: EntityTypes) => {
@@ -315,6 +334,7 @@ export function useTable({
   const drilldowns = useSelector(selectDrilldownItems);
   const {code: locale} = useSelector(selectLocale);
   const measures = useSelector(selectMeasureItems);
+  const dimensions = useDimensionItems();
   const actions = useActions();
   const {limit, offset} = useSelector(selectPaginationParams);
   const queryItem = useSelector(selectCurrentQueryItem);
@@ -401,6 +421,18 @@ export function useTable({
    * and its contents, for later use.
    */
   const finalKeys = Object.values(tableTypes)
+    .map(d => {
+      if (d.entityType === "level") {
+        return {
+          ...d,
+          entity: {
+            ...d.entity,
+            dimension: drilldowns.find(dd => dd.key === d.entity.name)?.dimension || ""
+          }
+        };
+      }
+      return d;
+    })
     .filter(t => !t.isId)
     .filter(columnFilter)
     .sort(columnSorting);
@@ -438,7 +470,7 @@ export function useTable({
       size: 50
     };
 
-    const columnsDef = finalKeys.map(column => {
+    const columnsDef = finalKeys.map(keyCol => {
       const {
         entity,
         entityType,
@@ -447,9 +479,9 @@ export function useTable({
         valueType,
         range,
         isId
-      } = column;
+      } = keyCol;
 
-      const isNumeric = valueType === "number" && columnKey !== "Year";
+      const isNumeric = valueType === "number" && !/Year/i.test(columnKey);
 
       const formatterKey = getFormat(
         "aggregator" in entity ? entity : columnKey,
@@ -477,6 +509,8 @@ export function useTable({
         },
         Header: ({column}) => {
           const isSorted = isColumnSorted(entity.name, sortKey);
+          const showTrash =
+            showTrashIcon(keyCol, finalKeys) && !isRequiredColumn(keyCol, finalKeys, dimensions);
           const isMobile = useMediaQuery(
             `(max-width: ${theme.breakpoints.sm}${
               /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
@@ -550,11 +584,11 @@ export function useTable({
                 </Box>
                 <Group position="apart" w={{base: "100%", sm: "auto"}}>
                   {isMobile && actionSort}
-                  {showTrashIcon(finalKeys, entityType) && (
+                  {showTrash && (
                     <CustomActionIcon
                       label={`At least one ${getEntityText(entityType)} is required.`}
                       key={`remove-${column.columnDef.header}`}
-                      disabled={!showTrashIcon(finalKeys, entityType) || isLoading || isFetching}
+                      disabled={!showTrash || isLoading || isFetching}
                       onClick={() => {
                         const nextQueryItem = removeColumn(queryItem, entity);
                         if (nextQueryItem) {
@@ -562,7 +596,7 @@ export function useTable({
                           updateURL(nextQueryItem);
                         }
                       }}
-                      showTooltip={!showTrashIcon(finalKeys, entityType)}
+                      showTooltip={!showTrash}
                       size={25}
                       ml={rem(5)}
                     >
@@ -590,7 +624,7 @@ export function useTable({
               const cellValue = cell.getValue();
               const row = cell.row;
               const cellId = row.original[`${cell.column.id} ID`];
-              const idFormatter = idFormatters[`${column.localeLabel} ID`];
+              const idFormatter = idFormatters[`${keyCol.localeLabel} ID`];
 
               return (
                 <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
@@ -803,7 +837,6 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-
                     const isNumeric = (column.columnDef as any).dataType === "number";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({
@@ -975,7 +1008,6 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   const actions = useActions();
   const {idFormatters} = useidFormatters();
   const navigate = useNavigate();
-
   const debouncedUpdateUrl = useMemo(
     () =>
       debounce((query: QueryItem) => {
@@ -1006,7 +1038,6 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   );
 
   const query = useSelector(selectCurrentQueryItem);
-
   if (!drilldown || !cut) return null;
 
   return (

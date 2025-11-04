@@ -1,23 +1,20 @@
 import type {TranslationContextProps} from "@datawheel/use-translation";
-import {VizbuilderProvider} from "@datawheel/vizbuilder/react";
+import type {VizbuilderProvider} from "@datawheel/vizbuilder/react";
 import {type CSSObject, MantineProvider} from "@mantine/core";
 import {bindActionCreators} from "@reduxjs/toolkit";
-import {assign} from "d3plus-common";
-import identity from "lodash-es/identity";
-import React, {useCallback, useMemo} from "react";
+import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {BrowserRouter as Router} from "react-router-dom";
 import {AppProviders} from "../context";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import type {Translation} from "../hooks/translation";
 import {
+  actions,
   type ExplorerActionMap,
   type ExplorerStore,
-  actions,
   storeFactory,
 } from "../state";
 import type {Formatter, PanelDescriptor} from "../utils/types";
-import {VizbuilderErrorBoundary, VizbuilderTransient} from "../vizbuilder";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
@@ -25,27 +22,6 @@ import {TableView} from "./TableView";
 import type {ToolbarConfigType} from "./Toolbar";
 import ExplorerTour from "./tour/ExplorerTour";
 import type {TourConfig} from "./tour/types";
-
-type VizbuilderProviderProps = React.ComponentProps<typeof VizbuilderProvider>;
-
-const defaultVizbuilderConfig: VizbuilderProviderProps = {
-  chartLimits: {
-    BARCHART_MAX_BARS: 20,
-    BARCHART_MAX_STACKED_BARS: 10,
-    BARCHART_VERTICAL_MAX_GROUPS: 12,
-    BARCHART_VERTICAL_TOTAL_BARS: 240,
-    BARCHART_YEAR_MAX_BARS: 20,
-    DONUT_SHAPE_MAX: 30,
-    LINEPLOT_LINE_MAX: 20,
-    LINEPLOT_LINE_POINT_MIN: 2,
-    STACKED_SHAPE_MAX: 200,
-    STACKED_TIME_MEMBER_MIN: 2,
-    TREE_MAP_SHAPE_MAX: 1000,
-  },
-  downloadFormats: ["SVG", "PNG"],
-  ErrorBoundary: VizbuilderErrorBoundary,
-  NonIdealState: VizbuilderTransient,
-};
 
 export type Pagination = {
   rowsLimits: number[];
@@ -55,7 +31,7 @@ export type Pagination = {
 const defaultTourConfig: TourConfig = {
   extraSteps: [],
   introImage: null,
-  tourProps: {}
+  tourProps: {},
 };
 /**
  * Main DataExplorer component
@@ -97,7 +73,7 @@ export function ExplorerComponent<Locale extends string>(props: {
    * @default "en"
    */
   defaultLocale?: Locale;
-  
+
   /**
    * The locale to use for sorting cube items within the SelectCubes component.
    * This controls the sorting of subtopics and cube buttons.
@@ -174,7 +150,7 @@ export function ExplorerComponent<Locale extends string>(props: {
   /**
    * Set of settings to pass to the VizbuilderProvider.
    */
-  vizbuilderSettings?: VizbuilderProviderProps;
+  vizbuilderSettings?: React.ComponentProps<typeof VizbuilderProvider>;
 
   /**
    * Determines whether Explorer should be rendered within a MantineProvider
@@ -213,7 +189,7 @@ export function ExplorerComponent<Locale extends string>(props: {
     withMultiQuery = false,
     pagination,
     tourConfig,
-    measuresActive
+    measuresActive,
   } = props;
 
   const panels = useMemo(
@@ -221,30 +197,22 @@ export function ExplorerComponent<Locale extends string>(props: {
       props.panels || [
         {key: "table", label: "table_view.tab_label", component: TableView},
         {key: "pivot", label: "pivot_view.tab_label", component: PivotView},
-        {key: "debug", label: "debug_view.tab_label", component: DebugView}
+        {key: "debug", label: "debug_view.tab_label", component: DebugView},
       ],
-    [props.panels]
+    [props.panels],
   );
 
-  const store: ExplorerStore = withinReduxProvider ? useMemo(storeFactory, []) : useStore();
+  const store: ExplorerStore = withinReduxProvider
+    ? useMemo(storeFactory, [])
+    : useStore();
 
   const boundActions = useMemo(
-    () => bindActionCreators<ExplorerActionMap, ExplorerBoundActionMap>(actions, store.dispatch),
-    []
-  );
-
-  const vizbuilderSettings: VizbuilderProviderProps = assign(
-    {},
-    defaultVizbuilderConfig,
-    props.vizbuilderSettings,
-  );
-  const vbPostprocessConfig = props.vizbuilderSettings?.postprocessConfig || identity;
-  vizbuilderSettings.postprocessConfig = useCallback(
-    (config, chart, params) => {
-      config.scrollContainer = ".vb-wrapper";
-      return vbPostprocessConfig(config, chart, params);
-    },
-    [vbPostprocessConfig],
+    () =>
+      bindActionCreators<ExplorerActionMap, ExplorerBoundActionMap>(
+        actions,
+        store.dispatch,
+      ),
+    [],
   );
 
   let content = (
@@ -265,22 +233,20 @@ export function ExplorerComponent<Locale extends string>(props: {
         translations={props.translations}
         defaultCube={props.defaultCube}
       >
-        <VizbuilderProvider {...vizbuilderSettings}>
-          <AppProviders>
-            <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
-              <ExplorerContent
-                defaultOpenParams={defaultOpenParams}
-                height={height}
-                panels={panels}
-                serverConfig={props.serverConfig}
-                serverURL={props.serverURL}
-                splash={props.splash}
-                withMultiQuery={withMultiQuery}
-                sortLocale={sortLocale}
-              />
-            </ExplorerTour>
-          </AppProviders>
-        </VizbuilderProvider>
+        <AppProviders vizbuilderSettings={props.vizbuilderSettings}>
+          <ExplorerTour tourConfig={{...defaultTourConfig, ...tourConfig}}>
+            <ExplorerContent
+              defaultOpenParams={defaultOpenParams}
+              height={height}
+              panels={panels}
+              serverConfig={props.serverConfig}
+              serverURL={props.serverURL}
+              splash={props.splash}
+              withMultiQuery={withMultiQuery}
+              sortLocale={sortLocale}
+            />
+          </ExplorerTour>
+        </AppProviders>
       </SettingsProvider>
     </Router>
   );
@@ -292,20 +258,20 @@ export function ExplorerComponent<Locale extends string>(props: {
         theme={{
           globalStyles: theme => ({
             "*, *::before, *::after": {
-              boxSizing: "border-box"
+              boxSizing: "border-box",
             },
             "[data-state='expanded']": {
-              width: 350
-            }
+              width: 350,
+            },
           }),
           components: {
             Text: {
               styles: theme => ({
                 root: {
-                  fontSize: theme.fontSizes.sm // Apply small font size to Text component
-                }
-              })
-            }
+                  fontSize: theme.fontSizes.sm, // Apply small font size to Text component
+                },
+              }),
+            },
             // Add other component customizations here
           },
           fontSizes: {
@@ -313,8 +279,8 @@ export function ExplorerComponent<Locale extends string>(props: {
             sm: "0.875rem",
             md: "1rem",
             lg: "1.125rem",
-            xl: "1.25rem"
-          }
+            xl: "1.25rem",
+          },
         }}
       >
         {content}

@@ -1,10 +1,5 @@
-import {
-  type TranslateFunction,
-  type TranslationDict,
-  translationFactory,
-} from "@datawheel/use-translation";
+import {type TranslationDict, translationFactory} from "@datawheel/use-translation";
 import type {Translation as VizbuilderTranslation} from "@datawheel/vizbuilder/react";
-import {useCallback} from "react";
 
 const explorerTranslation = {
   action_copy: "Copy",
@@ -306,15 +301,20 @@ const vizbuilderTranslation: ExtendibleTranslation<VizbuilderTranslation> = {
   },
   title: {
     main_on_period: "{{values}} by {{series}} on {{time_period}}",
-    main_over_period: "{{values}} by {{series}} over {{time}}",
+    main_over_period: "{{values}} by {{series}} over {{time_scale}}",
     main: "{{values}} by {{series}}",
     measure_on_period: "{{measure}} on {{period}}",
-    measure_over_period: "{{values}} over {{time}}",
+    measure_over_period: "{{values}} over {{time_scale}}",
     nonidealstate: "No results",
     series_members: "{{series}} ({{members}})",
     series: "{{series}}",
     time_range: "in {{from}}-{{to}}",
-    total: "Total: {{value}}"
+    total: "Total: {{value}}",
+    scale_year: "Annualy",
+    scale_quarter: "Quarterly",
+    scale_month: "Monthly",
+    scale_week: "Weekly",
+    scale_day: "Daily"
   },
   transient: {
     title_one_row: "The dataset has only one row and can't be used to generate charts.",
@@ -344,13 +344,3 @@ export const {useTranslation, TranslationConsumer, TranslationProvider} = transl
   defaultLocale: "en",
   defaultTranslation
 });
-
-export function useVizbuilderTranslation() {
-  const ctx = useTranslation();
-  const t = ctx.t;
-  const nsT = useCallback<TranslateFunction>(
-    (key, data) => t(`vizbuilder.${key}`, data),
-    [t],
-  );
-  return {...ctx, translate: nsT, t: nsT};
-}

@@ -1,26 +1,12 @@
-import {useQuery, useMutation, useQueryClient, keepPreviousData} from "@tanstack/react-query";
-import type {
-  TesseractCube,
-  TesseractDataResponse,
-  TesseractFormat,
-  TesseractMembersResponse
-} from "../api";
-import type {TesseractLevel, TesseractHierarchy, TesseractDimension} from "../api/tesseract/schema";
-import {queryParamsToRequest, requestToQueryParams} from "../api/tesseract/parse";
-import {mapDimensionHierarchyLevels} from "../api/traverse";
+import {useQuery, useMutation, keepPreviousData} from "@tanstack/react-query";
+import type {TesseractCube, TesseractDataResponse, TesseractFormat} from "../api";
+import {queryParamsToRequest} from "../api/tesseract/parse";
 import {filterMap} from "../utils/array";
 import {describeData, getOrderValue, getValues} from "../utils/object";
-import {
-  buildDrilldown,
-  buildMeasure,
-  buildProperty,
-  buildQuery,
-  QueryParams
-} from "../utils/structs";
+import {buildDrilldown, buildProperty, QueryParams} from "../utils/structs";
 import {keyBy} from "../utils/transform";
 import type {FileDescriptor} from "../utils/types";
 import {isValidQuery} from "../utils/validation";
-import {pickDefaultDrilldowns} from "../state/utils";
 import {useLogicLayer} from "../api/context";
 import {useSettings} from "./settings";
 import {useSelector} from "../state";
@@ -85,6 +71,8 @@ export const useDimensionItems = () => {
   const {data: schema} = useServerSchema();
   const {params} = useSelector(selectCurrentQueryItem);
   const dimensions = schema?.cubeMap[params.cube]?.dimensions || [];
+  const requiredDimensions =
+    schema?.cubeMap[params.cube]?.annotations.required_dimensions || ([] as string[]);
 
   return dimensions
     .map(dim => ({
@@ -96,7 +84,8 @@ export const useDimensionItems = () => {
             hierarchy.levels.slice().sort((a, b) => getOrderValue(a) - getOrderValue(b));
             return hierarchy;
           })
-          .sort((a, b) => getOrderValue(a) - getOrderValue(b))
+          .sort((a, b) => getOrderValue(a) - getOrderValue(b)),
+        required: requiredDimensions.includes(dim.name)
       },
       count: dim.hierarchies.reduce((acc, hie) => acc + hie.levels.length, 0),
       alpha: dim.hierarchies.reduce((acc, hie) => acc.concat(hie.name, "-"), "")
@@ -108,6 +97,11 @@ export const useDimensionItems = () => {
         a.alpha.localeCompare(b.alpha)
     )
     .map(i => i.item);
+};
+
+export const useRequiredDimensions = () => {
+  const dimensions = useDimensionItems();
+  return dimensions.filter(dim => dim.required);
 };
 
 // include to download query ISO 3 by default for drilldowns that has that property.
@@ -253,253 +247,5 @@ export function useFetchQuery(
     enabled: Boolean(queryLink),
     retry: false,
     placeholderData: withoutPagination ? undefined : keepPreviousData
-  });
-}
-
-// Hook to fetch members for a level
-export function useMembers(level: string, localeStr?: string, cubeName?: string) {
-  const {tesseract} = useLogicLayer();
-
-  return useQuery({
-    queryKey: ["members", level, localeStr, cubeName],
-    queryFn: async (): Promise<TesseractMembersResponse> => {
-      return tesseract.fetchMembers({
-        request: {cube: cubeName || "", level, locale: localeStr}
-      });
-    },
-    enabled: !!level
-  });
-}
-
-// Hook to hydrate params
-export function useHydrateParams(
-  cubeMap: Record<string, TesseractCube>,
-  queries: Array<{
-    key: string;
-    params: {
-      cube: string;
-      measures: Record<string, any>;
-      drilldowns: Record<
-        string,
-        {level: string; properties: Array<{active: boolean; name: string}>}
-      >;
-    };
-  }>,
-  suggestedCube = ""
-) {
-  const queryClient = useQueryClient();
-  const {tesseract} = useLogicLayer();
-
-  function isCompleteTuple(
-    tuple: [TesseractLevel, TesseractHierarchy, TesseractDimension] | undefined
-  ): tuple is [TesseractLevel, TesseractHierarchy, TesseractDimension] {
-    return tuple !== undefined && tuple.length === 3 && tuple.every(item => item !== undefined);
-  }
-
-  return useMutation({
-    mutationFn: async () => {
-      const defaultCube = cubeMap[suggestedCube] || Object.values(cubeMap)[0];
-
-      const queryPromises = queries.map(queryItem => {
-        const {params} = queryItem;
-        const {measures: measureItems} = params;
-
-        const cube = cubeMap[params.cube] || defaultCube;
-        const levelMap = mapDimensionHierarchyLevels(cube);
-
-        const resolvedMeasures = cube.measures.map(measure =>
-          buildMeasure(
-            measureItems[measure.name] || {
-              active: false,
-              key: measure.name,
-              name: measure.name,
-              caption: measure.caption
-            }
-          )
-        );
-
-        const resolvedDrilldowns = filterMap(
-          Object.values(params.drilldowns),
-          (item: {level: string; properties: Array<{active: boolean; name: string}>}) => {
-            const levelTuple = levelMap[item.level];
-            if (!isCompleteTuple(levelTuple)) return null;
-
-            const [level, hierarchy, dimension] = levelTuple!;
-
-            const activeProperties = filterMap(
-              item.properties,
-              (prop: {active: boolean; name: string}) => (prop.active ? prop.name : null)
-            );
-            return buildDrilldown({
-              active: true,
-              key: level.name,
-              dimension: dimension.name!,
-              hierarchy: hierarchy.name!,
-              level: level.name,
-              captionProperty: "",
-              members: [],
-              properties: level.properties.map(property =>
-                buildProperty({
-                  active: activeProperties.includes(property.name),
-                  level: level.name,
-                  name: property.name
-                })
-              )
-            });
-          }
-        );
-
-        return {
-          ...queryItem,
-          params: {
-            ...params,
-            cube: cube.name,
-            drilldowns: keyBy(resolvedDrilldowns, item => item.key),
-            measures: keyBy(resolvedMeasures, item => item.key)
-          }
-        };
-      });
-
-      const resolvedQueries = await Promise.all(queryPromises);
-      return keyBy(resolvedQueries, i => i.key);
-    },
-    onSuccess: queryMap => {
-      // Update the query client cache with the hydrated queries
-      queryClient.setQueryData(["hydratedQueries"], queryMap);
-    }
-  });
-}
-
-// Hook to parse query URL
-export function useParseQueryUrl() {
-  const queryClient = useQueryClient();
-  const {tesseract} = useLogicLayer();
-
-  return useMutation({
-    mutationFn: async ({
-      url,
-      cubeMap
-    }: {
-      url: string | URL;
-      cubeMap: Record<string, TesseractCube>;
-    }) => {
-      const search = new URL(url).searchParams;
-      const cube = search.get("cube");
-
-      if (cube && cubeMap[cube]) {
-        const params = requestToQueryParams(cubeMap[cube], search);
-
-        const queryItem = buildQuery({
-          panel: search.get("panel") || "table",
-          chart: search.get("chart") || "",
-          params
-        });
-
-        return queryItem;
-      }
-
-      return null;
-    },
-    onSuccess: queryItem => {
-      if (queryItem) {
-        // Update the query client cache
-        queryClient.setQueryData(["currentQuery"], queryItem);
-        queryClient.setQueryData(["selectedQuery"], queryItem.key);
-      }
-    }
-  });
-}
-
-// Hook to reload cubes
-export function useReloadCubes() {
-  const {tesseract} = useLogicLayer();
-
-  return useMutation({
-    mutationFn: async ({locale}: {locale: {code: string}}) => {
-      const schema = await tesseract.fetchSchema({locale: locale.code});
-      const cubes = schema.cubes.filter(cube => !cube.annotations.hide_in_ui);
-      return keyBy(cubes, i => i.name);
-    },
-    onSuccess: cubeMap => {
-      // Update the query client cache
-      const queryClient = useQueryClient();
-      queryClient.setQueryData(["cubeMap"], cubeMap);
-    }
-  });
-}
-
-// Hook to set cube
-export function useSetCube() {
-  const queryClient = useQueryClient();
-  const {tesseract, dataLocale} = useLogicLayer();
-
-  return useMutation({
-    mutationFn: async ({
-      cubeName,
-      cubeMap,
-      measuresActive
-    }: {
-      cubeName: string;
-      cubeMap: Record<string, TesseractCube>;
-      measuresActive?: number;
-    }) => {
-      const nextCube = cubeMap[cubeName];
-      if (!nextCube) return null;
-
-      const measuresLimit =
-        typeof measuresActive !== "undefined" ? measuresActive : nextCube.measures.length;
-
-      const nextMeasures = nextCube.measures.slice(0, measuresLimit).map(measure => {
-        return buildMeasure({
-          active: true,
-          key: measure.name,
-          name: measure.name,
-          caption: measure.caption
-        });
-      });
-
-      const nextDrilldowns = pickDefaultDrilldowns(nextCube.dimensions).map(level =>
-        buildDrilldown({
-          ...level,
-          key: level.name,
-          active: true,
-          properties: level.properties.map(prop =>
-            buildProperty({level: level.name, name: prop.name})
-          )
-        })
-      );
-
-      // Fetch members for each drilldown
-      const drilldownPromises = nextDrilldowns.map(async dd => {
-        const levelMeta = await tesseract.fetchMembers({
-          request: {cube: nextCube.name, level: dd.level, locale: dataLocale}
-        });
-
-        return {
-          ...dd,
-          members: levelMeta.members
-        };
-      });
-
-      const drilldownsWithMembers = await Promise.all(drilldownPromises);
-
-      return {
-        cube: nextCube.name,
-        measures: keyBy(nextMeasures, item => item.key),
-        drilldowns: keyBy(drilldownsWithMembers, item => item.key),
-        locale: dataLocale
-      };
-    },
-    onSuccess: result => {
-      if (result) {
-        // Update the query client cache
-        queryClient.setQueryData(["currentCube"], result.cube);
-        queryClient.setQueryData(["measures"], result.measures);
-        queryClient.setQueryData(["drilldowns"], result.drilldowns);
-        if (result.locale) {
-          queryClient.setQueryData(["locale"], result.locale);
-        }
-      }
-    }
   });
 }
