@@ -221,16 +221,7 @@ function SuccessResult(
     cube
   });
 
-  if (data?.length === 0 && !isLoading && !isError) {
-    return (
-      <FailureResult
-        className={cx(classes.container, props.className)}
-        icon={<IconBox color="orange" size="5rem" />}
-        title={t("results.error_emptyresult_title")}
-        description={t("results.error_emptyresult_detail")}
-      />
-    );
-  }
+
 
   return (
     <Flex

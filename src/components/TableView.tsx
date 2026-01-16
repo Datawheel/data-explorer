@@ -1073,10 +1073,11 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
 };
 
 const NoRecords = React.memo(() => {
+  const {translate: t} = useTranslation();
   return (
-    <Center style={{height: "calc(100% - 210px)"}}>
-      <Text size="xl" color="gray" italic>
-        No records to display.
+    <Center style={{height: "calc(100% - 210px)"}} my="xl">
+      <Text size="md" color="gray" italic>
+        {t("results.error_emptyresult_detail")}
       </Text>
     </Center>
   );
