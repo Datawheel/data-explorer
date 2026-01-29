@@ -41,6 +41,7 @@ export interface ViewProps<TData extends Record<string, any> = Record<string, st
   table?: MRT_TableInstance<TData & Record<string, any>>;
   isError?: boolean;
   isLoading?: boolean;
+  isFetching?: boolean;
   data?: Record<string, string | number>[];
   columns?: MRT_ColumnDef<TData>[];
   pagination?: MRT_PaginationState;

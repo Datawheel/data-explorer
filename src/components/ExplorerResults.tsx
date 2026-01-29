@@ -20,6 +20,7 @@ import {useSelector} from "react-redux";
 import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectIsPreviewMode} from "../state/queries";
+import type {QueryResult} from "../utils/structs";
 import type {PanelDescriptor, ViewProps} from "../utils/types";
 import AddColumnsDrawer from "./DrawerMenu";
 import {ExplorerTabs} from "./ExplorerTabs";
@@ -221,16 +222,7 @@ function SuccessResult(
     cube
   });
 
-  if (data?.length === 0 && !isLoading && !isError) {
-    return (
-      <FailureResult
-        className={cx(classes.container, props.className)}
-        icon={<IconBox color="orange" size="5rem" />}
-        title={t("results.error_emptyresult_title")}
-        description={t("results.error_emptyresult_detail")}
-      />
-    );
-  }
+
 
   return (
     <Flex
@@ -312,7 +304,7 @@ function SuccessResult(
                   cube={cube}
                   params={params}
                   data={data as TData[]}
-                  result={result}
+                  result={result as QueryResult<TData> | undefined}
                   table={table}
                   isError={isError}
                   isLoading={isLoading}

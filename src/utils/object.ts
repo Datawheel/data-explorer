@@ -53,28 +53,34 @@ export function describeData(
       if (!entityResult) return null;
       const [entity] = entityResult;
 
+      let entityType: AnyResultColumn["entityType"];
+      if (hasProperty(entity, "aggregator")) {
+        entityType = "measure";
+      } else if (hasProperty(entity, "depth")) {
+        entityType = "level";
+      } else {
+        entityType = "property";
+      }
+
       const typeSet = new Set(result.data.map(item => typeof item[column]));
-      const valueType =
-        typeSet.size === 1
-          ? typeSet.has("number")
-            ? "number"
-            : typeSet.has("boolean")
-            ? "boolean"
-            : /* else */ "string"
-          : typeSet.has("number")
-          ? "number"
-          : "string";
+      let valueType: AnyResultColumn["valueType"];
+      if (entityType === "measure" || typeSet.has("number")) {
+        valueType = "number";
+      } else if (typeSet.size === 1 && typeSet.has("boolean")) {
+        valueType = "boolean";
+      } else {
+        valueType = "string";
+      }
+
       const isId = column !== entity.name;
-      const entityType = hasProperty(entity, "aggregator")
-        ? "measure"
-        : hasProperty(entity, "depth")
-        ? "level"
-        : "property";
+      const caption = getCaption(entity, locale) || column;
+      const localeLabel = isId ? `${caption} ID` : caption;
+
       return [
         column,
         {
           label: column,
-          localeLabel: getCaption(entity, locale) + (isId ? " ID" : "") || column,
+          localeLabel,
           entity,
           entityType,
           isId,
