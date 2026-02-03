@@ -116,7 +116,7 @@ function App() {
   // move to env variables
   const items: ServerOption[] = useMemo(
     () => [
-      {value: "https://api.datasaudi.datawheel.us/tesseract/", label: "Data Saudi"},
+      {value: "https://datasaudi-pytesseract-feb.datawheel.us/tesseract/", label: "Data Saudi"},
       {value: "https://api-v2.oec.world/tesseract/", label: "OEC"},
       {value: "https://idj-api-prod.datawheel.us/tesseract/", label: "IDJ"},
       {value: "https://api-ts-dev.datausa.io/tesseract/", label: "DATA USA"}
