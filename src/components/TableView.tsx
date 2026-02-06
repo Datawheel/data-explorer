@@ -481,7 +481,9 @@ export function useTable({
         isId
       } = keyCol;
 
-      const isNumeric = valueType === "number" && !/Year/i.test(columnKey);
+      const isYearDrilldown =
+        entityType === "level" && entity.time_scale && !/Year/i.test(columnKey);
+      const isNumeric = valueType === "number" && !isYearDrilldown;
 
       const formatterKey = getFormat(
         "aggregator" in entity ? entity : columnKey,
@@ -489,7 +491,13 @@ export function useTable({
       );
 
       const formatter = getFormatter(formatterKey);
-
+      console.log({
+        columnKey,
+        isId,
+        isNumeric,
+        range,
+        valueType
+      });
       const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
       return {
         ...mantineFilterVariantObject,
@@ -729,7 +737,7 @@ export function useTable({
             </Alert>
           );
         }
-      } as const),
+      }) as const,
     [isError, t, isSmallerThanMd]
   );
 
@@ -875,6 +883,9 @@ export function TableView({
                         sx={theme => (isRowIndex ? index(theme) : base(theme))}
                       >
                         <Box
+                          data-isrowindex={isRowIndex}
+                          data-isnumeric={isNumeric}
+                          data-variant={header.column.columnDef.filterVariant}
                           sx={{
                             display: "flex",
                             flexFlow: "column",
