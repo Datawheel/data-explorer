@@ -32,17 +32,9 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
       levels.length < 4
     ) {
       const hierarchy = findDefaultHierarchy(dimension);
-      const hierarchyDepth = Math.max(...hierarchy.levels.map(l => l.depth));
       // uses deepest level for geo dimensions
       const levelIndex = dimension.type === "geo" ? hierarchy.levels.length - 1 : 0;
       const defaultLevel = hierarchy.levels[levelIndex];
-      if (
-        dimension.type === "time" &&
-        dimension.annotations.de_time_complete === "true" &&
-        defaultLevel.depth < hierarchyDepth
-      ) {
-        timeComplete = defaultLevel.name;
-      }
       levels.push({...defaultLevel, type: dimension.type});
     }
   }
@@ -67,6 +59,35 @@ export function pickDefaultDrilldowns(dimensions: TesseractDimension[], cube: Te
       }
       if (foundLevel && foundType) {
         levels.push({...foundLevel, type: foundType});
+      }
+    }
+  }
+
+  for (const dimension of dimensions) {
+    if (dimension.annotations.de_time_complete === "true") {
+      const hierarchy = findDefaultHierarchy(dimension);
+      const hierarchyLevels = hierarchy.levels;
+
+      // Select all levels of this hierarchy that are currently in the levels array
+      const availableLevels = hierarchyLevels.filter(hl => levels.some(l => l.name === hl.name));
+
+      if (availableLevels.length > 0) {
+        // Find the shallowest selected level
+        const timeCompleteLevel = availableLevels.reduce((prev, curr) =>
+          curr.depth < prev.depth ? curr : prev
+        );
+
+        // Find the deepest level in the definition
+        const deepestLevel = hierarchyLevels.reduce((prev, curr) =>
+          curr.depth > prev.depth ? curr : prev
+        );
+
+        // Check if the deepest level is among the selected levels
+        const deepestLevelSelected = availableLevels.some(l => l.depth === deepestLevel.depth);
+
+        if (timeCompleteLevel.depth < deepestLevel.depth && !deepestLevelSelected) {
+          timeComplete = timeCompleteLevel.name;
+        }
       }
     }
   }
