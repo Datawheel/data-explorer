@@ -201,6 +201,7 @@ export interface TesseractLevel {
   properties: TesseractProperty[];
   type?: "geo" | "time" | string;
   count?: number;
+  time_scale?: string;
 }
 
 export interface TesseractProperty {

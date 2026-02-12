@@ -481,7 +481,10 @@ export function useTable({
         isId
       } = keyCol;
 
-      const isNumeric = valueType === "number" && !/Year/i.test(columnKey);
+      const isYearDrilldown =
+        entityType === "level" && entity.time_scale && /Year/i.test(columnKey);
+
+      const isNumeric = valueType === "number" && !isYearDrilldown;
 
       const formatterKey = getFormat(
         "aggregator" in entity ? entity : columnKey,
@@ -729,7 +732,7 @@ export function useTable({
             </Alert>
           );
         }
-      } as const),
+      }) as const,
     [isError, t, isSmallerThanMd]
   );
 

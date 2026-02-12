@@ -817,7 +817,9 @@ function FilterItem({
             // Only toggle the measure if it's not the last one selected
             if (!isLastSelected) {
               actions.updateMeasure({...measure, active: !measure.active});
-              actions.updateFilter({...filter, active: !checked});
+              if (checked) {
+                actions.updateFilter({...filter, active: false});
+              }
             }
           }}
           checked={checked}
