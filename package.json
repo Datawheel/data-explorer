@@ -17,6 +17,10 @@
     "start": "vite serve",
     "test": "echo 'no tests defined yet'"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Datawheel/data-explorer.git"
+  },
   "dependencies": {
     "@datawheel/use-translation": "^0.2.0",
     "@datawheel/vizbuilder": "^0.7.5",
