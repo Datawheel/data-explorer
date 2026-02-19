@@ -4,7 +4,7 @@ import {
   useD3plusConfig,
   useVizbuilderContext,
 } from "@datawheel/vizbuilder/react";
-import {Box, Button, CopyButton, Group, Paper, Stack} from "@mantine/core";
+import {Box, Button, CopyButton, Group, LoadingOverlay, Paper, Stack} from "@mantine/core";
 import {
   IconArrowsMaximize,
   IconArrowsMinimize,
@@ -15,7 +15,7 @@ import {
   IconVectorTriangle,
 } from "@tabler/icons-react";
 import {saveElement} from "d3plus-export";
-import React, {useMemo, useRef, useState} from "react";
+import React, {useMemo, useRef, useState, memo} from "react";
 import {useInView} from "react-intersection-observer";
 
 const iconByFormat = {
@@ -23,6 +23,46 @@ const iconByFormat = {
   png: IconPhotoDown,
   svg: IconVectorTriangle,
 };
+
+const ChartRenderer = memo((props: {
+  ChartComponent: React.ComponentType<{config: any}>;
+  config: any;
+  containerRef: React.RefObject<HTMLDivElement>;
+  overlayRef: React.RefObject<HTMLDivElement>;
+  onReady: () => void;
+}) => {
+  const {ChartComponent, config, containerRef, overlayRef, onReady} = props;
+
+  React.useEffect(() => {
+    const box = containerRef.current;
+    if (!box) return;
+
+    const checkSvg = () => {
+      const svg = box.querySelector("svg");
+      if (svg) {
+        // Direct DOM manipulation to hide the loader instantly, 
+        // bypassing React's main-thread blocking during d3 rendering.
+        if (overlayRef.current) {
+          overlayRef.current.style.display = "none";
+        }
+        onReady();
+        return true;
+      }
+      return false;
+    };
+
+    if (checkSvg()) return;
+
+    const observer = new MutationObserver(() => {
+      if (checkSvg()) observer.disconnect();
+    });
+
+    observer.observe(box, {childList: true, subtree: true});
+    return () => observer.disconnect();
+  }, [containerRef, overlayRef, onReady]);
+
+  return <ChartComponent config={config} />;
+});
 
 export function ChartCard(props: {
   /** The information needed to build a specific chart configuration. */
@@ -139,6 +179,57 @@ export function ChartCard(props: {
     );
   }, [translate]);
 
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [shouldRenderChart, setShouldRenderChart] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
+
+  // Reset state when chart changes
+  React.useEffect(() => {
+    setIsLoaded(false);
+    setShouldRenderChart(false);
+    if (overlayRef.current) {
+      overlayRef.current.style.display = "block";
+    }
+  }, [chart.key]);
+
+  React.useEffect(() => {
+    if (ChartComponent && (inView || hasBeenInView) && !shouldRenderChart) {
+      // Guaranteed 1s delay to ensure the user sees the loader animation
+      // before the JS thread is hijacked by the heavy d3 processing.
+      const timer = setTimeout(() => {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            setShouldRenderChart(true);
+          });
+        });
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [ChartComponent, inView, hasBeenInView, shouldRenderChart]);
+
+  // Use MutationObserver to detect when the SVG is actually added to the DOM
+  React.useEffect(() => {
+    const box = nodeRef.current;
+    if (!box || !shouldRenderChart || isLoaded) return;
+
+    const observer = new MutationObserver(() => {
+      const svg = box.querySelector("svg");
+      if (svg) {
+        window.requestAnimationFrame(() => setIsLoaded(true));
+        observer.disconnect();
+      }
+    });
+
+    observer.observe(box, {childList: true, subtree: true});
+
+    // Initial check in case it rendered instantly (unlikely but possible)
+    if (box.querySelector("svg")) {
+      setIsLoaded(true);
+    }
+
+    return () => observer.disconnect();
+  }, [shouldRenderChart, isLoaded]);
+
   if (!ChartComponent || !config) return null;
 
   const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : "calc((80vh - 4rem) / 2)";
@@ -157,12 +248,35 @@ export function ChartCard(props: {
             {onFocus && focusButton}
           </Group>
           <Box
-            style={{flex: "1 1 auto"}}
+            style={{flex: "1 1 auto", position: "relative"}}
             ref={setRefs}
-            sx={{"& > .viz": {height: "100%"}, border: "1px solid red"}}
+            sx={{"& > .viz": {height: "100%"}}}
           >
-            {ChartComponent && (inView || hasBeenInView) ? (
-              <ChartComponent config={config} />
+            <Box
+              ref={overlayRef}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 100,
+              }}
+            >
+              <LoadingOverlay
+                visible={!isLoaded}
+                overlayBlur={2}
+                transitionDuration={0}
+              />
+            </Box>
+            {ChartComponent && (inView || hasBeenInView) && shouldRenderChart ? (
+              <ChartRenderer
+                ChartComponent={ChartComponent}
+                config={config}
+                containerRef={nodeRef}
+                overlayRef={overlayRef}
+                onReady={() => setIsLoaded(true)}
+              />
             ) : (
               <div style={{height: "100%", width: "100%"}} />
             )}
