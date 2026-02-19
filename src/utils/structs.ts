@@ -91,6 +91,7 @@ export interface FilterItem extends QueryParamsItem {
   conditionOne: [`${Comparison}`, string, number];
   conditionTwo?: [`${Comparison}`, string, number];
   joint: "and" | "or";
+  type?: "greaterThan" | "lessThan" | "between";
 }
 
 export interface MeasureItem extends QueryParamsItem {
@@ -224,6 +225,7 @@ export function buildFilter(props: {
   inputtedValue?: string;
   interpretedValue?: string;
   joint?: string;
+  type?: "greaterThan" | "lessThan" | "between";
 }): FilterItem {
   return {
     active: typeof props.active === "boolean" ? props.active : true,
@@ -231,15 +233,20 @@ export function buildFilter(props: {
     measure: props.measure || `${props.name}`,
     conditionOne: props.conditionOne || [
       props.const1 ? `${props.const1[0]}` : `${Comparison.GT}`,
-      props.const1 ? props.const1[1].toString() : props.inputtedValue || "0",
-      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, 0)
+      props.const1 ? props.const1[1].toString() : props.inputtedValue || "",
+      props.const1 ? props.const1[1] : parseNumeric(props.interpretedValue, NaN)
     ],
-    conditionTwo: props.conditionTwo || [
-      props.const2 ? `${props.const2[0]}` : `${Comparison.GT}`,
-      props.const2 ? props.const2[1].toString() : props.inputtedValue || "0",
-      props.const2 ? props.const2[1] : parseNumeric(props.interpretedValue, 0)
-    ],
-    joint: props.joint === "or" ? "or" : "and"
+    conditionTwo:
+      props.conditionTwo ||
+      (props.const2
+        ? [
+            `${props.const2[0]}`,
+            props.const2[1].toString(),
+            parseNumeric(props.const2[1].toString(), NaN)
+          ]
+        : undefined),
+    joint: props.joint === "or" ? "or" : "and",
+    type: props.type
   };
 }
 

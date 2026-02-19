@@ -103,6 +103,16 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
       });
 
       if (newQuery) {
+        // Merge filter types from current internal state to prevent UI fallback
+        Object.values(newQuery.params.filters).forEach(filter => {
+          const currentFilter = Object.values(queryItem.params.filters).find(
+            f => f.measure === filter.measure
+          );
+          if (currentFilter) {
+            filter.type = currentFilter.type;
+          }
+        });
+
         const promises = [...restDrilldowns, ...Object.values(newQuery.params.drilldowns)].map(
           dd => {
             const currentDrilldown = queryItem.params.drilldowns[dd.key];

@@ -1,8 +1,8 @@
 import {type Dataset, generateCharts} from "@datawheel/vizbuilder";
-import {ErrorBoundary, useVizbuilderContext} from "@datawheel/vizbuilder/react";
-import {createStyles, Modal} from "@mantine/core";
+import {ErrorBoundary, useVizbuilderContext, d3plusConfigBuilder} from "@datawheel/vizbuilder/react";
+import {createStyles, Modal, Pagination, Stack} from "@mantine/core";
 import cls from "clsx";
-import React, {useCallback, useMemo} from "react";
+import React, {useCallback, useMemo, useState, useEffect} from "react";
 import {useSelector} from "react-redux";
 import {useSettings} from "../../hooks/settings";
 import {selectCurrentQueryItem} from "../../state/queries";
@@ -84,8 +84,12 @@ export function Vizbuilder(props: {
     chartLimits,
     chartTypes,
     datacap,
+    getFormatter,
     getTopojsonConfig,
     NonIdealState,
+    postprocessConfig,
+    showConfidenceInt,
+    translate,
     ViewErrorComponent,
   } = useVizbuilderContext();
 
@@ -108,6 +112,31 @@ export function Vizbuilder(props: {
     return Object.fromEntries(charts.map(chart => [chart.key, chart]));
   }, [chartLimits, chartTypes, datacap, datasets, getTopojsonConfig]);
 
+  const filteredCharts = useMemo(() => {
+    const list = Object.values(charts);
+    const builderParams = {
+      fullMode: false,
+      getFormatter,
+      showConfidenceInt,
+      t: translate,
+    };
+
+    return list.filter(chart => {
+      const builder = d3plusConfigBuilder[chart.type];
+      if (!builder) return false;
+      const config = builder(chart as any, builderParams);
+      const finalConfig = postprocessConfig(config, chart, builderParams);
+      return finalConfig !== false;
+    });
+  }, [charts, getFormatter, postprocessConfig, showConfidenceInt, translate]);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 4;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [datasets, charts]);
+
   const content = useMemo(() => {
     const isLoading = datasets.some(dataset => Object.keys(dataset.columns).length === 0);
     if (isLoading) {
@@ -115,9 +144,12 @@ export function Vizbuilder(props: {
       return <NonIdealState status="loading" />;
     }
 
-    const chartList = Object.values(charts).slice(0, 10);
+    const chartList = filteredCharts.slice(
+      (currentPage - 1) * pageSize,
+      currentPage * pageSize
+    );
 
-    if (chartList.length === 0) {
+    if (filteredCharts.length === 0) {
       if (datasets.length === 1 && datasets[0].data.length === 1) {
         return <NonIdealState status="one-row" />;
       }
@@ -125,37 +157,49 @@ export function Vizbuilder(props: {
     }
 
     const isSingleChart = chartList.length === 1;
+    const totalPages = Math.ceil(filteredCharts.length / pageSize);
 
     return (
-      <div
-        className={cx("vb-scrollcontainer", classes.grid, {
-          [classes.fill]: isSingleChart,
-        })}
-      >
-        {chartList.map((chart, idx) => {
-          let className = classes.fill;
-          if (!isSingleChart) {
-            // For each group of 3 charts, assign grid positions
-            const names = [
-              classes.itemLarge,
-              classes.itemSmallTop,
-              classes.itemSmallBottom,
-            ];
-            className = names[idx % 3];
-          }
-          return (
-            <ChartCard
-              key={chart.key}
-              chart={chart}
-              onFocus={() => actions.updateChart(chart.key)}
-              height={isSingleChart ? 600 : undefined}
-              className={className}
-            />
-          );
-        })}
-      </div>
+      <Stack spacing="xl">
+        <div
+          className={cx("vb-scrollcontainer", classes.grid, {
+            [classes.fill]: isSingleChart,
+          })}
+        >
+          {chartList.map((chart, idx) => {
+            let className = classes.fill;
+            if (!isSingleChart) {
+              // For each group of 3 charts, assign grid positions
+              const names = [
+                classes.itemLarge,
+                classes.itemSmallTop,
+                classes.itemSmallBottom,
+              ];
+              className = names[idx % 3];
+            }
+            return (
+              <ChartCard
+                key={chart.key}
+                chart={chart}
+                onFocus={() => actions.updateChart(chart.key)}
+                height={isSingleChart ? 600 : undefined}
+                className={className}
+              />
+            );
+          })}
+        </div>
+        {totalPages > 1 && (
+          <Pagination
+            total={totalPages}
+            value={currentPage}
+            onChange={setCurrentPage}
+            position="center"
+            mb="xl"
+          />
+        )}
+      </Stack>
     );
-  }, [charts, classes, cx, datasets, NonIdealState]);
+  }, [filteredCharts, currentPage, classes, cx, datasets, NonIdealState, actions]);
 
   const currentChart = queryItem?.chart || "";
   const chart = charts[currentChart];
