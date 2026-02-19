@@ -141,7 +141,7 @@ export function ChartCard(props: {
 
   if (!ChartComponent || !config) return null;
 
-  const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : 400;
+  const resolvedHeight = height ? height : isFullMode ? "calc(100vh - 3rem)" : "calc((80vh - 4rem) / 2)";
 
   return (
     <ErrorBoundary ErrorContent={CardErrorComponent}>
@@ -159,7 +159,7 @@ export function ChartCard(props: {
           <Box
             style={{flex: "1 1 auto"}}
             ref={setRefs}
-            sx={{"& > .viz": {height: "100%"}}}
+            sx={{"& > .viz": {height: "100%"}, border: "1px solid red"}}
           >
             {ChartComponent && (inView || hasBeenInView) ? (
               <ChartComponent config={config} />
