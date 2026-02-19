@@ -242,38 +242,74 @@ type TableProps = {
   columnSorting?: (a: AnyResultColumn, b: AnyResultColumn) => number;
 };
 
-interface Condition {
+export interface Condition {
   conditionOne: [string, string, number];
   conditionTwo?: [string, string, number];
   joint?: string;
+  type?: "greaterThan" | "lessThan" | "between";
 }
 
 type ComparisonFunction = (value: number[]) => Condition;
 
-export function getFiltersConditions(fn: string, value: number[]) {
+export function getFiltersConditions(fn: string, value: any[]) {
   const comparisonMap = new Map<string, ComparisonFunction>([
     [
       "greaterThan",
-      (value: number[]): Condition => ({
-        conditionOne: [Comparison.GTE, String(value[0]), Number(value[0])],
-        conditionTwo: [Comparison.GT, "0", 0]
-      })
+      (value: any[]): Condition => {
+        const val = value[0] === "" ? "" : String(value[0]);
+        const num = value[0] === "" ? NaN : Number(value[0]);
+        return {
+          conditionOne: [Comparison.GTE, val, num],
+          conditionTwo: undefined,
+          type: "greaterThan"
+        };
+      }
     ],
     [
       "lessThan",
-      (value: number[]): Condition => ({
-        conditionOne: [Comparison.LTE, String(value[0]), Number(value[0])],
-        conditionTwo: [Comparison.GT, "0", 0]
-      })
+      (value: any[]): Condition => {
+        const val = value[0] === "" ? "" : String(value[0]);
+        const num = value[0] === "" ? NaN : Number(value[0]);
+        return {
+          conditionOne: [Comparison.LTE, val, num],
+          conditionTwo: undefined,
+          type: "lessThan"
+        };
+      }
     ],
     [
       "between",
-      (values: number[]): Condition => {
+      (values: any[]): Condition => {
         const [min, max] = values;
+        const isMinValid = min !== "" && min !== null && min !== undefined;
+        const isMaxValid = max !== "" && max !== null && max !== undefined;
+
+        if (isMinValid && isMaxValid) {
+          return {
+            conditionOne: [Comparison.GTE, String(min), Number(min)],
+            conditionTwo: [Comparison.LTE, String(max), Number(max)],
+            joint: "and",
+            type: "between"
+          };
+        }
+        if (isMinValid) {
+          return {
+            conditionOne: [Comparison.GTE, String(min), Number(min)],
+            conditionTwo: undefined,
+            type: "between"
+          };
+        }
+        if (isMaxValid) {
+          return {
+            conditionOne: [Comparison.LTE, String(max), Number(max)],
+            conditionTwo: undefined,
+            type: "between"
+          };
+        }
         return {
-          conditionOne: [Comparison.GTE, String(min), Number(min)],
-          conditionTwo: [Comparison.LTE, String(max), Number(max)],
-          joint: "and"
+          conditionOne: [Comparison.GTE, "", NaN],
+          conditionTwo: undefined,
+          type: "between"
         };
       }
     ]

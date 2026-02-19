@@ -157,12 +157,30 @@ function filterParse(item) {
   const condition = item.slice(indexName + 1);
   const joint = condition.includes(".and.") ? "and" : "or";
   const [cond1, cond2] = condition.split(`.${joint}.`);
+
+  const conditionOne = filterParseCondition(cond1);
+  const conditionTwo = cond2 ? filterParseCondition(cond2) : undefined;
+
+  let type: "greaterThan" | "lessThan" | "between" | undefined;
+  if (conditionOne && conditionTwo) {
+    if (conditionOne[0] === Comparison.GTE && conditionTwo[0] === Comparison.LTE) {
+      type = "between";
+    }
+  } else if (conditionOne) {
+    if (conditionOne[0] === Comparison.GTE || conditionOne[0] === Comparison.GT) {
+      type = "greaterThan";
+    } else if (conditionOne[0] === Comparison.LTE || conditionOne[0] === Comparison.LT) {
+      type = "lessThan";
+    }
+  }
+
   return {
     key: Math.random().toString(16).slice(2),
     active: true,
     measure: item.slice(0, indexName),
-    joint,
-    conditionOne: filterParseCondition(cond1),
-    conditionTwo: cond2 ? filterParseCondition(cond2) : undefined
+    joint: joint as "and" | "or",
+    conditionOne: conditionOne as [Comparison, string, number],
+    conditionTwo: conditionTwo as [Comparison, string, number] | undefined,
+    type
   };
 }

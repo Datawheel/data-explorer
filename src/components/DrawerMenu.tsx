@@ -535,6 +535,9 @@ export function getFilterfnKey(type) {
 }
 
 export function getFilterFn(filter: FilterItem) {
+  if (filter.type) {
+    return filter.type;
+  }
   if (filter.conditionOne && filter.conditionTwo) {
     if (filter.conditionOne[0] === Comparison.GTE && filter.conditionTwo[0] === Comparison.LTE) {
       return "between";
@@ -581,17 +584,15 @@ export function NumberInputComponent({text, filter}: {text: string; filter: Filt
   }, [debouncedUpdateUrl]);
 
   function getFilterValue(filter: FilterItem) {
-    return isNotValid(filter.conditionOne[2]) || filter.conditionOne[2] === 0
-      ? ""
-      : filter.conditionOne[2];
+    return isNotValid(filter.conditionOne[2]) ? "" : filter.conditionOne[2];
   }
 
   function onInputChange({filter, value}: {filter: FilterItem; value: number | ""}) {
     const isEmpty = value === "";
-    const conditions =
-      getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(value)]) || {};
+    const currentType = getFilterFn(filter) || "greaterThan";
+    const conditions = getFiltersConditions(currentType, [value]) || {};
     const active = !isEmpty;
-    const newFilter = buildFilter({...filter, active, ...conditions});
+    const newFilter = buildFilter({...filter, active, ...conditions, type: currentType});
     actions.updateFilter(newFilter);
 
     const newQuery = buildQuery(cloneDeep(queryItem));
@@ -638,10 +639,10 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
 
   function onInputChangeMinMax(props: {filter: FilterItem; min: number | ""; max: number | ""}) {
     const {filter, min, max} = props;
-    const conditions =
-      getFiltersConditions(getFilterFn(filter) || "greaterThan", [Number(min), Number(max)]) || {};
-    const active = Boolean(min) && Boolean(max);
-    const newFilter = buildFilter({...filter, active, ...conditions});
+    const currentType = getFilterFn(filter) || "between";
+    const conditions = getFiltersConditions(currentType, [min, max]) || {};
+    const active = min !== "" || max !== "";
+    const newFilter = buildFilter({...filter, active, ...conditions, type: currentType});
     actions.updateFilter(newFilter);
 
     const newQuery = buildQuery(cloneDeep(queryItem));
@@ -651,7 +652,7 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
 
   function getFilterValue(condition?: [`${Comparison}`, string, number]) {
     if (condition) {
-      return isNotValid(condition[2]) || condition[2] === 0 ? "" : condition[2];
+      return isNotValid(condition[2]) ? "" : condition[2];
     }
     return "";
   }
@@ -683,7 +684,10 @@ export const MinMax: React.FC<MinMaxProps> = ({filter, hideControls, ...rest}) =
 
 export function FilterFnsMenu({filter}: {filter: FilterItem}) {
   const actions = useActions();
+  const updateUrl = useUpdateUrl();
+  const queryItem = useSelector(selectCurrentQueryItem);
   const {translate: t} = useTranslation();
+
   return (
     <>
       <Menu shadow="md" width={200}>
@@ -697,8 +701,19 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
           <Menu.Item
             icon={<IconMathGreater size={14} />}
             onClick={() => {
-              const conditions = getFiltersConditions("greaterThan", [0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              const currentType = "greaterThan";
+              const conditions = getFiltersConditions(currentType, [""]) || {};
+              const newFilter = buildFilter({
+                ...filter,
+                ...conditions,
+                active: false,
+                type: currentType
+              });
+              actions.updateFilter(newFilter);
+
+              const newQuery = buildQuery(cloneDeep(queryItem));
+              newQuery.params.filters[filter.key] = newFilter;
+              updateUrl(newQuery);
             }}
           >
             {t("comparison.GT")}
@@ -706,8 +721,19 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
           <Menu.Item
             icon={<IconMathLower size={14} />}
             onClick={() => {
-              const conditions = getFiltersConditions("lessThan", [0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              const currentType = "lessThan";
+              const conditions = getFiltersConditions(currentType, [""]) || {};
+              const newFilter = buildFilter({
+                ...filter,
+                ...conditions,
+                active: false,
+                type: currentType
+              });
+              actions.updateFilter(newFilter);
+
+              const newQuery = buildQuery(cloneDeep(queryItem));
+              newQuery.params.filters[filter.key] = newFilter;
+              updateUrl(newQuery);
             }}
           >
             {t("comparison.LT")}
@@ -715,8 +741,19 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
           <Menu.Item
             icon={<IconArrowsLeftRight size={14} />}
             onClick={() => {
-              const conditions = getFiltersConditions("between", [0, 0]) || {};
-              actions.updateFilter(buildFilter({...filter, ...conditions, active: false}));
+              const currentType = "between";
+              const conditions = getFiltersConditions(currentType, ["", ""]) || {};
+              const newFilter = buildFilter({
+                ...filter,
+                ...conditions,
+                active: false,
+                type: currentType
+              });
+              actions.updateFilter(newFilter);
+
+              const newQuery = buildQuery(cloneDeep(queryItem));
+              newQuery.params.filters[filter.key] = newFilter;
+              updateUrl(newQuery);
             }}
           >
             {t("comparison.BT")}

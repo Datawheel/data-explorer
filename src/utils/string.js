@@ -72,7 +72,6 @@ export function getAnnotation(item, key, locale = "xx") {
  * @param {T} elseValue
  */
 export function parseNumeric(value, elseValue) {
-  return value && Number.isFinite(value) && !Number.isNaN(value)
-    ? Number.parseFloat(value)
-    : elseValue;
+  const result = Number.parseFloat(String(value));
+  return Number.isFinite(result) ? result : elseValue;
 }
