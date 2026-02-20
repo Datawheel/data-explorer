@@ -14,7 +14,7 @@ import {
   type ExplorerStore,
   storeFactory,
 } from "../state";
-import type {Formatter, PanelDescriptor} from "../utils/types";
+import type {DrilldownFormatter, Formatter, PanelDescriptor} from "../utils/types";
 import {DebugView} from "./DebugView";
 import {ExplorerContent} from "./ExplorerContent";
 import {PivotView} from "./PivotView";
@@ -107,8 +107,12 @@ export function ExplorerComponent<Locale extends string>(props: {
    * Defines an index of formatter functions available for dimension IDs
    * that are displayed next to the value.
    * */
-
   idFormatters?: Record<string, Formatter>;
+
+  /**
+   * Defines an index of formatter functions available for drilldowns.
+   * */
+  drilldownFormatters?: Record<string, DrilldownFormatter>;
   /**
    * Defines an alternative height for the component structure.
    * @default "100vh"
@@ -222,6 +226,7 @@ export function ExplorerComponent<Locale extends string>(props: {
         defaultMembersFilter={props.defaultMembersFilter}
         formatters={props.formatters}
         idFormatters={props.idFormatters}
+        drilldownFormatters={props.drilldownFormatters}
         withPermalink={props.withPermalink}
         panels={panels}
         pagination={pagination}
