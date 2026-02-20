@@ -104,6 +104,14 @@ const idFormatters = {
   "HS4 ID": formatHSCode,
   "HS6 ID": formatHSCode
 };
+
+const drilldownFormatters = {
+  "Quarter": (value, locale) => {
+    if (!value) return "";
+    return locale === "ar" ? value.replace(/Q(\d)/, "الربع $1") : value;
+  }
+}
+
 const locales = Object.keys(translations);
 
 const container = document.getElementById("app");
@@ -141,6 +149,7 @@ function App() {
             defaultOpenParams="drilldowns"
             formatters={formatters}
             idFormatters={idFormatters}
+            drilldownFormatters={drilldownFormatters}
             height={"100%"}
             panels={[
               {key: "table", label: "Data Table", component: TableView},

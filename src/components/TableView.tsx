@@ -49,7 +49,7 @@ import type {
   TesseractDimension
 } from "../api/tesseract/schema";
 import type {TesseractCube} from "../api/tesseract/schema";
-import {useFormatter, useidFormatters} from "../hooks/formatter";
+import {useFormatter, useidFormatters, useDrilldownFormatters} from "../hooks/formatter";
 import {serializePermalink, useUpdateUrl} from "../hooks/permalink";
 import {type ExplorerBoundActionMap, useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
@@ -486,6 +486,7 @@ export function useTable({
   const {translate: t} = useTranslation();
   const {getFormat, getFormatter} = useFormatter();
   const {idFormatters} = useidFormatters();
+  const {drilldownFormatters} = useDrilldownFormatters();
   const {sortKey, sortDir} = useSelector(selectSortingParams);
   const theme = useMantineTheme();
   const isSmallerThanMd = useMediaQuery(
@@ -664,6 +665,8 @@ export function useTable({
               const row = cell.row;
               const cellId = row.original[`${cell.column.id} ID`];
               const idFormatter = idFormatters[`${keyCol.localeLabel} ID`];
+              const drilldownFormatter = drilldownFormatters[`${keyCol.localeLabel}`] || drilldownFormatters[`${entity.name}`];
+              const formattedValue = drilldownFormatter ? drilldownFormatter(cellValue as any, locale) : cellValue;
 
               return (
                 <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
@@ -675,11 +678,11 @@ export function useTable({
                       textOverflow: "ellipsis"
                     }}
                   >
-                    {cellValue}
+                    {formattedValue as React.ReactNode}
                   </Text>
                   <Box>
                     {cellId && (
-                      <Text color="dimmed">{idFormatter ? idFormatter(cellId) : cellId}</Text>
+                      <Text color="dimmed">{idFormatter ? idFormatter(cellId as any) : cellId as React.ReactNode}</Text>
                     )}
                   </Box>
                 </Flex>
@@ -1046,6 +1049,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   const drilldown = drilldownItems.find(d => d.level === header.column.id);
   const actions = useActions();
   const {idFormatters} = useidFormatters();
+  const {drilldownFormatters} = useDrilldownFormatters();
   const navigate = useNavigate();
   const debouncedUpdateUrl = useMemo(
     () =>
@@ -1095,11 +1099,13 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
         value={cut.members || []}
         data={drilldown.members.map(m => {
           const idFormatter = idFormatters[`${localeLabel} ID`];
+          const drilldownFormatter = drilldownFormatters[`${localeLabel}`] || drilldownFormatters[`${label}`];
           const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
           const key = formattedKey ? `(${formattedKey})` : formattedKey;
+          const formattedCaption = drilldownFormatter ? drilldownFormatter(m.caption || m.key as any, locale.code) : m.caption;
           return {
             value: `${m.key}`,
-            label: m.caption ? `${m.caption} ${key}` : `${key}`
+            label: formattedCaption ? `${formattedCaption} ${key}` : `${key}`
           };
         })}
         clearButtonProps={{"aria-label": "Clear selection"}}

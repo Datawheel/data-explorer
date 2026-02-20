@@ -36,7 +36,7 @@ import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState
 import {useSelector} from "react-redux";
 import {Comparison, DimensionType} from "../api";
 import type {TesseractDimension, TesseractHierarchy, TesseractLevel} from "../api/tesseract/schema";
-import {useidFormatters} from "../hooks/formatter";
+import {useidFormatters, useDrilldownFormatters} from "../hooks/formatter";
 import {useUpdateUrl} from "../hooks/permalink";
 import {useActions} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
@@ -290,6 +290,7 @@ function LevelItem({
   const drilldowns = useSelector(selectDrilldownMap);
   const ditems = useSelector(selectDrilldownItems);
   const {idFormatters} = useidFormatters();
+  const {drilldownFormatters} = useDrilldownFormatters();
 
   const label = useMemo(() => {
     const captions = [
@@ -445,11 +446,13 @@ function LevelItem({
               value={cut?.members || []}
               data={currentDrilldown.members.map(m => {
                 const idFormatter = idFormatters[`${label} ID`];
+                const drilldownFormatter = drilldownFormatters[`${label}`];
                 const formattedKey = idFormatter ? idFormatter(m.key as any) : m.key;
                 const key = formattedKey ? `(${formattedKey})` : formattedKey;
+                const formattedCaption = drilldownFormatter ? drilldownFormatter(m.caption || m.key as any, locale) : m.caption;
                 return {
                   value: `${m.key}`,
-                  label: m.caption ? `${m.caption} ${key}` : `${key}`
+                  label: formattedCaption ? `${formattedCaption} ${key}` : `${key}`
                 };
               })}
               clearable

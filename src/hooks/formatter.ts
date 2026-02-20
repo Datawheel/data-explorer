@@ -107,3 +107,8 @@ export function useidFormatters() {
   const {idFormatters} = useSettings();
   return {idFormatters};
 }
+
+export function useDrilldownFormatters() {
+  const {drilldownFormatters} = useSettings();
+  return {drilldownFormatters};
+}

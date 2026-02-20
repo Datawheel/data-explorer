@@ -1,7 +1,7 @@
 /* eslint-disable comma-dangle */
 import React, {createContext, useCallback, useContext, useEffect, useMemo, useRef} from "react";
 import {type ExplorerActionMap} from "../state";
-import {Formatter, PanelDescriptor} from "../utils/types";
+import {DrilldownFormatter, Formatter, PanelDescriptor} from "../utils/types";
 import type {Pagination} from "../components/Explorer";
 import type {ToolbarConfigType} from "../components/Toolbar";
 import {Translation, TranslationProvider} from "./translation";
@@ -26,6 +26,7 @@ interface SettingsContextProps {
   defaultMembersFilter: "id" | "name" | "any";
   formatters: Record<string, Formatter>;
   idFormatters: Record<string, Formatter>;
+  drilldownFormatters: Record<string, DrilldownFormatter>;
   previewLimit: number;
   panels: PanelDescriptor[];
   paginationConfig: Pagination;
@@ -55,6 +56,7 @@ export function SettingsProvider(props: {
   defaultMembersFilter?: "id" | "name" | "any";
   formatters?: Record<string, Formatter>;
   idFormatters?: Record<string, Formatter>;
+  drilldownFormatters?: Record<string, DrilldownFormatter>;
   panels: PanelDescriptor[];
   previewLimit?: number;
   withPermalink: boolean | undefined;
@@ -89,6 +91,7 @@ export function SettingsProvider(props: {
       defaultMembersFilter: props.defaultMembersFilter || "id",
       formatters: props.formatters || {},
       idFormatters: props.idFormatters || {},
+      drilldownFormatters: props.drilldownFormatters || {},
       panels: props.panels,
       previewLimit: props.previewLimit || 50,
       paginationConfig: props.pagination ?? {rowsLimits: [100, 300, 500, 1000], defaultLimit: 100},

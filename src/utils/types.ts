@@ -14,6 +14,7 @@ export interface FileDescriptor {
 }
 
 export type Formatter = (value: number | null, locale?: string) => string;
+export type DrilldownFormatter = (value: string | null, locale?: string) => string;
 
 export interface JSONArrays {
   headers: string[];
