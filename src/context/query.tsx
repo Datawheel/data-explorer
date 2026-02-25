@@ -185,7 +185,7 @@ export function QueryProvider({children, defaultCube}: QueryProviderProps) {
     const cubeMap = schema?.cubeMap || {};
     const cubeArray = getValues(cubeMap);
     const cube = cubeArray.find(
-      cube => cube.name === table && getAnnotation(cube, "subtopic", locale) === subtopic
+      cube => cube.name === table && (getAnnotation(cube, "subtopic", locale) || "") === subtopic
     );
     if (cube) {
       setDefaultValues(cube);

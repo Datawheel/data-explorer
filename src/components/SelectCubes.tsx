@@ -114,7 +114,7 @@ function getCube(items: AnnotatedCube[], name: string, subtopic: string, locale:
   if (!Array.isArray(items)) return undefined;
   
   const cube = items.find(
-    item => item && item.name === name && getAnnotation(item, "subtopic", locale) === subtopic
+    item => item && item.name === name && (getAnnotation(item, "subtopic", locale) || "") === subtopic
   );
   return cube;
 }
