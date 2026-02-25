@@ -23,10 +23,18 @@ export default function useBuildGraph(locale: string): Graph {
 
         if (!yn(hide)) {
           graph.addNode(topic);
-          graph.addNode(subtopic);
           graph.addNode(name);
-          graph.addEdge(topic, subtopic);
-          graph.addEdge(subtopic, name);
+          
+          if (subtopic) {
+            const uniqueSubtopic = `${topic} - ${subtopic}`;
+            graph.addNode(uniqueSubtopic);
+            graph.addEdge(topic, uniqueSubtopic);
+            graph.addEdge(uniqueSubtopic, name);
+          } else {
+            // Cube without subtopic - connect directly to topic
+            graph.addEdge(topic, name);
+          }
+
           if (topic_order) {
             graph.addTopicOrder(topic, topic_order);
           }
