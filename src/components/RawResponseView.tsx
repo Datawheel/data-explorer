@@ -8,18 +8,17 @@ import {
   TextInput,
   useMantineTheme
 } from "@mantine/core";
-import {
-  IconClipboard,
-  IconClipboardCheck,
-  IconExternalLink,
-  IconWorldWww
-} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 
 export function RawResponseView(props) {
   const {result, isLoading, isFetching} = props;
   //   const [user] = useUser();
   //   const {t} = useTranslation("explorer");
   const theme = useMantineTheme();
+  const IconUrlBadge = useIcon("url-badge");
+  const IconOpenExternal = useIcon("open-external");
+  const IconCopyLink = useIcon("copy-link");
+  const IconCopyLinkDone = useIcon("copy-link-done");
   const token = "tokenValue";
 
   const tokenizedUrl = result?.url ? `${result.url}${token ? `&token=${token}` : ""}` : "";
@@ -30,7 +29,7 @@ export function RawResponseView(props) {
       <Stack>
         <Group align="flex-end" noWrap w="100%">
           <TextInput
-            icon={<IconWorldWww size={20} />}
+            icon={<IconUrlBadge size={20} />}
             label={"API URL"}
             readOnly
             value={tokenizedUrl}
@@ -43,7 +42,7 @@ export function RawResponseView(props) {
               component="a"
               href={tokenizedUrl}
               target="_blank"
-              leftIcon={<IconExternalLink />}
+              leftIcon={<IconOpenExternal />}
               sx={{
                 borderBottomRightRadius: 0,
                 borderTopRightRadius: 0
@@ -55,7 +54,7 @@ export function RawResponseView(props) {
               {({copied, copy}) => (
                 <Button
                   color={copied ? theme.colors.teal[5] : theme.colors.green[7]}
-                  leftIcon={copied ? <IconClipboardCheck /> : <IconClipboard />}
+                  leftIcon={copied ? <IconCopyLinkDone /> : <IconCopyLink />}
                   onClick={copy}
                   sx={theme => ({
                     borderBottomLeftRadius: 0,
@@ -73,7 +72,7 @@ export function RawResponseView(props) {
         </Group>
         <Group align="flex-end" noWrap w="100%">
           <TextInput
-            icon={<IconWorldWww size={20} />}
+            icon={<IconUrlBadge size={20} />}
             label={"Curl Command"}
             readOnly
             value={curlCommand}
@@ -85,7 +84,7 @@ export function RawResponseView(props) {
             {({copied, copy}) => (
               <Button
                 color={copied ? theme.colors.teal[5] : theme.colors.green[7]}
-                leftIcon={copied ? <IconClipboardCheck /> : <IconClipboard />}
+                leftIcon={copied ? <IconCopyLinkDone /> : <IconCopyLink />}
                 onClick={copy}
               >
                 {copied ? "Copied" : "Copy"}

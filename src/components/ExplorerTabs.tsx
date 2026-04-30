@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {MantineTheme, Tabs, Menu, ActionIcon, useMantineTheme} from "@mantine/core";
 import {useTranslation} from "../main";
-import {IconDotsVertical} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {useMediaQuery} from "@mantine/hooks";
 
 const tabsStyles = (t: MantineTheme) => ({
@@ -25,6 +25,7 @@ const tabsStyles = (t: MantineTheme) => ({
 export function ExplorerTabs({panels, onChange, value}) {
   const {translate: t} = useTranslation();
   const [menuOpened, setMenuOpened] = useState(false);
+  const IconMoreOptions = useIcon("more-options");
   const theme = useMantineTheme();
   const isMobile = useMediaQuery(
     `(max-width: ${theme.breakpoints.xs}${
@@ -74,7 +75,7 @@ export function ExplorerTabs({panels, onChange, value}) {
                 color={theme.primaryColor}
                 sx={{display: "flex", alignItems: "center", height: "100%", marginLeft: "auto"}}
               >
-                <IconDotsVertical size="1.2rem" />
+                <IconMoreOptions size="1.2rem" />
               </ActionIcon>
             </Menu.Target>
             <Menu.Dropdown>

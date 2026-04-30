@@ -16,7 +16,7 @@ import {MRT_TableInstance} from "mantine-react-table";
 import {useDebouncedValue, useMediaQuery} from "@mantine/hooks";
 import {useTranslation} from "../hooks/translation";
 import {useSettings} from "../hooks/settings";
-import {IconHelpCircle, IconQuestionMark, IconSettings} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {useTour} from "@reactour/tour";
 
 const toolbarSx: Sx = t => ({
@@ -115,13 +115,14 @@ function ToolbarSearch({table}: {table: MRT_TableInstance}) {
 function TourButton() {
   const {setIsOpen, setCurrentStep} = useTour();
   const {translate: t} = useTranslation();
+  const IconOpenHelp = useIcon("open-help");
   const startTour = () => {
     setCurrentStep(0);
     setIsOpen(true);
   };
   return (
     <ToolbarButton
-      icon={<IconHelpCircle strokeWidth={1.5} />}
+      icon={<IconOpenHelp strokeWidth={1.5} />}
       label={t("tour.controls.help")}
       onClick={startTour}
     ></ToolbarButton>
@@ -136,6 +137,7 @@ export default function Toolbar({
 }) {
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
+  const IconSettings = useIcon("settings");
   const smallerThanLg = useMediaQuery(
     `(max-width: ${theme.breakpoints.xs}${
       /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"

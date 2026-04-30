@@ -14,7 +14,7 @@ import {
   UnstyledButton
 } from "@mantine/core";
 import {useFullscreen} from "@mantine/hooks";
-import {IconAlertTriangle, IconBox, IconWorld} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import React, {Suspense, useMemo} from "react";
 import {useSelector} from "react-redux";
 import {useSettings} from "../hooks/settings";
@@ -82,13 +82,15 @@ export function ExplorerResults(props: {
   const {online: isServerOnline, url: serverUrl} = schema || {};
   const {translate: t} = useTranslation();
   const {classes, cx} = useStyles();
+  const IconGeo = useIcon("dimension-geo");
+  const IconWarning = useIcon("warning");
 
   // Check if client is browser not connected to internet
   if (typeof window === "object" && window.navigator.onLine === false) {
     return (
       <FailureResult
         className={cx(classes.container, props.className)}
-        icon={<IconWorld color="orange" size="5rem" />}
+        icon={<IconGeo color="orange" size="5rem" />}
         title={t("results.error_disconnected_title")}
       />
     );
@@ -99,7 +101,7 @@ export function ExplorerResults(props: {
     return (
       <FailureResult
         className={cx(classes.container, props.className)}
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
         title={t("results.error_serveroffline_title")}
         description={
           <Text span>
@@ -142,7 +144,7 @@ export function ExplorerResults(props: {
             <Text>{schemaErrorDetail.message}</Text>
           </Stack>
         }
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
       />
     );
   }

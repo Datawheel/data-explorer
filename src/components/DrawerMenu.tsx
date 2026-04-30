@@ -17,20 +17,7 @@ import {
   useMantineTheme
 } from "@mantine/core";
 import {useDisclosure, useMediaQuery} from "@mantine/hooks";
-import {
-  IconAdjustments,
-  IconArrowsLeftRight,
-  IconBox,
-  IconClock,
-  IconFilter,
-  IconFilterOff,
-  IconMathGreater,
-  IconMathLower,
-  IconPlus,
-  IconSettings,
-  IconStack3,
-  IconWorld
-} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {cloneDeep, debounce} from "lodash-es";
 import React, {type PropsWithChildren, useCallback, useEffect, useMemo, useState} from "react";
 import {useSelector} from "react-redux";
@@ -89,6 +76,8 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   const updateUrl = useUpdateUrl();
 
   const {translate: t} = useTranslation();
+  const IconAddItem = useIcon("add-item");
+  const IconDrilldowns = useIcon("drilldowns");
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(
     `(max-width: ${theme.breakpoints.md}${
@@ -110,7 +99,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         }}
         title={
           <Group>
-            <IconPlus size="1.2rem" />
+            <IconAddItem size="1.2rem" />
             <Text fw={700}>{t("params.add_columns")}</Text>
           </Group>
         }
@@ -144,13 +133,13 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
             variant="filled"
             color={theme.primaryColor}
           >
-            <IconStack3 size="0.75rem" />
+            <IconDrilldowns size="0.75rem" />
           </ActionIcon>
         ) : (
           <Button
             id="dex-column-btn"
             className="dex-column-drawer-trigger"
-            leftIcon={<IconPlus size="1.2rem" />}
+            leftIcon={<IconAddItem size="1.2rem" />}
             onClick={open}
             m="xs"
             size="xs"
@@ -204,6 +193,9 @@ function DimensionItem({
   locale: string;
   activeItems: DrilldownItem[];
 }) {
+  const IconDimensionGeo = useIcon("dimension-geo");
+  const IconDimensionTime = useIcon("dimension-time");
+  const IconDimensionDataset = useIcon("dimension-dataset");
   const isChildSubMenu = dimension.hierarchies.length !== 1;
 
   const options = dimension.hierarchies.map(hie => (
@@ -235,7 +227,7 @@ function DimensionItem({
         my="md"
         label={
           <Group>
-            {getIconForDimensionType(dimension.type)}
+            {getIconForDimensionType(dimension.type, {geo: IconDimensionGeo, time: IconDimensionTime, dataset: IconDimensionDataset})}
             <Text italic>{getCaption(dimension, locale)}</Text>
           </Group>
         }
@@ -299,6 +291,9 @@ function LevelItem({
 }) {
   const [activePropertiesFilter, setActiveProperties] = useState(false);
   const {translate: t} = useTranslation();
+  const IconFilterActive = useIcon("filter-active");
+  const IconFilterRemove = useIcon("filter-remove");
+  const IconQueryOptions = useIcon("query-options");
 
   const actions = useActions();
 
@@ -444,7 +439,7 @@ function LevelItem({
               }}
               disabled={isDisabled}
             >
-              {cut?.active ? <IconFilterOff /> : <IconFilter />}
+              {cut?.active ? <IconFilterRemove /> : <IconFilterActive />}
             </ActionIcon>
             {properties && (
               <Tooltip label={t("params.add_metadata")}>
@@ -453,7 +448,7 @@ function LevelItem({
                   data-active={String(activePropertiesFilter)}
                   onClick={() => setActiveProperties(value => !value)}
                 >
-                  <IconAdjustments />
+                  <IconQueryOptions />
                 </ActionIcon>
               </Tooltip>
             )}
@@ -721,6 +716,10 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
   const {translate: t} = useTranslation();
+  const IconSettings = useIcon("settings");
+  const IconOperatorGte = useIcon("operator-gte");
+  const IconOperatorLte = useIcon("operator-lte");
+  const IconCompareValues = useIcon("compare-values");
 
   return (
     <>
@@ -733,7 +732,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
         <Menu.Dropdown>
           <Menu.Label>{t("params.filter_mode")}</Menu.Label>
           <Menu.Item
-            icon={<IconMathGreater size={14} />}
+            icon={<IconOperatorGte size={14} />}
             onClick={() => {
               const currentType = "greaterThan";
               const conditions = getFiltersConditions(currentType, [""]) || {};
@@ -753,7 +752,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             {t("comparison.GT")}
           </Menu.Item>
           <Menu.Item
-            icon={<IconMathLower size={14} />}
+            icon={<IconOperatorLte size={14} />}
             onClick={() => {
               const currentType = "lessThan";
               const conditions = getFiltersConditions(currentType, [""]) || {};
@@ -773,7 +772,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
             {t("comparison.LT")}
           </Menu.Item>
           <Menu.Item
-            icon={<IconArrowsLeftRight size={14} />}
+            icon={<IconCompareValues size={14} />}
             onClick={() => {
               const currentType = "between";
               const conditions = getFiltersConditions(currentType, ["", ""]) || {};
@@ -871,6 +870,8 @@ function FilterItem({
 }) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
+  const IconFilterActive = useIcon("filter-active");
+  const IconFilterRemove = useIcon("filter-remove");
   const filterFn = getFilterFn(filter);
   const text = t(`comparison.${getFilterfnKey(filterFn)}`);
   const isBetween = filterFn === "between";
@@ -906,7 +907,7 @@ function FilterItem({
             size="sm"
             onClick={() => setActiveFilter(value => !value)}
           >
-            {activeFilter ? <IconFilterOff /> : <IconFilter />}
+            {activeFilter ? <IconFilterRemove /> : <IconFilterActive />}
           </ActionIcon>
           <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
             <BarsSVG />
@@ -927,14 +928,20 @@ function FilterItem({
 }
 
 // Function to get the appropriate icon for each dimension type
-const getIconForDimensionType = (dimensionType: DimensionType) => {
+const getIconForDimensionType = (
+  dimensionType: DimensionType,
+  icons: {geo: React.ComponentType<any>; time: React.ComponentType<any>; dataset: React.ComponentType<any>}
+) => {
+  const Geo = icons.geo;
+  const Time = icons.time;
+  const Dataset = icons.dataset;
   switch (dimensionType) {
     case DimensionType.GEO:
-      return <IconWorld size={20} />;
+      return <Geo size={20} />;
     case DimensionType.TIME:
-      return <IconClock size={20} />;
+      return <Time size={20} />;
     default:
-      return <IconBox size={20} />;
+      return <Dataset size={20} />;
   }
 };
 

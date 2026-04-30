@@ -6,6 +6,7 @@ import React, {useMemo} from "react";
 import {Provider as ReduxProvider, useStore} from "react-redux";
 import {BrowserRouter as Router} from "react-router-dom";
 import {AppProviders} from "../context";
+import {IconProvider, type IconMap} from "../context/icons";
 import {type ExplorerBoundActionMap, SettingsProvider} from "../hooks/settings";
 import type {Translation} from "../hooks/translation";
 import {
@@ -182,6 +183,13 @@ export function ExplorerComponent<Locale extends string>(props: {
    * @default false
    */
   withPermalink?: boolean;
+
+  /**
+   * Overrides for the internal icon set. Provide a partial map of icon keys
+   * to React components to replace specific icons throughout the Explorer UI.
+   * The default icons are from the Tabler icon set.
+   */
+  icons?: Partial<IconMap>;
 }) {
   const {
     defaultLocale = "en",
@@ -220,6 +228,7 @@ export function ExplorerComponent<Locale extends string>(props: {
   );
 
   let content = (
+    <IconProvider icons={props.icons}>
     <Router>
       <SettingsProvider
         actions={boundActions}
@@ -254,6 +263,7 @@ export function ExplorerComponent<Locale extends string>(props: {
         </AppProviders>
       </SettingsProvider>
     </Router>
+    </IconProvider>
   );
 
   if (withinMantineProvider) {

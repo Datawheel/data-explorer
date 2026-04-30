@@ -1,5 +1,5 @@
 import {Accordion, ActionIcon, Group, ScrollArea, Text, Tooltip} from "@mantine/core";
-import {IconAlertTriangleFilled, IconInfoCircleFilled} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import React from "react";
 
 export const LayoutParamsArea = (props: {
@@ -11,6 +11,9 @@ export const LayoutParamsArea = (props: {
   warning?: string | undefined;
   value: string;
 }) => {
+  const IconInfo = useIcon("info");
+  const IconWarningSolid = useIcon("warning-solid");
+
   const tooltip = props.tooltip
     ? <Tooltip
       events={{hover: true, focus: false, touch: true}}
@@ -19,14 +22,14 @@ export const LayoutParamsArea = (props: {
       withinPortal
     >
       <ActionIcon color="blue">
-        <IconInfoCircleFilled />
+        <IconInfo />
       </ActionIcon>
     </Tooltip>
     : null;
 
   const toolbar = props.warning
     ? <ActionIcon color="orange">
-      <IconAlertTriangleFilled />
+      <IconWarningSolid />
     </ActionIcon>
     : props.toolbar;
 

@@ -1,13 +1,7 @@
 import React, {type ReactNode, useCallback, useEffect, useMemo, useState} from "react";
 import {useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
-import {
-  IconCopy,
-  IconDotsVertical,
-  IconDownload,
-  IconX,
-  IconAlertCircle
-} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import type {MRT_PaginationState, MRT_TableInstance} from "mantine-react-table";
 import {MRT_TablePagination} from "mantine-react-table";
 import {useClipboard} from "@mantine/hooks";
@@ -186,6 +180,7 @@ type ApiAndCsvButtonsProps = {
 const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
   const {copied, copyHandler, url, data} = props;
   const {translate: t} = useTranslation();
+  const IconCopyData = useIcon("copy-data");
   return (
     <Box id="query-results-debug-view" className="dex-download-area">
       <Group spacing="xs" noWrap>
@@ -193,7 +188,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
           <Button
             id="dex-api-btn"
             className="dex-copy-api-btn"
-            leftIcon={<IconCopy size={20} />}
+            leftIcon={<IconCopyData size={20} />}
             sx={{height: 28}}
             onClick={copyHandler}
           >
@@ -208,6 +203,8 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 
 const DownloadQuery = ({data}) => {
   const {translate: t} = useTranslation();
+  const IconError = useIcon("error");
+  const IconDownload = useIcon("download");
   const formats = Object.values(Format);
   const components: ReactNode[] = [];
   const {mutateAsync: downloadQuery, isError, error} = useDownloadQuery();
@@ -238,7 +235,7 @@ const DownloadQuery = ({data}) => {
         shadow="md"
       >
         <Alert
-          icon={<IconAlertCircle size="1rem" />}
+          icon={<IconError size="1rem" />}
           color="red"
           p="xs"
           withCloseButton
@@ -373,6 +370,8 @@ type MenuOptsProps = {
 function MenuOpts({formats}: MenuOptsProps) {
   const {translate: t} = useTranslation();
   const [opened, setOpened] = useState(false);
+  const IconDownload = useIcon("download");
+  const IconMoreOptions = useIcon("more-options");
   const {mutateAsync: downloadQuery} = useDownloadQuery();
 
   const buttons = formats.map(format => (
@@ -409,7 +408,7 @@ function MenuOpts({formats}: MenuOptsProps) {
             minWidth: 0
           }}
         >
-          <IconDotsVertical size="0.8rem" />
+          <IconMoreOptions size="0.8rem" />
         </ActionIcon>
       </Menu.Target>
       <Menu.Dropdown>

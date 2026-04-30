@@ -5,7 +5,7 @@ import {useSelector} from "react-redux";
 import {useTranslation} from "../hooks/translation";
 import {selectCurrentQueryItem, selectCurrentQueryParams} from "../state/queries";
 import {SelectObject} from "./Select";
-import {IconLanguage} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {useServerSchema} from "../hooks/useQueryApi";
 import {useActions} from "../hooks/settings";
 import {useUpdateUrl} from "../hooks/permalink";
@@ -51,6 +51,7 @@ const getCurrentLocale = (params, server) => {
 export function LocaleSelector() {
   const updateUrl = useUpdateUrl();
   const actions = useActions();
+  const IconLocaleSelector = useIcon("locale-selector");
   const {translate: t, locale, setLocale} = useTranslation();
   const {data: schema} = useServerSchema();
   const localeOptions = schema?.localeOptions || [];
@@ -97,7 +98,7 @@ export function LocaleSelector() {
             size: "xs",
             styles: localeSelectorStyle,
             icon: (
-              <IconLanguage
+              <IconLocaleSelector
                 size="0.8rem"
                 color={
                   theme.colorScheme === "dark"

@@ -1,6 +1,6 @@
 import {Box, Button, Group, Input, SimpleGrid, Stack, Text} from "@mantine/core";
 import {useClipboard} from "@mantine/hooks";
-import {IconClipboard, IconExternalLink, IconWorld} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import React, {useCallback, useMemo} from "react";
 import {useTranslation} from "../hooks/translation";
 import type {ViewProps} from "../utils/types";
@@ -14,6 +14,9 @@ export function DebugView(props: ViewProps) {
   const {translate: t} = useTranslation();
 
   const {copy, copied} = useClipboard({timeout: 1000});
+  const IconUrlIndicator = useIcon("url-indicator");
+  const IconOpenExternal = useIcon("open-external");
+  const IconCopyLink = useIcon("copy-link");
 
   const copyHandler = useCallback(() => copy(url), [url, copy]);
 
@@ -47,12 +50,12 @@ export function DebugView(props: ViewProps) {
         {url && (
           <Input.Wrapper label={t("debug_view.url_logiclayer")}>
             <Group noWrap spacing="xs">
-              <Input icon={<IconWorld />} readOnly rightSectionWidth="auto" value={url} w="100%" />
+              <Input icon={<IconUrlIndicator />} readOnly rightSectionWidth="auto" value={url} w="100%" />
               <Button.Group>
-                <Button leftIcon={<IconExternalLink />} onClick={openHandler} variant="default">
+                <Button leftIcon={<IconOpenExternal />} onClick={openHandler} variant="default">
                   {t("action_open")}
                 </Button>
-                <Button leftIcon={<IconClipboard />} onClick={copyHandler} variant="default">
+                <Button leftIcon={<IconCopyLink />} onClick={copyHandler} variant="default">
                   {copied ? t("action_copy_done") : t("action_copy")}
                 </Button>
               </Button.Group>

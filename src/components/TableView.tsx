@@ -14,15 +14,7 @@ import {
   rem,
   useMantineTheme
 } from "@mantine/core";
-import {
-  IconAlertCircle,
-  IconArrowsSort,
-  IconTrash,
-  IconSortAscendingLetters as SortAsc,
-  IconSortDescendingLetters as SortDesc,
-  IconSortAscendingNumbers as SortNAsc,
-  IconSortDescendingNumbers as SortNDesc
-} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {cloneDeep, debounce} from "lodash-es";
 import {
   type MRT_ColumnDef as ColumnDef,
@@ -215,14 +207,27 @@ function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, ran
 
 type SortDirection = "asc" | "desc" | false;
 
-function getSortIcon(value: SortDirection, entityType: EntityTypes) {
+type SortIcons = {
+  sortTextAsc: React.ComponentType<any>;
+  sortTextDesc: React.ComponentType<any>;
+  sortNumAsc: React.ComponentType<any>;
+  sortNumDesc: React.ComponentType<any>;
+  sortUnsorted: React.ComponentType<any>;
+};
+
+function getSortIcon(value: SortDirection | false, entityType: EntityTypes, icons: SortIcons) {
+  const SortTextAsc = icons.sortTextAsc;
+  const SortTextDesc = icons.sortTextDesc;
+  const SortNumAsc = icons.sortNumAsc;
+  const SortNumDesc = icons.sortNumDesc;
+  const SortUnsorted = icons.sortUnsorted;
   switch (value) {
     case "asc":
-      return entityType === "measure" ? <SortNAsc /> : <SortAsc />;
+      return entityType === "measure" ? <SortNumAsc /> : <SortTextAsc />;
     case "desc":
-      return entityType === "measure" ? <SortNDesc /> : <SortDesc />;
+      return entityType === "measure" ? <SortNumDesc /> : <SortTextDesc />;
     default:
-      return <IconArrowsSort />;
+      return <SortUnsorted />;
   }
 }
 
@@ -551,6 +556,19 @@ export function useTable({
           const isSorted = isColumnSorted(entity.name, sortKey);
           const showTrash =
             showTrashIcon(keyCol, finalKeys) && !isRequiredColumn(keyCol, finalKeys, dimensions);
+          const IconSortTextAsc = useIcon("sort-text-asc");
+          const IconSortTextDesc = useIcon("sort-text-desc");
+          const IconSortNumAsc = useIcon("sort-num-asc");
+          const IconSortNumDesc = useIcon("sort-num-desc");
+          const IconSortUnsorted = useIcon("sort-unsorted");
+          const IconRemoveColumn = useIcon("remove-column");
+          const sortIcons: SortIcons = {
+            sortTextAsc: IconSortTextAsc,
+            sortTextDesc: IconSortTextDesc,
+            sortNumAsc: IconSortNumAsc,
+            sortNumDesc: IconSortNumDesc,
+            sortUnsorted: IconSortUnsorted,
+          };
           const isMobile = useMediaQuery(
             `(max-width: ${theme.breakpoints.sm}${
               /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
@@ -603,7 +621,7 @@ export function useTable({
                 }
               }}
             >
-              {getSortIcon(isSorted ? sortDir : false, entityType)}
+              {getSortIcon(isSorted ? sortDir : false, entityType, sortIcons)}
             </ActionIcon>
           );
           return (
@@ -643,7 +661,7 @@ export function useTable({
                       size={25}
                       ml={rem(5)}
                     >
-                      <IconTrash />
+                      <IconRemoveColumn />
                     </CustomActionIcon>
                   )}
                 </Group>
@@ -763,10 +781,11 @@ export function useTable({
         },
         renderBottomToolbar() {
           const [isOpen, setIsOpen] = useState(false);
+          const IconError = useIcon("error");
           if (!isOpen) return null;
           return (
             <Alert
-              icon={<IconAlertCircle size="1rem" />}
+              icon={<IconError size="1rem" />}
               color="yellow"
               withCloseButton
               onClose={() => setIsOpen(false)}

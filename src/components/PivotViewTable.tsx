@@ -1,5 +1,5 @@
 import {Alert, Box, Button, Input, Loader, SimpleGrid, createStyles} from "@mantine/core";
-import {IconAlertCircle, IconAlertTriangle} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {
   MantineReactTable,
   useMantineReactTable,
@@ -65,6 +65,8 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
 ) {
   const {cube, params, className, panelKey, data: result, ...mantineReactTableProps} = props;
   const {translate: t} = useTranslation();
+  const IconError = useIcon("error");
+  const IconWarning = useIcon("warning");
   const {data: schema} = useServerSchema();
   const {classes, cx} = useStyles();
   const locale = params.locale;
@@ -135,7 +137,7 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
     const warnings: React.ReactNode[] = [];
     if (rowProp.type === "prop" || colProp.type === "prop") {
       warnings.push(
-        <Alert color="yellow" m="sm" icon={<IconAlertCircle size="2rem" />} key="propertypivot">
+        <Alert color="yellow" m="sm" icon={<IconError size="2rem" />} key="propertypivot">
           {t("pivot_view.warning_propertypivot")}
         </Alert>
       );
@@ -144,11 +146,11 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
     if (drilldownCount > 2) {
       warnings.push(
         valProp.type !== Aggregator.SUM ? (
-          <Alert color="yellow" m="sm" icon={<IconAlertCircle size="2rem" />} key="notsummeasure">
+          <Alert color="yellow" m="sm" icon={<IconError size="2rem" />} key="notsummeasure">
             {t("pivot_view.warning_notsummeasure")}
           </Alert>
         ) : (
-          <Alert color="yellow" m="sm" icon={<IconAlertCircle size="2rem" />} key="sumdimensions">
+          <Alert color="yellow" m="sm" icon={<IconError size="2rem" />} key="sumdimensions">
             {t("pivot_view.warning_sumdimensions")}
           </Alert>
         )
@@ -189,7 +191,7 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
   if (drilldownOptions.length < 2) {
     return (
       <NonIdealState
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
         title={t("pivot_view.error_missingparams")}
       />
     );
@@ -200,21 +202,21 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
   if (!colProp || !rowProp || !valProp) {
     preview = (
       <NonIdealState
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
         title={t("pivot_view.error_missingparams")}
       />
     );
   } else if (colProp === rowProp) {
     preview = (
       <NonIdealState
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
         title={t("pivot_view.error_onedimension")}
       />
     );
   } else if (pivottingError != null) {
     preview = (
       <NonIdealState
-        icon={<IconAlertTriangle color="orange" size="5rem" />}
+        icon={<IconWarning color="orange" size="5rem" />}
         title={t("pivot_view.error_internal")}
         description={t("pivot_view.error_internal_detail", {error: pivottingError.message})}
       />

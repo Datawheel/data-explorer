@@ -1,7 +1,7 @@
 import React from "react";
 import {TourProps, TourProvider} from "@reactour/tour";
 import {Button, useMantineTheme} from "@mantine/core";
-import { IconArrowLeft, IconArrowRight } from "@tabler/icons-react";
+import {useIcon} from "../../context/icons";
 import { useTranslation } from "../../hooks/translation";
 import { useTourSteps } from "./useTourSteps";
 import { TourConfig } from "./types";
@@ -10,6 +10,8 @@ function PrevButton(props) {
     const {translate: t} = useTranslation();
     const theme = useMantineTheme();
     const isRtl = theme.dir === "rtl";
+    const IconTourPrev = useIcon("tour-prev");
+    const IconTourNext = useIcon("tour-next");
     const handleClick = () => props.setCurrentStep(
         (s:number) => s === 0
             ?  props.steps.length - 1
@@ -17,7 +19,7 @@ function PrevButton(props) {
     )
     return (
         <Button            
-            leftIcon={isRtl ? <IconArrowRight size="0.8rem" /> : <IconArrowLeft size="0.8rem" />}
+            leftIcon={isRtl ? <IconTourNext size="0.8rem" /> : <IconTourPrev size="0.8rem" />}
             onClick={handleClick}
             radius={0}
             size="lg"
@@ -36,6 +38,8 @@ function NextButton(props) {
     const {translate: t} = useTranslation();
     const theme = useMantineTheme();
     const isRtl = theme.dir === "rtl";
+    const IconTourPrev = useIcon("tour-prev");
+    const IconTourNext = useIcon("tour-next");
 
     const handleClick = () => {
         if(props.currentStep === props.steps.length - 1) {
@@ -59,7 +63,7 @@ function NextButton(props) {
             size="lg"
             sx={{flex: "0 0 50%"}}
             onClick={handleClick}
-            rightIcon={isRtl ? <IconArrowLeft size="0.8rem" /> : <IconArrowRight size="0.8rem" />}
+            rightIcon={isRtl ? <IconTourPrev size="0.8rem" /> : <IconTourNext size="0.8rem" />}
             radius={0}
         >
             {t("tour.controls.next")}

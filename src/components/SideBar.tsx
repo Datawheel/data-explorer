@@ -16,7 +16,7 @@ import {
 } from "@mantine/core";
 import {CloseButton} from "@mantine/core";
 import {createContext} from "../utils/create-context";
-import {IconSearch, IconChevronLeft, IconChevronRight, IconX} from "@tabler/icons-react";
+import {useIcon} from "../context/icons";
 import {DataSetSVG} from "./icons";
 import type Graph from "../utils/graph";
 import {useTranslation} from "../hooks/translation";
@@ -101,6 +101,9 @@ function SideBar(props: PropsWithChildren<{}>) {
   const {expanded, input, setExpanded, setInput} = useSideBar();
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
+  const IconClear = useIcon("clear");
+  const IconCollapseSidebar = useIcon("collapse-sidebar");
+  const IconExpandSidebar = useIcon("expand-sidebar");
   const smallerThanMd = useMediaQuery(
     `(max-width: ${theme.breakpoints.md}${
       /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"
@@ -173,12 +176,12 @@ function SideBar(props: PropsWithChildren<{}>) {
                   >
                     {expanded ? (
                       smallerThanMd ? (
-                        <IconX size="1.5rem" />
+                        <IconClear size="1.5rem" />
                       ) : (
-                        <IconChevronLeft size="1.5rem" />
+                        <IconCollapseSidebar size="1.5rem" />
                       )
                     ) : (
-                      <IconChevronRight size="1.5rem" />
+                      <IconExpandSidebar size="1.5rem" />
                     )}
                   </ActionIcon>
                 </Group>
@@ -260,6 +263,7 @@ export function SideBarItem(props: PropsWithChildren<{}>) {
 function CubeSearchInput(props: Pick<SidebarContextProps, "expanded" | "input" | "setInput">) {
   const {expanded, input, setInput} = props;
   const {translate: t} = useTranslation();
+  const IconSearch = useIcon("search");
   // const {expanded, input, setInput} = useSideBar();
   const [inputValue, setInputValue] = useState(input);
 
