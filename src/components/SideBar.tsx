@@ -111,6 +111,8 @@ function SideBar(props: PropsWithChildren<{}>) {
     <>
       <Box
         id="dex-sidebar"
+        className="dex-sidebar"
+        data-expanded={String(expanded)}
         py="md"
         sx={t => ({
           height: "100%",
@@ -162,6 +164,7 @@ function SideBar(props: PropsWithChildren<{}>) {
                     {t("params.label_dataset")}
                   </Text>
                   <ActionIcon
+                    className="dex-sidebar-toggle"
                     onClick={() => setExpanded(!expanded)}
                     variant="subtle"
                     mt="auto"
@@ -197,6 +200,7 @@ function SideBar(props: PropsWithChildren<{}>) {
           </Box>
           <ScrollArea
             id="dex-select-cube-area"
+            className="dex-cube-nav"
             sx={theme => ({
               borderTopColor:
                 theme.colorScheme === "dark" ? theme.colors.dark[6] : theme.colors.gray[3],
@@ -263,6 +267,7 @@ function CubeSearchInput(props: Pick<SidebarContextProps, "expanded" | "input" |
     <TextInput
       icon={<IconSearch />}
       id="dex-search"
+      classNames={{wrapper: "dex-cube-search"}}
       radius="xl"
       size="md"
       placeholder={t("params.label_search")}

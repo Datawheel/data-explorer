@@ -29,7 +29,17 @@ export function SelectCubes({locale, sortLocale}: {locale: string; sortLocale?: 
   const {schemaLoading} = useQueryItem();
 
   if (schemaLoading) {
-    return loadingCubes.map(cube => <Skeleton m={15} h={40} w={"100%"} animate key={cube.id} />);
+    return loadingCubes.map(cube => (
+      <Skeleton
+        className="dex-cube-item"
+        data-loading="true"
+        m={15}
+        h={40}
+        w={"100%"}
+        animate
+        key={cube.id}
+      />
+    ));
   }
 
   if (items.length === 1) {
@@ -238,7 +248,7 @@ function RootAccordions({items, sortItems, graph, locale, selectedItem, sortLoca
             graph.topicOrder[topic] === graph.topicOrder[item]
           ) || item;
           return (
-            <Accordion.Item value={`topic-${item}`} key={`topic-${item}`}>
+            <Accordion.Item className="dex-topic" value={`topic-${item}`} key={`topic-${item}`}>
               <AccordionControl>{item}</AccordionControl>
               <Accordion.Panel>
                 <div style={{display: "flex", flexDirection: "column"}}>
@@ -296,7 +306,8 @@ function CubeButton({
       maw={"100%"}
       pr="md"
       component="a"
-      className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
+      className={`${classes.link} dex-cube-item`}
+      data-active={String(isItemSelected)}
       sx={t => ({
         backgroundColor: isItemSelected
           ? t.fn.primaryColor()
@@ -495,7 +506,7 @@ function SubtopicAccordion({
             : [];
 
           return (
-            <Accordion.Item value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
+            <Accordion.Item className="dex-subtopic" value={`subtopic-${item}`} key={`subtopic-${item}-${index}`}>
               <AccordionControl>{item.split(" - ").pop()}</AccordionControl>
               <Accordion.Panel>
                 {filtered.map((table, index) => (

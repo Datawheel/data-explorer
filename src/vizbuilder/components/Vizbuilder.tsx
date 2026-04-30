@@ -160,9 +160,9 @@ export function Vizbuilder(props: {
     const totalPages = Math.ceil(filteredCharts.length / pageSize);
 
     return (
-      <Stack spacing="xl">
+      <Stack className="vb-vizbuilder-content" spacing="xl">
         <div
-          className={cx("vb-scrollcontainer", classes.grid, {
+          className={cx("vb-scrollcontainer", "vb-chart-grid", classes.grid, {
             [classes.fill]: isSingleChart,
           })}
         >
@@ -183,13 +183,14 @@ export function Vizbuilder(props: {
                 chart={chart}
                 onFocus={() => actions.updateChart(chart.key)}
                 height={isSingleChart ? 600 : undefined}
-                className={className}
+                className={cx("vb-chart-card", className)}
               />
             );
           })}
         </div>
         {totalPages > 1 && (
           <Pagination
+            className="vb-chart-pagination"
             total={totalPages}
             value={currentPage}
             onChange={setCurrentPage}
@@ -205,7 +206,7 @@ export function Vizbuilder(props: {
   const chart = charts[currentChart];
 
   return (
-    <div className={cls("vb-wrapper", classes.wrapper, props.className)}>
+    <div className={cls("vb-wrapper", "vb-vizbuilder", classes.wrapper, props.className)}>
       {props.customHeader}
       <ErrorBoundary ErrorContent={ViewErrorComponent}>{content}</ErrorBoundary>
       {props.customFooter}

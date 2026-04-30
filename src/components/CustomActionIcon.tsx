@@ -13,11 +13,13 @@ const CustomActionIcon: React.FC<PropsWithChildren<CustomActionIconProps>> = ({
   showTooltip,
   onClick,
   children,
-  label
+  label,
+  className,
+  ...rest
 }) => {
   const [popoverOpened, setPopoverOpened] = React.useState(false);
   const actionIcon = (
-    <ActionIcon disabled={disabled} size={25} ml={5} onClick={onClick}>
+    <ActionIcon className={className} disabled={disabled} size={25} ml={5} onClick={onClick}>
       {children}
     </ActionIcon>
   );

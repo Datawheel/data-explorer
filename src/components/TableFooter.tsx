@@ -135,8 +135,8 @@ function TableFooter(props: Props) {
             </Box>
 
             <Flex align="center" direction={{base: "column", lg: "row"}} gap="xs">
-              <Group display={{base: "none", md: "flex"}} noWrap>
-                <Box maw="7rem" miw={"fit"} display={{base: "none", md: "block"}}>
+              <Group className="dex-pagination-controls" display={{base: "none", md: "flex"}} noWrap>
+                <Box className="dex-page-size-select" maw="7rem" miw={"fit"} display={{base: "none", md: "block"}}>
                   <Select
                     data={items}
                     defaultValue={String(queryItem.params.pagiLimit)}
@@ -149,6 +149,7 @@ function TableFooter(props: Props) {
                 </Box>
                 {totalRowCount && (
                   <Text
+                    className="dex-row-count"
                     c="dimmed"
                     display={{base: "none", md: "block"}}
                     sx={{whiteSpace: "nowrap"}}
@@ -157,7 +158,11 @@ function TableFooter(props: Props) {
                   </Text>
                 )}
               </Group>
-              {showPagination && <MRT_TablePagination table={table} />}
+              {showPagination && (
+                <div className="dex-pagination">
+                  <MRT_TablePagination table={table} />
+                </div>
+              )}
             </Flex>
             <Group spacing={"xs"} position="right">
               <Box display={{base: "block", md: "none"}}>
@@ -182,11 +187,12 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
   const {copied, copyHandler, url, data} = props;
   const {translate: t} = useTranslation();
   return (
-    <Box id="query-results-debug-view">
+    <Box id="query-results-debug-view" className="dex-download-area">
       <Group spacing="xs" noWrap>
         {url && (
           <Button
             id="dex-api-btn"
+            className="dex-copy-api-btn"
             leftIcon={<IconCopy size={20} />}
             sx={{height: 28}}
             onClick={copyHandler}
@@ -245,6 +251,8 @@ const DownloadQuery = ({data}) => {
 
   components.push(
     <ButtonDownload
+      className="dex-download-btn"
+      data-format="csv"
       leftIcon={<IconDownload size={20} />}
       sx={{height: 28, position: "relative"}}
       key="download_csv"
@@ -259,7 +267,7 @@ const DownloadQuery = ({data}) => {
   }
 
   return (
-    <Box id="dex-btn-group-download" sx={{position: "relative"}}>
+    <Box id="dex-btn-group-download" className="dex-download-group" sx={{position: "relative"}}>
       {errorAlert}
       <Group spacing={"xs"} noWrap>
         {components}
@@ -369,6 +377,8 @@ function MenuOpts({formats}: MenuOptsProps) {
 
   const buttons = formats.map(format => (
     <ItemDownload
+      className="dex-download-item"
+      data-format={format}
       component="a"
       key={format}
       provider={() => downloadQuery({format})}
@@ -389,6 +399,8 @@ function MenuOpts({formats}: MenuOptsProps) {
     >
       <Menu.Target>
         <ActionIcon
+          className="dex-download-menu-trigger"
+          data-open={String(opened)}
           onClick={() => setOpened(o => !o)}
           variant="filled"
           color="primary"

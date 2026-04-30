@@ -96,7 +96,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
     })`
   );
   return (
-    <>
+    <div className="dex-column-drawer" data-open={String(opened)}>
       <Drawer
         id="dex-column-drawer"
         opened={opened}
@@ -123,6 +123,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
         <DrillDownOptions />
         <Box mt="3rem" pb="md">
           <Button
+            className="dex-column-drawer-submit"
             fullWidth
             color="primary"
             onClick={() => {
@@ -136,12 +137,19 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
       </Drawer>
       <Group position="center" sx={{flexWrap: "nowrap"}}>
         {smallerThanMd ? (
-          <ActionIcon onClick={open} size="md" variant="filled" color={theme.primaryColor}>
+          <ActionIcon
+            className="dex-column-drawer-trigger"
+            onClick={open}
+            size="md"
+            variant="filled"
+            color={theme.primaryColor}
+          >
             <IconStack3 size="0.75rem" />
           </ActionIcon>
         ) : (
           <Button
             id="dex-column-btn"
+            className="dex-column-drawer-trigger"
             leftIcon={<IconPlus size="1.2rem" />}
             onClick={open}
             m="xs"
@@ -151,7 +159,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
           </Button>
         )}
       </Group>
-    </>
+    </div>
   );
 };
 
@@ -209,11 +217,19 @@ function DimensionItem({
     />
   ));
 
+  const dimensionType =
+    dimension.type === DimensionType.GEO
+      ? "geo"
+      : dimension.type === DimensionType.TIME
+      ? "time"
+      : "standard";
+
   return (
     <div
       key={dimension.name}
-      className="dex-dimension-control"
+      className="dex-dimension"
       id={`dex-dimension-${dimension.name}`}
+      data-type={dimensionType}
     >
       <Divider
         my="md"
@@ -337,8 +353,17 @@ function LevelItem({
   return (
     currentDrilldown && (
       <>
-        <Group className="dex-level-control" mt="sm" position="apart" key={level.name} noWrap>
+        <Group
+          className="dex-level-item"
+          data-active={String(checked)}
+          data-filtered={String(!!cut?.active)}
+          mt="sm"
+          position="apart"
+          key={level.name}
+          noWrap
+        >
           <Checkbox
+            className="dex-level-checkbox"
             sx={{cursor: "pointer", paddingLeft}}
             onChange={() => {
               if (isOtherHierarchySelected && !checked) {
@@ -401,9 +426,10 @@ function LevelItem({
             size="xs"
             disabled={isDisabled || disableUncheck}
           />
-          <Group sx={{flexWrap: "nowrap"}}>
+          <Group className="dex-level-actions" sx={{flexWrap: "nowrap"}}>
             <ActionIcon
               className="dex-level-filter"
+              data-active={String(!!cut?.active)}
               size="sm"
               onClick={() => {
                 const nextCut = buildCut(cut || level);
@@ -422,18 +448,22 @@ function LevelItem({
             </ActionIcon>
             {properties && (
               <Tooltip label={t("params.add_metadata")}>
-                <ActionIcon onClick={() => setActiveProperties(value => !value)}>
+                <ActionIcon
+                  className="dex-level-properties"
+                  data-active={String(activePropertiesFilter)}
+                  onClick={() => setActiveProperties(value => !value)}
+                >
                   <IconAdjustments />
                 </ActionIcon>
               </Tooltip>
             )}
-            <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">
+            <ThemeIcon className="dex-level-type-icon" size="xs" color="gray" variant="light" bg="transparent">
               <StackSVG />
             </ThemeIcon>
           </Group>
         </Group>
         {cut?.active && (
-          <Box pt="md">
+          <Box className="dex-level-cut-members" pt="md">
             <MultiSelect
               sx={{flex: "1 1 100%"}}
               searchable
@@ -461,7 +491,7 @@ function LevelItem({
             />
           </Box>
         )}
-        {activePropertiesFilter && <PropertiesMultiSelect item={currentDrilldown} />}
+        {activePropertiesFilter && <PropertiesMultiSelect className="dex-level-properties-panel" item={currentDrilldown} />}
       </>
     )
   );
@@ -469,8 +499,9 @@ function LevelItem({
 
 type PropertiesMultiSelectType = {
   item: DrilldownItem;
+  className?: string;
 };
-function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectType>) {
+function PropertiesMultiSelect({item, className}: PropsWithChildren<PropertiesMultiSelectType>) {
   const levelTriadMap = useSelector(selectLevelTriadMap);
   const locale = useSelector(selectLocale);
   const actions = useActions();
@@ -506,7 +537,7 @@ function PropertiesMultiSelect({item}: PropsWithChildren<PropertiesMultiSelectTy
   }, [activeProperties.length, levelTriadMap, item, locale.code, t]);
 
   return (
-    <Box pt="md">
+    <Box className={className} pt="md">
       <MultiSelect
         sx={{flex: "1 1 100%"}}
         searchable
@@ -849,7 +880,7 @@ function FilterItem({
   const isLastSelected = activeItems.length === 1 && checked;
 
   return (
-    <Box key={measure.name}>
+    <Box className="dex-measure-item" data-active={String(checked)} key={measure.name}>
       <Group mt="sm" position="apart">
         <Checkbox
           sx={{cursor: "pointer"}}
@@ -869,7 +900,12 @@ function FilterItem({
         />
         <Group sx={{flexWrap: "nowrap"}}>
           {activeFilter && <FilterFnsMenu filter={filter} />}
-          <ActionIcon size="sm" onClick={() => setActiveFilter(value => !value)}>
+          <ActionIcon
+            className="dex-measure-filter"
+            data-active={String(activeFilter)}
+            size="sm"
+            onClick={() => setActiveFilter(value => !value)}
+          >
             {activeFilter ? <IconFilterOff /> : <IconFilter />}
           </ActionIcon>
           <ThemeIcon size="xs" color="gray" variant="light" bg="transparent">

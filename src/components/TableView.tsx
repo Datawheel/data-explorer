@@ -166,13 +166,13 @@ function showTrashIcon(entity: AnyResultColumn, columns: AnyResultColumn[]) {
 const getActionIcon = (entityType: EntityTypes) => {
   if (entityType === "measure") {
     return (
-      <ActionIcon size="md" color="red">
+      <ActionIcon className="dex-col-type-icon" size="md" color="red">
         <BarsSVG />
       </ActionIcon>
     );
   } else if (entityType === "level") {
     return (
-      <ActionIcon size="md" color="blue">
+      <ActionIcon className="dex-col-type-icon" size="md" color="blue">
         <StackSVG />
       </ActionIcon>
     );
@@ -559,6 +559,8 @@ export function useTable({
           const actionSort = (
             <ActionIcon
               key={`sort-${header}`}
+              className="dex-col-sort"
+              data-direction={isSorted ? sortDir : "none"}
               size={22}
               ml={rem(5)}
               onClick={() => {
@@ -605,7 +607,7 @@ export function useTable({
             </ActionIcon>
           );
           return (
-            <Box mb={rem(5)} key="header">
+            <Box className="dex-col-header-content" mb={rem(5)} key="header">
               <Flex
                 justify="center"
                 align={{base: "flex-start", sm: "center"}}
@@ -618,7 +620,7 @@ export function useTable({
                     justify={{base: "flex-start", sm: "space-between"}}
                   >
                     {getActionIcon(entityType)}
-                    <Text size="sm">{header}</Text>
+                    <Text className="dex-col-label" size="sm">{header}</Text>
                     {!isMobile && <Box ml={"auto"}>{actionSort}</Box>}
                   </Flex>
                 </Box>
@@ -626,6 +628,7 @@ export function useTable({
                   {isMobile && actionSort}
                   {showTrash && (
                     <CustomActionIcon
+                      className="dex-col-remove"
                       label={`At least one ${getEntityText(entityType)} is required.`}
                       key={`remove-${column.columnDef.header}`}
                       disabled={!showTrash || isLoading || isFetching}
@@ -655,7 +658,7 @@ export function useTable({
         Cell: isNumeric
           ? ({cell}) => {
               return (
-                <span style={{display: "block", textAlign: "right"}}>
+                <span className="dex-cell-value" data-numeric="true" style={{display: "block", textAlign: "right"}}>
                   {formatter(cell.getValue(), locale)}
                 </span>
               );
@@ -669,8 +672,9 @@ export function useTable({
               const formattedValue = drilldownFormatter ? drilldownFormatter(cellValue as any, locale) : cellValue;
 
               return (
-                <Flex justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
+                <Flex className="dex-cell-content" justify="space-between" sx={{width: "100%", maxWidth: 400}} gap="sm">
                   <Text
+                    className="dex-cell-value"
                     size="sm"
                     sx={{
                       whiteSpace: "nowrap",
@@ -682,7 +686,7 @@ export function useTable({
                   </Text>
                   <Box>
                     {cellId && (
-                      <Text color="dimmed">{idFormatter ? idFormatter(cellId as any) : cellId as React.ReactNode}</Text>
+                      <Text className="dex-cell-id" color="dimmed">{idFormatter ? idFormatter(cellId as any) : cellId as React.ReactNode}</Text>
                     )}
                   </Box>
                 </Flex>
@@ -840,6 +844,7 @@ export function TableView({
         <ProgressBar isTopToolbar={false} table={table} />
         <ScrollArea
           id="dex-table"
+          className="dex-table"
           h={isData ? "100%" : "auto"}
           viewportRef={viewport}
           sx={{
@@ -910,10 +915,14 @@ export function TableView({
                       }
                     });
 
+                    const entityType = (column.columnDef as any).entityType ?? "";
                     return (
                       <Box
                         component="th"
                         key={header.id}
+                        className="dex-col-header"
+                        data-type={entityType}
+                        data-numeric={String(isNumeric)}
                         sx={theme => (isRowIndex ? index(theme) : base(theme))}
                       >
                         <Box
@@ -957,7 +966,7 @@ export function TableView({
                 })}
               >
                 {table.getRowModel().rows.map(row => (
-                  <tr key={row.id} ref={rowRef}>
+                  <tr key={row.id} className="dex-table-row" ref={rowRef}>
                     {row.getVisibleCells().map(cell => (
                       <MRT_TableBodyCell
                         key={cell.id}
@@ -1022,7 +1031,7 @@ const NumericFilter = ({header}: {header: MRT_Header<TData>}) => {
     const isBetween = filterFn === "between";
 
     return (
-      <Flex gap="xs" style={{fontWeight: "normal"}}>
+      <Flex className="dex-col-filter" data-filter-type="numeric" gap="xs" style={{fontWeight: "normal"}}>
         <Box sx={{flex: "1 1 auto"}}>
           {isBetween ? (
             <MinMax filter={filter} hideControls />
@@ -1084,7 +1093,7 @@ const MultiFilter = ({header}: {header: MRT_Header<TData>}) => {
   if (!drilldown || !cut) return null;
 
   return (
-    <Box pt="sm" style={{fontWeight: "normal"}}>
+    <Box className="dex-col-filter" data-filter-type="multi" pt="sm" style={{fontWeight: "normal"}}>
       <MultiSelect
         sx={{flex: "1 1 100%"}}
         searchable

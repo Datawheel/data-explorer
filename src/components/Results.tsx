@@ -62,7 +62,8 @@ export default function Results(props: Props) {
             key={cube.name}
             component="a"
             fz="xs"
-            className={isItemSelected ? `${classes.link} ${classes.linkActive}` : classes.link}
+            className={`${classes.link} dex-cube-item`}
+            data-active={String(isItemSelected)}
             sx={theme => ({
               opacity: 1,
               cursor: "pointer",
@@ -84,7 +85,7 @@ export default function Results(props: Props) {
     return [<Divider key={label} my="xs" label={label} />, ...topicResults];
   });
 
-  return <Box px="sm">{results.length ? results : "No results"}</Box>;
+  return <Box className="dex-cube-nav" px="sm">{results.length ? results : "No results"}</Box>;
 }
 
 Results.displayName = "SearchResults";
@@ -95,7 +96,6 @@ export const useStyles = createStyles(t => ({
     outline: 0,
     display: "block",
     textDecoration: "none",
-    // color: t.colorScheme === "dark" ? t.white : t.colors.dark[6],
     color: t.colorScheme === "dark" ? t.colors.dark[1] : t.colors.gray[7],
     padding: t.spacing.xs,
     minHeight: rem(20),
@@ -105,14 +105,14 @@ export const useStyles = createStyles(t => ({
     "&:hover": {
       backgroundColor:
         t.colorScheme === "dark" ? t.colors[t.primaryColor][4] : t.colors[t.primaryColor][4]
+    },
+    "&[data-active='true']": {
+      backgroundColor:
+        t.colorScheme === "dark"
+          ? t.fn.rgba(t.colors[t.primaryColor][9], 0.45)
+          : t.colors[t.primaryColor][4],
+      color: t.white,
+      fontWeight: 500
     }
-  },
-  linkActive: {
-    backgroundColor:
-      t.colorScheme === "dark"
-        ? t.fn.rgba(t.colors[t.primaryColor][9], 0.45)
-        : t.colors[t.primaryColor][4],
-    color: t.white,
-    fontWeight: 500
   }
 }));

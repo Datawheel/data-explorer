@@ -48,14 +48,15 @@ export function ExplorerTabs({panels, onChange, value}) {
     <Tabs
       color="blue"
       id="query-results-tabs"
+      className="dex-tabs"
       onTabChange={onChange}
       value={value}
       styles={tabsStyles}
     >
-      <Tabs.List sx={{flexWrap: "nowrap", alignItems: "center", justifyContent: "space-between"}}>
+      <Tabs.List className="dex-tabs-list" sx={{flexWrap: "nowrap", alignItems: "center", justifyContent: "space-between"}}>
         <div style={{display: "flex"}}>
           {visiblePanels.map(panel => (
-            <Tabs.Tab key={panel.key} id={panel.key} value={panel.key} h={56}>
+            <Tabs.Tab className="dex-tab" key={panel.key} id={panel.key} value={panel.key} h={56}>
               {t(panel.label)}
             </Tabs.Tab>
           ))}
@@ -66,6 +67,8 @@ export function ExplorerTabs({panels, onChange, value}) {
           <Menu opened={menuOpened} onChange={setMenuOpened} withinPortal>
             <Menu.Target>
               <ActionIcon
+                className="dex-tabs-overflow-trigger"
+                data-open={String(menuOpened)}
                 size="lg"
                 variant="subtle"
                 color={theme.primaryColor}
@@ -77,6 +80,8 @@ export function ExplorerTabs({panels, onChange, value}) {
             <Menu.Dropdown>
               {menuPanels.map(panel => (
                 <Menu.Item
+                  className="dex-tab"
+                  data-active={String(value === panel.key)}
                   key={panel.key}
                   onClick={() => handleMenuItemClick(panel.key)}
                   color={value === panel.key ? theme.primaryColor : undefined}

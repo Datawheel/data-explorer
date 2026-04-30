@@ -41,7 +41,7 @@ export function CubeSourceAnchor(
   return (
     <Text component="p" {...textProps}>
       {`${t("params.label_source")}: `}
-      {srcLink ? <Anchor href={srcLink} target="_blank">{srcName}</Anchor> : <Text span>{srcName}</Text>}
+      {srcLink ? <Anchor className="dex-cube-source-anchor" href={srcLink} target="_blank">{srcName}</Anchor> : <Text span>{srcName}</Text>}
     </Text>
   );
 }
@@ -51,18 +51,18 @@ export default function CubeSource() {
   const {code: locale} = useSelector(selectLocale);
   return (
     selectedItem && (
-      <Text sx={{"& p": {margin: 0}}}>
-        <CubeAnnotation fz="xs" fw="bold" annotation="table" item={selectedItem} locale={locale} />
+      <Text className="dex-cube-source" sx={{"& p": {margin: 0}}}>
+        <CubeAnnotation className="dex-cube-title" fz="xs" fw="bold" annotation="table" item={selectedItem} locale={locale} />
         <CubeAnnotation
           annotation="description"
           className="dex-cube-description"
           item={selectedItem}
           locale={locale}
         />
-        <CubeSourceAnchor item={selectedItem} locale={locale} fz="xs" />
+        <CubeSourceAnchor className="dex-cube-source-link" item={selectedItem} locale={locale} fz="xs" />
         <CubeAnnotation
           annotation="source_description"
-          className="dex-cube-srcdescription"
+          className="dex-cube-source-description"
           fz="xs"
           item={selectedItem}
           locale={locale}

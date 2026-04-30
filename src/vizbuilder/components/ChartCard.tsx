@@ -124,6 +124,8 @@ export function ChartCard(props: {
       return (
         <Button
           key={format}
+          className="vb-chart-download"
+          data-format={formatLower}
           compact
           leftIcon={<Icon size={16} />}
           onClick={() => {
@@ -150,6 +152,8 @@ export function ChartCard(props: {
     const Icon = isFullMode ? IconArrowsMinimize : IconArrowsMaximize;
     return (
       <Button
+        className="vb-chart-focus"
+        data-fullmode={String(!!isFullMode)}
         compact
         leftIcon={<Icon size={16} />}
         onClick={onFocus}
@@ -166,6 +170,8 @@ export function ChartCard(props: {
       <CopyButton value={window.location.href} timeout={1500}>
         {({copied, copy}) => (
           <Button
+            className="vb-chart-share"
+            data-copied={String(copied)}
             compact
             leftIcon={copied ? <IconCheck size={16} /> : <IconShare size={16} />}
             onClick={copy}
@@ -241,18 +247,20 @@ export function ChartCard(props: {
         w="100%"
         style={{overflow: "hidden", height: resolvedHeight, ...props.style}}
       >
-        <Stack spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
-          <Group position="center" spacing="xs" align="center">
+        <Stack className="vb-chart-card-inner" spacing="xs" p="xs" style={{position: "relative"}} h="100%" w="100%">
+          <Group className="vb-chart-actions" position="center" spacing="xs" align="center">
             {isFullMode && shareButton}
             {downloadButtons}
             {onFocus && focusButton}
           </Group>
           <Box
+            className="vb-chart-canvas"
             style={{flex: "1 1 auto", position: "relative"}}
             ref={setRefs}
             sx={{"& > .viz": {height: "100%"}}}
           >
             <Box
+              className="vb-chart-loader"
               ref={overlayRef}
               style={{
                 position: "absolute",
