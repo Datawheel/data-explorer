@@ -556,12 +556,7 @@ export function useTable({
           const isSorted = isColumnSorted(entity.name, sortKey);
           const showTrash =
             showTrashIcon(keyCol, finalKeys) && !isRequiredColumn(keyCol, finalKeys, dimensions);
-          const IconSortTextAsc = useIcon("sort-text-asc");
-          const IconSortTextDesc = useIcon("sort-text-desc");
-          const IconSortNumAsc = useIcon("sort-num-asc");
-          const IconSortNumDesc = useIcon("sort-num-desc");
-          const IconSortUnsorted = useIcon("sort-unsorted");
-          const IconRemoveColumn = useIcon("remove-column");
+          const [IconSortTextAsc, IconSortTextDesc, IconSortNumAsc, IconSortNumDesc, IconSortUnsorted, IconRemoveColumn] = useIcon(["sort-text-asc", "sort-text-desc", "sort-num-asc", "sort-num-desc", "sort-unsorted", "remove-column"]);
           const sortIcons: SortIcons = {
             sortTextAsc: IconSortTextAsc,
             sortTextDesc: IconSortTextDesc,

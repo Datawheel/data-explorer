@@ -10,8 +10,7 @@ function PrevButton(props) {
     const {translate: t} = useTranslation();
     const theme = useMantineTheme();
     const isRtl = theme.dir === "rtl";
-    const IconTourPrev = useIcon("tour-prev");
-    const IconTourNext = useIcon("tour-next");
+    const [IconTourPrev, IconTourNext] = useIcon(["tour-prev", "tour-next"]);
     const handleClick = () => props.setCurrentStep(
         (s:number) => s === 0
             ?  props.steps.length - 1
@@ -38,8 +37,7 @@ function NextButton(props) {
     const {translate: t} = useTranslation();
     const theme = useMantineTheme();
     const isRtl = theme.dir === "rtl";
-    const IconTourPrev = useIcon("tour-prev");
-    const IconTourNext = useIcon("tour-next");
+    const [IconTourPrev, IconTourNext] = useIcon(["tour-prev", "tour-next"]);
 
     const handleClick = () => {
         if(props.currentStep === props.steps.length - 1) {

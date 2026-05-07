@@ -203,8 +203,7 @@ const ApiAndCsvButtons: React.FC<ApiAndCsvButtonsProps> = props => {
 
 const DownloadQuery = ({data}) => {
   const {translate: t} = useTranslation();
-  const IconError = useIcon("error");
-  const IconDownload = useIcon("download");
+  const [IconError, IconDownload] = useIcon(["error", "download"]);
   const formats = Object.values(Format);
   const components: ReactNode[] = [];
   const {mutateAsync: downloadQuery, isError, error} = useDownloadQuery();
@@ -370,8 +369,7 @@ type MenuOptsProps = {
 function MenuOpts({formats}: MenuOptsProps) {
   const {translate: t} = useTranslation();
   const [opened, setOpened] = useState(false);
-  const IconDownload = useIcon("download");
-  const IconMoreOptions = useIcon("more-options");
+  const [IconDownload, IconMoreOptions] = useIcon(["download", "more-options"]);
   const {mutateAsync: downloadQuery} = useDownloadQuery();
 
   const buttons = formats.map(format => (

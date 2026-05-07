@@ -14,9 +14,7 @@ export function DebugView(props: ViewProps) {
   const {translate: t} = useTranslation();
 
   const {copy, copied} = useClipboard({timeout: 1000});
-  const IconUrlIndicator = useIcon("url-indicator");
-  const IconOpenExternal = useIcon("open-external");
-  const IconCopyLink = useIcon("copy-link");
+  const [IconUrlIndicator, IconOpenExternal, IconCopyLink] = useIcon(["url-indicator", "open-external", "copy-link"]);
 
   const copyHandler = useCallback(() => copy(url), [url, copy]);
 

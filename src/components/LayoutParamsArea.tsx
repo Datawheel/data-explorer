@@ -11,8 +11,7 @@ export const LayoutParamsArea = (props: {
   warning?: string | undefined;
   value: string;
 }) => {
-  const IconInfo = useIcon("info");
-  const IconWarningSolid = useIcon("warning-solid");
+  const [IconInfo, IconWarningSolid] = useIcon(["info", "warning-solid"]);
 
   const tooltip = props.tooltip
     ? <Tooltip

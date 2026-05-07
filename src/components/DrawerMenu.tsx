@@ -76,8 +76,7 @@ const AddColumnsDrawer: React.FC<AddColumnsDrawerProps> = () => {
   const updateUrl = useUpdateUrl();
 
   const {translate: t} = useTranslation();
-  const IconAddItem = useIcon("add-item");
-  const IconDrilldowns = useIcon("drilldowns");
+  const [IconAddItem, IconDrilldowns] = useIcon(["add-item", "drilldowns"]);
   const theme = useMantineTheme();
   const smallerThanMd = useMediaQuery(
     `(max-width: ${theme.breakpoints.md}${
@@ -193,9 +192,7 @@ function DimensionItem({
   locale: string;
   activeItems: DrilldownItem[];
 }) {
-  const IconDimensionGeo = useIcon("dimension-geo");
-  const IconDimensionTime = useIcon("dimension-time");
-  const IconDimensionDataset = useIcon("dimension-dataset");
+  const [IconDimensionGeo, IconDimensionTime, IconDimensionDataset] = useIcon(["dimension-geo", "dimension-time", "dimension-dataset"]);
   const isChildSubMenu = dimension.hierarchies.length !== 1;
 
   const options = dimension.hierarchies.map(hie => (
@@ -291,9 +288,7 @@ function LevelItem({
 }) {
   const [activePropertiesFilter, setActiveProperties] = useState(false);
   const {translate: t} = useTranslation();
-  const IconFilterActive = useIcon("filter-active");
-  const IconFilterRemove = useIcon("filter-remove");
-  const IconQueryOptions = useIcon("query-options");
+  const [IconFilterActive, IconFilterRemove, IconQueryOptions] = useIcon(["filter-active", "filter-remove", "query-options"]);
 
   const actions = useActions();
 
@@ -716,10 +711,7 @@ export function FilterFnsMenu({filter}: {filter: FilterItem}) {
   const updateUrl = useUpdateUrl();
   const queryItem = useSelector(selectCurrentQueryItem);
   const {translate: t} = useTranslation();
-  const IconSettings = useIcon("settings");
-  const IconOperatorGte = useIcon("operator-gte");
-  const IconOperatorLte = useIcon("operator-lte");
-  const IconCompareValues = useIcon("compare-values");
+  const [IconSettings, IconOperatorGte, IconOperatorLte, IconCompareValues] = useIcon(["settings", "operator-gte", "operator-lte", "compare-values"]);
 
   return (
     <>
@@ -870,8 +862,7 @@ function FilterItem({
 }) {
   const [activeFilter, setActiveFilter] = useState(false);
   const {translate: t} = useTranslation();
-  const IconFilterActive = useIcon("filter-active");
-  const IconFilterRemove = useIcon("filter-remove");
+  const [IconFilterActive, IconFilterRemove] = useIcon(["filter-active", "filter-remove"]);
   const filterFn = getFilterFn(filter);
   const text = t(`comparison.${getFilterfnKey(filterFn)}`);
   const isBetween = filterFn === "between";

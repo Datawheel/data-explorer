@@ -139,7 +139,16 @@ export function IconProvider(props: {
   return <IconContextProvider value={value}>{props.children}</IconContextProvider>;
 }
 
-export function useIcon(key: IconKey): React.ComponentType<any> {
+type IconComponents<Keys extends readonly IconKey[]> = {
+  [I in keyof Keys]: React.ComponentType<any>;
+};
+
+export function useIcon(key: IconKey): React.ComponentType<any>;
+export function useIcon<Keys extends readonly IconKey[]>(keys: [...Keys]): IconComponents<Keys>;
+export function useIcon(keyOrKeys: IconKey | readonly IconKey[]): React.ComponentType<any> | React.ComponentType<any>[] {
   const map = useIconContext();
-  return map[key] ?? (() => null);
+  if (Array.isArray(keyOrKeys)) {
+    return (keyOrKeys as IconKey[]).map(key => map[key] ?? (() => null));
+  }
+  return map[keyOrKeys as IconKey] ?? (() => null);
 }

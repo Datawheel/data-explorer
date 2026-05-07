@@ -15,10 +15,7 @@ export function RawResponseView(props) {
   //   const [user] = useUser();
   //   const {t} = useTranslation("explorer");
   const theme = useMantineTheme();
-  const IconUrlBadge = useIcon("url-badge");
-  const IconOpenExternal = useIcon("open-external");
-  const IconCopyLink = useIcon("copy-link");
-  const IconCopyLinkDone = useIcon("copy-link-done");
+  const [IconUrlBadge, IconOpenExternal, IconCopyLink, IconCopyLinkDone] = useIcon(["url-badge", "open-external", "copy-link", "copy-link-done"]);
   const token = "tokenValue";
 
   const tokenizedUrl = result?.url ? `${result.url}${token ? `&token=${token}` : ""}` : "";

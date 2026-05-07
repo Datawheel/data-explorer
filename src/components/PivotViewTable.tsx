@@ -65,8 +65,7 @@ export function PivotViewTable<TData extends Record<string, unknown>>(
 ) {
   const {cube, params, className, panelKey, data: result, ...mantineReactTableProps} = props;
   const {translate: t} = useTranslation();
-  const IconError = useIcon("error");
-  const IconWarning = useIcon("warning");
+  const [IconError, IconWarning] = useIcon(["error", "warning"]);
   const {data: schema} = useServerSchema();
   const {classes, cx} = useStyles();
   const locale = params.locale;

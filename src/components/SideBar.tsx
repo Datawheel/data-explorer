@@ -101,9 +101,7 @@ function SideBar(props: PropsWithChildren<{}>) {
   const {expanded, input, setExpanded, setInput} = useSideBar();
   const {translate: t} = useTranslation();
   const theme = useMantineTheme();
-  const IconClear = useIcon("clear");
-  const IconCollapseSidebar = useIcon("collapse-sidebar");
-  const IconExpandSidebar = useIcon("expand-sidebar");
+  const [IconClear, IconCollapseSidebar, IconExpandSidebar] = useIcon(["clear", "collapse-sidebar", "expand-sidebar"]);
   const smallerThanMd = useMediaQuery(
     `(max-width: ${theme.breakpoints.md}${
       /(?:px|em|rem|vh|vw|%)$/.test(theme.breakpoints.xs) ? "" : "px"

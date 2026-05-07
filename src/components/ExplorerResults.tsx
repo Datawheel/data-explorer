@@ -82,8 +82,7 @@ export function ExplorerResults(props: {
   const {online: isServerOnline, url: serverUrl} = schema || {};
   const {translate: t} = useTranslation();
   const {classes, cx} = useStyles();
-  const IconGeo = useIcon("dimension-geo");
-  const IconWarning = useIcon("warning");
+  const [IconGeo, IconWarning] = useIcon(["dimension-geo", "warning"]);
 
   // Check if client is browser not connected to internet
   if (typeof window === "object" && window.navigator.onLine === false) {
