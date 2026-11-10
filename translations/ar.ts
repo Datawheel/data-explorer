@@ -12,7 +12,8 @@ export default {
     GTE: "مساوي أو أكبر من",
     LT: "أقل من",
     LTE: "مساوي أو أقل من",
-    NEQ: "غير مساوي لـ"
+    NEQ: "غير مساوي لـ",
+    BT: "بين"
   },
   debug_view: {
     tab_label: "أداة التصحيح",
@@ -31,7 +32,9 @@ export default {
     json: "JSON",
     jsonarrays: "مصفوفات JSON",
     jsonrecords: "سجلات JSON",
-    xlsx: "XLSX"
+    xlsx: "XLSX",
+    tsv: "TSV",
+    parquet: "Parquet"
   },
   loading: {
     title: "جارٍ التحميل...",
@@ -39,6 +42,8 @@ export default {
     message_default: "يرجى الانتظار..."
   },
   params: {
+    add_metadata: "إضافة بيانات وصفية",
+    submit: "إرسال",
     action_clear: "مسح الاستعلام",
     action_clear_description: "مسح جميع المعلمات من الاستعلام الحالي",
     action_execute: "تنفيذ الاستعلام",
@@ -187,6 +192,9 @@ export default {
     selected_items: "العناصر المحددة",
     unselected_items: "العناصر غير المحددة"
   },
+  // TODO: translate; falls back to English so the UI does not show raw keys
+  sidebar: enTranslationDict.sidebar,
+  tour: enTranslationDict.tour,
   // vizbuilder: enTranslationDict.vizbuilder,
   vizbuilder: {
     action_close: "اغلاق",
@@ -228,7 +236,12 @@ export default {
       series_members: "{{series}} ({{members}})",
       series: "{{series}}",
       time_range: "في {{from}}-{{to}}",
-      total: "المجموع: {{value}}"
+      total: "المجموع: {{value}}",
+      scale_year: "سنوي",
+      scale_quarter: "ربع سنوي",
+      scale_month: "شهري",
+      scale_week: "أسبوعي",
+      scale_day: "يومي"
     },
     transient: {
       title_one_row: "تحتوي مجموعة البيانات على صف واحد فقط ولا يمكن استخدامها لإنشاء رسوم بيانية.",

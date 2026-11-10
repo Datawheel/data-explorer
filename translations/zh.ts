@@ -13,6 +13,7 @@ export default {
     LT: "小于",
     LTE: "小于或等于",
     NEQ: "不等于",
+    BT: "介于",
   },
   debug_view: {
     tab_label: "调试器",
@@ -32,6 +33,8 @@ export default {
     jsonarrays: "JSON 数组",
     jsonrecords: "JSON 记录",
     xlsx: "XLSX",
+    tsv: "TSV",
+    parquet: "Parquet",
   },
   loading: {
     title: "加载中...",
@@ -39,6 +42,9 @@ export default {
     message_default: "请稍候...",
   },
   params: {
+    add_metadata: "添加元数据",
+    add_columns: "添加列",
+    submit: "提交",
     action_clear: "清除查询",
     action_clear_description: "清除当前查询中的所有参数",
     action_execute: "执行查询",
@@ -184,5 +190,8 @@ export default {
     selected_items: "选中项目",
     unselected_items: "未选中项目",
   },
+  // TODO: translate; falls back to English so the UI does not show raw keys
+  sidebar: enTranslationDict.sidebar,
+  tour: enTranslationDict.tour,
   vizbuilder: enTranslationDict.vizbuilder,
 };

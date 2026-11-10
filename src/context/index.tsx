@@ -21,18 +21,19 @@ const queryClient = new QueryClient();
 
 const defaultVizbuilderConfig: VizbuilderProviderProps = {
   chartLimits: {
+    // Not in ChartLimits since vizbuilder 0.7.15, kept for apps on older 0.7.x versions
     BARCHART_MAX_BARS: 20,
+    BARCHART_YEAR_MAX_BARS: 20,
     BARCHART_MAX_STACKED_BARS: 10,
     BARCHART_VERTICAL_MAX_GROUPS: 12,
     BARCHART_VERTICAL_TOTAL_BARS: 240,
-    BARCHART_YEAR_MAX_BARS: 20,
     DONUT_SHAPE_MAX: 30,
     LINEPLOT_LINE_MAX: 20,
     LINEPLOT_LINE_POINT_MIN: 2,
     STACKED_SHAPE_MAX: 200,
     STACKED_TIME_MEMBER_MIN: 2,
     TREE_MAP_SHAPE_MAX: 1000,
-  },
+  } as VizbuilderProviderProps["chartLimits"],
   downloadFormats: ["SVG", "PNG"],
   CardErrorComponent: () => null, // Hides via Boundary ChartCards that throw error
 };

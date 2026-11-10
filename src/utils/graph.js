@@ -3,7 +3,8 @@ import {matchSorter} from "match-sorter";
 
 class Graph {
   constructor() {
-    this.nodes = new Set([]);
+    /** @type {Set<string>} */
+    this.nodes = new Set();
     this.adjList = {};
     this.items = [];
     this.topicOrder = {};

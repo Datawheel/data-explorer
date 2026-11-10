@@ -1,5 +1,7 @@
 // Just a test class to collect value while traversing
 class Logger {
+  values: unknown[];
+
   constructor() {
     this.values = [];
     this.log = this.log.bind(this);

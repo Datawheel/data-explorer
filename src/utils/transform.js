@@ -51,12 +51,14 @@ export function csvSerialize(
   const rMembers = [...new Set(data.map(d => d[rName]))]
     .sort((a, b) => rSortTable.indexOf(a) - rSortTable.indexOf(b));
 
-  /** @type {Map<string, Map<string, number>>} */
-  const groupedData = regroup(
-    data,
-    group => sumBy(group, vName),
-    d => d[cName],
-    d => d[rName]
+  // Two key getters are passed, so the result is always two levels deep
+  const groupedData = /** @type {Map<string, Map<string, number>>} */ (
+    regroup(
+      data,
+      group => sumBy(group, vName),
+      d => d[cName],
+      d => d[rName]
+    )
   );
 
   // Array of the members in the column axis
@@ -131,9 +133,14 @@ export function keyBy(array, accesor, target = {}) {
 }
 
 /**
+ * @typedef {{dimension: string, hierarchy: string, level: string}} LevelDescriptor
+ * @typedef {LevelDescriptor | {dimension: string, hierarchy: string, name: string}} LevelReference
+ */
+
+/**
  * Transforms a level array descriptor into a level object descriptor
  * @param {string[]} arr
- * @returns {TessExpl.Struct.LevelDescriptor}
+ * @returns {LevelDescriptor}
  */
 export function levelArrayToRef(arr) {
   return {dimension: arr[0], hierarchy: arr[1], level: arr[2]};
@@ -141,7 +148,7 @@ export function levelArrayToRef(arr) {
 
 /**
  * Transforms a level object descriptor into a level array descriptor
- * @param {TessExpl.Struct.LevelReference} ref
+ * @param {LevelReference} ref
  * @returns {string[]}
  */
 export function levelRefToArray(ref) {
@@ -213,7 +220,7 @@ export function safeRegExp(pattern, flags) {
 }
 
 /**
- * @template T
+ * @template {Record<string, any>} T
  * @param {T[]} data
  * @param {string} name
  * @returns {string[]}
@@ -251,7 +258,7 @@ export function splitName(name) {
 
 /**
  * Converts a descriptor into a fullName string
- * @param {TessExpl.Struct.LevelReference} ref
+ * @param {LevelReference} ref
  */
 export function stringifyName(ref) {
   const nameParts = levelRefToArray(ref);
