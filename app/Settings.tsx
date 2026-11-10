@@ -57,7 +57,7 @@ export function SettingsProvider({
   locales,
   servers
 }: {
-  children: (settings: SettingsParams) => JSX.Element;
+  children: (settings: SettingsParams & {server: ServerOption}) => JSX.Element;
   locales: string[];
   servers: ServerOption[];
 }) {
@@ -176,7 +176,7 @@ export function SettingsProvider({
         </Flex>
       </Header>
 
-      {server ? children(settings) : <LoadingOverlay visible={true} />}
+      {server ? children({...settings, server}) : <LoadingOverlay visible={true} />}
     </MantineProvider>
   );
 }

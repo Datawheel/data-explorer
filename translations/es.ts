@@ -13,6 +13,7 @@ export default {
     LT: "Menor que",
     LTE: "Igual o menor que",
     NEQ: "No igual a",
+    BT: "Entre",
   },
   debug_view: {
     tab_label: "Depurador",
@@ -32,6 +33,8 @@ export default {
     jsonarrays: "Matrices JSON",
     jsonrecords: "Registros JSON",
     xlsx: "XLSX",
+    tsv: "TSV",
+    parquet: "Parquet",
   },
   loading: {
     title: "Cargando...",
@@ -40,6 +43,9 @@ export default {
     message_default: "Por favor, espera...",
   },
   params: {
+    add_metadata: "Agregar metadatos",
+    add_columns: "Agregar columna",
+    submit: "Enviar",
     action_clear: "Limpiar consulta",
     action_clear_description: "Limpiar todos los parámetros de la consulta actual",
     action_execute: "Ejecutar consulta",
@@ -195,5 +201,8 @@ export default {
     selected_items: "Elementos seleccionados",
     unselected_items: "Elementos no seleccionados",
   },
+  // TODO: translate; falls back to English so the UI does not show raw keys
+  sidebar: enTranslationDict.sidebar,
+  tour: enTranslationDict.tour,
   vizbuilder: enTranslationDict.vizbuilder,
 };

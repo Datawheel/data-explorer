@@ -198,19 +198,15 @@ function getMemberFilterFnTypes(member) {
     label: member.caption ? `${member.caption} ${member.key}` : `${member.key}`
   };
 }
-function getMantineFilterMultiSelectProps(isId: boolean, isNumeric: boolean, range) {
-  let result: {
-    filterVariant?: "multi-select" | "text";
-    mantineFilterMultiSelectProps?: {
-      data: (string | {value: string; label: string})[];
-    };
-  } = {};
-  const filterVariant =
-    !isId && !isNumeric && (!range || (range && range[1] - range[0] <= 100))
-      ? "multi-select"
-      : "text";
-  result = Object.assign({}, result, {filterVariant});
-  return result;
+/**
+ * Levels are always filtered by picking members (cuts), no matter if their
+ * member keys are numbers (Year, Time, Date) or strings. The value type of the
+ * column must not be used to decide this, as it only matters for measures.
+ */
+function getMantineFilterMultiSelectProps(isId: boolean, entityType: EntityTypes) {
+  const filterVariant: "multi-select" | "text" =
+    !isId && entityType === "level" ? "multi-select" : "text";
+  return {filterVariant};
 }
 
 type SortDirection = "asc" | "desc" | false;
@@ -514,14 +510,12 @@ export function useTable({
         label: columnKey,
         localeLabel: header,
         valueType,
-        range,
         isId
       } = keyCol;
 
-      const isYearDrilldown =
-        entityType === "level" && entity.time_scale && /Year/i.test(columnKey);
-
-      const isNumeric = valueType === "number" && !isYearDrilldown;
+      // Level members with numeric keys (Year, Time, Date) are identifiers,
+      // not quantities, so they are never treated as numeric columns.
+      const isNumeric = valueType === "number" && entityType !== "level";
 
       const formatterKey = getFormat(
         "aggregator" in entity ? entity : columnKey,
@@ -530,7 +524,7 @@ export function useTable({
 
       const formatter = getFormatter(formatterKey);
 
-      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, isNumeric, range);
+      const mantineFilterVariantObject = getMantineFilterMultiSelectProps(isId, entityType);
       return {
         ...mantineFilterVariantObject,
         entityType,
@@ -879,7 +873,9 @@ export function TableView({
                 <Box component="tr" key={headerGroup.id} sx={{fontWeight: "normal"}}>
                   {headerGroup.headers.map(header => {
                     const column = table.getColumn(header.id);
-                    const isNumeric = (column.columnDef as any).dataType === "number";
+                    const columnDef = column.columnDef as any;
+                    const isNumeric =
+                      columnDef.dataType === "number" && columnDef.entityType !== "level";
                     const isRowIndex = column.id === "#";
                     const base = (theme: MantineTheme) => ({
                       backgroundColor:

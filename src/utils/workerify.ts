@@ -34,7 +34,9 @@ function createSourceObject(str) {
     return URL.createObjectURL(new Blob([str], {type: SCRIPT_TYPE}));
   }
   catch (e) {
-    const BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder || window.MSBlobBuilder;
+    // Legacy, non-standard fallback for browsers without the Blob constructor
+    const legacy = window as any;
+    const BlobBuilder = legacy.BlobBuilder || legacy.WebKitBlobBuilder || legacy.MozBlobBuilder || legacy.MSBlobBuilder;
     const blob = new BlobBuilder();
     blob.append(str);
     return URL.createObjectURL(blob.getBlob(SCRIPT_TYPE));

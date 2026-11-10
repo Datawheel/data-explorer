@@ -1,11 +1,10 @@
 import {Switch, ThemeIcon, Tooltip} from "@mantine/core";
 import {IconInfoCircleFilled} from "@tabler/icons-react";
-import React, {useCallback, useEffect} from "react";
+import React, {useCallback} from "react";
 import {useSelector} from "react-redux";
 import {useActions, useSettings} from "../hooks/settings";
 import {useTranslation} from "../hooks/translation";
 import {selectIsPreviewMode} from "../state/queries";
-import {selectSerializedParams} from "../state/selectors";
 
 /**
  * @typedef LoadAllResultsSwitchProps
@@ -21,13 +20,8 @@ export const PreviewModeSwitch = props => {
   const {translate: t} = useTranslation();
 
   const isPreviewMode = useSelector(selectIsPreviewMode);
-  const serialParams = useSelector(selectSerializedParams);
 
   const {previewLimit} = useSettings();
-
-  useEffect(() => {
-    isPreviewMode && actions.willRequestQuery();
-  }, [isPreviewMode, serialParams]);
 
   const onClickLoadAllResults = useCallback(() => {
     actions.updateIsPreview(!isPreviewMode);
